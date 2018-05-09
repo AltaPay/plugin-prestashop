@@ -3,7 +3,7 @@ AltaPay have developed plug-ins for leading ecommerce platforms, all of which ar
 
 
 ## Supported functionalities
-![latest plugin update]
+Content will appear soon 
 
 ## Contact
 Feel free to contact our support team (support@altapay.com) if you need any assistance.
