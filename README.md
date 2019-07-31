@@ -11,6 +11,29 @@ Feel free to contact our support team (customerservice.gw@valitor.com) if you ne
 
 ## Changelog
 
+* 2.2.1
+
+
+    ** Fix the price rule handling
+    ** Fix the path issue for the lock file
+
+* 2.2.0
+
+
+    ** Added support for the latest PrestaShop version: 1.7.6
+    ** Code improvements - removed a bunch of warnings for the webserver
+    ** Fix - duplicate of the terminals on Save
+    ** Added support for coupons
+    ** Improved the unit price fetcher
+    ** Added meaningful messages at failed payment gateway connection
+
+* 2.1.0
+
+
+    ** Improved the payment gateway connection details
+    ** Fix the issue with the autoloader
+    ** Fix multiple warnings from the webserver
+
 * 2.0.0
 
 
