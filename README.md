@@ -11,6 +11,11 @@ Feel free to contact our support team (customerservice.gw@valitor.com) if you ne
 
 ## Changelog
 
+* 2.2.2
+
+
+    ** Added support for PrestaShop version: 1.7.6.1
+
 * 2.2.1
 
 
