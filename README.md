@@ -11,6 +11,13 @@ Feel free to contact our support team (customerservice.gw@valitor.com) if you ne
 
 ## Changelog
 
+2.3.0
+
+
+    ** Added support for coupons
+        *** shipping in not included, as is not supported by the standard checkout
+    ** Fix partial captures and refunds when Klarna used
+
 * 2.2.2
 
 
