@@ -2,16 +2,19 @@
 Valitor has developed plug-ins for leading ecommerce platforms, all of which are supported in-house. 
 
 
-## Supported functionalities
-![latest plugin update](https://github.com/AltaPay/AltaPay-and-Prestashop-plug-in/blob/master/img/PrestaShop.JPG)
-
 ## Contact
 Feel free to contact our support team (customerservice.gw@valitor.com) if you need any assistance.
 
 
 ## Changelog
 
-2.3.0
+* 2.4.0
+
+
+    ** Added support for variable products
+    ** Improved the partial captures on orderlines
+
+* 2.3.0
 
 
     ** Added support for coupons
