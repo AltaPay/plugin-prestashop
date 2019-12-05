@@ -8,6 +8,15 @@ Feel free to contact our support team (customerservice.gw@valitor.com) if you ne
 
 ## Changelog
 
+* 2.5.0
+
+
+    ** Auto capture when the order status changes to Delivered
+        *** no additional capture for partial amount
+    ** Enhancements on the error messages
+    ** Small fixtures and code refactoring
+    ** Added support for PrestaShop version: 1.7.6.2
+
 * 2.4.0
 
 
