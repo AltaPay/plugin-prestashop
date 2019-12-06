@@ -12,22 +12,29 @@ Feel free to contact our support team (customerservice.gw@valitor.com) if you ne
 
 
     ** Auto capture when the order status changes to Delivered
+    
         *** no additional capture for partial amount
+        
     ** Enhancements on the error messages
+    
     ** Small fixtures and code refactoring
+    
     ** Added support for PrestaShop version: 1.7.6.2
 
 * 2.4.0
 
 
     ** Added support for variable products
+    
     ** Improved the partial captures on orderlines
 
 * 2.3.0
 
 
     ** Added support for coupons
+    
         *** shipping in not included, as is not supported by the standard checkout
+        
     ** Fix partial captures and refunds when Klarna used
 
 * 2.2.2
@@ -39,23 +46,31 @@ Feel free to contact our support team (customerservice.gw@valitor.com) if you ne
 
 
     ** Fix the price rule handling
+    
     ** Fix the path issue for the lock file
 
 * 2.2.0
 
 
     ** Added support for the latest PrestaShop version: 1.7.6
+    
     ** Code improvements - removed a bunch of warnings for the webserver
+    
     ** Fix - duplicate of the terminals on Save
+    
     ** Added support for coupons
+    
     ** Improved the unit price fetcher
+    
     ** Added meaningful messages at failed payment gateway connection
 
 * 2.1.0
 
 
     ** Improved the payment gateway connection details
+    
     ** Fix the issue with the autoloader
+    
     ** Fix multiple warnings from the webserver
 
 * 2.0.0
