@@ -8,6 +8,11 @@ Feel free to contact our support team (customerservice.gw@valitor.com) if you ne
 
 ## Changelog
 
+* 2.6.0
+
+
+    ** Auto capture triggered based on the selected order status (available in plugin settings)
+
 * 2.5.0
 
 
