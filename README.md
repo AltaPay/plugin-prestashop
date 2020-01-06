@@ -8,6 +8,11 @@ Feel free to contact our support team (customerservice.gw@valitor.com) if you ne
 
 ## Changelog
 
+* 2.6.1
+
+
+    ** Fix for the total amount when coupons are used  
+
 * 2.6.0
 
 
