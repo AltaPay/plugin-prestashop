@@ -8,6 +8,11 @@ Feel free to contact our support team (customerservice.gw@valitor.com) if you ne
 
 ## Changelog
 
+* 3.1.0
+
+
+    ** Added support for gift-wrapping
+
 * 3.0.0
 
 
