@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -47,7 +48,7 @@ class ALTAPAY extends PaymentModule
             'ALTAPAY_USERNAME',
             'ALTAPAY_PASSWORD',
             'ALTAPAY_URL',
-            'AUTOCAPTURE_STATUS',
+            'AUTOCAPTURE_STATUSES',
             'ALTAPAY_TERMINAL'
         ));
         if (isset($config['ALTAPAY_USERNAME'])) {
@@ -59,8 +60,8 @@ class ALTAPAY extends PaymentModule
         if (isset($config['ALTAPAY_URL'])) {
             $this->url = $config['ALTAPAY_URL'];
         }
-        if (isset($config['AUTOCAPTURE_STATUS'])) {
-            $this->captureStatus = $config['AUTOCAPTURE_STATUS'];
+        if (isset($config['AUTOCAPTURE_STATUSES'])) {
+            $this->captureStatus = $config['AUTOCAPTURE_STATUSES'];
         }
 
 
@@ -105,8 +106,7 @@ class ALTAPAY extends PaymentModule
             Db::getInstance()->Execute($sql1);
             $sql2 = "ALTER TABLE  `" . _DB_PREFIX_ . "altapay_order`  add column paymentTerminal varchar(255) NOT NULL AFTER paymentType";
             Db::getInstance()->Execute($sql2);
-        }
-        else {
+        } else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'altapay_order` (
 			`id_order` int(10) unsigned NOT NULL,
 			`unique_id` varchar(255) NOT NULL,
@@ -150,8 +150,7 @@ class ALTAPAY extends PaymentModule
             $sql = "RENAME TABLE  `" . _DB_PREFIX_ . "valitor_transaction`  TO `" . _DB_PREFIX_ . "altapay_transaction`  ";
             Db::getInstance()->Execute($sql);
 
-        }
-        else {
+        } else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'altapay_transaction` (
 			`id` int(255) NOT NULL AUTO_INCREMENT,
 			`id_cart` int(255) unsigned NOT NULL,
@@ -169,7 +168,6 @@ class ALTAPAY extends PaymentModule
         }
 
 
-
         /* This table contains the payment methods / terminals */
         if (Db::getInstance()->Execute("SELECT 1 FROM `" . _DB_PREFIX_ . "valitor_terminals`")) {
 
@@ -179,8 +177,7 @@ class ALTAPAY extends PaymentModule
             $sql1 = "ALTER TABLE  `" . _DB_PREFIX_ . "altapay_terminals`  add column ccTokenControl_ int(255) NOT NULL AFTER currency";
             Db::getInstance()->Execute($sql1);
 
-        }
-        else {
+        } else {
             Db::getInstance()->Execute("CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "altapay_terminals` (
 			`id_terminal` int(11) NOT NULL AUTO_INCREMENT,
 			`display_name` varchar(255) DEFAULT NULL,
@@ -202,8 +199,7 @@ class ALTAPAY extends PaymentModule
             $sql = "RENAME TABLE  `" . _DB_PREFIX_ . "valitor_orderlines`  TO `" . _DB_PREFIX_ . "altapay_orderlines`  ";
             Db::getInstance()->Execute($sql);
 
-        }
-        else {
+        } else {
             Db::getInstance()->Execute("CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "altapay_orderlines` (
 		`altapay_payment_id` varchar(36) NOT NULL,
 		`product_id` varchar(36) NOT NULL,
@@ -218,8 +214,7 @@ class ALTAPAY extends PaymentModule
             $sql = "RENAME TABLE  `" . _DB_PREFIX_ . "valitor_saved_credit_card`  TO `" . _DB_PREFIX_ . "altapay_saved_credit_card`  ";
             Db::getInstance()->Execute($sql);
 
-        }
-        else {
+        } else {
             Db::getInstance()->Execute("CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "altapay_saved_credit_card` (
 		`id` mediumint(9) NOT NULL AUTO_INCREMENT,
 		`time` datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -245,8 +240,7 @@ class ALTAPAY extends PaymentModule
             $sql = "RENAME TABLE  `" . _DB_PREFIX_ . "valitor_cartInfo`  TO `" . _DB_PREFIX_ . "altapay_cartInfo`  ";
             Db::getInstance()->Execute($sql);
 
-        }
-        else {
+        } else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'altapay_cartInfo` (
 			`id_cart` int(10) unsigned NOT NULL,
 			`productDetails` varchar(255) NOT NULL,
@@ -255,7 +249,7 @@ class ALTAPAY extends PaymentModule
 		) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8');
         }
 
-        
+
         $this->createOrderState();
 
         return true;
@@ -381,7 +375,7 @@ class ALTAPAY extends PaymentModule
 
         $ccTokenControlOptions = [
             [
-                'name'=>'Enable',
+                'name' => 'Enable',
                 'val' => 1
             ]
         ];
@@ -395,17 +389,17 @@ class ALTAPAY extends PaymentModule
         }
 
         if (_PS_VERSION_ >= '1.7.0.0') {
-            $tokenControl =  array(
+            $tokenControl = array(
                 'type' => 'checkbox',
                 'label' => $this->l('Credit Card Token Control'),
                 'desc' => $this->l('Check this box to enable Credit Card Control for this terminal'),
-                'name' =>'ccTokenControl',
-                'id' =>'ccTokenControl',
+                'name' => 'ccTokenControl',
+                'id' => 'ccTokenControl',
                 'required' => false,
                 'lang' => false,
                 'values' => array(
                     'query' => $ccTokenControlOptions,
-                    'id'=>'id',
+                    'id' => 'id',
                     'name' => 'name',
                 ));
         }
@@ -521,16 +515,16 @@ class ALTAPAY extends PaymentModule
                 ),
             ),
             'submit' => array(
-        'title' => $this->l('Save'),
-    ),
+                'title' => $this->l('Save'),
+            ),
             'buttons' => array(
-        array(
-            'href' => AdminController::$currentIndex .
-                '&configure=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'),
-            'title' => $this->l('Back to list'),
-            'icon' => 'process-icon-back'
-        )
-    ),
+                array(
+                    'href' => AdminController::$currentIndex .
+                        '&configure=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'),
+                    'title' => $this->l('Back to list'),
+                    'icon' => 'process-icon-back'
+                )
+            ),
         );
         $helper = new HelperForm();
         $helper->module = $this;
@@ -595,12 +589,9 @@ class ALTAPAY extends PaymentModule
         foreach ($terminals as $terminal) {
             if (!$objects) {
                 $terminalNature = $terminal->getNature();
-                if(in_array('CreditCard', $terminalNature))
-                {
+                if (in_array('CreditCard', $terminalNature)) {
                     $termNature = 'CreditCard';
-                }
-                else if(in_array('Invoice', $terminalNature))
-                {
+                } else if (in_array('Invoice', $terminalNature)) {
                     $termNature = 'Invoice';
                 }
                 $terminalArray[$terminal->getTitle()] = array(
@@ -730,7 +721,7 @@ class ALTAPAY extends PaymentModule
                 if (Tools::getValue('goodwillrefund') == 'yes') {
                     $goodWillRefund = true;
                 }
-                $finalOrderLines = $this->populateOrderLinesFromPost($orderLines, $orderLineGiftWrap , $orderID, $goodWillRefund);
+                $finalOrderLines = $this->populateOrderLinesFromPost($orderLines, $orderLineGiftWrap, $orderID, $goodWillRefund);
 
                 // Add a dummy orderLine array in case no orderLines are parsed in the refund
                 if ($finalOrderLines === array() && $goodWillRefund) {
@@ -819,10 +810,10 @@ class ALTAPAY extends PaymentModule
         foreach ($orderLines as $key => $orderedQuantity) {
             if ($orderedQuantity > 0) {
                 $productDetails = $productDetail[$key];
-                if(!empty($productDetails)) {
+                if (!empty($productDetails)) {
                     $productName = $productDetails['product_name'];
 
-                    $priceWithoutReductionTaxIncl = $productDetails['unit_price_tax_incl']/(1-($productDetails['reduction_percent']/100));
+                    $priceWithoutReductionTaxIncl = $productDetails['unit_price_tax_incl'] / (1 - ($productDetails['reduction_percent'] / 100));
                     $basePrice = $productDetails['original_product_price'];
 
 
@@ -832,11 +823,11 @@ class ALTAPAY extends PaymentModule
                     if ($productDetails['reduction_percent'] > 0) {
                         $discountPercentage = $productDetails['reduction_percent'];
 
-                    } else if(!empty($cartRuleDiscounts)) {
+                    } else if (!empty($cartRuleDiscounts)) {
                         foreach ($cartRuleDiscounts as $cartRuleDiscount) {
-                            if($productDetails['product_id'] == $cartRuleDiscount['productID']) {
+                            if ($productDetails['product_id'] == $cartRuleDiscount['productID']) {
                                 $discountPercentage = $cartRuleDiscount['discountPercent'];
-                              break;
+                                break;
                             } else {
                                 $discountPercentage = 0;
                             }
@@ -885,22 +876,29 @@ class ALTAPAY extends PaymentModule
                     $altapayOrderLines[$i]['discount'] = $discountPercentage;
 
                     $compensationQuantity += $productQuantity;
-                }
-                else
-                    {
-                        $orderDetail = new Order((int)$orderID);
-                        $shippingDetail = reset($orderDetail->getShipping());
-                        // Mandatory keys for orderLines:
-                        $altapayOrderLines[$i]['description'] = $shippingDetail['carrier_name']; // Description of item.
-                        $altapayOrderLines[$i]['itemId'] = $shippingDetail['carrier_name']; // Item number (SKU)
-                        $altapayOrderLines[$i]['quantity'] = 1;
-                        // Unit price excluding sales tax, only two digits.
-                        $altapayOrderLines[$i]['unitPrice'] = $shippingDetail['shipping_cost_tax_excl'];
+                } else {
+                    $shippingDiscount = 0;
+                    $cartRuleDiscounts = $this->getCartRuleDiscounts($orderDetail);
+                    foreach ($cartRuleDiscounts as $cartRuleDiscount) {
+                        if ($cartRuleDiscount['shipping']) {
+                            $shippingDiscount = 100;
+                        }
+                    }
 
-                        // Optional keys for orderLines:
-                        $altapayOrderLines[$i]['taxAmount'] = $shippingDetail['shipping_cost_tax_incl'] - $shippingDetail['shipping_cost_tax_excl']; //Taxamount should be the total tax amount for order line.
-                        // The type of order line it is. Should be one of the following: shipment|handling|item|refund
-                        $altapayOrderLines[$i]['goodsType'] = 'shipment';
+                    $orderDetail = new Order((int)$orderID);
+                    $shippingDetail = reset($orderDetail->getShipping());
+                    // Mandatory keys for orderLines:
+                    $altapayOrderLines[$i]['description'] = $shippingDetail['carrier_name']; // Description of item.
+                    $altapayOrderLines[$i]['itemId'] = $shippingDetail['carrier_name']; // Item number (SKU)
+                    $altapayOrderLines[$i]['quantity'] = 1;
+                    // Unit price excluding sales tax, only two digits.
+                    $altapayOrderLines[$i]['unitPrice'] = $shippingDetail['shipping_cost_tax_excl'];
+                    $altapayOrderLines[$i]['discount'] = $shippingDiscount;
+
+                    // Optional keys for orderLines:
+                    $altapayOrderLines[$i]['taxAmount'] = $shippingDetail['shipping_cost_tax_incl'] - $shippingDetail['shipping_cost_tax_excl']; //Taxamount should be the total tax amount for order line.
+                    // The type of order line it is. Should be one of the following: shipment|handling|item|refund
+                    $altapayOrderLines[$i]['goodsType'] = 'shipment';
                 }
             } else {
                 continue;
@@ -990,11 +988,10 @@ class ALTAPAY extends PaymentModule
         if ($idTerminal = Tools::getValue('id_terminal')) {
             $terminal = new Terminal((int)$idTerminal);
         } // New
-        elseif(!($idTerminal = Tools::getValue('id_terminal')) && $terminalId ) {
+        elseif (!($idTerminal = Tools::getValue('id_terminal')) && $terminalId) {
             $idTerminal = $terminalId;
             $terminal = new Terminal((int)$idTerminal);
-        }
-        else {
+        } else {
             $terminal = new Terminal;
         }
 
@@ -1010,7 +1007,7 @@ class ALTAPAY extends PaymentModule
 
 
         // Fields
-        $fields = array('display_name', 'remote_name', 'icon_filename', 'currency', 'ccTokenControl_' , 'payment_type', 'active');
+        $fields = array('display_name', 'remote_name', 'icon_filename', 'currency', 'ccTokenControl_', 'payment_type', 'active');
         foreach ($fields as $fieldName) {
             $terminal->{$fieldName} = Tools::getValue($fieldName);
         }
@@ -1077,6 +1074,11 @@ class ALTAPAY extends PaymentModule
     public function renderForm()
     {
         $orderStatus = new OrderState($this->context->language->id);
+        $statuses = OrderState::getOrderStates($this->context->language->id);
+        $selectCaptureStatus = array();
+        foreach ($statuses as $status) {
+            $selectCaptureStatus[] = array('key' => $status["id_order_state"], 'name' => $status["name"]);
+        }
 
         $fieldsForm = array(
             'form' => array(
@@ -1109,20 +1111,18 @@ class ALTAPAY extends PaymentModule
                     ),
                     array(
                         'type' => 'select',
-                        'label' => $this->l('Auto-capture status'),
-                        'desc' => 'Enter the status to trigger autocapture when order status is updated',
-                        'name' => 'AUTOCAPTURE_STATUS',
+                        'label' => 'Capture on status changed to',
+                        'name' => 'AUTOCAPTURE_STATUSES[]',
+                        'class' => 'chosen',
+                        'required' => false,
+                        'multiple' => true,
                         'options' => array(
-                            'query' => $orderStatus->getOrderStates($this->context->language->id),
-                            'id' => 'id_order_state',
-                            'name' => 'name',
-                            'default' => array(
-                                'label' => 'Select an auto-capture status',
-                                'value' => '',
-                            )
-                        ),
-                        'required' => false
+                            'query' => $selectCaptureStatus,
+                            'id' => 'key',
+                            'name' => 'name'
+                        )
                     ),
+
                 ),
                 'submit' => array(
                     'title' => $this->l('Save'),
@@ -1166,7 +1166,7 @@ class ALTAPAY extends PaymentModule
             'ALTAPAY_USERNAME' => Tools::getValue('ALTAPAY_USERNAME', Configuration::get('ALTAPAY_USERNAME')),
             'ALTAPAY_PASSWORD' => Tools::getValue('ALTAPAY_PASSWORD', Configuration::get('ALTAPAY_PASSWORD')),
             'ALTAPAY_URL' => Tools::getValue('ALTAPAY_URL', Configuration::get('ALTAPAY_URL')),
-            'AUTOCAPTURE_STATUS' => Tools::getValue('AUTOCAPTURE_STATUS', Configuration::get('AUTOCAPTURE_STATUS')),
+            'AUTOCAPTURE_STATUSES[]' => Tools::getValue('AUTOCAPTURE_STATUSES', unserialize(Configuration::get('AUTOCAPTURE_STATUSES'))),
         );
     }
 
@@ -1278,8 +1278,8 @@ class ALTAPAY extends PaymentModule
             if (Tools::getValue('ALTAPAY_PASSWORD') !== "") {
                 Configuration::updateValue('ALTAPAY_PASSWORD', Tools::getValue('ALTAPAY_PASSWORD'));
             }
-            if (Tools::getValue('AUTOCAPTURE_STATUS') !== "") {
-                Configuration::updateValue('AUTOCAPTURE_STATUS', Tools::getValue('AUTOCAPTURE_STATUS'));
+            if (Tools::getValue('AUTOCAPTURE_STATUSES') !== "") {
+                Configuration::updateValue('AUTOCAPTURE_STATUSES', serialize(Tools::getValue("AUTOCAPTURE_STATUSES")));
             }
         }
         $this->Mhtml .= '<div class="alert alert-success"> ' . $this->l('Settings updated') . '</div>';
@@ -1372,14 +1372,14 @@ class ALTAPAY extends PaymentModule
 
             $giftWrappingFee = null;
 
-            if($productDetails->gift) {
+            if ($productDetails->gift) {
                 $giftWrappingFee = $productDetails->total_wrapping;
             }
 
             if ($amountToCapture == 0) {
                 return;
             } elseif ($amountToCapture > 0 && $orderCapturedAmount == 0) {
-                $orderLines = $this->populateOrderLinesFromPost(array_column($productDetails->getList($params['id_order']), 'product_quantity'), $giftWrappingFee,$params['id_order'], false);
+                $orderLines = $this->populateOrderLinesFromPost(array_column($productDetails->getList($params['id_order']), 'product_quantity'), $giftWrappingFee, $params['id_order'], false);
                 $api->captureAmount($paymentID, $orderLines, $amountToCapture);
                 markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($orderLines));
             } elseif ($amountToCapture > 0 && $orderCapturedAmount > 0 && $captureRemainedAmount) {
@@ -1481,18 +1481,25 @@ class ALTAPAY extends PaymentModule
         }
         $orderStatus = new OrderState($this->context->language->id);
         $configuredStatus = $orderStatus->getOrderStates($this->context->language->id);
-        $objectID = array_search($this->captureStatus, array_column($configuredStatus, 'id_order_state'));
-        if (!empty($objectID)) {
-            $orderstatusName = $configuredStatus[$objectID]['name'];
+        $allowedOrderStatuses = unserialize(Configuration::get('AUTOCAPTURE_STATUSES'));
+
+        foreach ($allowedOrderStatuses as $orderStatusID) {
+            $objectID = array_search($orderStatusID, array_column($configuredStatus, 'id_order_state'));
+            if (!empty($objectID)) {
+                $orderstatusName[] = $configuredStatus[$objectID]['name'];
+            }
         }
 
         $currentOrderStatus = $params['newOrderStatus'];
         if (!empty($currentOrderStatus)) {
             $currentOrderStatus = $params['newOrderStatus']->name;
-            if ($currentOrderStatus == $orderstatusName) {
-                $paymentID = $results['payment_id'];
-                $this->performCapture($paymentID, $params, false);
+            foreach ($orderstatusName as $captureOrderStatus) {
+                if ($currentOrderStatus == $captureOrderStatus) {
+                    $paymentID = $results['payment_id'];
+                    $this->performCapture($paymentID, $params, false);
+                }
             }
+
         } else {
             return;
         }
@@ -1515,7 +1522,7 @@ class ALTAPAY extends PaymentModule
         $orderDetail = new Order((int)$params['id_order']);
         $productDetail = $orderDetail->getProducts();
         $shippingDetail = $orderDetail->getShipping();
-        if($orderDetail->gift) {
+        if ($orderDetail->gift) {
             $giftWrappingFee = $orderDetail->total_wrapping;
             $this->smarty->assign('ap_gift_wrapping', $giftWrappingFee);
         }
@@ -1663,7 +1670,7 @@ class ALTAPAY extends PaymentModule
      */
     public function hookDisplayCustomerAccount()
     {
-        if(_PS_VERSION_ >= '1.7.0.0') {
+        if (_PS_VERSION_ >= '1.7.0.0') {
             return $this->display(__FILE__, 'savedCreditCards.tpl');
         }
     }
@@ -1687,12 +1694,12 @@ class ALTAPAY extends PaymentModule
 
         if ($this->context->customer->isLogged()) {
             $customerID = $this->context->customer->id;
-            $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE userID ='.$customerID;
+            $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE userID =' . $customerID;
             $results = Db::getInstance()->executeS($sql);
 
-            if(!empty($results)) {
-                foreach($results as $result) {
-                    $savedCreditCard[] = array (
+            if (!empty($results)) {
+                foreach ($results as $result) {
+                    $savedCreditCard[] = array(
                         'creditCard' => $result['creditCardNumber'],
                         'cardName' => $result['cardName'],
                         'cardExpiryDate' => $result['cardExpiryDate']);
@@ -1714,7 +1721,7 @@ class ALTAPAY extends PaymentModule
         $paymentsOptions = array();
         foreach ($paymentMethods as $paymentMethod) {
             $this->context->smarty->assign('ccTokenControl', $paymentMethod['ccTokenControl_']);
-            if(!empty($customerID)){
+            if (!empty($customerID)) {
                 $this->context->smarty->assign('customerID', $customerID);
             }
             $actionText = $this->l('Pay with') . ' ' . $paymentMethod['display_name'];
@@ -1957,9 +1964,9 @@ class ALTAPAY extends PaymentModule
         }
 
         if (!is_null($savedCreditCard)) {
-            $sql = "SELECT ccToken FROM `" . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE creditcardNumber ="'.$savedCreditCard.'"';
+            $sql = "SELECT ccToken FROM `" . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE creditcardNumber ="' . $savedCreditCard . '"';
             $results = Db::getInstance()->executeS($sql);
-            foreach ($results as $result){
+            foreach ($results as $result) {
                 $ccToken = $result['ccToken'];
             }
         }
@@ -2070,128 +2077,70 @@ class ALTAPAY extends PaymentModule
         return $arr;
     }
 
-    //function will be used to create the capture or refund quantity count in order to store in the db
-
-    /** @var CartCore */
+    /**
+     * function will be used to create the capture or refund quantity count in order to store in the db
+     * @return array
+     * @var CartCore
+     */
     private function getOrderLines($cart)
     {
         $i = 0;
+        $orderSummary = $cart->getSummaryDetails();
+        $orderSubtotal = $orderSummary['total_products_wt'];
+
         $orderLines = array();
         $products = $cart->getProducts();
+        $shippingDiscountPercent = 0;
+        $freeGiftVoucher = $this->getCartRuleProperties($cart);
         $vouchers = $this->getVoucherDetails();
         $cartID = $cart->id;
         $orderDetails = array();
-        if (!empty($vouchers)) {
-                foreach ($products as $p) {
-                    $discountPercent = 0;
-                    $discountedAmount = 0;
-                    $productPriceAfterDiscount =0;
-                    $productID = $p['id_product'];
-                    $unitCode = 'unit';
-                    if ($p['cart_quantity'] > 1) {
-                        $unitCode = 'units';
-                    }
-                    if ($p['id_product_attribute']) {
-                        $itemID = $p['reference'] . '-' . $p['id_product_attribute'];
-                    } else {
-                        $itemID = $p['reference'];
-                    }
-                    $rateBasePrice = 1 + $p['rate'] / 100;
 
-                    $productUrl = $this->context->link->getProductLink($p['id_product']);
-                    $productImageUrl = $this->context->link->getImageLink($p['link_rewrite'], $p['id_image'], 'home_default');
-                    //Calculation of base price
-                    $basePrice = round($p['price_without_reduction'], 2) / $rateBasePrice;
-                    $singleProductTaxAmount = $p['price_without_reduction'] - $basePrice;
-
-                    foreach($vouchers as $voucher)
-                    {
-                        if(in_array($productID, $voucher['products']) || $voucher['products'] == 'all') {
-                            if (empty($discountPercent)) {
-                                $discountPercent += $voucher['reductionPercent'];
-                                $discountedAmount = $basePrice * ($discountPercent/100);
-                                $productPriceAfterDiscount = $basePrice - $discountedAmount;
-                            } else {
-                                $totalDiscountedAmount = $discountedAmount + ($productPriceAfterDiscount * ($voucher['reductionPercent']/100));
-                                $discountPercent = ($totalDiscountedAmount / $basePrice) * 100;
-                            }
-                        }
-
-                    }
-
-                    $orderDetails[$i]['productID'] = $productID;
-                    $orderDetails[$i]['discountPercent'] = $discountPercent;
-                    // Mandatory keys for orderLines:
-                    $orderLines[$i]['description'] = $p['name']; // Description of item.
-                    $orderLines[$i]['itemId'] = $itemID; // Item number (SKU)
-                    $orderLines[$i]['quantity'] = $p['cart_quantity'];
-
-                    // Unit price excluding sales tax, only two digits.
-                    $orderLines[$i]['unitPrice'] = number_format(floor(100 * $basePrice) / 100, 2, '.', '');
-
-                    // Optional keys for orderLines:
-                    $orderLines[$i]['taxAmount'] = number_format($p['cart_quantity'] * $singleProductTaxAmount, 2, '.', ''); // Tax amount should be the total tax amount.
-                    $orderLines[$i]['taxPercent'] = number_format(($singleProductTaxAmount / $basePrice) * 100, 2, '.', '');
-                    //$orderLines[$i]['taxPercent'] = $couponAmount; //Tax Rate specified
-                    $orderLines[$i]['goodsType'] = 'item'; // Order line Type - one of the following shipment|handling|item
-                    $orderLines[$i]['unitCode'] = $unitCode;
-                    $orderLines[$i]['discount'] = $discountPercent;
-                    $orderLines[$i]['imageUrl'] = $productImageUrl;
-                    $orderLines[$i]['productUrl'] = $productUrl;
-
-                    $i++;
-                }
+        if (in_array('1', $freeGiftVoucher['freeShippingStatus'], true)) {
+            $cartRuleFreeShipping = true;
         } else {
-            foreach ($products as $p) {
-                $unitCode = 'unit';
-                if ($p['cart_quantity'] > 1) {
-                    $unitCode = 'units';
-                }
-                if ($p['id_product_attribute']) {
-                    $itemID = $p['reference'] . '-' . $p['id_product_attribute'];
-                } else {
-                    $itemID = $p['reference'];
-                }
+            $cartRuleFreeShipping = false;
+        }
+
+        foreach ($products as $p) {
+            $rateBasePrice = 1 + ($p['rate'] / 100);
+            //Calculation of base price
+            $basePrice = $p['price_without_reduction'] / $rateBasePrice;
+            $singleProductTaxAmount = $p['price_without_reduction'] - $basePrice;
+            $productID = $p['id_product'];
+            $discountPercent = 0;
+
+            if (!empty($vouchers)) {
+                $discountPercent = $this->getVoucherDiscounts($vouchers, $productID,$discountPercent, $basePrice, $orderSubtotal, $freeGiftVoucher);
+            } else {
                 $discountAmount = $p['price_without_reduction'] - $p['price_with_reduction'];
-                $amountBeforeTax = ($discountAmount / $p['price_without_reduction']) * 100;
-                $rateBasePrice = 1 + $p['rate'] / 100;
-                $productUrl = $this->context->link->getProductLink( $p['id_product']);
-                $productImageUrl = $this->context->link->getImageLink( $p['link_rewrite'],$p['id_image'], 'home_default');
-                //Calculation of base price
-                $basePrice = round($p['price_without_reduction'])/ $rateBasePrice;
-                $singleProductTaxAmount = $p['price_without_reduction'] - $basePrice;
-                // Mandatory keys for orderLines:
-                $orderLines[$i]['description'] = $p['name']; // Description of item.
-                $orderLines[$i]['itemId'] = $itemID; // Item number (SKU)
-                $orderLines[$i]['quantity'] = $p['cart_quantity'];
-
-                // Unit price excluding sales tax, only two digits.
-                $orderLines[$i]['unitPrice'] = number_format(floor(100 * $basePrice) / 100, 2, '.', '');
-
-                // Optional keys for orderLines:
-                $orderLines[$i]['taxAmount'] = number_format($p['cart_quantity'] * $singleProductTaxAmount, 2, '.', ''); // Tax amount should be the total tax amount.
-                $orderLines[$i]['taxPercent'] = number_format(($singleProductTaxAmount / $basePrice) * 100, 2, '.', '');
-                $orderLines[$i]['goodsType'] = 'item'; // Order line Type - one of the following shipment|handling|item
-                $orderLines[$i]['unitCode'] = $unitCode;
-                $orderLines[$i]['discount'] = $amountBeforeTax;
-                $orderLines[$i]['imageUrl'] = $productImageUrl;
-                $orderLines[$i]['productUrl'] = $productUrl;
-
-                $i++;
+                $discountPercent = ($discountAmount / $p['price_without_reduction']) * 100;
             }
+            $unitCode = 'unit';
+            if ($p['cart_quantity'] > 1) {
+                $unitCode = 'units';
+            }
+            if ($p['id_product_attribute']) {
+                $itemID = $p['reference'] . '-' . $p['id_product_attribute'];
+            } else {
+                $itemID = $p['reference'];
+            }
+
+            $productUrl = $this->context->link->getProductLink($p['id_product']);
+
+            $productImageUrl = $this->context->link->getImageLink($p['link_rewrite'], $p['id_image'], 'home_default');
+            $orderDetails[$i]['productID'] = $productID;
+            $orderDetails[$i]['discountPercent'] = $discountPercent;
+            if ($cartRuleFreeShipping) {
+                $orderDetails[$i]['shipping'] = 'free';
+            }
+
+            $orderLines[$i] = $this->createOrderlines($p['name'], $itemID, $p['cart_quantity'], $discountPercent, $basePrice, $singleProductTaxAmount, 'item', $unitCode, $productImageUrl, $productUrl);
+            $i++;
         }
 
-        $giftWrappingFee = 0;
-        if($cart->gift) {
-            $giftWrappingFee = $cart->getGiftWrappingPrice();
-        }
-        if($giftWrappingFee) {
-            $orderLines[$i]['description'] = 'Gift Wrap';
-            $orderLines[$i]['itemId'] = 'giftwrap';
-            $orderLines[$i]['quantity'] = 1;
-            $orderLines[$i]['unitPrice'] = $giftWrappingFee;  // Shipping cost without tax
-            //$orderLines[$i]['taxPercent'] = number_format(($carrierTax / $carrier) * 100, 2, '.', '');
-            $orderLines[$i]['goodsType'] = 'item';
+        if ($cart->gift) {
+            $orderLines[$i] = $this->createOrderlines('Gift Wrap', 'giftwrap', 1, 0, $cart->getGiftWrappingPrice(), 0, 'item');
             $i++;
         }
 
@@ -2199,25 +2148,132 @@ class ALTAPAY extends PaymentModule
         $carrierCostWithTax = $cart->getTotalShippingCost();
         $carrierCostWithoutTax = $cart->getTotalShippingCost(null, false);
         $carrierTax = $carrierCostWithTax - $carrierCostWithoutTax;
-        $orderLines[$i]['description'] = $carrier->delay;
-        $orderLines[$i]['itemId'] = $carrier->name;
-        $orderLines[$i]['quantity'] = 1;
-        $orderLines[$i]['unitPrice'] = $carrierCostWithoutTax;  // Shipping cost without tax
-        // Optional keys for orderLines:
-        $orderLines[$i]['taxAmount'] = $carrierTax;
-        //$orderLines[$i]['taxPercent'] = number_format(($carrierTax / $carrier) * 100, 2, '.', '');
-        $orderLines[$i]['goodsType'] = 'shipment';
+        if ($cartRuleFreeShipping) {
+            $shippingDiscountPercent = 100;
+        }
+        $orderLines[$i] = $this->createOrderlines($carrier->delay, $carrier->name, 1, $shippingDiscountPercent, $carrierCostWithoutTax, $carrierTax, 'shipment');
 
-        if(!empty($orderDetails)){
+        //$orderLines[$i]['taxPercent'] = number_format(($carrierTax / $carrier) * 100, 2, '.', '');
+
+        if (!empty($orderDetails)) {
             $orderDetails = json_encode($orderDetails);
             $sql = 'INSERT INTO ' . _DB_PREFIX_ . 'altapay_cartInfo
 		(id_cart, productDetails, date_add)
         VALUES ' .
-                "('".$cartID."', '". $orderDetails. "', '" . time() . "')";
+                "('" . $cartID . "', '" . $orderDetails . "', '" . time() . "')";
             Db::getInstance()->Execute($sql);
         }
 
+
         return $orderLines;
+    }
+
+
+    /**
+     * Returns the order lines using provided params
+     * @param $productName
+     * @param $itemID
+     * @param $quantity
+     * @param $discount
+     * @param $unitPrice
+     * @param $taxAmount
+     * @param $goodsType
+     * @param $unitCode
+     * @param $imageUrl
+     * @param $productUrl
+     * @return mixed
+     */
+    private function createOrderlines($productName, $itemID, $quantity, $discount, $unitPrice, $taxAmount, $goodsType, $unitCode, $imageUrl, $productUrl)
+    {
+        // Mandatory keys for orderLines:
+        $orderLines['description'] = $productName; // Description of item.
+        $orderLines['itemId'] = $itemID; // Item number (SKU)
+        $orderLines['quantity'] = $quantity;
+        $orderLines['discount'] = $discount;
+        // Unit price excluding sales tax, only two digits.
+        $orderLines['unitPrice'] = number_format(floor(100 * $unitPrice) / 100, 2, '.', '');
+
+        // Optional keys for orderLines:
+        $orderLines['taxAmount'] = number_format($quantity * $taxAmount, 4, '.', ''); // Tax amount should be the total tax amount.
+        $orderLines['taxPercent'] = number_format(($taxAmount / $unitPrice) * 100, 2, '.', '');
+        //$orderLines[$i]['taxPercent'] = $couponAmount; //Tax Rate specified
+        $orderLines['goodsType'] = $goodsType; // Order line Type - one of the following shipment|handling|item
+        if($unitCode && $imageUrl && $productUrl) {
+            $orderLines['unitCode'] = $unitCode;
+            $orderLines['imageUrl'] = $imageUrl;
+            $orderLines['productUrl'] = $productUrl;
+        }
+
+        return $orderLines;
+    }
+
+    /**
+     * Returns the voucher discounts for each product in the order lines
+     * @param $vouchers
+     * @param $productID
+     * @param $discountPercent
+     * @param $basePrice
+     * @param $orderSubtotal
+     * @param $freeGiftVoucher
+     * @return float|int
+     */
+    private function getVoucherDiscounts($vouchers, $productID, $discountPercent, $basePrice, $orderSubtotal, $freeGiftVoucher)
+    {
+        $discountedAmount = 0;
+        $productPriceAfterDiscount = 0;
+        foreach ($vouchers as $key => $voucher) {
+            if (in_array($productID, $voucher['products']) || $voucher['products'] == 'all') {
+                if (empty($discountPercent) && $voucher['reductionPercent'] != '0.00') {
+                    $discountPercent += $voucher['reductionPercent'];
+                    $discountedAmount = $basePrice * ($discountPercent / 100);
+                    $productPriceAfterDiscount = $basePrice - $discountedAmount;
+                } else if ($voucher['reductionPercent'] == '0.00' && (empty($freeGiftVoucher['free_gift']) || $freeGiftVoucher['free_gift'] )&& $freeGiftVoucher['free_gift'] != $productID) {
+                    if($freeGiftVoucher['free_gift']) {
+                        $discountPercent += (($freeGiftVoucher['reductionAmount']+$freeGiftVoucher[$key])/($orderSubtotal+$freeGiftVoucher[$key])*100);
+                    }
+                    else {
+                        $discountPercent += ($freeGiftVoucher[$key]/ ($orderSubtotal)) * 100;
+                    }
+
+                } else if ($voucher['reductionPercent'] == '0.00' && empty($freeGiftVoucher['free_gift']) || $freeGiftVoucher['free_gift'] == $productID) {
+                    $discountPercent += (($freeGiftVoucher['reductionAmount']+$freeGiftVoucher[$key])/($orderSubtotal+$freeGiftVoucher[$key])*100);
+
+                } else {
+                    $totalDiscountedAmount = $discountedAmount + ($productPriceAfterDiscount * ($voucher['reductionPercent'] / 100));
+                    $discountPercent = ($totalDiscountedAmount / $basePrice) * 100;
+                }
+            }
+
+        }
+
+        return $discountPercent;
+    }
+
+
+    /**
+     * Returns the array of Cart Rule properties like discount percentage, free shipping status and free gift conditions
+     * @param $cart
+     * @return array
+     */
+    private function getCartRuleProperties($cart)
+    {
+        $j = 0;
+        $voucherProperties = array();
+        $freeShipping = array();
+        $cartRules = $cart->getCartRules();
+
+        foreach ($cartRules as $key => $cartRule) {
+            if ($cartRule['gift_product']) {
+                $voucherProperties['free_gift'] = $cartRule['gift_product'];
+            }
+            $cartRuleID = $cartRule['id_cart_rule'];
+            $freeShipping[$j] = $cartRule['free_shipping'];
+            $voucherProperties[$cartRuleID] = $cartRule['value_real'];
+            $voucherProperties['reductionAmount'] = $cartRule['reduction_amount'];
+            $j++;
+        }
+        $voucherProperties['freeShippingStatus'] = $freeShipping;
+        return $voucherProperties;
     }
 
     /**
@@ -2262,17 +2318,15 @@ class ALTAPAY extends PaymentModule
     {
         $voucherDetails = array();
         $appliedCartRules = $this->context->cart->getCartRules();
-        foreach($appliedCartRules as $cartRule)
-        {
+        foreach ($appliedCartRules as $cartRule) {
             $reductionPercent = $cartRule['reduction_percent'];
-            if(!empty($cartRule['reduction_product'])){
+            if (!empty($cartRule['reduction_product'])) {
 
-                $voucherDetails[$cartRule['id_cart_rule']] = $this->getCartRuleGroupProducts($cartRule['id_cart_rule'], $reductionPercent );
-            }
-            else{
+                $voucherDetails[$cartRule['id_cart_rule']] = $this->getCartRuleGroupProducts($cartRule['id_cart_rule'], $reductionPercent);
+            } else {
                 $voucherDetails[$cartRule['id_cart_rule']] = array(
                     'reductionPercent' => $reductionPercent,
-                    'products'=>'all');
+                    'products' => 'all');
             }
         }
         return $voucherDetails;
@@ -2287,7 +2341,9 @@ class ALTAPAY extends PaymentModule
     {
         $cartRuleDiscounts = 0;
         $discountPercent = reset(Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'altapay_cartInfo WHERE id_cart = ' . $order->id_cart));
-        if(!empty($discountPercent)) {
+
+
+        if (!empty($discountPercent)) {
             $discountPercent = json_decode($discountPercent['productDetails']);
             $cartRuleDiscounts = json_decode(json_encode($discountPercent), true);
         }
