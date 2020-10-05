@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ~ Altapay module for Prestashop
+  ~
+  ~ Copyright © 2020 Altapay. All rights reserved.
+  ~ For the full copyright and license information, please view the LICENSE
+  ~ file that was distributed with this source code.
+  -->
+
+<module>
+    <name>altapay</name>
+    <displayName><![CDATA[Altapay for Prestashop]]></displayName>
+    <version><![CDATA[3.1.0]]></version>
+    <description><![CDATA[Altapay for Prestashop - Payments less complicated]]></description>
+    <author><![CDATA[Altapay A/S]]></author>
+    <tab><![CDATA[payments_gateways]]></tab>
+	<confirmUninstall><![CDATA[Are you sure about removing these details?]]></confirmUninstall>
+    <is_configurable>1</is_configurable>
+    <need_instance>1</need_instance>
+	<limited_countries></limited_countries>
+</module>
