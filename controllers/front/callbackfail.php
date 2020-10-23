@@ -1,6 +1,6 @@
 <?php
 /**
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -14,6 +14,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
 {
     /**
      * Method to add external assets
+     * @return void
      */
     public function setMedia()
     {
@@ -24,6 +25,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
     /**
      * Method to follow when callback fail is being triggered
      * @throws Exception
+     * @return void
      */
     public function postProcess()
     {
@@ -33,7 +35,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
 
         $shopOrderId = $response->getPrimaryPayment()->getShopOrderId();
 
-        // load the cart
+        // Load the cart
         $cart = getCartFromUniqueId($shopOrderId);
         if (!Validate::isLoadedObject($cart)) {
             die('Could not load cart - exiting');
@@ -42,13 +44,13 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
         $status = Tools::getValue('payment_status');
         if ($status == 'epayment_cancelled') {
             $unique_id = Tools::getValue('shop_orderid');
-            // updated transaction record to cancel
+            // Updated transaction record to cancel
             $pI = pSQL($unique_id);
             $q = 'UPDATE `' . _DB_PREFIX_ . 'altapay_transaction` set `is_cancelled`=1 WHERE `unique_id`=\'' .$pI. '\'';
             Db::getInstance()->Execute($q);
 
 
-            // redirect back to either standard or quick checkout process
+            // Redirect back to either standard or quick checkout process
             $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
             $pLink = $this->context->link->getPageLink($controller);
             $vCan = 'altapay_cancel=1&isPaymentStep=true&step=3#altapay_cancel';
@@ -61,7 +63,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             $mId = $this->module->id;
             Logger::addLog('Payment failure for cart ' . $cId . '. Error Message: ' . $mErM, 3, 2001, $mNa, $mId, true);
 
-            /*redirect user back to checkout payment step,
+            /* Redirect user back to checkout payment step,
             assume a failure occured creating the URL until a payment url is received*/
             $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
 
@@ -75,7 +77,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                 'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $mNa . '/',
                 'css_dir' => $css_dir,
             ));
-            //Prestashop 1.6 and Prestashop 1.7 have different declarations of $this->setTemplate()
+            // PrestaShop 1.6 and PrestaShop 1.7 have different declarations of $this->setTemplate()
             if (_PS_VERSION_ >= '1.7.0.0') {
                 $this->setTemplate('module:altapay/views/templates/front/payment_error17.tpl');
             } else {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -15,6 +15,7 @@ class ALTAPAYPaymentModuleFrontController extends ModuleFrontController
 
     /**
      * Method to follow when payment is being initiated with payment method
+     * @return void
      */
     public function initContent()
     {
@@ -28,14 +29,15 @@ class ALTAPAYPaymentModuleFrontController extends ModuleFrontController
         }
 
         /*redirect user back to checkout payment step,
-        assume a failure occured creating the URL until a payment url is received*/
+        * assume a failure occured creating the URL until a payment url is received
+        */
         $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
-        $payment_form_url=$this->context->link->getPageLink($controller, true, null, "step=3&altapay_unavailable=1").
-        '#altapay_unavailable';
+        $payment_form_url=$this->context->link->getPageLink($controller, true, null,
+                "step=3&altapay_unavailable=1").'#altapay_unavailable';
 
         $payment_method=Tools::getValue('method', false);
 
-        if(isset($_COOKIE['selectedCreditCard'])) {
+        if (isset($_COOKIE['selectedCreditCard'])) {
             $savedCreditCard = $_COOKIE['selectedCreditCard'];
             unset($_COOKIE['selectedCreditCard']);
             setcookie('selectedCreditCard', null, -1, '/');
@@ -49,17 +51,17 @@ class ALTAPAYPaymentModuleFrontController extends ModuleFrontController
         if ($result['success']) {
             $payment_form_url=$result['payment_form_url'];
 
-            //insert into transaction log
+            // Insert into transaction log
             $sql='INSERT INTO `'._DB_PREFIX_.'altapay_transaction` 
 				(id_cart, payment_form_url, unique_id, amount, date_add) VALUES '.
                 "('".$cart->id."', '".$payment_form_url."', '".$result['uniqueid']."', '"
                 .$result['amount']."', '".time()."')";
             Db::getInstance()->Execute($sql);
 
-            //redirect user to payment form url
+            // Redirect user to payment form url
             Tools::redirect($payment_form_url);
         } else {
-            //redirect user back to checkout with generic error
+            // Redirect user back to checkout with generic error
             Tools::redirect($payment_form_url);
         }
     }

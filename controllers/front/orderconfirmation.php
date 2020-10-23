@@ -1,6 +1,6 @@
 <?php
 /**
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -13,13 +13,14 @@ class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontControlle
 {
     /**
      * Method to follow when order is being successfully processed
+     * @return void
      */
     public function initContent()
     {
         $this->display_column_left = false;
         parent::initContent();
 
-        //assignment of order detail variables
+        // Assignment of order detail variables
         $orderID = (int)$_REQUEST['id_order'];
         $order = new Order($orderID);
         $orderPaymentNature = '';
@@ -29,7 +30,7 @@ class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontControlle
         $altapayOrderDetails = getAltapayOrderDetails($orderID);
         $terminalTokenControlStatus = 0;
 
-        //loop through the order details to check and assign payment nature
+        // Loop through the order details to check and assign payment nature
         foreach ($altapayOrderDetails as $altapayOrderDetail) {
             $orderPaymentNature = $altapayOrderDetail['paymentNature'];
             if ($orderPaymentNature == 'CreditCard') {
@@ -46,11 +47,7 @@ class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontControlle
 
                 $terminalTokenControlStatus = getTerminalTokenControlStatus($orderTerminalRemoteName)[0]['ccTokenControl_'];
 
-                if (empty($results)) {
-                    $this->context->smarty->assign('creditCardStatus', 0);
-                } else {
-                    $this->context->smarty->assign('creditCardStatus', 1);
-                }
+                $this->context->smarty->assign('creditCardStatus', $results ? 1 : 0);
                 $this->context->smarty->assign('cardMask', $card);
                 $this->context->smarty->assign('cardToken', $cardToken);
                 $this->context->smarty->assign('cardBrand', $cardBrand);
@@ -58,18 +55,17 @@ class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontControlle
             } else {
                 $this->context->smarty->assign('cardMask', 0);
                 $this->context->smarty->assign('cardToken', 0);
-
             }
         }
 
-        //assigment of necessary variables to render in template
+        // Assigment of necessary variables to render in template
         $this->context->smarty->assign('deliveryAddress', $deliveryAddress);
         $this->context->smarty->assign('invoiceAddress', $invoiceAddress);
         $this->context->smarty->assign('productDetails', $productDetails);
         $this->context->smarty->assign('orderID', $orderID);
         $this->context->smarty->assign('orderDetails', $order);
 
-        //Display appropriate template according to user logged in statys
+        // Display appropriate template according to user logged in statys
         if ($this->context->customer->isLogged() && $terminalTokenControlStatus) {
             $this->context->smarty->assign('paymentNature', $orderPaymentNature);
             $this->setTemplate('module:altapay/views/templates/front/orderConfirmationRegisteredUser.tpl');

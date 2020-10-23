@@ -1,6 +1,6 @@
 <?php
 /**
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -35,7 +35,7 @@ class ALTAPAY extends PaymentModule
         $this->version = '3.1.0';
         $this->v16 = _PS_VERSION_ >= '1.6.1.24';
         $this->v17 = _PS_VERSION_ >= '1.7.6.5';
-        $this->author = 'Altapay A/S';
+        $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = array('min' => '1.6.1.24', 'max' => '1.7.6.5');
 
@@ -67,8 +67,8 @@ class ALTAPAY extends PaymentModule
 
         parent::__construct();
 
-        $this->displayName = $this->l('Altapay for Prestashop');
-        $this->description = $this->l('Altapay for Prestashop - Payments less complicated');
+        $this->displayName = $this->l('AltaPay for PrestaShop');
+        $this->description = $this->l('AltaPay: Payments less complicated');
         $this->confirmUninstall = $this->l('Are you sure about removing these details?');
 
         // Make sure currencies are configured for this payment module
@@ -79,6 +79,7 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Called on install
+     * @return bool
      */
     public function install()
     {
@@ -96,9 +97,8 @@ class ALTAPAY extends PaymentModule
             return false;
         }
 
-        /* This table captures the payment information */
+        // This table captures the payment information
         if (Db::getInstance()->Execute("SELECT 1 FROM `" . _DB_PREFIX_ . "valitor_order`")) {
-
             $sql = "RENAME TABLE  `" . _DB_PREFIX_ . "valitor_order`  TO `" . _DB_PREFIX_ . "altapay_order`  ";
             Db::getInstance()->Execute($sql);
 
@@ -146,10 +146,8 @@ class ALTAPAY extends PaymentModule
         /* This table captures each of the transaction details.  An order may or may not exist, and a transaction
        can exist multiple times for each cart */
         if (Db::getInstance()->Execute("SELECT 1 FROM `" . _DB_PREFIX_ . "valitor_transaction`")) {
-
             $sql = "RENAME TABLE  `" . _DB_PREFIX_ . "valitor_transaction`  TO `" . _DB_PREFIX_ . "altapay_transaction`  ";
             Db::getInstance()->Execute($sql);
-
         } else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'altapay_transaction` (
 			`id` int(255) NOT NULL AUTO_INCREMENT,
@@ -168,15 +166,13 @@ class ALTAPAY extends PaymentModule
         }
 
 
-        /* This table contains the payment methods / terminals */
+        // This table contains the payment methods / terminals
         if (Db::getInstance()->Execute("SELECT 1 FROM `" . _DB_PREFIX_ . "valitor_terminals`")) {
-
             $sql = "RENAME TABLE  `" . _DB_PREFIX_ . "valitor_terminals`  TO `" . _DB_PREFIX_ . "altapay_terminals`  ";
             Db::getInstance()->Execute($sql);
 
             $sql1 = "ALTER TABLE  `" . _DB_PREFIX_ . "altapay_terminals`  add column ccTokenControl_ int(255) NOT NULL AFTER currency";
             Db::getInstance()->Execute($sql1);
-
         } else {
             Db::getInstance()->Execute("CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "altapay_terminals` (
 			`id_terminal` int(11) NOT NULL AUTO_INCREMENT,
@@ -193,12 +189,11 @@ class ALTAPAY extends PaymentModule
         }
 
 
-        /* This table contains count of captured/refunded order lines */
-        if (Db::getInstance()->Execute("SELECT 1 FROM `" . _DB_PREFIX_ . "valitor_orderlines`")) {
+        // This table contains count of captured/refunded order lines
 
+        if (Db::getInstance()->Execute("SELECT 1 FROM `" . _DB_PREFIX_ . "valitor_orderlines`")) {
             $sql = "RENAME TABLE  `" . _DB_PREFIX_ . "valitor_orderlines`  TO `" . _DB_PREFIX_ . "altapay_orderlines`  ";
             Db::getInstance()->Execute($sql);
-
         } else {
             Db::getInstance()->Execute("CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "altapay_orderlines` (
 		`altapay_payment_id` varchar(36) NOT NULL,
@@ -210,10 +205,8 @@ class ALTAPAY extends PaymentModule
         }
 
         if (Db::getInstance()->Execute("SELECT 1 FROM `" . _DB_PREFIX_ . "valitor_saved_credit_card`")) {
-
             $sql = "RENAME TABLE  `" . _DB_PREFIX_ . "valitor_saved_credit_card`  TO `" . _DB_PREFIX_ . "altapay_saved_credit_card`  ";
             Db::getInstance()->Execute($sql);
-
         } else {
             Db::getInstance()->Execute("CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "altapay_saved_credit_card` (
 		`id` mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -234,12 +227,11 @@ class ALTAPAY extends PaymentModule
             return false;
         }
 
-        /* This table captures the payment information */
-        if (Db::getInstance()->Execute("SELECT 1 FROM `" . _DB_PREFIX_ . "valitor_cartInfo`")) {
+        // This table captures the payment information
 
+        if (Db::getInstance()->Execute("SELECT 1 FROM `" . _DB_PREFIX_ . "valitor_cartInfo`")) {
             $sql = "RENAME TABLE  `" . _DB_PREFIX_ . "valitor_cartInfo`  TO `" . _DB_PREFIX_ . "altapay_cartInfo`  ";
             Db::getInstance()->Execute($sql);
-
         } else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'altapay_cartInfo` (
 			`id_cart` int(10) unsigned NOT NULL,
@@ -257,6 +249,7 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Create a new order state
+     * @return void
      */
     public function createOrderState()
     {
@@ -290,6 +283,7 @@ class ALTAPAY extends PaymentModule
     /**
      * Called on uninstall
      * Leaves tables in place in order to not loose history.
+     * @return bool
      */
     public function uninstall()
     {
@@ -305,8 +299,7 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Return content for the configuration in back office
-     *
-     * @return String HTML for display
+     * @return string HTML for display
      */
     public function getContent()
     {
@@ -347,8 +340,7 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Form for adding and editing terminals
-     *
-     * @return String HTML for display
+     * @return string HTML for display
      */
     public function renderAddForm()
     {
@@ -550,9 +542,8 @@ class ALTAPAY extends PaymentModule
     }
 
     /**
-     * Query the ALTAPAY API for available terminals
-     *
-     * @return array Array of terminals
+     * Query the AltaPay API for available terminals
+     * @return array<int, Terminal>
      */
     private function getAltapayTerminals($objects = false)
     {
@@ -591,7 +582,7 @@ class ALTAPAY extends PaymentModule
                 $terminalNature = $terminal->getNature();
                 if (in_array('CreditCard', $terminalNature)) {
                     $termNature = 'CreditCard';
-                } else if (in_array('Invoice', $terminalNature)) {
+                } elseif (in_array('Invoice', $terminalNature)) {
                     $termNature = 'Invoice';
                 }
                 $terminalArray[$terminal->getTitle()] = array(
@@ -610,6 +601,9 @@ class ALTAPAY extends PaymentModule
 
     /* ******************************** */
 
+    /**
+     * @return string
+     */
     private function getAPIUsername()
     {
         return $this->username;
@@ -617,6 +611,9 @@ class ALTAPAY extends PaymentModule
 
     /* ******************************** */
 
+    /**
+     * @return string
+     */
     private function getAPIPassword()
     {
         return $this->password;
@@ -624,6 +621,9 @@ class ALTAPAY extends PaymentModule
 
     /* ******************************** */
 
+    /**
+     * @return string
+     */
     public function getAltapayUrl()
     {
         return $this->url;
@@ -631,8 +631,7 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Get field values for add/edit terminal form
-     *
-     * @return Array Associative array of object values
+     * @return array<string, mixed>
      */
     public function getFormValues()
     {
@@ -655,6 +654,7 @@ class ALTAPAY extends PaymentModule
     /**
      * Handle payment processing
      * capture, refund, release
+     * @return void
      */
     private function processPaymentActions()
     {
@@ -694,7 +694,7 @@ class ALTAPAY extends PaymentModule
                 $api->captureAmount($paymentID, $finalOrderLines, Tools::getValue('amount'));
                 markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
             } catch (Exception $e) {
-                //save the latest error message in db
+                // Save the latest error message in db
                 $response = json_decode($e->getMessage(), true);
                 saveLastErrorMessage($paymentID, $response['responseMsg']);
 
@@ -818,12 +818,11 @@ class ALTAPAY extends PaymentModule
 
 
                     $cartRuleDiscounts = $this->getCartRuleDiscounts($orderDetail);
-                    //Calculation of base price
+                    // Calculation of base price
 
                     if ($productDetails['reduction_percent'] > 0) {
                         $discountPercentage = $productDetails['reduction_percent'];
-
-                    } else if (!empty($cartRuleDiscounts)) {
+                    } elseif (!empty($cartRuleDiscounts)) {
                         foreach ($cartRuleDiscounts as $cartRuleDiscount) {
                             if ($productDetails['product_id'] == $cartRuleDiscount['productID']) {
                                 $discountPercentage = $cartRuleDiscount['discountPercent'];
@@ -831,7 +830,6 @@ class ALTAPAY extends PaymentModule
                             } else {
                                 $discountPercentage = 0;
                             }
-
                         }
                     }
 
@@ -849,17 +847,17 @@ class ALTAPAY extends PaymentModule
                         $goodsType = 'refund';
                     }
 
-                    //Looping into the product array to get the difference regarding compensation amount
+                    // Looping into the product array to get the difference regarding compensation amount
                     foreach ($productDetail as $proKeys) {
                         $productPriceTaxIncl = $proKeys['total_price_tax_incl'];
-                        $priceAfterDiscountRounded += (float)number_format($productPriceTaxIncl - ($productPriceTaxIncl * ($discountPercentage / 100)), 2, '.', '');
+                        $priceAfterDiscountRounded += round($productPriceTaxIncl - ($productPriceTaxIncl * ($discountPercentage / 100)), 2);
                         $priceAfterDiscount += $productPriceTaxIncl - ($productPriceTaxIncl * ($discountPercentage / 100));
                         $totalQuantity += $proKeys['product_quantity'];
                     }
-                    //Calculation of Total Compensation Amount
-                    $compensationAmount = (float)number_format($priceAfterDiscountRounded - $priceAfterDiscount, 2, '.', '');
+                    // Calculation of Total Compensation Amount
+                    $compensationAmount = round($priceAfterDiscountRounded - $priceAfterDiscount, 2);
                     $compensationAmountPerQuantity = $compensationAmount / $totalQuantity;
-                    $totalProductsTaxAmount = (float)number_format($productTax * $productQuantity, 2, '.', '');
+                    $totalProductsTaxAmount = number_format($productTax * $productQuantity, 2, '.', '');
 
 
                     // Mandatory keys for orderLines:
@@ -867,7 +865,7 @@ class ALTAPAY extends PaymentModule
                     $altapayOrderLines[$i]['itemId'] = $itemID; // Item number (SKU)
                     $altapayOrderLines[$i]['quantity'] = $productQuantity;
                     // Unit price excluding sales tax, only two digits.
-                    $altapayOrderLines[$i]['unitPrice'] = (float)number_format($basePrice, 2, '.', '');
+                    $altapayOrderLines[$i]['unitPrice'] = number_format($basePrice, 2, '.', '');
 
                     // Optional keys for orderLines:
                     $altapayOrderLines[$i]['taxAmount'] = $totalProductsTaxAmount; //Taxamount should be the total tax amount for order line.
@@ -919,7 +917,6 @@ class ALTAPAY extends PaymentModule
             $altapayOrderLines[$i]['goodsType'] = 'item';
 
             $i++;
-
         }
         if ($compensationAmountPerQuantity > 0) {
             $altapayOrderLines[$i]['description'] = 'compensation'; // Description of item.
@@ -929,7 +926,7 @@ class ALTAPAY extends PaymentModule
             $altapayOrderLines[$i]['unitPrice'] = $compensationQuantity * $compensationAmountPerQuantity;
 
             // Optional keys for orderLines:
-            $altapayOrderLines[$i]['taxAmount'] = 0; //Taxamount should be the total tax amount for order line.
+            $altapayOrderLines[$i]['taxAmount'] = 0; // Taxamount should be the total tax amount for order line.
             // The type of order line it is. Should be one of the following: shipment|handling|item|refund
             $altapayOrderLines[$i]['goodsType'] = 'item';
         }
@@ -944,9 +941,9 @@ class ALTAPAY extends PaymentModule
      */
     public function getItemCaptureRefundQuantityCount($orderLines)
     {
-        //get the array of the itemIDs to be captured or refund of each orderline
+        // Get the array of the itemIDs to be captured or refund of each orderline
         $itemIDs = array_column($orderLines, 'itemId');
-        // get the array of quantities of the Items to be captured or refund of each orderline
+        // Get the array of quantities of the Items to be captured or refund of each orderline
         $quantities = array_column($orderLines, 'quantity');
 
         return array_combine($itemIDs, $quantities);
@@ -979,6 +976,7 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Handle submission of terminal form
+     * @return bool
      */
     private function postProcessTerminal()
     {
@@ -1015,19 +1013,19 @@ class ALTAPAY extends PaymentModule
         // Validate
         $result = $terminal->validateFields(false, true);
 
-        if ($result == 1) {
-
+        if ($result) {
             $terminal->save();
             return true;
-        } else {
-            $this->Mhtml .= '<div class="alert alert-danger">' . $result . '</div>';
         }
+
+        $this->Mhtml .= '<div class="alert alert-danger">' . $result . '</div>';
 
         return false;
     }
 
     /**
-     * Return a single terminal from ALTAPAY API
+     * Return a single terminal from AltaPay API
+     * @return array<string>
      */
     private function getAltapayTerminal($name)
     {
@@ -1039,12 +1037,13 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Method for getting terminal status after creation
+     * @return void
      */
     private function postProcessActive()
     {
         $idTerminal = Tools::getValue('id_terminal');
         if (!$idTerminal) {
-            return;
+            return null;
         }
 
         $terminal = new Terminal((int)$idTerminal);
@@ -1054,6 +1053,7 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Info displayed at the top on the module config page
+     * @return string HTML for display
      */
     protected function displayAltapay()
     {
@@ -1064,12 +1064,11 @@ class ALTAPAY extends PaymentModule
         return $html;
     }
 
-    //hookPayment is utilized in prestashop 1.6
+    // hookPayment is utilized in prestashop 1.6
 
     /**
      * Merchant details form
-     *
-     * @return String HTML for display
+     * @return string HTML for display
      */
     public function renderForm()
     {
@@ -1157,8 +1156,7 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Field values for the merchant details form
-     *
-     * @return Array Array of curent configuration values
+     * @return array Array of curent configuration values
      */
     public function getConfigFieldsValues()
     {
@@ -1172,8 +1170,7 @@ class ALTAPAY extends PaymentModule
 
     /**
      * List of terminals
-     *
-     * @return String HTML for display
+     * @return string HTML for display
      */
     public function renderTerminalList()
     {
@@ -1247,6 +1244,7 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Validate merchant details form
+     * @return void
      */
     private function postValidation()
     {
@@ -1264,6 +1262,7 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Method for saving gateway configuration details in plugin settings
+     * @return void
      */
     private function postProcess()
     {
@@ -1289,7 +1288,7 @@ class ALTAPAY extends PaymentModule
      * Displays the error that occurred in the hookActionOrderStatusUpdate method, if any.
      *
      * @param $params
-     * @return mixed
+     * @return bool
      */
     public function hookBackOfficeHeader($params)
     {
@@ -1301,11 +1300,11 @@ class ALTAPAY extends PaymentModule
         if ($cookie->altapayError) {
             $this->context->controller->errors[] = $cookie->altapayError;
 
-            // unset the variable:
+            // Unset the variable:
             $cookie->altapayError = null;
         }
 
-        // always returns false because there is no template to display
+        // Always returns false because there is no template to display
         return false;
     }
 
@@ -1313,14 +1312,14 @@ class ALTAPAY extends PaymentModule
      * Captures a payment when the status is changed to Shipped
      *
      * @param $params
-     * @return mixed
+     * @return string
      */
     public function hookActionOrderStatusUpdate($params)
     {
         $results = $this->selectOrder($params);
 
         if (!$results) {
-            return;
+            return null;
         }
 
         $paymentID = $results['payment_id'];
@@ -1330,19 +1329,18 @@ class ALTAPAY extends PaymentModule
 
         $shippedStatus = Configuration::get('PS_OS_SHIPPING');
 
-        if (!empty($newStatus)) {
-            if ($newStatus->id == $shippedStatus) { // a capture will be made if necessary
-                $this->performCapture($paymentID, $params);
-            }
-        } else {
-            return;
+        if (!$newStatus) {
+            return null;
+        }
+        if ($newStatus->id == $shippedStatus) { // A capture will be made if necessary
+            $this->performCapture($paymentID, $params);
         }
         return $results;
     }
 
     /**
      * @param $params
-     * @return mixed
+     * @return void
      */
     private function selectOrder($params)
     {
@@ -1358,6 +1356,7 @@ class ALTAPAY extends PaymentModule
      * @param $paymentID
      * @param $params
      * @param bool $captureRemainedAmount
+     * @return string
      */
     public function performCapture($paymentID, $params, $captureRemainedAmount = true)
     {
@@ -1377,8 +1376,9 @@ class ALTAPAY extends PaymentModule
             }
 
             if ($amountToCapture == 0) {
-                return;
-            } elseif ($amountToCapture > 0 && $orderCapturedAmount == 0) {
+                return null;
+            }
+            if ($amountToCapture > 0 && $orderCapturedAmount == 0) {
                 $orderLines = $this->populateOrderLinesFromPost(array_column($productDetails->getList($params['id_order']), 'product_quantity'), $giftWrappingFee, $params['id_order'], false);
                 $api->captureAmount($paymentID, $orderLines, $amountToCapture);
                 markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($orderLines));
@@ -1424,9 +1424,8 @@ class ALTAPAY extends PaymentModule
                     // Saves the payment stays in the database. The function is loaded from helpers file.
                     updatePaymentStatus($paymentID, "Payment Released");
                 }
-            } else if ($orderCapturedAmount == $refundedAmount && $refundedAmount == $orderReservedAmount || $refundedAmount == $orderReservedAmount) {
+            } elseif ($orderCapturedAmount == $refundedAmount && $refundedAmount == $orderReservedAmount || $refundedAmount == $orderReservedAmount) {
                 $api->release($paymentID);
-
             } else {
                 $api->release($paymentID);
             }
@@ -1445,6 +1444,7 @@ class ALTAPAY extends PaymentModule
 
             return $cookie->altapayError;
         }
+        return null;
     }
 
     /**
@@ -1477,7 +1477,7 @@ class ALTAPAY extends PaymentModule
         global $cookie;
         $results = $this->selectOrder($params);
         if (!$results) {
-            return;
+            return null;
         }
         $orderStatus = new OrderState($this->context->language->id);
         $configuredStatus = $orderStatus->getOrderStates($this->context->language->id);
@@ -1499,15 +1499,15 @@ class ALTAPAY extends PaymentModule
                     $this->performCapture($paymentID, $params, false);
                 }
             }
-
         } else {
-            return;
+            return null;
         }
         return $results;
     }
 
     /**
      * Displays payment info on order detail pages in back office
+     * @return void
      */
     public function hookAdminOrder($params)
     {
@@ -1605,15 +1605,16 @@ class ALTAPAY extends PaymentModule
     /**
      * Hook payment is being triggered for prestashop 1.6 for payment processing from checkout page
      * @param $params
+     * @return null|string
      */
     public function hookPayment($params)
     {
         if (!$this->active) {
-            return;
+            return null;
         }
         // Check that we can accept this currency (currency restrictions)
         if (!$this->checkCurrency($params['cart'])) {
-            return;
+            return null;
         }
 
         $this->context->controller->addJquery();
@@ -1666,7 +1667,7 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Hook for displaying custom section in  user account page in prestashop
-     * @return mixed
+     * @return void
      */
     public function hookDisplayCustomerAccount()
     {
@@ -1685,11 +1686,11 @@ class ALTAPAY extends PaymentModule
         $savedCreditCard = array();
 
         if (!$this->active) {
-            return;
+            return null;
         }
         // Check that we can accept this currency (currency restrictions)
         if (!$this->checkCurrency($params['cart'])) {
-            return;
+            return null;
         }
 
         if ($this->context->customer->isLogged()) {
@@ -1706,7 +1707,6 @@ class ALTAPAY extends PaymentModule
                 }
                 $this->context->smarty->assign('savedCreditCard', $savedCreditCard);
             }
-
         }
 
         $this->context->controller->addCSS($this->_path . 'css/payment.css', 'all');
@@ -1747,6 +1747,7 @@ class ALTAPAY extends PaymentModule
     /**
      * Hook for binding custom JS files on prestashop front end
      * @param $params
+     * @return void
      */
     public function hookActionFrontControllerSetMedia($params)
     {
@@ -1776,13 +1777,14 @@ class ALTAPAY extends PaymentModule
     /**
      * Hook triggered at the time of payment returns
      * @param $params
+     * @return void
      */
     public function hookPaymentReturn($params)
     {
         if (!$this->active) {
-            return;
+            return null;
         }
-        //Prestashop 1.7 doesn't have the $params['objOrder']
+        // PrestaShop 1.7 doesn't have the $params['objOrder']
         if (!isset($params['objOrder']) || !is_object($params['objOrder'])) {
             $params['objOrder'] = $params['order'];
         }
@@ -1802,7 +1804,6 @@ class ALTAPAY extends PaymentModule
                 $this->smarty->assign('reference', $params['objOrder']->reference);
             }
         } else {
-            //if 'open' = Configuration::get('ALTAPAY_OS_PENDING')
             $this->smarty->assign(array(
                 'total_to_pay' => Tools::displayPrice($params['total_to_pay'], $params['currencyObj'], false),
                 'status' => 'open',
@@ -1827,12 +1828,12 @@ class ALTAPAY extends PaymentModule
      */
     public function createTransaction($payment_method = false, $savedCreditCard)
     {
-        //$userType = 'private';
+        // $userType = 'private';
         $customerCreatedDate = null;
         $cart = $this->context->cart;
         $ccToken = null;
 
-        // terminal
+        // Terminal
         $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
         if (!is_object($terminal)) {
             $message = "Could not determine remote terminal - possibly currency mismatch";
@@ -1846,7 +1847,7 @@ class ALTAPAY extends PaymentModule
             );
         }
         $cgConf = array();
-        // config
+        // Config
         $cgConf['user'] = $this->getAPIUsername();
         $cgConf['password'] = $this->getAPIPassword();
         $cgConf['payment_type'] = $terminal->payment_type;
@@ -1858,7 +1859,7 @@ class ALTAPAY extends PaymentModule
         $cgConf['cookie'] = isset($_SERVER['HTTP_COOKIE']) ? $_SERVER['HTTP_COOKIE'] : null;
 
         $callback = array();
-        // callbacks
+        // Callbacks
         $callback['callback_form'] = $this->context->link->getModuleLink(
             $this->name,
             'callbackform',
@@ -1908,12 +1909,12 @@ class ALTAPAY extends PaymentModule
             $this->context->shop->id
         );
         $customer = array();
-        // customer info
+        // Customer info
         $customer['billing_firstname'] = $this->context->customer->firstname;
         $customer['billing_lastname'] = $this->context->customer->lastname;
         $customer['email'] = $this->context->customer->email;
 
-        // billing address
+        // Billing address
         $invoice_address = new Address($this->context->cart->id_address_invoice);
         $country = new Country($invoice_address->id_country);
         $state = new State($invoice_address->id_state);
@@ -1925,11 +1926,11 @@ class ALTAPAY extends PaymentModule
         $customer['billing_region'] = $state->iso_code;
         $customer['billing_country'] = $country->iso_code;
 
-        // phone
+        // Phone
         $invoiceAph = $invoice_address->phone;
         $customer['customer_phone'] = $invoice_address->phone != '' ? $invoiceAph : $invoice_address->phone_mobile;
 
-        // shipping address
+        // Shipping address
         $sp_address = new Address($this->context->cart->id_address_delivery);
         $sp_country = new Country($sp_address->id_country);
         $sp_state = new State($sp_address->id_state);
@@ -1951,6 +1952,7 @@ class ALTAPAY extends PaymentModule
 //            $customerInfo['billing_att'] = '';
 //            $customerInfo['billing_ref'] = '';
 //        }
+
         //Calling transactionInfo method from helpers file
         $transactionInfo = transactionInfo();
 
@@ -2111,7 +2113,7 @@ class ALTAPAY extends PaymentModule
             $discountPercent = 0;
 
             if (!empty($vouchers)) {
-                $discountPercent = $this->getVoucherDiscounts($vouchers, $productID,$discountPercent, $basePrice, $orderSubtotal, $freeGiftVoucher);
+                $discountPercent = $this->getVoucherDiscounts($vouchers, $productID, $discountPercent, $basePrice, $orderSubtotal, $freeGiftVoucher);
             } else {
                 $discountAmount = $p['price_without_reduction'] - $p['price_with_reduction'];
                 $discountPercent = ($discountAmount / $p['price_without_reduction']) * 100;
@@ -2198,7 +2200,7 @@ class ALTAPAY extends PaymentModule
         $orderLines['taxPercent'] = number_format(($taxAmount / $unitPrice) * 100, 2, '.', '');
         //$orderLines[$i]['taxPercent'] = $couponAmount; //Tax Rate specified
         $orderLines['goodsType'] = $goodsType; // Order line Type - one of the following shipment|handling|item
-        if($unitCode && $imageUrl && $productUrl) {
+        if ($unitCode && $imageUrl && $productUrl) {
             $orderLines['unitCode'] = $unitCode;
             $orderLines['imageUrl'] = $imageUrl;
             $orderLines['productUrl'] = $productUrl;
@@ -2227,23 +2229,19 @@ class ALTAPAY extends PaymentModule
                     $discountPercent += $voucher['reductionPercent'];
                     $discountedAmount = $basePrice * ($discountPercent / 100);
                     $productPriceAfterDiscount = $basePrice - $discountedAmount;
-                } else if ($voucher['reductionPercent'] == '0.00' && (empty($freeGiftVoucher['free_gift']) || $freeGiftVoucher['free_gift'] )&& $freeGiftVoucher['free_gift'] != $productID) {
-                    if($freeGiftVoucher['free_gift']) {
+                } elseif ($voucher['reductionPercent'] == '0.00' && (empty($freeGiftVoucher['free_gift']) || $freeGiftVoucher['free_gift'])&& $freeGiftVoucher['free_gift'] != $productID) {
+                    if ($freeGiftVoucher['free_gift']) {
                         $discountPercent += (($freeGiftVoucher['reductionAmount']+$freeGiftVoucher[$key])/($orderSubtotal+$freeGiftVoucher[$key])*100);
-                    }
-                    else {
+                    } else {
                         $discountPercent += ($freeGiftVoucher[$key]/ ($orderSubtotal)) * 100;
                     }
-
-                } else if ($voucher['reductionPercent'] == '0.00' && empty($freeGiftVoucher['free_gift']) || $freeGiftVoucher['free_gift'] == $productID) {
+                } elseif ($voucher['reductionPercent'] == '0.00' && empty($freeGiftVoucher['free_gift']) || $freeGiftVoucher['free_gift'] == $productID) {
                     $discountPercent += (($freeGiftVoucher['reductionAmount']+$freeGiftVoucher[$key])/($orderSubtotal+$freeGiftVoucher[$key])*100);
-
                 } else {
                     $totalDiscountedAmount = $discountedAmount + ($productPriceAfterDiscount * ($voucher['reductionPercent'] / 100));
                     $discountPercent = ($totalDiscountedAmount / $basePrice) * 100;
                 }
             }
-
         }
 
         return $discountPercent;
@@ -2321,7 +2319,6 @@ class ALTAPAY extends PaymentModule
         foreach ($appliedCartRules as $cartRule) {
             $reductionPercent = $cartRule['reduction_percent'];
             if (!empty($cartRule['reduction_product'])) {
-
                 $voucherDetails[$cartRule['id_cart_rule']] = $this->getCartRuleGroupProducts($cartRule['id_cart_rule'], $reductionPercent);
             } else {
                 $voucherDetails[$cartRule['id_cart_rule']] = array(
@@ -2349,5 +2346,4 @@ class ALTAPAY extends PaymentModule
         }
         return $cartRuleDiscounts;
     }
-
 }

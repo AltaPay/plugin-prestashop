@@ -1,5 +1,5 @@
 <!--
-  ~ Altapay module for Prestashop
+  ~ AltaPay module for PrestaShop
   ~
   ~ Copyright © 2020 Altapay. All rights reserved.
   ~ For the full copyright and license information, please view the LICENSE
@@ -7,7 +7,7 @@
   -->
 
 <div class="panel">
-	<h1>{l s="Altapay for Prestashop - Payments less complicated" mod="altapay"}</h1>
+	<h1>{l s="AltaPay: Payments less complicated" mod="altapay"}</h1>
 	<br>
 	<div class="alert alert-info">
 		<h4>{l s="How to use this module" mod="altapay"}</h4>

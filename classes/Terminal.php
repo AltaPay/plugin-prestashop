@@ -1,6 +1,6 @@
 <?php
 /**
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -37,6 +37,10 @@ class Terminal extends ObjectModel
         ),
     );
 
+    /**
+     * Terminal constructor.
+     * @param int $id_terminal
+     */
     public function __construct($id_terminal = null)//, $id_lang = null)
     {
         parent::__construct($id_terminal);
@@ -44,7 +48,7 @@ class Terminal extends ObjectModel
 
     /**
      * Method to get saved terminals from database
-     * @return mixed
+     * @return array
      */
     public static function getTerminals()
     {
@@ -55,7 +59,7 @@ class Terminal extends ObjectModel
 
     /**
      * Method to get active terminals from database
-     * @return mixed
+     * @return array
      */
     public static function getActiveTerminals()
     {
@@ -67,7 +71,7 @@ class Terminal extends ObjectModel
     /**
      * Method to get terminals against a given currency from database
      * @param bool $currency
-     * @return mixed
+     * @return array
      */
     public static function getActiveTerminalsForCurrency($currency = false)
     {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -25,8 +25,8 @@ function transactionInfo($transactionInfo = array())
     $pluginName = 'altapay';
     $pluginVersion = '3.1.0';
 
-    // transaction info
-    $transactionInfo['ecomPlatform'] = 'Prestashop';
+    // Transaction info
+    $transactionInfo['ecomPlatform'] = 'PrestaShop';
     $transactionInfo['ecomVersion'] = _PS_VERSION_;
     $transactionInfo['ecomPluginName'] = $pluginName;
     $transactionInfo['ecomPluginVersion'] = $pluginVersion;
@@ -35,21 +35,24 @@ function transactionInfo($transactionInfo = array())
     return $transactionInfo;
 }
 
+/**
+ * @param $response
+ * @return array<string>
+ */
 function determinePaymentMethodForDisplay($response)
 {
     $paymentNature = $response->getPrimaryPayment()->getPaymentNature();
 
     if ($paymentNature == "Wallet") {
-        $paymentMethod = $response->getPrimaryPayment()->getPaymentSchemeName();
-    } elseif ($paymentNature == "CreditCard") {
-        $paymentMethod = $paymentNature;
-    } elseif ($paymentNature == "CreditCardWallet") {
-        $paymentMethod = $response->getPrimaryPayment()->getPaymentSchemeName();
-    } else {
-        $paymentMethod = $paymentNature;
+        return $response->getPrimaryPayment()->getPaymentSchemeName();
     }
-
-    return $paymentMethod;
+    if ($paymentNature == "CreditCard") {
+        return $paymentNature;
+    }
+    if ($paymentNature == "CreditCardWallet") {
+        return $response->getPrimaryPayment()->getPaymentSchemeName();
+    }
+    return $paymentNature;
 }
 
 /**
@@ -159,8 +162,8 @@ function markAsRefund($paymentId, $orderlines = array())
                         . $quantity . " WHERE altapay_payment_id = '" . $paymentId . "' AND product_id = " . $productId;
                     Db::getInstance()->Execute($sql);
                 } else {
-                    //product which have not been captured cannot be refunded
-                    //maybe throw an error here ...
+                    // Product which have not been captured cannot be refunded
+                    // maybe throw an error here ...
                     continue;
                 }
             }
@@ -175,10 +178,10 @@ function markAsRefund($paymentId, $orderlines = array())
  * Method to update latest error message from gateway response in database
  * @param $paymentId
  * @param $latestError
+ * @return void
  */
 function saveLastErrorMessage($paymentId, $latestError)
 {
-
     $sql = 'UPDATE 
     ' . _DB_PREFIX_ . 'altapay_order SET latestError = \'' . $latestError . '\' WHERE payment_id='
         . $paymentId . ' LIMIT 1';
@@ -189,6 +192,7 @@ function saveLastErrorMessage($paymentId, $latestError)
  * Method for updating payment status in database
  * @param $paymentId
  * @param $paymentStatus
+ * @return void
  */
 function updatePaymentStatus($paymentId, $paymentStatus)
 {
@@ -203,10 +207,10 @@ function updatePaymentStatus($paymentId, $paymentStatus)
  * @param $response
  * @param $current_order
  * @param string $payment_status
+ * @return void
  */
 function createAltapayOrder($response, $current_order, $payment_status = 'succeeded')
 {
-
     $uniqueId = $response->getPrimaryPayment()->getShopOrderId();
     $paymentId = $response->getPrimaryPayment()->getId();
     $cardMask = $response->getPrimaryPayment()->getMaskedPan();
@@ -223,7 +227,7 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
         $requireCapture = 1;
     }
     $cardExpiryDate = 0;
-    if($cardExpiryMonth && $cardExpiryYear) {
+    if ($cardExpiryMonth && $cardExpiryYear) {
         $cardExpiryDate = $cardExpiryMonth.'/'.$cardExpiryYear;
     }
 
@@ -288,13 +292,17 @@ function apiLogin()
         'ALTAPAY_URL'
     ));
 
-       $api = new AltapayMerchantAPI($config['ALTAPAY_URL'],
-            $config['ALTAPAY_USERNAME'], $config['ALTAPAY_PASSWORD'], null);
-        try {
-            $api->login();
-        } catch (Exception $e) {
-            return $e->getMessage();
-        }
+    $api = new AltapayMerchantAPI(
+        $config['ALTAPAY_URL'],
+        $config['ALTAPAY_USERNAME'],
+        $config['ALTAPAY_PASSWORD'],
+        null
+    );
+    try {
+        $api->login();
+    } catch (Exception $e) {
+        return $e->getMessage();
+    }
 
     return $api;
 }
@@ -331,4 +339,3 @@ function getTerminalTokenControlStatus($terminalRemoteName)
     $sql = 'SELECT ccTokenControl_ FROM `'._DB_PREFIX_.'altapay_terminals` WHERE `remote_name`='."'$terminalRemoteName'";
     return Db::getInstance()->executeS($sql);
 }
-

@@ -1,5 +1,5 @@
 /*
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -70,7 +70,7 @@ var altapay = {
         });
     },
 
-    //Recalculation of the amount for capture/refund depending on selected order lines
+    // Recalculation of the amount for capture/refund depending on selected order lines
     recalculateAmount: function(element) {
         var sum = 0.0000;
         $.each($('tr.ap-orderlines'), function(key, value) {
@@ -87,7 +87,6 @@ var altapay = {
                 }
                 $('.ap-order-modify', value).val(quantity);
             }
-            //sum = parseFloat((sum + (unitprice * quantity)).toFixed(4));
             sum = parseFloat(((sum + (price / ordered) * quantity).toFixed(2)));
 
         });

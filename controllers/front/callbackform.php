@@ -1,6 +1,6 @@
 <?php
 /**
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -14,6 +14,7 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
 {
     /**
      * Method to add external assets
+     * @return void
      */
     public function setMedia()
     {
@@ -25,11 +26,12 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
 
     /**
      * Method to follow when callback form is being requested
+     * @return void
      */
     public function postProcess()
     {
         $css_dir = null;
-        //Different conventions of assigning details for Version 1.6 and 1.7 respectively
+        // Different conventions of assigning details for Version 1.6 and 1.7 respectively
         if (_PS_VERSION_ >= '1.7.0.0') {
             $cart = $this->context->cart;
             $this->context->smarty->assign('pathUri', $this->module->getPathUri());

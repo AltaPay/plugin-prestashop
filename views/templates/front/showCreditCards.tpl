@@ -1,7 +1,7 @@
 <!doctype html>
 
 <!--
-  ~ Altapay module for Prestashop
+  ~ AltaPay module for PrestaShop
   ~
   ~ Copyright © 2020 Altapay. All rights reserved.
   ~ For the full copyright and license information, please view the LICENSE

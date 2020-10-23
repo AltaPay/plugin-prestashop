@@ -1,5 +1,5 @@
 /*
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -23,7 +23,7 @@ $(function(){
 
     function check() {
         var val = $("#terminalNature").val();
-        //var result = val.match(/\((.*)\)/);
+
         if (val === "CreditCard") {
             $("#ccTokenControl_").prop("disabled", false);
             return;

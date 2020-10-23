@@ -1,6 +1,6 @@
 <?php
 /**
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -11,6 +11,7 @@ class AltapayCallbackredirectModuleFrontController extends ModuleFrontController
 {
     /**
      * Method to follow when callback redirect is being triggered
+     * @return void
      */
     public function postProcess()
     {

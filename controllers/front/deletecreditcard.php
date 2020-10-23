@@ -1,6 +1,6 @@
 <?php
 /**
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -12,6 +12,7 @@ class ALTAPAYdeletecreditcardModuleFrontController extends ModuleFrontController
 
     /**
      * Method to follow when saved credit card is being deleted from user account page
+     * @return void
      */
     public function postProcess()
     {

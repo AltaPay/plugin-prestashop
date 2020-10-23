@@ -1,6 +1,6 @@
 <?php
 /**
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -10,9 +10,7 @@
 require_once(_PS_MODULE_DIR_.'/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php');
 
 /**
- * Wrapper for interacting with ALTAPAY merchant API
- *
- * @author Ulrik Andersen ulrik.and@gmail.com
+ * Wrapper for interacting with AltaPay merchant API
  */
 class MerchantAPI
 {
@@ -23,10 +21,6 @@ class MerchantAPI
     private $api_url;
     private $api_username;
     private $api_password;
-    
-    public function __construct()
-    {
-    }
 
     /**
      * Method for validation of credentials provided for api connection
@@ -34,6 +28,7 @@ class MerchantAPI
      * @param $api_username
      * @param $api_password
      * @throws Exception
+     * @return void
      */
     public function init($api_url, $api_username, $api_password)
     {
@@ -52,6 +47,7 @@ class MerchantAPI
      * @throws AltapayRequestTimeoutException
      * @throws AltapayUnauthorizedAccessException
      * @throws AltapayUnknownMerchantAPIException
+     * @return AltapayAPIPayment
      */
     public function getPaymentDetails($paymentId)
     {
@@ -126,6 +122,7 @@ class MerchantAPI
     /**
      * Method for validation of merchant details
      * @throws AltapayMerchantAPIException
+     * @return void
      */
     private function validateConfiguration()
     {
@@ -154,7 +151,7 @@ class MerchantAPI
      */
     public function xmlParser($xml)
     {
-        //get the response XML and convert into array
+        // Get the response XML and convert into array
         $xml = simplexml_load_string($xml);
         $json = json_encode($xml);
 

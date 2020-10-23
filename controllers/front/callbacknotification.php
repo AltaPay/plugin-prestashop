@@ -1,6 +1,6 @@
 <?php
 /**
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -15,6 +15,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
     /**
      * Method to follow when callback notification is being triggered
      * @throws Exception
+     * @return void
      */
     public function postProcess()
     {
@@ -28,42 +29,43 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $fp = fopen(_PS_MODULE_DIR_.'/altapay/controllers/front/lock.txt', 'r');
             flock($fp, LOCK_EX);
 
-            // load the cart
+            // Load the cart
             $cart = getCartFromUniqueId($shopOrderId);
             if (!Validate::isLoadedObject($cart)) {
                 $this->unlock($fp);
                 die('Could not load cart - exiting');
             }
 
-            // load the customer
+            // Load the customer
             $customer = new Customer((int)$cart->id_customer);
 
             $transactionStatus = $response->getPrimaryPayment()->getCurrentStatus();
             $shopOrderId       = $response->getPrimaryPayment()->getShopOrderId();
 
-            // check if an order exist
+            // Check if an order exist
             $order = getOrderFromUniqueId($shopOrderId);
 
             // NO ORDER FOUND, CREATE?
             if (!Validate::isLoadedObject($order)) {
-                // payment successful - create order
+                // Payment successful - create order
                 if ($response->wasSuccessful()) {
                     $order_status=(int)Configuration::get('PS_OS_PAYMENT');
 
                     $paymentType=$response->getPrimaryPayment()->getAuthType();
                     $amount_paid=$response->getPrimaryPayment()->getCapturedAmount();
                     $currency_paid=Currency::getIdByIsoCode($response->getPrimaryPayment()->getCurrency());
-                    /*if payment type is 'payment' funds have not yet been captured,
-                    so Altapay returns 0 as the captured amount.Therefore we assume full payment has been authorized.*/
+                    /* If payment type is 'payment' funds have not yet been captured,
+                    * so Altapay returns 0 as the captured amount.Therefore we assume full payment has been authorized.
+                    */
                     if ($paymentType=='payment') {
                         $amount_paid = $cart->getOrderTotal(true, Cart::BOTH);
                         $currency_paid = new Currency($cart->id_currency);
                     }
 
-                    //determine payment method for display
+                    // Determine payment method for display
                     $paymentMethod = determinePaymentMethodForDisplay($response);
 
-                    //create an order with 'payment accepted' status
+                    // Create an order with 'payment accepted' status
                     $cSk = $customer->secure_key;
                     $cpId = (int)$currency_paid->id;
                     $cId = $cart->id;
@@ -71,7 +73,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     $pMeth = $paymentMethod;
                     $this->module->validateOrder($cId, $oSt, $amount_paid, $pMeth, null, null, $cpId, false, $cSk);
 
-                    // log order
+                    // Log order
                     $current_order = new Order((int)$this->module->currentOrder);
                     createAltapayOrder($response, $current_order);
                     $this->unlock($fp);
@@ -80,17 +82,17 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     $this->unlock($fp);
                     die('Only handling Success state');
                 }
-            } // ORDER FOUND, BUT NOT PENDING
+            } // Order found, but not pending
             elseif ($order->getCurrentState() != Configuration::get('ALTAPAY_OS_PENDING')) { //pending
                 $this->unlock($fp);
                 die('Order found but is not currently pending - ignoring');
-            } // PENDING ORDER FOUND, UPDATE
+            } // Pending order found, update
             elseif (Validate::isLoadedObject($order)) {
                 if ($transactionStatus=='captured') {
-                    //update to Payment Accepted
+                    // Update to Payment Accepted
                     $order->setCurrentState((int)Configuration::get('PS_OS_PAYMENT'));
 
-                    //update payment status to 'succeeded'
+                    // Update payment status to 'succeeded'
                     $oId = $order->id;
                     $sql='UPDATE `'._DB_PREFIX_.'altapay_order` 
                     SET `paymentStatus` = \'succeeded\' WHERE `id_order` = '.$oId;
@@ -112,7 +114,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
                     $order->setCurrentState((int)Configuration::get('PS_OS_PAYMENT'));
 
-                    //update payment status to 'succeeded'
+                    // Update payment status to 'succeeded'
                     $sql='UPDATE `'._DB_PREFIX_.'altapay_order` 
                     SET `paymentStatus` = \'succeeded\' WHERE `id_order` = '.$order->id;
                     Db::getInstance()->Execute($sql);
@@ -126,10 +128,10 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     $this->unlock($fp);
                     die('Order status updated to Accepted');
                 } elseif ($transactionStatus=='epayment_declined') {
-                    //update to Payment Error
+                    // Update to Payment Error
                     $order->setCurrentState((int)Configuration::get('PS_OS_ERROR'));
 
-                    //update payment status to 'declined'
+                    // Update payment status to 'declined'
                     $sql='UPDATE `'._DB_PREFIX_.'altapay_order` 
                     SET `paymentStatus` = \'declined\' WHERE `id_order` = '.$order->id;
                     Db::getInstance()->Execute($sql);
@@ -137,7 +139,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     $this->unlock($fp);
                     die('Order status updated to Error');
                 } else {
-                    //unexpected scenario
+                    // Unexpected scenario
                     $mNa = $this->module->name;
                     Logger::addLog('Unexpected scenario: Callback notification was received for Transaction '
                     .$shopOrderId.' with payment status '.$transactionStatus, 3, '1005', $mNa, $this->module->id, true);
@@ -150,6 +152,10 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
         }
     }
 
+    /**
+     * @param $fileOpen
+     * @return void
+     */
     public function unlock($fileOpen)
     {
         flock($fileOpen, LOCK_UN);

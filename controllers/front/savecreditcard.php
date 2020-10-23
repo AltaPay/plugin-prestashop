@@ -1,6 +1,6 @@
 <?php
 /**
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -12,6 +12,7 @@ class ALTAPAYsavecreditcardModuleFrontController extends ModuleFrontController
 
     /**
      * Method for saving credit card in database
+     * @return void
      */
     public function postProcess()
     {
@@ -24,7 +25,6 @@ class ALTAPAYsavecreditcardModuleFrontController extends ModuleFrontController
             $customerID = $this->context->customer->id;
             $sql = 'REPLACE  into `' . _DB_PREFIX_ . 'altapay_saved_credit_card` (time,userID,cardBrand,creditCardNumber,cardExpiryDate,ccToken) VALUES (Now(),'.$customerID.',"'.$cardBrand.'","'.$cardMask.'","'.$cardExpiryDate.'","'.$cardToken.'")';
             Db::getInstance()->executeS($sql);
-
         }
         Tools::redirect('index.php?fc=module&module=altapay&controller=showsavedcreditcards');
     }

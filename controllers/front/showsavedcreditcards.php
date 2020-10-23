@@ -1,6 +1,6 @@
 <?php
 /**
- * Altapay module for Prestashop
+ * AltaPay module for PrestaShop
  *
  * Copyright © 2020 Altapay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
@@ -11,6 +11,7 @@ class ALTAPAYshowsavedcreditcardsModuleFrontController extends ModuleFrontContro
 {
     /**
      * Method for displaying saved credit cards in user account page
+     * @return void
      */
     public function initContent()
     {
@@ -23,14 +24,15 @@ class ALTAPAYshowsavedcreditcardsModuleFrontController extends ModuleFrontContro
             $customerID = $this->context->customer->id;
             $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE userID ='.$customerID ;
             $results = Db::getInstance()->executeS($sql);
-            if(!empty($results)){
-                foreach($results as $result) {
-                    $savedCreditCard[] = array (
+            if (!empty($results)) {
+                foreach ($results as $result) {
+                    $savedCreditCard[] = [
                         'userID'=>$result['userID'],
                         'creditCard' => $result['creditCardNumber'],
                         'cardName'=> $result['cardName'],
                         'cardBrand'=> $result['cardBrand'],
-                        'cardExpiryDate'=> $result['cardExpiryDate']);
+                        'cardExpiryDate'=> $result['cardExpiryDate']
+                    ];
                 }
                 $this->context->smarty->assign('savedCreditCard', $savedCreditCard);
             }
