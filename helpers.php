@@ -2,7 +2,7 @@
 /**
  * AltaPay module for PrestaShop
  *
- * Copyright © 2020 Altapay. All rights reserved.
+ * Copyright © 2020 AltaPay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
@@ -36,7 +36,7 @@ function transactionInfo($transactionInfo = array())
 }
 
 /**
- * @param $response
+ * @param AltapayCallbackHandler $response
  * @return array<string>
  */
 function determinePaymentMethodForDisplay($response)
@@ -63,7 +63,6 @@ function determinePaymentMethodForDisplay($response)
 
 function getCartFromUniqueId($uniqueId)
 {
-    $cart = false;
     $results = Db::getInstance()->getRow('SELECT id_cart 
     FROM `' . _DB_PREFIX_ . 'altapay_transaction` 
     WHERE unique_id=\'' . $uniqueId . '\'');
@@ -100,7 +99,6 @@ function markAsCaptured($paymentId, $orderlines = array())
         . _DB_PREFIX_ . 'altapay_order SET requireCapture = 0 WHERE payment_id = ' . $paymentId . ' LIMIT 1';
     Db::getInstance()->Execute($sql);
 
-    if (count($orderlines) > 0) {
         foreach ($orderlines as $productId => $quantity) {
             if ($quantity == 0) {
                 continue;
@@ -123,7 +121,6 @@ function markAsCaptured($paymentId, $orderlines = array())
                 Db::getInstance()->Execute($sqlOrderLine);
             }
         }
-    }
 
     return true;
 }
@@ -140,7 +137,9 @@ function markAsRefund($paymentId, $orderlines = array())
     FROM ' . _DB_PREFIX_ . 'altapay_order WHERE payment_id = ' . $paymentId;
     $result = Db::getInstance()->getRow($sqlRequireCapture);
     // Only payments which have been captured/partial captured will be considered
-    if (isset($result['requireCapture']) && $result['requireCapture'] == 0) {
+    if (!isset($result['requireCapture']) || $result['requireCapture'] != 0) {
+        return false;
+    }
         if (count($orderlines) > 0) {
             foreach ($orderlines as $productId => $quantity) {
                 if ($quantity == 0) {
@@ -163,15 +162,11 @@ function markAsRefund($paymentId, $orderlines = array())
                     Db::getInstance()->Execute($sql);
                 } else {
                     // Product which have not been captured cannot be refunded
-                    // maybe throw an error here ...
                     continue;
                 }
             }
         }
         return true;
-    } else {
-        return false;
-    }
 }
 
 /**
@@ -233,11 +228,8 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
 
     $errorCode = null;
     $errorText = null;
-
     $customerInfo = $response->getPrimaryPayment()->getCustomerInfo();
-    //$billingCountry = $customerInfo->getBillingAddress()->getCountry();
     $cardCountry = $customerInfo->getCountryOfOrigin()->getCountry();
-
     //insert into order log
     $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_order`
 		(id_order, unique_id, payment_id, cardMask, cardToken, cardBrand, cardExpiryDate, cardCountry, 
@@ -280,7 +272,7 @@ function convertDateTimeFormat($date)
 
 
 /**
- * Method for Altapay api login
+ * Method for AltaPay api login
  * @return string|AltapayMerchantAPI
  * @throws Exception
  */

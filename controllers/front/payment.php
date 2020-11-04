@@ -2,12 +2,12 @@
 /**
  * AltaPay module for PrestaShop
  *
- * Copyright © 2020 Altapay. All rights reserved.
+ * Copyright © 2020 AltaPay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-require_once(_PS_MODULE_DIR_.'/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php');
+require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
 
 class ALTAPAYPaymentModuleFrontController extends ModuleFrontController
 {
@@ -15,6 +15,7 @@ class ALTAPAYPaymentModuleFrontController extends ModuleFrontController
 
     /**
      * Method to follow when payment is being initiated with payment method
+     *
      * @return void
      */
     public function initContent()
@@ -31,11 +32,11 @@ class ALTAPAYPaymentModuleFrontController extends ModuleFrontController
         /*redirect user back to checkout payment step,
         * assume a failure occured creating the URL until a payment url is received
         */
-        $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
-        $payment_form_url=$this->context->link->getPageLink($controller, true, null,
-                "step=3&altapay_unavailable=1").'#altapay_unavailable';
+        $controller       = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
+        $payment_form_url = $this->context->link->getPageLink($controller, true, null,
+                "step=3&altapay_unavailable=1") . '#altapay_unavailable';
 
-        $payment_method=Tools::getValue('method', false);
+        $payment_method = Tools::getValue('method', false);
 
         if (isset($_COOKIE['selectedCreditCard'])) {
             $savedCreditCard = $_COOKIE['selectedCreditCard'];
@@ -46,16 +47,16 @@ class ALTAPAYPaymentModuleFrontController extends ModuleFrontController
             setcookie('selectedCreditCard', null, -1, '/');
         }
 
-        $result=$this->module->createTransaction($payment_method, $savedCreditCard);
+        $result = $this->module->createTransaction($payment_method, $savedCreditCard);
 
         if ($result['success']) {
-            $payment_form_url=$result['payment_form_url'];
+            $payment_form_url = $result['payment_form_url'];
 
             // Insert into transaction log
-            $sql='INSERT INTO `'._DB_PREFIX_.'altapay_transaction` 
-				(id_cart, payment_form_url, unique_id, amount, date_add) VALUES '.
-                "('".$cart->id."', '".$payment_form_url."', '".$result['uniqueid']."', '"
-                .$result['amount']."', '".time()."')";
+            $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction` 
+				(id_cart, payment_form_url, unique_id, amount, date_add) VALUES ' .
+                   "('" . $cart->id . "', '" . $payment_form_url . "', '" . $result['uniqueid'] . "', '"
+                   . $result['amount'] . "', '" . time() . "')";
             Db::getInstance()->Execute($sql);
 
             // Redirect user to payment form url

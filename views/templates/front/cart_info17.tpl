@@ -1,11 +1,11 @@
-<!--
-  ~ AltaPay module for PrestaShop
-  ~
-  ~ Copyright © 2020 Altapay. All rights reserved.
-  ~ For the full copyright and license information, please view the LICENSE
-  ~ file that was distributed with this source code.
-  -->
- 
+{**
+ * AltaPay module for PrestaShop
+ *
+ * Copyright © 2020 AltaPay. All rights reserved.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+*}
+
 {assign var="cart_summary" value=$summarydetails}
 {assign var="cart_products" value=$products}
  {assign currency Currency::getDefaultCurrency()->sign}
@@ -95,8 +95,8 @@
 
             </td>
             <td colspan="2" class="price-discount price" id="total_discount">
-                {if  $cart_summary.total_tax}
-                    {if  $cart_summary.total_price}
+                {if $cart_summary.total_tax}
+                    {if $cart_summary.total_price}
                        {$currency_code} {$cart_summary.total_discounts_tax_exc*-1}
                     {else}
                        {$currency_code} {$cart_summary.total_discounts*-1}

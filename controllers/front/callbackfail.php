@@ -2,7 +2,7 @@
 /**
  * AltaPay module for PrestaShop
  *
- * Copyright © 2020 Altapay. All rights reserved.
+ * Copyright © 2020 AltaPay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
@@ -38,7 +38,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
         // Load the cart
         $cart = getCartFromUniqueId($shopOrderId);
         if (!Validate::isLoadedObject($cart)) {
-            die('Could not load cart - exiting');
+            exit('Could not load cart - exiting');
         }
 
         $status = Tools::getValue('payment_status');
@@ -63,8 +63,8 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             $mId = $this->module->id;
             Logger::addLog('Payment failure for cart ' . $cId . '. Error Message: ' . $mErM, 3, 2001, $mNa, $mId, true);
 
-            /* Redirect user back to checkout payment step,
-            assume a failure occured creating the URL until a payment url is received*/
+            /* Redirect the user back to the checkout payment step,
+            assume a failure occurred creating the URL until a payment URL is received*/
             $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
 
             $css_dir = null;

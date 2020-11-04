@@ -3,23 +3,25 @@ spl_autoload_register('autoLoader');
 
 /**
  * Method for autoload all the classes within directory
- * @param $class
- * @param null $dir
+ * @param null|string $class The fully-qualified class name.
+ * @param null|string $dir
+ *
+ * @return void
  */
+
 function autoLoader($class, $dir = null)
 {
     $namespace = 'Altapay';
     require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . "IAltapayCommunicationLogger.class.php");
 
     if (0 !== strpos($class, $namespace)) {
-        return;
+        return null;
     }
 
     if (is_null($dir)) {
         $dir = dirname(__FILE__);
     }
-    //Load the Altapay SDK version
-    //TODO: refactor this
+    // Load the Altapay SDK version
     include_once $dir . DIRECTORY_SEPARATOR . "ALTAPAY_VERSION.php";
 
     $listDir = scandir(realpath($dir));

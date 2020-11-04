@@ -2,7 +2,7 @@
 /**
  * AltaPay module for PrestaShop
  *
- * Copyright © 2020 Altapay. All rights reserved.
+ * Copyright © 2020 AltaPay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
@@ -10,14 +10,11 @@
 class Terminal extends ObjectModel
 {
     public $id_terminal;
-    public $display_name;
     public $remote_name;
     public $payment_type;
     public $currency;
-    public $ccTokenControl;
-    public $icon_filename;
 
-    /** @var boolean Enabled or disabled */
+    /** @var bool Enabled or disabled */
     public $active;
     public $position;
 
@@ -41,7 +38,7 @@ class Terminal extends ObjectModel
      * Terminal constructor.
      * @param int $id_terminal
      */
-    public function __construct($id_terminal = null)//, $id_lang = null)
+    public function __construct($id_terminal = null)
     {
         parent::__construct($id_terminal);
     }

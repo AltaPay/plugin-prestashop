@@ -1,12 +1,12 @@
 <!doctype html>
 
-<!--
-  ~ AltaPay module for PrestaShop
-  ~
-  ~ Copyright © 2020 Altapay. All rights reserved.
-  ~ For the full copyright and license information, please view the LICENSE
-  ~ file that was distributed with this source code.
-  -->
+{**
+ * AltaPay module for PrestaShop
+ *
+ * Copyright © 2020 AltaPay. All rights reserved.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+*}
 
 <html lang="{$language.iso_code}">
 
@@ -35,7 +35,6 @@
             {/block}
 
             {block name="content_wrapper"}
-
                 <h1>
                     {l s='Saved credit card(s)' mod='altapay'}
                 </h1>
@@ -96,13 +95,13 @@
         {literal}
             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
             <script>
-                $(document).ready(function(){
-                    $(".cardName").keyup(function() {
+                $(document).ready(function () {
+                    $(".cardName").keyup(function () {
                         var row = $(this).closest("tr");
                         var index = row.index();
                         document.getElementsByClassName("msg")[index].innerHTML = ("Press enter to save the card name").fontcolor("red");
                     });
-                    $(".cardName").change(function(){
+                    $(".cardName").change(function () {
                         var row = $(this).closest("tr");    // Find the row
                         var userCreditcard = row.find(".userCreditcard").text(); // Find the text
                         var userID = parseInt(row.find(".userID").text()); // Find the text
@@ -111,10 +110,12 @@
                         $.ajax({
                             type: "POST",
                             url: updatelink,
-                            data: {"userID":userID,
-                                "userCreditcard":""+userCreditcard+"",
-                                "cardName": cardName},
-                            success: function(response){
+                            data: {
+                                "userID": userID,
+                                "userCreditcard": "" + userCreditcard + "",
+                                "cardName": cardName
+                            },
+                            success: function (response) {
                                 var index = row.index();
                                 document.getElementsByClassName("msg")[index].innerHTML = ("Changes saved".fontcolor("green"));
                             }

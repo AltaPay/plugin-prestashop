@@ -5,7 +5,7 @@ Altapay - PHP SDK
 
 ** Version 1.1.0
 
-    * Rebranding from Altapay to Altapay
+    * Rebranding from Valitor to Altapay
 
 ** Version 1.0.6
 

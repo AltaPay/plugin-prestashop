@@ -2,13 +2,12 @@
 /**
  * AltaPay module for PrestaShop
  *
- * Copyright © 2020 Altapay. All rights reserved.
+ * Copyright © 2020 AltaPay. All rights reserved.
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-require_once(_PS_MODULE_DIR_.'/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php');
-
+require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
 /**
  * Wrapper for interacting with AltaPay merchant API
  */
@@ -18,8 +17,17 @@ class MerchantAPI
      * @var AltapayMerchantAPI
      */
     private $api;
+    /**
+     * @var string
+     */
     private $api_url;
+    /**
+     * @var string
+     */
     private $api_username;
+    /**
+     * @var string
+     */
     private $api_password;
 
     /**
@@ -74,7 +82,7 @@ class MerchantAPI
 
         if (!$response->wasSuccessful()) {
             $xmlResponse = $this->xmlParser($response->getXml());
-            throw new Exception($this->errorMsg($xmlResponse, 'Capture'));
+            throw new Exception($this->errorMsg($xmlResponse, 'Error occurred while payment capture'));
         }
 
         return $response;
@@ -94,7 +102,7 @@ class MerchantAPI
 
         if (!$response->wasSuccessful()) {
             $xmlResponse = $this->xmlParser($response->getXml());
-            throw new Exception($this->errorMsg($xmlResponse, 'Refund'));
+            throw new Exception($this->errorMsg($xmlResponse, 'Error occurred while payment refund'));
         }
 
         return $response;
@@ -152,7 +160,7 @@ class MerchantAPI
     public function xmlParser($xml)
     {
         // Get the response XML and convert into array
-        $xml = simplexml_load_string($xml);
+        $xml = new SimpleXMLElement($xml);
         $json = json_encode($xml);
 
         return json_decode($json, true);
