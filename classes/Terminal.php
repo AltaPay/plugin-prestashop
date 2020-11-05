@@ -18,21 +18,21 @@ class Terminal extends ObjectModel
     public $active;
     public $position;
 
-    public static $definition = array(
+    public static $definition = [
         'table' => 'altapay_terminals',
         'primary' => 'id_terminal',
-        'fields' => array(
-            'id_terminal' => array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'copy_post' => false),
-            'display_name' => array('type' => self::TYPE_STRING, 'required' => true, 'size' => 255),
-            'remote_name' => array('type' => self::TYPE_STRING, 'required' => true, 'size' => 255),
-            'payment_type' => array('type' => self::TYPE_STRING, 'required' => true, 'size' => 32),
-            'currency' => array('type' => self::TYPE_STRING, 'required' => true, 'size' => 100),
-            'ccTokenControl_' => array('type' => self::TYPE_INT,'required' => true, 'size' => 255),
-            'icon_filename' => array('type' => self::TYPE_STRING, 'required' => true, 'size' => 100),
-            'active' => array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
-            'position' => array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId'),
-        ),
-    );
+        'fields' => [
+            'id_terminal' => ['type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'copy_post' => false],
+            'display_name' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 255],
+            'remote_name' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 255],
+            'payment_type' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 32],
+            'currency' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 100],
+            'ccTokenControl_' => ['type' => self::TYPE_INT,'required' => true, 'size' => 255],
+            'icon_filename' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 100],
+            'active' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
+            'position' => ['type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId'],
+        ],
+    ];
 
     /**
      * Terminal constructor.

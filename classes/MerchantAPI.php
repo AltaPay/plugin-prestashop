@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
+require_once _PS_MODULE_DIR_ . '/altapay/lib/AltapayMerchantAPI.class.php';
 /**
  * Wrapper for interacting with AltaPay merchant API
  */
@@ -76,7 +76,7 @@ class MerchantAPI
      * @return AltapayCaptureResponse
      * @throws AltapayMerchantAPIException
      */
-    public function captureAmount($paymentId, $orderLines = array(), $amount = 0)
+    public function captureAmount($paymentId, $orderLines = [], $amount = 0)
     {
         $response = $this->api->captureReservation($paymentId, $amount, $orderLines);
 
@@ -96,7 +96,7 @@ class MerchantAPI
      * @return AltapayRefundResponse
      * @throws AltapayMerchantAPIException
      */
-    public function refundAmount($paymentId, $orderLines = array(), $amount = 0)
+    public function refundAmount($paymentId, $orderLines =[], $amount = 0)
     {
         $response = $this->api->refundCapturedReservation($paymentId, $amount, $orderLines);
 
@@ -174,7 +174,7 @@ class MerchantAPI
      */
     public function errorMsg($xmlResponse, $action)
     {
-        $response = array();
+        $response = [];
 
         $response['responseResult'] = $xmlResponse['Body'][$action . ' Result'];
         $response['responseMsg'] = $xmlResponse['Body']['MerchantErrorMessage'];

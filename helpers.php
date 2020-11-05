@@ -95,32 +95,31 @@ function getOrderFromUniqueId($uniqueId)
  */
 function markAsCaptured($paymentId, $orderlines = array())
 {
-    $sql = 'UPDATE '
-        . _DB_PREFIX_ . 'altapay_order SET requireCapture = 0 WHERE payment_id = ' . $paymentId . ' LIMIT 1';
+    $sql = 'UPDATE ' . _DB_PREFIX_ . 'altapay_order SET requireCapture = 0 WHERE payment_id = ' . $paymentId . ' LIMIT 1';
     Db::getInstance()->Execute($sql);
 
-        foreach ($orderlines as $productId => $quantity) {
-            if ($quantity == 0) {
-                continue;
-            }
-
-            $result = Db::getInstance()->getRow('SELECT captured 
-            FROM ' . _DB_PREFIX_ . 'altapay_orderlines WHERE altapay_payment_id = "'
-                . $paymentId . '" AND product_id = ' . $productId);
-
-            if (isset($result['captured'])) {
-                $quantity += $result['captured'];
-                $sqlUpdateCapture = 'UPDATE ' . _DB_PREFIX_ .
-                    'altapay_orderlines SET captured = ' . $quantity .
-                    ' WHERE altapay_payment_id = ' . $paymentId;
-                Db::getInstance()->Execute($sqlUpdateCapture);
-            } else {
-                $sqlOrderLine = 'INSERT INTO ' . _DB_PREFIX_ .
-                    'altapay_orderlines (altapay_payment_id, product_id, captured) 
-                VALUES("' . $paymentId . '", "' . $productId . '", ' . $quantity . ')';
-                Db::getInstance()->Execute($sqlOrderLine);
-            }
+    foreach ($orderlines as $productId => $quantity) {
+        if ($quantity == 0) {
+            continue;
         }
+
+        $result = Db::getInstance()->getRow('SELECT captured 
+            FROM ' . _DB_PREFIX_ . 'altapay_orderlines WHERE altapay_payment_id = "'
+                                            . $paymentId . '" AND product_id = ' . $productId);
+
+        if (isset($result['captured'])) {
+            $quantity += $result['captured'];
+            $sqlUpdateCapture = 'UPDATE ' . _DB_PREFIX_ .
+                                'altapay_orderlines SET captured = ' . $quantity .
+                                ' WHERE altapay_payment_id = ' . $paymentId;
+            Db::getInstance()->Execute($sqlUpdateCapture);
+        } else {
+            $sqlOrderLine = 'INSERT INTO ' . _DB_PREFIX_ .
+                            'altapay_orderlines (altapay_payment_id, product_id, captured) 
+                VALUES("' . $paymentId . '", "' . $productId . '", ' . $quantity . ')';
+            Db::getInstance()->Execute($sqlOrderLine);
+        }
+    }
 
     return true;
 }
@@ -140,33 +139,33 @@ function markAsRefund($paymentId, $orderlines = array())
     if (!isset($result['requireCapture']) || $result['requireCapture'] != 0) {
         return false;
     }
-        if (count($orderlines) > 0) {
-            foreach ($orderlines as $productId => $quantity) {
-                if ($quantity == 0) {
-                    continue;
-                }
-                $sqlGetRefundedFieldValue = 'SELECT captured, refunded 
+    if (count($orderlines) > 0) {
+        foreach ($orderlines as $productId => $quantity) {
+            if ($quantity == 0) {
+                continue;
+            }
+            $sqlGetRefundedFieldValue = 'SELECT captured, refunded 
                 FROM ' . _DB_PREFIX_ . 'altapay_orderlines WHERE altapay_payment_id = "'
-                    . $paymentId . '" AND product_id = ' . $productId;
-                $result = Db::getInstance()->getRow($sqlGetRefundedFieldValue);
-                if (isset($result['refunded'])) {
-                    $quantity += $result['refunded'];
-                    // If the amount of refunded items is bigger than the actual captured amount than set the max amount
-                    if ($quantity > $result['captured']) {
-                        $quantity = $result['captured'];
-                    }
-
-                    // Update only of there is a capture for this product
-                    $sql = "UPDATE " . _DB_PREFIX_ . "altapay_orderlines SET refunded = "
-                        . $quantity . " WHERE altapay_payment_id = '" . $paymentId . "' AND product_id = " . $productId;
-                    Db::getInstance()->Execute($sql);
-                } else {
-                    // Product which have not been captured cannot be refunded
-                    continue;
+                                        . $paymentId . '" AND product_id = ' . $productId;
+            $result = Db::getInstance()->getRow($sqlGetRefundedFieldValue);
+            if (isset($result['refunded'])) {
+                $quantity += $result['refunded'];
+                // If the amount of refunded items is bigger than the actual captured amount than set the max amount
+                if ($quantity > $result['captured']) {
+                    $quantity = $result['captured'];
                 }
+
+                // Update only of there is a capture for this product
+                $sql = "UPDATE " . _DB_PREFIX_ . "altapay_orderlines SET refunded = "
+                       . $quantity . " WHERE altapay_payment_id = '" . $paymentId . "' AND product_id = " . $productId;
+                Db::getInstance()->Execute($sql);
+            } else {
+                // Product which have not been captured cannot be refunded
+                continue;
             }
         }
-        return true;
+    }
+    return true;
 }
 
 /**
@@ -179,7 +178,7 @@ function saveLastErrorMessage($paymentId, $latestError)
 {
     $sql = 'UPDATE 
     ' . _DB_PREFIX_ . 'altapay_order SET latestError = \'' . $latestError . '\' WHERE payment_id='
-        . $paymentId . ' LIMIT 1';
+           . $paymentId . ' LIMIT 1';
     Db::getInstance()->Execute($sql);
 }
 
@@ -193,7 +192,7 @@ function updatePaymentStatus($paymentId, $paymentStatus)
 {
     $sql = 'UPDATE 
     ' . _DB_PREFIX_ . 'altapay_order SET paymentStatus = \'' . $paymentStatus . '\' WHERE payment_id='
-        . $paymentId . ' LIMIT 1';
+           . $paymentId . ' LIMIT 1';
     Db::getInstance()->Execute($sql);
 }
 
@@ -235,15 +234,15 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
 		(id_order, unique_id, payment_id, cardMask, cardToken, cardBrand, cardExpiryDate, cardCountry, 
         paymentType, paymentTerminal, paymentStatus, paymentNature, requireCapture, errorCode, errorText, date_add) 
         VALUES ' .
-        "('" . $current_order->id . "', '" . pSQL($uniqueId) . "', '"
-        . pSQL($paymentId) . "', '" . pSQL($cardMask) . "', '"
-        . pSQL($cardToken) . "', '" . pSQL($cardBrand) . "', '"
-        . pSQL($cardExpiryDate) . "', '"
-        . pSQL($cardCountry) . "', '" . pSQL($paymentType) . "', '"
-        . pSQL($paymentTerminal) . "', '"
-        . pSQL($paymentStatus) . "', '" . pSQL($paymentNature) . "', '"
-        . pSQL($requireCapture) . "', '" . pSQL($errorCode) . "', '"
-        . pSQL($errorText) . "', '" . time() . "')";
+           "('" . $current_order->id . "', '" . pSQL($uniqueId) . "', '"
+           . pSQL($paymentId) . "', '" . pSQL($cardMask) . "', '"
+           . pSQL($cardToken) . "', '" . pSQL($cardBrand) . "', '"
+           . pSQL($cardExpiryDate) . "', '"
+           . pSQL($cardCountry) . "', '" . pSQL($paymentType) . "', '"
+           . pSQL($paymentTerminal) . "', '"
+           . pSQL($paymentStatus) . "', '" . pSQL($paymentNature) . "', '"
+           . pSQL($requireCapture) . "', '" . pSQL($errorCode) . "', '"
+           . pSQL($errorText) . "', '" . time() . "')";
     Db::getInstance()->Execute($sql);
 
     if (Validate::isLoadedObject($current_order)) {

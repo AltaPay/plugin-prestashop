@@ -18,7 +18,7 @@ class ALTAPAYshowsavedcreditcardsModuleFrontController extends ModuleFrontContro
         $this->display_column_left = false;
         parent::initContent();
 
-        $savedCreditCard = array();
+        $savedCreditCard = [];
 
         if ($this->context->customer->isLogged()) {
             $customerID = $this->context->customer->id;

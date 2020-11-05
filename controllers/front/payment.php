@@ -7,12 +7,10 @@
  * file that was distributed with this source code.
  */
 
-require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
+require_once _PS_MODULE_DIR_ . '/altapay/lib/AltapayMerchantAPI.class.php';
 
 class ALTAPAYPaymentModuleFrontController extends ModuleFrontController
 {
-    public $ssl = true;
-
     /**
      * Method to follow when payment is being initiated with payment method
      *
