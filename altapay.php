@@ -24,7 +24,7 @@ class ALTAPAY extends PaymentModule
     private $Mhtml = '';
     private $postErrors = [];
     private $paymentMethodIconDir = 'views/img/payment_icons';
-    const ALTAPAY = " {Altapay} ";
+    const ALTAPAY = " {AltaPay} ";
 
     public function __construct()
     {
@@ -544,7 +544,7 @@ class ALTAPAY extends PaymentModule
      */
     private function getAltapayTerminals($objects = false)
     {
-        require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
+        require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltaPayMerchantAPI.class.php';
         $cgConf                = [];
         $terminalArray         = [];
         $termNature            = '';
