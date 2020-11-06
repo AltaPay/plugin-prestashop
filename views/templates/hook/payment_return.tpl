@@ -6,11 +6,11 @@
  * file that was distributed with this source code.
 *}
 
-{if $status == 'ok' || $status == 'open'}
+{if $status === 'ok' || $status === 'open'}
 
-	{if $status == 'ok'}
+	{if $status === 'ok'}
 	<div class="alert alert-success">{l s='Your payment has been authorized' mod='altapay'}</div>
-	{elseif $status == 'open'}
+	{elseif $status === 'open'}
 	<div class="alert alert-success">{l s='Your payment request has been received and is awaiting payment processing' mod='altapay'}</div>
 	{/if}
 

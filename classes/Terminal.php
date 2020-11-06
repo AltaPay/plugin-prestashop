@@ -35,15 +35,6 @@ class Terminal extends ObjectModel
     ];
 
     /**
-     * Terminal constructor.
-     * @param int $id_terminal
-     */
-    public function __construct($id_terminal = null)
-    {
-        parent::__construct($id_terminal);
-    }
-
-    /**
      * Method to get saved terminals from database
      * @return array
      */

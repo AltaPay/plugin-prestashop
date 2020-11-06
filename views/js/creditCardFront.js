@@ -1,4 +1,3 @@
-
 /*
  * AltaPay module for PrestaShop
  *
@@ -7,8 +6,8 @@
  * file that was distributed with this source code.
  */
 
-$(function(){
-    $("select.selectCreditCard").change(function() {
+$(function () {
+    $("select.selectCreditCard").change(function () {
         var selectedCreditCard = $(this).children("option:selected").val();
         Cookies.set('selectedCreditCard', selectedCreditCard);
     });

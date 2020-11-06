@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-require_once _PS_MODULE_DIR_ . '/altapay/lib/AltapayCallbackHandler.class.php';
+require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
 require_once _PS_MODULE_DIR_ . '/altapay/helpers.php';
 
 class AltapayCallbacknotificationModuleFrontController extends ModuleFrontController
@@ -34,7 +34,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $cart = getCartFromUniqueId($shopOrderId);
             if (!Validate::isLoadedObject($cart)) {
                 $this->unlock($fp);
-                die('Could not load cart - exiting');
+                exit('Could not load cart - exiting');
             }
 
             // Load the customer
@@ -58,7 +58,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     /* If payment type is 'payment' funds have not yet been captured,
                     * so AltaPay returns 0 as the captured amount.Therefore we assume full payment has been authorized.
                     */
-                    if ($paymentType == 'payment') {
+                    if ($paymentType === 'payment') {
                         $amount_paid   = $cart->getOrderTotal(true, Cart::BOTH);
                         $currency_paid = new Currency($cart->id_currency);
                     }
@@ -78,18 +78,18 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     $current_order = new Order((int)$this->module->currentOrder);
                     createAltapayOrder($response, $current_order);
                     $this->unlock($fp);
-                    die('Order created');
+                    exit('Order created');
                 } else {
                     $this->unlock($fp);
-                    die('Only handling Success state');
+                    exit('Only handling Success state');
                 }
             } // Order found, but not pending
             elseif ($order->getCurrentState() != Configuration::get('ALTAPAY_OS_PENDING')) { //pending
                 $this->unlock($fp);
-                die('Order found but is not currently pending - ignoring');
+                exit('Order found but is not currently pending - ignoring');
             } // Pending order found, update
             elseif (Validate::isLoadedObject($order)) {
-                if ($transactionStatus == 'captured') {
+                if ($transactionStatus === 'captured') {
                     // Update to Payment Accepted
                     $order->setCurrentState((int)Configuration::get('PS_OS_PAYMENT'));
 
@@ -106,8 +106,8 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     }
 
                     $this->unlock($fp);
-                    die('Order status updated to Accepted');
-                } elseif ($transactionStatus == 'preauth' || $transactionStatus == 'bank_payment_finalized') {
+                    exit('Order status updated to Accepted');
+                } elseif ($transactionStatus === 'preauth' || $transactionStatus === 'bank_payment_finalized') {
                     /* preauth occurs for wallet transactions where payment type is 'payment'.
                     Funds are still waiting to be captured.*/
                     // For this scenario we change the order status to 'payment accepted'.
@@ -127,8 +127,8 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     }
 
                     $this->unlock($fp);
-                    die('Order status updated to Accepted');
-                } elseif ($transactionStatus == 'epayment_declined') {
+                    exit('Order status updated to Accepted');
+                } elseif ($transactionStatus === 'epayment_declined') {
                     // Update to Payment Error
                     $order->setCurrentState((int)Configuration::get('PS_OS_ERROR'));
 
@@ -138,7 +138,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     Db::getInstance()->Execute($sql);
 
                     $this->unlock($fp);
-                    die('Order status updated to Error');
+                    exit('Order status updated to Error');
                 } else {
                     // Unexpected scenario
                     $mNa = $this->module->name;
@@ -146,7 +146,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                                    . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
                         $this->module->id, true);
                     $this->unlock($fp);
-                    die('Unrecognized status received ' . $transactionStatus);
+                    exit('Unrecognized status received ' . $transactionStatus);
                 }
             }
         } finally {

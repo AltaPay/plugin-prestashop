@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-require_once _PS_MODULE_DIR_ . '/altapay/lib/AltapayMerchantAPI.class.php';
+require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
 
 class ALTAPAYPaymentModuleFrontController extends ModuleFrontController
 {
@@ -27,8 +27,8 @@ class ALTAPAYPaymentModuleFrontController extends ModuleFrontController
             Tools::redirect('index.php?controller=order');
         }
 
-        /*redirect user back to checkout payment step,
-        * assume a failure occured creating the URL until a payment url is received
+        /* Redirect user back to the checkout payment step,
+        * assume a failure occurred creating the URL until a payment URL is received
         */
         $controller       = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
         $payment_form_url = $this->context->link->getPageLink($controller, true, null,
@@ -60,7 +60,7 @@ class ALTAPAYPaymentModuleFrontController extends ModuleFrontController
             // Redirect user to payment form url
             Tools::redirect($payment_form_url);
         } else {
-            // Redirect user back to checkout with generic error
+            // Redirect user back to checkout with a generic error
             Tools::redirect($payment_form_url);
         }
     }

@@ -7,9 +7,9 @@
  * file that was distributed with this source code.
  */
 
-require_once _PS_MODULE_DIR_ . '/altapay/lib/AltapayCallbackHandler.class.php';
+require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
 require_once _PS_MODULE_DIR_ . '/altapay/helpers.php';
-require_once _PS_MODULE_DIR_ . '/altapay/lib/AltapayMerchantAPI.class.php';
+require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
 
 class AltapayCallbackokModuleFrontController extends ModuleFrontController
 {
@@ -35,7 +35,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $cart = getCartFromUniqueId($shopOrderId);
             if (!Validate::isLoadedObject($cart)) {
                 $this->unlock($fp);
-                die('Could not load cart - exiting');
+                exit('Could not load cart - exiting');
             }
 
             // Load the customer
@@ -63,10 +63,10 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                  * so AltaPay returns zero as the captured amount.
                  * Therefore we assume full payment has been authorized.
                  */
-                if ($paymentType == 'payment') {
+                if ($paymentType === 'payment') {
                     $amountPaid   = $cart->getOrderTotal(true, Cart::BOTH);
                     $currencyPaid = new Currency($cart->id_currency);
-                } elseif ($paymentType == 'paymentAndCapture' && $captureStatus == 'true') {
+                } elseif ($paymentType === 'paymentAndCapture' && $captureStatus === 'true') {
                     $amountPaid   = $cart->getOrderTotal(true, Cart::BOTH);
                     $currencyPaid = new Currency($cart->id_currency);
                     $api          = apiLogin();
@@ -101,7 +101,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     true);
                 echo $this->module->l('This payment method is not available 1004.', 'callbackok');
 
-                /* Redirect user back to checkout payment step,
+                /* Redirect user back to the checkout payment step,
                 * assume a failure occured creating the URL until a payment url is received
                 */
                 $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';

@@ -33,7 +33,7 @@ class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontControlle
         // Loop through the order details to check and assign payment nature
         foreach ($altapayOrderDetails as $altapayOrderDetail) {
             $orderPaymentNature = $altapayOrderDetail['paymentNature'];
-            if ($orderPaymentNature == 'CreditCard') {
+            if ($orderPaymentNature === 'CreditCard') {
                 $card = $altapayOrderDetail['cardMask'];
                 $cardToken = $altapayOrderDetail['cardToken'];
                 $cardBrand = $altapayOrderDetail['cardBrand'];

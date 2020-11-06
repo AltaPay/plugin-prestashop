@@ -52,7 +52,7 @@
                                             <tr>
                                                 <th>Date</th>
                                                 <th>Status</th>
-                                                {if $paymentNature == 'CreditCard' && empty($creditCardStatus)}
+                                                {if $paymentNature === 'CreditCard' && empty($creditCardStatus)}
                                                 <th>Credit card</th>
                                                 {/if}
                                             </tr>
@@ -61,7 +61,7 @@
                                             <tr>
                                                 <td><br><p>{$orderDetails->date_add|date_format:"%d/%m/%Y"}</p></td>
                                                 <td><span class="label label-pill dark" style="background-color:#32CD32">{l s='Payment accepted'}</span></td>
-                                                {if $paymentNature == 'CreditCard' && empty($creditCardStatus)}
+                                                {if $paymentNature === 'CreditCard' && empty($creditCardStatus)}
                                                     <td>
                                                             <a class="btn btn-primary light-button btn-sm hidden-xs-down" style="text-transform: none; font-weight: 600; padding: 0.35rem 0.375rem;"
                                                                     type="submit" href="{$link->getModuleLink('altapay', 'savecreditcard', ['orderID'=>$orderID, 'cardMask'=>$cardMask, 'cardToken'=>$cardToken, 'cardBrand'=>$cardBrand, 'cardExpiryDate'=>$cardExpiryDate ])}" name="savecreditcardDetails" value="Save credit card details">Save your credit card for later use</a>
@@ -178,11 +178,11 @@
     <br>
     <?php
         if (array_key_exists('delete', $_POST)) {
-        deleteRecord();
+            deleteRecord();
         }
         function deleteRecord()
         {
-        echo 'Done';
+            echo 'Done';
         }
     ?>
     <footer id="footer">

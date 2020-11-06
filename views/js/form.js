@@ -6,18 +6,18 @@
  * file that was distributed with this source code.
  */
 
-$(function(){
-    $( document ).ready(function() {
+$(function () {
+    $(document).ready(function () {
         $("#terminalNature").hide();
         let index = $("#terminalName").prop('selectedIndex');
-        $('#terminalNature option:eq('+index+')').prop('selected', true);
+        $('#terminalNature option:eq(' + index + ')').prop('selected', true);
         check();
     });
 
-    $("#terminalName").change(function() {
+    $("#terminalName").change(function () {
         $("#terminalNature").hide();
         let index = $("#terminalName").prop('selectedIndex');
-        $('#terminalNature option:eq('+index+')').prop('selected', true);
+        $('#terminalNature option:eq(' + index + ')').prop('selected', true);
         check();
     });
 

@@ -46,13 +46,13 @@ function determinePaymentMethodForDisplay($response)
 {
     $paymentNature = $response->getPrimaryPayment()->getPaymentNature();
 
-    if ($paymentNature == "Wallet") {
+    if ($paymentNature === "Wallet") {
         return $response->getPrimaryPayment()->getPaymentSchemeName();
     }
-    if ($paymentNature == "CreditCard") {
+    if ($paymentNature === "CreditCard") {
         return $paymentNature;
     }
-    if ($paymentNature == "CreditCardWallet") {
+    if ($paymentNature === "CreditCardWallet") {
         return $response->getPrimaryPayment()->getPaymentSchemeName();
     }
 
@@ -152,30 +152,28 @@ function markAsRefund($paymentId, $orderlines = array())
     if (!isset($result['requireCapture']) || $result['requireCapture'] != 0) {
         return false;
     }
-    if (count($orderlines) > 0) {
-        foreach ($orderlines as $productId => $quantity) {
-            if ($quantity == 0) {
-                continue;
-            }
-            $sqlGetRefundedFieldValue = 'SELECT captured, refunded 
+    foreach ($orderlines as $productId => $quantity) {
+        if ($quantity == 0) {
+            continue;
+        }
+        $sqlGetRefundedFieldValue = 'SELECT captured, refunded 
                 FROM ' . _DB_PREFIX_ . 'altapay_orderlines WHERE altapay_payment_id = "'
-                                        . $paymentId . '" AND product_id = ' . $productId;
-            $result                   = Db::getInstance()->getRow($sqlGetRefundedFieldValue);
-            if (isset($result['refunded'])) {
-                $quantity += $result['refunded'];
-                // If the amount of refunded items is bigger than the actual captured amount than set the max amount
-                if ($quantity > $result['captured']) {
-                    $quantity = $result['captured'];
-                }
-
-                // Update only of there is a capture for this product
-                $sql = "UPDATE " . _DB_PREFIX_ . "altapay_orderlines SET refunded = "
-                       . $quantity . " WHERE altapay_payment_id = '" . $paymentId . "' AND product_id = " . $productId;
-                Db::getInstance()->Execute($sql);
-            } else {
-                // Product which have not been captured cannot be refunded
-                continue;
+                                    . $paymentId . '" AND product_id = ' . $productId;
+        $result                   = Db::getInstance()->getRow($sqlGetRefundedFieldValue);
+        if (isset($result['refunded'])) {
+            $quantity += $result['refunded'];
+            // If the amount of refunded items is bigger than the actual captured amount than set the max amount
+            if ($quantity > $result['captured']) {
+                $quantity = $result['captured'];
             }
+
+            // Update only of there is a capture for this product
+            $sql = "UPDATE " . _DB_PREFIX_ . "altapay_orderlines SET refunded = "
+                   . $quantity . " WHERE altapay_payment_id = '" . $paymentId . "' AND product_id = " . $productId;
+            Db::getInstance()->Execute($sql);
+        } else {
+            // Product which have not been captured cannot be refunded
+            continue;
         }
     }
 
@@ -237,7 +235,7 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
     $paymentNature   = $response->getPrimaryPayment()->getPaymentNature();
     $paymentStatus   = $payment_status;
     $requireCapture  = 0;
-    if ($paymentType == 'payment') {
+    if ($paymentType === 'payment') {
         $requireCapture = 1;
     }
     $cardExpiryDate = 0;

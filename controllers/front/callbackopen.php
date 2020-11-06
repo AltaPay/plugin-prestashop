@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-require_once _PS_MODULE_DIR_.'/altapay/lib/AltapayCallbackHandler.class.php';
+require_once _PS_MODULE_DIR_.'/altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
 require_once _PS_MODULE_DIR_.'/altapay/helpers.php';
 
 class AltapayCallbackopenModuleFrontController extends ModuleFrontController
@@ -35,7 +35,7 @@ class AltapayCallbackopenModuleFrontController extends ModuleFrontController
         // Load the cart
         $cart = getCartFromUniqueId($shopOrderId);
         if (!Validate::isLoadedObject($cart)) {
-            die('Could not load cart - exiting');
+            exit('Could not load cart - exiting');
         }
 
         // Load the customer

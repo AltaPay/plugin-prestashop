@@ -2,8 +2,8 @@
 
 if command -v dpkg-query -l zip
 then
-  git clone https://github.com/AltaPay/sdk-php.git
-  cp -rf sdk-php/lib/* lib/
+  git clone --branch 3.0.0 https://github.com/AltaPay/sdk-php.git
+  cp -rf sdk-php/lib/* lib/altapay/altapay-php-sdk/lib/
   rm -rf sdk-php/
   find . -type d -exec cp index.php {} \;
   mkdir -p dist/altapay
@@ -11,7 +11,7 @@ then
   cd ./dist
   zip altapay.zip -r altapay
   rm -r altapay
-  cd ../lib/
+  cd ../lib/altapay/altapay-php-sdk/lib/
   find . \! -name 'helpers.php' -delete
 else
   echo "Zip package is not currently installed"

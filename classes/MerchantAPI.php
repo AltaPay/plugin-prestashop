@@ -7,7 +7,8 @@
  * file that was distributed with this source code.
  */
 
-require_once _PS_MODULE_DIR_ . '/altapay/lib/AltapayMerchantAPI.class.php';
+require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
+
 /**
  * Wrapper for interacting with AltaPay merchant API
  */
@@ -30,11 +31,13 @@ class MerchantAPI
      */
     private $api_password;
 
+    const ALTAPAY = " {Altapay} ";
+
     /**
      * Method for validation of credentials provided for api connection
-     * @param $api_url
-     * @param $api_username
-     * @param $api_password
+     * @param string $api_url
+     * @param string $api_username
+     * @param string $api_password
      * @throws Exception
      * @return void
      */
@@ -48,7 +51,7 @@ class MerchantAPI
 
     /**
      * Method to get payment details against payment Id
-     * @param $paymentId
+     * @param int $paymentId
      * @return AltapayAPIPayment
      * @throws AltapayConnectionFailedException
      * @throws AltapayInvalidResponseException
@@ -62,7 +65,7 @@ class MerchantAPI
         $response = $this->api->getPayment($paymentId);
 
         if (is_null($response)) {
-            throw new Exception("Could not get payment details of payment ".$paymentId);
+            throw new Exception(self::ALTAPAY . 'Could not get payment details of payment '.$paymentId);
         }
 
         return $response->getPrimaryPayment();
@@ -70,7 +73,7 @@ class MerchantAPI
 
     /**
      * Method to trigger capture action
-     * @param $paymentId
+     * @param int $paymentId
      * @param array $orderLines
      * @param int $amount
      * @return AltapayCaptureResponse
@@ -82,7 +85,7 @@ class MerchantAPI
 
         if (!$response->wasSuccessful()) {
             $xmlResponse = $this->xmlParser($response->getXml());
-            throw new Exception($this->errorMsg($xmlResponse, 'Error occurred while payment capture'));
+            throw new Exception($this->errorMsg($xmlResponse, self::ALTAPAY . 'Error occurred while payment capture'));
         }
 
         return $response;
@@ -90,7 +93,7 @@ class MerchantAPI
 
     /**
      * Method to trigger refund action
-     * @param $paymentId
+     * @param int $paymentId
      * @param array $orderLines
      * @param int $amount
      * @return AltapayRefundResponse
@@ -102,7 +105,7 @@ class MerchantAPI
 
         if (!$response->wasSuccessful()) {
             $xmlResponse = $this->xmlParser($response->getXml());
-            throw new Exception($this->errorMsg($xmlResponse, 'Error occurred while payment refund'));
+            throw new Exception($this->errorMsg($xmlResponse, self::ALTAPAY . 'Error occurred while payment refund'));
         }
 
         return $response;
@@ -110,8 +113,8 @@ class MerchantAPI
 
     /**
      * Method to trigger release action
-     * @param $paymentId
-     * @param $transactionAction
+     * @param int $paymentId
+     * @param string $transactionAction
      * @return AltapayReleaseResponse
      * @throws AltapayMerchantAPIException
      */
@@ -121,7 +124,7 @@ class MerchantAPI
 
         if (!$response->wasSuccessful()) {
             $xmlResponse = $this->xmlParser($response->getXml());
-            throw new Exception($this->errorMsg($xmlResponse, $transactionAction));
+            throw new Exception($this->errorMsg($xmlResponse, self::ALTAPAY . $transactionAction));
         }
 
         return $response;
@@ -137,7 +140,7 @@ class MerchantAPI
         if (empty($this->api_url) ||
             empty($this->api_username) ||
             empty($this->api_password)) {
-            throw new Exception('Url, username or password missing');
+            throw new Exception(self::ALTAPAY . 'Url, username or password missing');
         }
 
         $this->api = new AltapayMerchantAPI(
@@ -148,14 +151,14 @@ class MerchantAPI
         );
         $response = $this->api->login();
         if (!$response->wasSuccessful()) {
-            throw new Exception("Could not login to the Merchant API: ".
+            throw new Exception(self::ALTAPAY . 'Could not login to the Merchant API: '.
                 $response->getErrorMessage(), $response->getErrorCode());
         }
     }
 
     /**
-     * @param $xml
-     * @return mixed
+     * @param /SimpleXMLElement $xml
+     * @return array
      */
     public function xmlParser($xml)
     {
@@ -168,8 +171,8 @@ class MerchantAPI
 
     /**
      * Method for getting error message response
-     * @param $xmlResponse
-     * @param $action
+     * @param array $xmlResponse
+     * @param string $action
      * @return false|string
      */
     public function errorMsg($xmlResponse, $action)

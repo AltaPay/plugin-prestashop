@@ -81,11 +81,11 @@
     <br>
     <?php
         if (array_key_exists('delete', $_POST)) {
-        deleteRecord();
+            deleteRecord();
         }
         function deleteRecord()
         {
-        echo 'Done';
+            echo 'Done';
         }
     ?>
     <footer id="footer">

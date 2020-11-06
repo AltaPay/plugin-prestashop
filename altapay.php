@@ -24,6 +24,7 @@ class ALTAPAY extends PaymentModule
     private $Mhtml = '';
     private $postErrors = [];
     private $paymentMethodIconDir = 'views/img/payment_icons';
+    const ALTAPAY = " {Altapay} ";
 
     public function __construct()
     {
@@ -543,7 +544,7 @@ class ALTAPAY extends PaymentModule
      */
     private function getAltapayTerminals($objects = false)
     {
-        require_once(_PS_MODULE_DIR_ . '/altapay/lib/AltapayMerchantAPI.class.php');
+        require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
         $cgConf                = [];
         $terminalArray         = [];
         $termNature            = '';
@@ -560,7 +561,7 @@ class ALTAPAY extends PaymentModule
             if (!$response->wasSuccessful()) {
                 $resErrMsg  = $response->getErrorMessage();
                 $resErrCode = $response->getErrorCode();
-                throw new Exception('Could not login to the Merchant API: ' . $resErrMsg, $resErrCode);
+                throw new Exception(self::ALTAPAY . 'Could not login to the Merchant API: ' . $resErrMsg, $resErrCode);
             }
         } catch (Exception $e) {
             Logger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
@@ -674,7 +675,7 @@ class ALTAPAY extends PaymentModule
             );
             exit();
         }
-        if ($action == 'Capture') { // CAPTURE
+        if ($action === 'Capture') { // CAPTURE
             try {
                 $finalOrderLines = $this->populateOrderLinesFromPost($orderLines, $orderLineGiftWrap, $orderID);
                 $api->captureAmount($paymentID, $finalOrderLines, Tools::getValue('amount'));
@@ -698,10 +699,10 @@ class ALTAPAY extends PaymentModule
                 ]
             );
             exit();
-        } elseif ($action == 'Refund') { // REFUND
+        } elseif ($action === 'Refund') { // REFUND
             try {
                 $refundAmount = Tools::getValue('amount');
-                if (Tools::getValue('goodwillrefund') == 'yes') {
+                if (Tools::getValue('goodwillrefund') === 'yes') {
                     $goodWillRefund = true;
                 }
                 $finalOrderLines = $this->populateOrderLinesFromPost(
@@ -718,7 +719,7 @@ class ALTAPAY extends PaymentModule
                 $api->refundAmount($paymentID, $finalOrderLines, $refundAmount);
                 $refundUpdate = markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
                 if (!$refundUpdate) {
-                    throw new Exception('The refund could not be updated in database');
+                    throw new Exception(self::ALTAPAY . 'The refund could not be updated in database');
                 }
             } catch (Exception $e) {
                 $response = json_decode($e->getMessage(), true);
@@ -740,7 +741,7 @@ class ALTAPAY extends PaymentModule
                 ]
             );
             exit();
-        } elseif ($action == 'Release') { // RELEASE
+        } elseif ($action === 'Release') { // RELEASE
             try {
                 $api->release($paymentID, $action);
                 updatePaymentStatus($paymentID, 'Payment Released');
@@ -1260,9 +1261,9 @@ class ALTAPAY extends PaymentModule
         if (Tools::isSubmit('btnSubmit')) {
             Configuration::updateValue('ALTAPAY_USERNAME', Tools::getValue('ALTAPAY_USERNAME'));
             $urlPath = preg_replace('/\s+/', '', Tools::getValue('ALTAPAY_URL'));
-            if (Tools::substr($urlPath, -1) != '/') {
+            if (Tools::substr($urlPath, -1) !== '/') {
                 Configuration::updateValue('ALTAPAY_URL', $urlPath .= '/');
-            } elseif (Tools::substr($urlPath, -1) == '/') {
+            } elseif (Tools::substr($urlPath, -1) === '/') {
                 Configuration::updateValue('ALTAPAY_URL', $urlPath);
             }
             if (Tools::getValue('ALTAPAY_PASSWORD') !== '') {
@@ -1899,7 +1900,7 @@ class ALTAPAY extends PaymentModule
 
         // Phone
         $invoiceAph                 = $invoice_address->phone;
-        $customer['customer_phone'] = $customer['customer_phone'] = $invoice_address->phone ?: $invoice_address->phone_mobile;
+        $customer['customer_phone'] = $invoice_address->phone ?: $invoice_address->phone_mobile;
 
         // Shipping address
         $sp_address                     = new Address($this->context->cart->id_address_delivery);
@@ -1926,9 +1927,9 @@ class ALTAPAY extends PaymentModule
         }
 
         if (!is_null($savedCreditCard)) {
-            $sql     = "SELECT ccToken FROM " . _DB_PREFIX_ . "altapay_saved_credit_card WHERE creditcardNumber =" . $savedCreditCard;
+            $sql = "SELECT ccToken FROM `" . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE creditcardNumber ="' . $savedCreditCard . '"';
             $results = Db::getInstance()->executeS($sql);
-            foreach ($results as $result) {
+             foreach ($results as $result) {
                 $ccToken = $result['ccToken'];
             }
         }
@@ -1941,7 +1942,7 @@ class ALTAPAY extends PaymentModule
             if (!$response->wasSuccessful()) {
                 $resErrMsg  = $response->getErrorMessage();
                 $resErrCode = $response->getErrorCode();
-                throw new Exception('Could not login to the Merchant API: ' . $resErrMsg, $resErrCode);
+                throw new Exception(self::ALTAPAY . 'Could not login to the Merchant API: ' . $resErrMsg, $resErrCode);
             }
         } catch (Exception $e) {
             Logger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
@@ -1980,7 +1981,7 @@ class ALTAPAY extends PaymentModule
             if (!$response->wasSuccessful()) {
                 $resErrMsg  = $response->getErrorMessage();
                 $resErrCode = $response->getErrorCode();
-                throw new Exception('Could not create the payment request: ' . $resErrMsg, $resErrCode);
+                throw new Exception(self::ALTAPAY . 'Could not create the payment request: ' . $resErrMsg, $resErrCode);
             }
 
             return [
@@ -2234,18 +2235,18 @@ class ALTAPAY extends PaymentModule
         $discountedAmount          = 0;
         $productPriceAfterDiscount = 0;
         foreach ($vouchers as $key => $voucher) {
-            if (in_array($productID, $voucher['products']) || $voucher['products'] == 'all') {
-                if (empty($discountPercent) && $voucher['reductionPercent'] != '0.00') {
+            if (in_array($productID, $voucher['products']) || $voucher['products'] === 'all') {
+                if (empty($discountPercent) && $voucher['reductionPercent'] !== '0.00') {
                     $discountPercent           += $voucher['reductionPercent'];
                     $discountedAmount          = $basePrice * ($discountPercent / 100);
                     $productPriceAfterDiscount = $basePrice - $discountedAmount;
-                } elseif ($voucher['reductionPercent'] == '0.00' && (empty($freeGiftVoucher['free_gift']) || $freeGiftVoucher['free_gift'])&& $freeGiftVoucher['free_gift'] != $productID) {
+                } elseif ($voucher['reductionPercent'] === '0.00' && (empty($freeGiftVoucher['free_gift']) || $freeGiftVoucher['free_gift'])&& $freeGiftVoucher['free_gift'] != $productID) {
                     if ($freeGiftVoucher['free_gift']) {
                         $discountPercent += (($freeGiftVoucher['reductionAmount'] + $freeGiftVoucher[$key]) / ($orderSubtotal + $freeGiftVoucher[$key]) * 100);
                     } else {
                         $discountPercent += ($freeGiftVoucher[$key] / ($orderSubtotal)) * 100;
                     }
-                } elseif ($voucher['reductionPercent'] == '0.00' && empty($freeGiftVoucher['free_gift']) || $freeGiftVoucher['free_gift'] == $productID) {
+                } elseif ($voucher['reductionPercent'] === '0.00' && empty($freeGiftVoucher['free_gift']) || $freeGiftVoucher['free_gift'] == $productID) {
                     $discountPercent += (($freeGiftVoucher['reductionAmount'] + $freeGiftVoucher[$key]) / ($orderSubtotal+$freeGiftVoucher[$key]) * 100);
                 } else {
                     $totalDiscountedAmount = $discountedAmount + ($productPriceAfterDiscount * ($voucher['reductionPercent'] / 100));
@@ -2355,18 +2356,16 @@ class ALTAPAY extends PaymentModule
      * @return array
      */
     private function getCartRuleDiscounts($order)
-    {
-        $cartRuleDiscounts = [];
-        $discountPercent   = reset(Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'altapay_cartInfo WHERE id_cart = ' . $order->id_cart));
+{
+    $cartRuleDiscounts = [];
+    $discountPercent   = reset(Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'altapay_cartInfo WHERE id_cart = ' . $order->id_cart));
 
-        if (!empty($discountPercent)) {
-            $discountPercent   = json_decode($discountPercent['productDetails']);
-            $cartRuleDiscounts = json_decode(json_encode($discountPercent), true);
-
-        }
-
-        return $cartRuleDiscounts;
+      if (!empty($discountPercent) && isset($discountPercent['productDetails'])) {
+        $cartRuleDiscounts = json_decode($discountPercent['productDetails']);
     }
+
+    return $cartRuleDiscounts;
+}
 
     /**
      * @param string    $paymentID
