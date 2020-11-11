@@ -9,7 +9,7 @@ spl_autoload_register('autoLoader');
 function autoLoader($class, $dir = null)
 {
     $namespace = 'Altapay';
-    require_once __DIR__. DIRECTORY_SEPARATOR . "IAltapayCommunicationLogger.class.php";
+    require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . "IAltapayCommunicationLogger.class.php";
 
     if (0 !== strpos($class, $namespace)) {
         return;
@@ -25,7 +25,7 @@ function autoLoader($class, $dir = null)
     $listDir = scandir(realpath($dir));
     if (isset($listDir) && !empty($listDir)) {
         foreach ($listDir as $listDirkey => $subDir) {
-            if ($subDir === '.' || $subDir === '..') {
+            if ($subDir == '.' || $subDir == '..') {
                 continue;
             }
             $file = $dir . DIRECTORY_SEPARATOR . $subDir . DIRECTORY_SEPARATOR . $class . '.class.php';

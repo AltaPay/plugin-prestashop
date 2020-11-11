@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-require_once(dirname(__DIR__, 2) . '/helpers.php');
+require_once dirname(__DIR__, 2) . '/helpers.php';
 
 class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontController
 {

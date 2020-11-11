@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltaPayMerchantAPI.class.php';
+require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
 
 /**
  * Wrapper for interacting with AltaPay merchant API

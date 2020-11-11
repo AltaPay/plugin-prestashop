@@ -544,7 +544,7 @@ class ALTAPAY extends PaymentModule
      */
     private function getAltapayTerminals($objects = false)
     {
-        require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltaPayMerchantAPI.class.php';
+        require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
         $cgConf                = [];
         $terminalArray         = [];
         $termNature            = '';
@@ -1484,6 +1484,7 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign('ap_product_details', $productDetail);
         $this->smarty->assign('ap_shipping_details', $shippingDetail);
         $this->smarty->assign('ap_coupon_discount', $discounts);
+        $this->smarty->assign('ap_order_detail', $orderDetail->total_discounts);
         $apOrders     = [];
         $apOrderlines = $this->getOrderActions($results['payment_id']);
         foreach ($productDetail as $product) {
@@ -2071,7 +2072,6 @@ class ALTAPAY extends PaymentModule
         } else {
             $cartRuleFreeShipping = false;
         }
-
         foreach ($products as $p) {
             $rateBasePrice = 1 + ($p['rate'] / 100);
             //Calculation of base price
@@ -2355,17 +2355,17 @@ class ALTAPAY extends PaymentModule
      *
      * @return array
      */
-    private function getCartRuleDiscounts($order)
-{
-    $cartRuleDiscounts = [];
-    $discountPercent   = reset(Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'altapay_cartInfo WHERE id_cart = ' . $order->id_cart));
+        private function getCartRuleDiscounts($order)
+    {
+        $cartRuleDiscounts = [];
+        $discountPercent = reset(Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'altapay_cartInfo WHERE id_cart = ' . $order->id_cart));
+        
+        if (isset($discountPercent['productDetails'])) {
+            $cartRuleDiscounts = json_decode($discountPercent['productDetails'], true) ?: [];
+        }
 
-      if (!empty($discountPercent) && isset($discountPercent['productDetails'])) {
-        $cartRuleDiscounts = json_decode($discountPercent['productDetails']);
+        return $cartRuleDiscounts;
     }
-
-    return $cartRuleDiscounts;
-}
 
     /**
      * @param string    $paymentID

@@ -66,7 +66,7 @@
                                             Total amount
                                         </td>
                                         {foreach $ap_product_details as $key => $value }
-                                        {if !empty($ap_coupon_discount)}
+                                        {if !empty($ap_coupon_discount) && $ap_order_detail > 0}
                                             {foreach $ap_coupon_discount as $discount}
                                                 {assign var="productID" value=$discount['productID']}
                                                 {if $productID == $value['product_id']}
@@ -76,7 +76,7 @@
                                                     {assign var="freeShipping" value=1}
                                                 {/if}
                                             {/foreach}
-                                        {elseif $value['reduction_percent'] > 0}
+                                        {elseif $value['reduction_percent'] > 0 && $ap_order_detail > 0}
                                             {assign var="catalogRule" value="applied"}
                                             {assign var="discountPercent" value=$value['reduction_percent']}
                                         {else}
