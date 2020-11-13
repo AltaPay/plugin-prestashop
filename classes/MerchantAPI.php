@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
+require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltaPayMerchantAPI.class.php';
 
 /**
  * Wrapper for interacting with AltaPay merchant API
@@ -65,7 +65,7 @@ class MerchantAPI
         $response = $this->api->getPayment($paymentId);
 
         if (is_null($response)) {
-            throw new Exception(self::ALTAPAY . 'Could not get payment details of payment '.$paymentId);
+            throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not get payment details of payment '.$paymentId);
         }
 
         return $response->getPrimaryPayment();
@@ -85,7 +85,7 @@ class MerchantAPI
 
         if (!$response->wasSuccessful()) {
             $xmlResponse = $this->xmlParser($response->getXml());
-            throw new Exception($this->errorMsg($xmlResponse, self::ALTAPAY . 'Error occurred while payment capture'));
+            throw new AltapayMerchantAPIException($this->errorMsg($xmlResponse, self::ALTAPAY . 'Error occurred while payment capture'));
         }
 
         return $response;
@@ -105,7 +105,7 @@ class MerchantAPI
 
         if (!$response->wasSuccessful()) {
             $xmlResponse = $this->xmlParser($response->getXml());
-            throw new Exception($this->errorMsg($xmlResponse, self::ALTAPAY . 'Error occurred while payment refund'));
+            throw new AltapayMerchantAPIException($this->errorMsg($xmlResponse, self::ALTAPAY . 'Error occurred while payment refund'));
         }
 
         return $response;
@@ -124,7 +124,7 @@ class MerchantAPI
 
         if (!$response->wasSuccessful()) {
             $xmlResponse = $this->xmlParser($response->getXml());
-            throw new Exception($this->errorMsg($xmlResponse, self::ALTAPAY . $transactionAction));
+            throw new AltapayMerchantAPIException($this->errorMsg($xmlResponse, self::ALTAPAY . $transactionAction));
         }
 
         return $response;
@@ -140,7 +140,7 @@ class MerchantAPI
         if (empty($this->api_url) ||
             empty($this->api_username) ||
             empty($this->api_password)) {
-            throw new Exception(self::ALTAPAY . 'Url, username or password missing');
+            throw new AltapayMerchantAPIException(self::ALTAPAY . 'Url, username or password missing');
         }
 
         $this->api = new AltapayMerchantAPI(
@@ -151,7 +151,7 @@ class MerchantAPI
         );
         $response = $this->api->login();
         if (!$response->wasSuccessful()) {
-            throw new Exception(self::ALTAPAY . 'Could not login to the Merchant API: '.
+            throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not login to the Merchant API: '.
                 $response->getErrorMessage(), $response->getErrorCode());
         }
     }

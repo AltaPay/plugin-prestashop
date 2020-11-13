@@ -11,9 +11,9 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once dirname(__FILE__) . '/classes/Terminal.php';
-require_once dirname(__FILE__) . '/classes/MerchantAPI.php';
-require_once dirname(__FILE__) . '/helpers.php';
+require_once __DIR__ . '/classes/Terminal.php';
+require_once __DIR__ . '/classes/MerchantAPI.php';
+require_once __DIR__ . '/helpers.php';
 
 class ALTAPAY extends PaymentModule
 {
@@ -544,7 +544,7 @@ class ALTAPAY extends PaymentModule
      */
     private function getAltapayTerminals($objects = false)
     {
-        require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
+        require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltaPayMerchantAPI.class.php';
         $cgConf                = [];
         $terminalArray         = [];
         $termNature            = '';
@@ -561,7 +561,7 @@ class ALTAPAY extends PaymentModule
             if (!$response->wasSuccessful()) {
                 $resErrMsg  = $response->getErrorMessage();
                 $resErrCode = $response->getErrorCode();
-                throw new Exception(self::ALTAPAY . 'Could not login to the Merchant API: ' . $resErrMsg, $resErrCode);
+                throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not login to the Merchant API: ' . $resErrMsg, $resErrCode);
             }
         } catch (Exception $e) {
             Logger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
@@ -719,7 +719,7 @@ class ALTAPAY extends PaymentModule
                 $api->refundAmount($paymentID, $finalOrderLines, $refundAmount);
                 $refundUpdate = markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
                 if (!$refundUpdate) {
-                    throw new Exception(self::ALTAPAY . 'The refund could not be updated in database');
+                    throw new AltapayMerchantAPIException(self::ALTAPAY . 'The refund could not be updated in database');
                 }
             } catch (Exception $e) {
                 $response = json_decode($e->getMessage(), true);
@@ -1943,7 +1943,7 @@ class ALTAPAY extends PaymentModule
             if (!$response->wasSuccessful()) {
                 $resErrMsg  = $response->getErrorMessage();
                 $resErrCode = $response->getErrorCode();
-                throw new Exception(self::ALTAPAY . 'Could not login to the Merchant API: ' . $resErrMsg, $resErrCode);
+                throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not login to the Merchant API: ' . $resErrMsg, $resErrCode);
             }
         } catch (Exception $e) {
             Logger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
@@ -1982,7 +1982,7 @@ class ALTAPAY extends PaymentModule
             if (!$response->wasSuccessful()) {
                 $resErrMsg  = $response->getErrorMessage();
                 $resErrCode = $response->getErrorCode();
-                throw new Exception(self::ALTAPAY . 'Could not create the payment request: ' . $resErrMsg, $resErrCode);
+                throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not create the payment request: ' . $resErrMsg, $resErrCode);
             }
 
             return [
@@ -2236,7 +2236,7 @@ class ALTAPAY extends PaymentModule
         $productPriceAfterDiscount = 0;
         foreach ($vouchers as $key => $voucher) {
             if (in_array($productID, $voucher['products']) || $voucher['products'] === 'all') {
-                if (empty($discountPercent) && $voucher['reductionPercent'] !== '0.00') {
+                if (!$discountPercent && $voucher['reductionPercent'] !== '0.00') {
                     $discountPercent           += $voucher['reductionPercent'];
                     $discountedAmount          = $basePrice * ($discountPercent / 100);
                     $productPriceAfterDiscount = $basePrice - $discountedAmount;
