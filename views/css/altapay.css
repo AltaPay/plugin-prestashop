@@ -1,0 +1,129 @@
+/*
+ * AltaPay module for PrestaShop
+ *
+ * Copyright © 2020 AltaPay. All rights reserved.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+/*
+Here it is possible to style the payment form 
+and to remove elements from it
+
+Examples:
+*/
+
+/* Change the label color */
+/*.pensio_payment_form_label_cell {
+	color: blue;
+}*/
+
+/* General */
+
+.pensioPaymentSubmitButton, .altapaySubmitButton, .submit_row {
+    display: none;
+}
+
+.pensio_payment_form_row {
+    margin-bottom: 10px;
+}
+
+form#CreditCard {
+    margin-top: 20px;
+}
+
+.card_logos {
+    margin-top: 30px;
+}
+
+.card_logos img {
+    margin-right: 3px;
+}
+
+.secure-comm {
+    margin-top: 20px;
+    color: green;
+    font-size: 14px;
+}
+
+.payment_msg {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.payment_total {
+    margin-top: 20px;
+}
+
+.payment_total_text {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+input.btn.btn-success.PensioSubmitButton.customPayButton {
+    margin-top: 10px;
+}
+
+td.pensio_payment_form_label_cell {
+    padding-left: 0px;
+}
+
+/* CVC */
+
+.cvc_description_row > .pensio_payment_form_label_cell {
+    display: none;
+}
+
+.pensio_payment_form_cvc_cell img {
+    width: 70px;
+}
+
+/* Input styling */
+
+#CreditCard input {
+    height: 30px;
+    padding: 5px 5px;
+    font-size: 12px;
+    line-height: 1.5;
+    -moz-border-radius: 3px 3px 3px 3px;
+    -webkit-border-radius: 3px 3px 3px 3px;
+    border-radius: 3px;
+    border: 1px solid #cccccc;
+    color: #555555;
+}
+
+#CreditCard select {
+    height: 30px;
+    border: 1px solid #cccccc;
+    font-size: 12px;
+    color: #555555;
+    -moz-border-radius: 3px 3px 3px 3px;
+    -webkit-border-radius: 3px 3px 3px 3px;
+    border-radius: 3px;
+}
+
+#creditCardNumberInput {
+    width: 200px;
+}
+
+#emonth, #eyear {
+    width: 80px;
+}
+
+#cvcInput {
+    width: 80px;
+}
+div#order-detail-content {
+    width: 70%;
+    margin: 0 auto;
+    padding: 50px 20px;
+    background: #2fb5d22b;
+}
+
+.table-bordered, .table-bordered td, .table-bordered th {
+    border: 2px solid #2fb5d2;
+}
+
+.table thead th {
+    border-bottom: 3px solid #2fb5d2;
+}

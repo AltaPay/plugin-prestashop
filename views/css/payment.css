@@ -1,0 +1,29 @@
+/*
+ * AltaPay module for PrestaShop
+ *
+ * Copyright © 2020 AltaPay. All rights reserved.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+p.payment_module a.altapay {
+    background-color: #fbfbfb;
+}
+
+p.payment_module a.altapay:hover {
+      background-color: #f6f6f6; 
+}
+
+p.payment_module a.altapay:after {
+      display: block;
+      content: "\f054";
+      position: absolute;
+      right: 15px;
+      margin-top: -11px;
+      top: 50%;
+      font-family: "FontAwesome";
+      font-size: 25px;
+      height: 22px;
+      width: 14px;
+      color: #777; 
+}
