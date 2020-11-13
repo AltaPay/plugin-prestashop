@@ -14,6 +14,7 @@ if (!defined('_PS_VERSION_')) {
 require_once __DIR__ . '/classes/Terminal.php';
 require_once __DIR__ . '/classes/MerchantAPI.php';
 require_once __DIR__ . '/helpers.php';
+require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltaPayMerchantAPI.class.php';
 
 class ALTAPAY extends PaymentModule
 {
@@ -544,7 +545,6 @@ class ALTAPAY extends PaymentModule
      */
     private function getAltapayTerminals($objects = false)
     {
-        require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltaPayMerchantAPI.class.php';
         $cgConf                = [];
         $terminalArray         = [];
         $termNature            = '';
