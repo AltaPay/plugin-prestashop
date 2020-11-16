@@ -572,9 +572,9 @@ class ALTAPAY extends PaymentModule
         foreach ($terminals as $terminal) {
             if (!$objects) {
                 $terminalNature = $terminal->getNature();
-                if (in_array('CreditCard', $terminalNature)) {
+                if (in_array('CreditCard', $terminalNature, true)) {
                     $termNature = 'CreditCard';
-                } elseif (in_array('Invoice', $terminalNature)) {
+                } elseif (in_array('Invoice', $terminalNature, true)) {
                     $termNature = 'Invoice';
                 }
                 $terminalArray[$terminal->getTitle()] = [
@@ -868,7 +868,7 @@ class ALTAPAY extends PaymentModule
                         }
                     }
                     $orderDetail    = new Order((int)$orderID);
-                    $shippingDetail = reset($orderDetail->getShipping());
+                    $shippingDetail = reset($orderDetail->getShipping());              
                     // Mandatory keys for orderLines:
                     $altapayOrderLines[$i]['description'] = $shippingDetail['carrier_name']; // Description of item.
                     $altapayOrderLines[$i]['itemId']      = $shippingDetail['carrier_name']; // Item number (SKU)
@@ -1433,13 +1433,13 @@ class ALTAPAY extends PaymentModule
 
         foreach ($allowedOrderStatuses as $orderStatusID) {
             $objectID = array_search($orderStatusID, array_column($configuredStatus, 'id_order_state'));
-            if (!empty($objectID)) {
+            if ($objectID) {
                 $orderstatusName[] = $configuredStatus[$objectID]['name'];
             }
         }
 
         $currentOrderStatus = $params['newOrderStatus'];
-        if (!empty($currentOrderStatus)) {
+        if ($currentOrderStatus) {
             $currentOrderStatus = $params['newOrderStatus']->name;
             foreach ($orderstatusName as $captureOrderStatus) {
                 if ($currentOrderStatus == $captureOrderStatus) {
@@ -1662,7 +1662,7 @@ class ALTAPAY extends PaymentModule
             $sql        = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE userID =' . $customerID;
             $results    = Db::getInstance()->executeS($sql);
 
-            if (!empty($results)) {
+            if ($results) {
                 foreach ($results as $result) {
                     $savedCreditCard[] = [
                         'creditCard'     => $result['creditCardNumber'],
@@ -1686,7 +1686,7 @@ class ALTAPAY extends PaymentModule
         $paymentsOptions = [];
         foreach ($paymentMethods as $paymentMethod) {
             $this->context->smarty->assign('ccTokenControl', $paymentMethod['ccTokenControl_']);
-            if (!empty($customerID)) {
+            if ($customerID) {
                 $this->context->smarty->assign('customerID', $customerID);
             }
             $actionText     = $this->l('Pay with') . ' ' . $paymentMethod['display_name'];
@@ -2076,11 +2076,12 @@ class ALTAPAY extends PaymentModule
             $rateBasePrice = 1 + ($p['rate'] / 100);
             //Calculation of base price
             $basePrice              = $p['price_without_reduction'] / $rateBasePrice;
+
             $singleProductTaxAmount = $p['price_without_reduction'] - $basePrice;
             $productID              = $p['id_product'];
             $discountPercent        = 0;
 
-            if (!empty($vouchers)) {
+           if ($vouchers) {
                 $discountPercent = $this->getVoucherDiscounts(
                     $vouchers,
                     $productID,
@@ -2149,7 +2150,7 @@ class ALTAPAY extends PaymentModule
             'shipment'
         );
 
-        if (!empty($orderDetails)) {
+        if ($orderDetails) {
             $orderDetails = json_encode($orderDetails);
             $sql          = 'INSERT INTO ' . _DB_PREFIX_ . 'altapay_cartInfo (id_cart, productDetails, date_add) VALUES ' . "('" . $cartID . "', '"
                             . $orderDetails . "', '" . time() . "')";
@@ -2194,7 +2195,7 @@ class ALTAPAY extends PaymentModule
         $orderLines['quantity']    = $quantity;
         $orderLines['discount']    = $discount;
         // Unit price excluding sales tax, only two digits.
-        $orderLines['unitPrice'] = number_format(floor(100 * $unitPrice) / 100, 2, '.', '');
+        $orderLines['unitPrice'] = number_format((100 * $unitPrice) / 100, 2, '.', '');
 
         /**
          * Optional keys for orderLines:
