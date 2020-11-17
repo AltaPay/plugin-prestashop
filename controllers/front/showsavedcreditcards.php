@@ -24,7 +24,7 @@ class ALTAPAYshowsavedcreditcardsModuleFrontController extends ModuleFrontContro
             $customerID = $this->context->customer->id;
             $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE userID ='.$customerID ;
             $results = Db::getInstance()->executeS($sql);
-            if (!empty($results)) {
+            if ($results) {
                 foreach ($results as $result) {
                     $savedCreditCard[] = [
                         'userID'=>$result['userID'],
