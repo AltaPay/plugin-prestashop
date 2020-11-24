@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-require_once _PS_MODULE_DIR_.'/altapay/lib/altapay/altapay-php-sdk/lib/AltaPayCallbackHandler.class.php';
+require_once _PS_MODULE_DIR_.'/altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
 require_once _PS_MODULE_DIR_.'/altapay/helpers.php';
 
 class AltapayCallbackformModuleFrontController extends ModuleFrontController

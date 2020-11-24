@@ -5,6 +5,17 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.3.0] - 2020-11-24
+### Changed
+ - Modify licence file with MIT License
+
+### Fixed
+- Fix price mismatch issue in reservation call
+- Fix issue with catalog discounts
+
+### Removed
+- Code improvements - removed a build.xml file from the root
+
 ## [3.2.0] - 2020-09-21
 ### Added
 - Support for for cart rules based on amount
