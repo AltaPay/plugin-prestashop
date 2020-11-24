@@ -9,7 +9,6 @@ spl_autoload_register('autoLoader');
 function autoLoader($class, $dir = null)
 {
     require_once __DIR__ . DIRECTORY_SEPARATOR . "IAltapayCommunicationLogger.class.php";
-    
     if (false === strpos($class, 'Altapay')) {
         return;
     }
