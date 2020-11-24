@@ -14,7 +14,7 @@ if (!defined('_PS_VERSION_')) {
 require_once __DIR__ . '/classes/Terminal.php';
 require_once __DIR__ . '/classes/MerchantAPI.php';
 require_once __DIR__ . '/helpers.php';
-require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltaPayMerchantAPI.class.php';
+require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
 
 class ALTAPAY extends PaymentModule
 {
@@ -31,9 +31,9 @@ class ALTAPAY extends PaymentModule
     {
         $this->name                   = 'altapay';
         $this->tab                    = 'payments_gateways';
-        $this->version                = '3.1.0';
+        $this->version                = '3.3.0';
         $this->v16                    = _PS_VERSION_ >= '1.6.1.24';
-        $this->v17                    = _PS_VERSION_ >= '1.7.6.8';
+        $this->v17                    = _PS_VERSION_ >= '1.7.6.9';
         $this->author                 = 'AltaPay A/S';
         $this->is_eu_compatible       = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.6.8'];

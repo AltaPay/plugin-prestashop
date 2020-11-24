@@ -2,7 +2,7 @@
 
 if command -v dpkg-query -l zip
 then
-  git clone --branch 3.0.0 https://github.com/AltaPay/sdk-php.git
+  git clone --branch 3.0.1 https://github.com/AltaPay/sdk-php.git
   cp -rf sdk-php/lib/* lib/altapay/altapay-php-sdk/lib/
   rm -rf sdk-php/
   find . -type d -exec cp index.php {} \;
