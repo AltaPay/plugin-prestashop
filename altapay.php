@@ -791,8 +791,7 @@ class ALTAPAY extends PaymentModule
         $isSetBackendDiscount = false,
         $backendDiscount,
         $fullCapture = false
-    )
-    {
+    ) {
         $i                             = 0;
         $priceAfterDiscountRounded     = 0;
         $priceAfterDiscount            = 0;
@@ -922,7 +921,7 @@ class ALTAPAY extends PaymentModule
 
     /**
      * @param string $orderID
-     * @param array $cartRuleDiscounts
+     * @param array  $cartRuleDiscounts
      *
      * @return array
      */
@@ -955,6 +954,7 @@ class ALTAPAY extends PaymentModule
 
         return $altapayOrderLines;
     }
+
     /**
      * Method to get quantity count of captured or refunded items from order backend
      *
@@ -1360,7 +1360,7 @@ class ALTAPAY extends PaymentModule
             return null;
         }
         if ($newStatus->id == $shippedStatus) { // A capture will be made if necessary
-            $this->performCapture($paymentID, $params,true,true);
+            $this->performCapture($paymentID, $params, true, true);
         }
 
         return $results;
@@ -1396,19 +1396,19 @@ class ALTAPAY extends PaymentModule
         try {
             $api            = new MerchantAPI();
             $productDetails = new OrderDetail;
-            $cart                = $this->context->cart;
-            $orderSummary  = $cart->getSummaryDetails();
+            $cart           = $this->context->cart;
+            $orderSummary   = $cart->getSummaryDetails();
             $api->init($this->getAltapayUrl(), $this->getAPIUsername(), $this->getAPIPassword());
-            $paymentDetails      = $api->getPaymentDetails($paymentID);
-            $orderDetail    = new Order((int)$params['id_order']);
-            $discountData = $this->getorderCartRule($params['id_order']);
+            $paymentDetails  = $api->getPaymentDetails($paymentID);
+            $orderDetail     = new Order((int)$params['id_order']);
+            $discountData    = $this->getorderCartRule($params['id_order']);
             $backendDiscount = 0;
-            foreach($discountData as $key=>$discount){
+            foreach ($discountData as $key => $discount) {
                 $idCartRule = $discount['id_cart_rule'];
-                if($this->enableBackendDiscount($orderSummary['discounts'],$idCartRule)){
+                if ($this->enableBackendDiscount($orderSummary['discounts'], $idCartRule)) {
                     $backendDiscount += $discountData[$key]['value'];
                 }
-              }
+            }
             $orderReservedAmount = $paymentDetails->getReservedAmount();
             $orderCapturedAmount = $paymentDetails->getCapturedAmount();
             $amountToCapture     = $orderReservedAmount - $orderCapturedAmount;
@@ -1430,7 +1430,7 @@ class ALTAPAY extends PaymentModule
                     $backendDiscount,
                     true
                 );
-                if ($statusCapture) {        
+                if ($statusCapture) {
                     $api->captureAmount($paymentID, $orderLines, $orderDetail->total_paid);
                 } else {
                     $api->captureAmount($paymentID, $orderLines, $amountToCapture);
@@ -1444,15 +1444,24 @@ class ALTAPAY extends PaymentModule
             $this->returnError($paymentID, $e);
         }
     }
-    public function enableBackendDiscount($array1, $idCartRule)
+
+    /**
+     * @param array $appliedDiscount
+     * @param int   $idCartRule
+     *
+     * @return bool
+     */
+    public function enableBackendDiscount($appliedDiscount, $idCartRule)
     {
-        foreach($array1 as $key=>$arr1){
-          if($arr1['id_cart_rule'] == $idCartRule){
-             return false;
-          }
-       }
-       return true;
+        foreach ($appliedDiscount as $key => $discountData) {
+            if ($discountData['id_cart_rule'] == $idCartRule) {
+                return false;
+            }
+        }
+
+        return true;
     }
+
     /**
      * Method being triggered when complete capture is being performed without selecting orderlines
      *
@@ -2109,7 +2118,7 @@ class ALTAPAY extends PaymentModule
 
     public function getorderCartRule($orderID)
     {
-        $cartDiscount        = Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'order_cart_rule WHERE id_order = ' . $orderID);
+        $cartDiscount = Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'order_cart_rule WHERE id_order = ' . $orderID);
 
         return $cartDiscount;
     }
@@ -2149,7 +2158,7 @@ class ALTAPAY extends PaymentModule
             $productID              = $p['id_product'];
             $discountPercent        = 0;
 
-           if ($vouchers) {
+            if ($vouchers) {
                 $discountPercent = $this->getVoucherDiscounts(
                     $vouchers,
                     $productID,
