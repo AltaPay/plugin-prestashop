@@ -1,0 +1,37 @@
+name: PHP Composer
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  php-stan:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Pull repo
+      uses: actions/checkout@v2
+    - name: Install composer and add dependencies
+      uses: php-actions/composer@v4 
+    - run: sudo composer require --dev prestashop/php-dev-tools
+    - run: sudo composer global require phpstan/phpstan:^0.12
+    - run: sudo cp vendor/prestashop/php-dev-tools/phpstan/ps-module-extension.neon vendor/prestashop/php-dev-tools/phpstan/extension.neon
+    - run: sudo cp vendor/prestashop/php-dev-tools/templates/phpstan/phpstan.neon phpstan.neon
+    - run: sudo chown -R $USER:$USER phpstan.neon
+    - run: sudo echo '  excludes_analyse:' >> phpstan.neon
+    - run: sudo echo '    - %currentWorkingDirectory%/vendor/*' >> phpstan.neon
+    - run: _PS_ROOT_DIR_=./ php ~/.composer/vendor/bin/phpstan.phar --configuration=phpstan.neon analyse ./
+  
+  php-cs-fixer:
+    name: PHP-CS-Fixer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.0.0
+      - name: Run PHP-CS-Fixer
+        uses: php-actions/composer@v4
+      - run: sudo composer require --dev prestashop/php-dev-tools  
+      - run: composer global require phpstan/phpstan:^0.12
+      - run: sudo cp vendor/prestashop/php-dev-tools/templates/cs-fixer/php_cs.dist .php_cs.dist
+      - run: sudo cp vendor/prestashop/php-dev-tools/templates/cs-fixer/prettyci.composer.json .prettyci.composer.json
+      - run: php vendor/bin/php-cs-fixer fix
+        
