@@ -777,6 +777,9 @@ class ALTAPAY extends PaymentModule
      * @param array|null $orderLineGiftWrap
      * @param string     $orderID
      * @param bool       $goodWillRefund
+     * @param bool       $isSetBackendDiscount
+     * @param int|float  $backendDiscount
+     * @param bool       $fullCapture
      *
      * @return array
      */
@@ -788,7 +791,8 @@ class ALTAPAY extends PaymentModule
         $isSetBackendDiscount = false,
         $backendDiscount,
         $fullCapture = false
-    ) {
+    )
+    {
         $i                             = 0;
         $priceAfterDiscountRounded     = 0;
         $priceAfterDiscount            = 0;
@@ -864,7 +868,7 @@ class ALTAPAY extends PaymentModule
                     $altapayOrderLines[$i]['discount']  = $discountPercentage;
                     $compensationQuantity               += $productQuantity;
                 } else {
-                    $altapayOrderLines[$i] = $this->getShippingInfo( $orderID, $cartRuleDiscounts);
+                    $altapayOrderLines[$i] = $this->getShippingInfo($orderID, $cartRuleDiscounts);
                 }
             } else {
                 continue;
@@ -885,18 +889,18 @@ class ALTAPAY extends PaymentModule
             $altapayOrderLines[$i]['goodsType'] = 'item';
             $i++;
         }
-        if($isSetBackendDiscount && $backendDiscount > 0){
+        if ($isSetBackendDiscount && $backendDiscount > 0) {
             $altapayOrderLines[$i]['description'] = 'Backend Discount'; // Description of item.
             $altapayOrderLines[$i]['itemId']      = 'bk-dsc'; // Item number (SKU)
             $altapayOrderLines[$i]['quantity']    = 1;
-            $altapayOrderLines[$i]['unitPrice'] = '-'.$backendDiscount;
+            $altapayOrderLines[$i]['unitPrice']   = '-' . $backendDiscount;
             // Optional keys for orderLines:
-            $altapayOrderLines[$i]['taxAmount'] = 0; 
+            $altapayOrderLines[$i]['taxAmount'] = 0;
             // The type of order line it is. Should be one of the following: shipment|handling|item|refund
             $altapayOrderLines[$i]['goodsType'] = 'item';
             $i++;
         }
-        if($fullCapture){
+        if ($fullCapture) {
             $altapayOrderLines[$i] = $this->getShippingInfo($orderID, $cartRuleDiscounts);
             $i++;
         }
@@ -916,12 +920,18 @@ class ALTAPAY extends PaymentModule
         return $altapayOrderLines;
     }
 
+    /**
+     * @param string $orderID
+     * @param array $cartRuleDiscounts
+     *
+     * @return array
+     */
     public function getShippingInfo($orderID, $cartRuleDiscounts)
     {
-        $shippingDiscount = 0;
+        $shippingDiscount  = 0;
         $altapayOrderLines = [];
-        $orderDetail    = new Order((int)$orderID);
-        $shippingDetail = reset($orderDetail->getShipping());  
+        $orderDetail       = new Order((int)$orderID);
+        $shippingDetail    = reset($orderDetail->getShipping());
         foreach ($cartRuleDiscounts as $cartRuleDiscount) {
             if ($cartRuleDiscount['shipping']) {
                 $shippingDiscount = 100;
@@ -939,7 +949,7 @@ class ALTAPAY extends PaymentModule
            Taxamount should be the total tax amount for order line.
         */
         $altapayOrderLines['taxAmount'] = $shippingDetail['shipping_cost_tax_incl']
-                                              - $shippingDetail['shipping_cost_tax_excl'];
+                                          - $shippingDetail['shipping_cost_tax_excl'];
         // The type of order line it is. Should be one of the following: shipment|handling|item|refund
         $altapayOrderLines['goodsType'] = 'shipment';
 
