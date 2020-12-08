@@ -1,7 +1,7 @@
 {
     "name": "altapay/plugin-prestashop",
     "description": "Altapay: Payments less complicated",
-    "require": {
+    "require-dev": {
         "prestashop/php-dev-tools": "^3.11",
         "phpstan/phpstan": "^0.12"
     },

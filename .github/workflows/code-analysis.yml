@@ -22,5 +22,5 @@ jobs:
       - name: Install packages and run PHP CS Fixer
         uses: actions/checkout@v2.0.0
       - run: composer install
-      - run: php vendor/bin/php-cs-fixer fix
-        
+      - run: php vendor/bin/php-cs-fixer fix --dry-run --diff
+
