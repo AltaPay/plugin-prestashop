@@ -8,14 +8,14 @@
   -->
 
 <module>
-    <name>altapay</name>
-    <displayName><![CDATA[AltaPay for PrestaShop]]></displayName>
-    <version><![CDATA[3.1.0]]></version>
-    <description><![CDATA[AltaPay: Payments less complicated]]></description>
-    <author><![CDATA[AltaPay A/S]]></author>
-    <tab><![CDATA[payments_gateways]]></tab>
+	<name>altapay</name>
+	<displayName><![CDATA[AltaPay for PrestaShop]]></displayName>
+	<version><![CDATA[3.3.1]]></version>
+	<description><![CDATA[AltaPay: Payments less complicated]]></description>
+	<author><![CDATA[AltaPay A/S]]></author>
+	<tab><![CDATA[payments_gateways]]></tab>
 	<confirmUninstall><![CDATA[Are you sure about removing these details?]]></confirmUninstall>
-    <is_configurable>1</is_configurable>
-    <need_instance>1</need_instance>
+	<is_configurable>1</is_configurable>
+	<need_instance>1</need_instance>
 	<limited_countries></limited_countries>
 </module>

@@ -7,10 +7,15 @@
  * file that was distributed with this source code.
  */
 
-require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
+require_once _PS_MODULE_DIR_ . 'altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
 
-class ALTAPAYPaymentModuleFrontController extends ModuleFrontController
+class AltapayPaymentModuleFrontController extends ModuleFrontController
 {
+    /**
+     * @var bool
+     */
+    public $display_column_left;
+
     /**
      * Method to follow when payment is being initiated with payment method
      *
@@ -45,7 +50,7 @@ class ALTAPAYPaymentModuleFrontController extends ModuleFrontController
             setcookie('selectedCreditCard', null, -1, '/');
         }
 
-        $result = $this->module->createTransaction($payment_method, $savedCreditCard);
+        $result = $this->module->createTransaction($savedCreditCard, $payment_method);
 
         if ($result['success']) {
             $payment_form_url = $result['payment_form_url'];

@@ -240,7 +240,7 @@
         {if count($cart_summary.discounts)}
             <tbody>
             {foreach from=$cart_summary.discounts item=discount name=discountLoop}
-                {if (float)$discount.value_real == 0}
+                {if {$discount.value_real|floatval} == 0}
                     {continue}
                 {/if}
                 <tr class="cart_discount {if $smarty.foreach.discountLoop.last}last_item{elseif $smarty.foreach.discountLoop.first}first_item{else}item{/if}" id="cart_discount_{$discount.id_discount}">

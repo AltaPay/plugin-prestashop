@@ -7,13 +7,13 @@
  * file that was distributed with this source code.
  */
 
-require_once dirname(__DIR__, 2) . '/helpers.php';
-
 class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontController
 {
     /**
      * Method to follow when order is being successfully processed
      * @return void
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public function initContent()
     {
