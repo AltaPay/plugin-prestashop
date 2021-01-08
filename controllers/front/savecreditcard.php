@@ -9,10 +9,10 @@
 
 class ALTAPAYsavecreditcardModuleFrontController extends ModuleFrontController
 {
-
     /**
      * Method for saving credit card in database
      * @return void
+     * @throws PrestaShopDatabaseException
      */
     public function postProcess()
     {

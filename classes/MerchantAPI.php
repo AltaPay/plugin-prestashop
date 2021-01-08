@@ -7,8 +7,23 @@
  * file that was distributed with this source code.
  */
 
-require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/helpers.php';
+namespace Altapay\classes;
 
+use AltapayAPIPayment;
+use AltapayCaptureResponse;
+use AltapayConnectionFailedException;
+use AltapayInvalidResponseException;
+use AltapayMerchantAPI;
+use AltapayMerchantAPIException;
+use AltapayRefundResponse;
+use AltapayReleaseResponse;
+use AltapayRequestTimeoutException;
+use AltapayUnauthorizedAccessException;
+use AltapayUnknownMerchantAPIException;
+use SimpleXMLElement;
+
+require_once _PS_MODULE_DIR_ . 'altapay/lib/altapay/altapay-php-sdk/lib/helpers.php';
+require_once _PS_MODULE_DIR_ . 'altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
 /**
  * Wrapper for interacting with AltaPay merchant API
  */
@@ -38,8 +53,8 @@ class MerchantAPI
      * @param string $api_url
      * @param string $api_username
      * @param string $api_password
-     * @throws Exception
-     * @return void
+     *
+     * @throws AltapayMerchantAPIException
      */
     public function init($api_url, $api_username, $api_password)
     {
@@ -52,13 +67,14 @@ class MerchantAPI
     /**
      * Method to get payment details against payment Id
      * @param int $paymentId
-     * @return AltapayAPIPayment
+     *
+     * @return AltapayAPIPayment|null
      * @throws AltapayConnectionFailedException
      * @throws AltapayInvalidResponseException
+     * @throws AltapayMerchantAPIException
      * @throws AltapayRequestTimeoutException
      * @throws AltapayUnauthorizedAccessException
      * @throws AltapayUnknownMerchantAPIException
-     * @return AltapayAPIPayment
      */
     public function getPaymentDetails($paymentId)
     {
@@ -73,11 +89,18 @@ class MerchantAPI
 
     /**
      * Method to trigger capture action
-     * @param int $paymentId
+     *
+     * @param int   $paymentId
      * @param array $orderLines
-     * @param int $amount
+     * @param int   $amount
+     *
      * @return AltapayCaptureResponse
+     * @throws AltapayConnectionFailedException
+     * @throws AltapayInvalidResponseException
      * @throws AltapayMerchantAPIException
+     * @throws AltapayRequestTimeoutException
+     * @throws AltapayUnauthorizedAccessException
+     * @throws AltapayUnknownMerchantAPIException
      */
     public function captureAmount($paymentId, $orderLines = [], $amount = 0)
     {
@@ -93,11 +116,18 @@ class MerchantAPI
 
     /**
      * Method to trigger refund action
-     * @param int $paymentId
+     *
+     * @param int   $paymentId
      * @param array $orderLines
-     * @param int $amount
+     * @param int   $amount
+     *
      * @return AltapayRefundResponse
+     * @throws AltapayConnectionFailedException
+     * @throws AltapayInvalidResponseException
      * @throws AltapayMerchantAPIException
+     * @throws AltapayRequestTimeoutException
+     * @throws AltapayUnauthorizedAccessException
+     * @throws AltapayUnknownMerchantAPIException
      */
     public function refundAmount($paymentId, $orderLines =[], $amount = 0)
     {
@@ -113,10 +143,17 @@ class MerchantAPI
 
     /**
      * Method to trigger release action
-     * @param int $paymentId
+     *
+     * @param int    $paymentId
      * @param string $transactionAction
+     *
      * @return AltapayReleaseResponse
+     * @throws AltapayConnectionFailedException
+     * @throws AltapayInvalidResponseException
      * @throws AltapayMerchantAPIException
+     * @throws AltapayRequestTimeoutException
+     * @throws AltapayUnauthorizedAccessException
+     * @throws AltapayUnknownMerchantAPIException
      */
     public function release($paymentId, $transactionAction)
     {
@@ -134,6 +171,7 @@ class MerchantAPI
      * Method for validation of merchant details
      * @throws AltapayMerchantAPIException
      * @return void
+     * @throws AltapayMerchantAPIException
      */
     private function validateConfiguration()
     {
@@ -157,7 +195,7 @@ class MerchantAPI
     }
 
     /**
-     * @param /SimpleXMLElement $xml
+     * @param SimpleXMLElement $xml
      * @return array
      */
     public function xmlParser($xml)

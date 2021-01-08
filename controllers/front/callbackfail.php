@@ -7,8 +7,7 @@
  * file that was distributed with this source code.
  */
 
-require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
-require_once _PS_MODULE_DIR_ . '/altapay/helpers.php';
+require_once _PS_MODULE_DIR_ . 'altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
 
 class AltapayCallbackfailModuleFrontController extends ModuleFrontController
 {
@@ -32,9 +31,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
         $xml = Tools::getValue('xml');
         $callbackHandler = new AltapayCallbackHandler();
         $response = $callbackHandler->parseXmlResponse($xml);
-
         $shopOrderId = $response->getPrimaryPayment()->getShopOrderId();
-
         // Load the cart
         $cart = getCartFromUniqueId($shopOrderId);
         if (!Validate::isLoadedObject($cart)) {
@@ -62,12 +59,6 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             $mNa = $this->module->name;
             $mId = $this->module->id;
             Logger::addLog('Payment failure for cart ' . $cId . '. Error Message: ' . $mErM, 3, 2001, $mNa, $mId, true);
-
-            /* Redirect the user back to the checkout payment step,
-            assume a failure occurred creating the URL until a payment URL is received*/
-            $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
-
-            $css_dir = null;
             $this->context->smarty->assign(array(
                 'errorText' => $response->getCardHolderErrorMessage(),
                 'unique_id' => $response->getPrimaryPayment()->getShopOrderId(),
@@ -75,7 +66,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                 'this_path' => $this->module->getPathUri(),
                 'this_path_altapay' => $this->module->getPathUri(),
                 'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $mNa . '/',
-                'css_dir' => $css_dir,
+                'css_dir' => null,
             ));
             // PrestaShop 1.6 and PrestaShop 1.7 have different declarations of $this->setTemplate()
             if (_PS_VERSION_ >= '1.7.0.0') {

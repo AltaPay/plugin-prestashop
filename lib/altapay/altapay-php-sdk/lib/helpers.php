@@ -3,7 +3,7 @@ spl_autoload_register('autoLoader');
 
 /**
  * Method for autoload all the classes within directory
- * @param $class
+ * @param string $class
  * @param null $dir
  */
 function autoLoader($class, $dir = null)

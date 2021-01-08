@@ -8,7 +8,6 @@
  */
 
 require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
-require_once _PS_MODULE_DIR_ . '/altapay/helpers.php';
 require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
 
 class AltapayCallbackokModuleFrontController extends ModuleFrontController
@@ -79,7 +78,6 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $currencyPaidID    = (int)$currencyPaid->id;
                 $customerSecureKey = $customer->secure_key;
                 $cartID            = $cart->id;
-                $paymentMethod     = $paymentMethod;
                 $this->module->validateOrder($cartID, $orderStatus, $amountPaid, $paymentMethod, null, null,
                     $currencyPaidID, false, $customerSecureKey);
 

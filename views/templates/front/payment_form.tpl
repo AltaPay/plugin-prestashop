@@ -18,10 +18,9 @@
 
     div#order-detail-content {
         width: 70%;
-        margin: 0 auto;
         padding: 10px 20px 30px;
         background: #2fb5d22b;
-        margin-bottom: 40px;
+        margin: 0 auto 40px;
     }
 
     .table-bordered, .table-bordered td, .table-bordered th {

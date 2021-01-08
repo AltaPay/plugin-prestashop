@@ -1,0 +1,27 @@
+{
+  "name": "altapay/altapay-for-prestashop",
+  "license": "MIT",
+  "description": "AltaPay: Payments less complicated",
+  "keywords": [
+    "payment",
+    "altapay"
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "config": {
+    "preferred-install": "dist",
+    "sort-packages": true
+  },
+  "require": {
+    "php": "^5.6 || ^7.0"
+  },
+  "autoload": {
+    "files": ["helpers.php"],
+    "psr-0": {
+      "Altapay_": "Models/"
+    },
+    "psr-4": {
+      "Altapay\\": "classes/"
+    }
+  }
+}
