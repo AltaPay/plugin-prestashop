@@ -58,7 +58,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             $cId = $cart->id;
             $mNa = $this->module->name;
             $mId = $this->module->id;
-            Logger::addLog('Payment failure for cart ' . $cId . '. Error Message: ' . $mErM, 3, 2001, $mNa, $mId, true);
+            PrestaShopLogger::addLog('Payment failure for cart ' . $cId . '. Error Message: ' . $mErM, 3, 2001, $mNa, $mId, true);
             $this->context->smarty->assign(array(
                 'errorText' => $response->getCardHolderErrorMessage(),
                 'unique_id' => $response->getPrimaryPayment()->getShopOrderId(),

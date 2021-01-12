@@ -11,10 +11,10 @@ require_once _PS_MODULE_DIR_ . 'altapay/lib/altapay/altapay-php-sdk/lib/AltapayM
 
 class AltapayPaymentModuleFrontController extends ModuleFrontController
 {
-    /**
-     * @var bool
-     */
-    public $display_column_left;
+     /**
+      * @var bool
+      */
+     public $display_column_left;
 
     /**
      * Method to follow when payment is being initiated with payment method

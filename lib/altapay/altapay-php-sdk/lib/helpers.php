@@ -18,7 +18,7 @@ function autoLoader($class, $dir = null)
     }
 
     $listDir = scandir(realpath($dir));
-    if (isset($listDir) && !empty($listDir)) {
+    if (!empty($listDir)) {
         foreach ($listDir as $listDirkey => $subDir) {
             if ($subDir === '.' || $subDir === '..') {
                 continue;

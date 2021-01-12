@@ -25,6 +25,10 @@ class ALTAPAY extends PaymentModule
     private $postErrors = [];
     private $paymentMethodIconDir = 'views/img/payment_icons';
     const ALTAPAY = " {AltaPay} ";
+    public $is_eu_compatible;
+    public $v16;
+    public $v17;
+    public $fields_form;
 
     public function __construct()
     {
@@ -32,10 +36,10 @@ class ALTAPAY extends PaymentModule
         $this->tab                    = 'payments_gateways';
         $this->version                = '3.3.1';
         $this->v16                    = _PS_VERSION_ >= '1.6.1.24';
-        $this->v17                    = _PS_VERSION_ >= '1.7.6.9';
+        $this->v17                    = _PS_VERSION_ >= '1.7.7.0';
         $this->author                 = 'AltaPay A/S';
         $this->is_eu_compatible       = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.6.9'];
+        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.7.0'];
         $this->currencies             = true;
         $this->currencies_mode        = 'checkbox';
         $this->bootstrap              = true;
@@ -571,7 +575,7 @@ class ALTAPAY extends PaymentModule
                 throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not login to the Merchant API: ' . $resErrMsg, $resErrCode);
             }
         } catch (Exception $e) {
-            Logger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
+            PrestaShopLogger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
             Tools::redirectAdmin($this->context->link->getAdminLink('AdminModules', false) . '&configure='
                                  . $this->name . '&errorMessage&token=' . Tools::getAdminTokenLite('AdminModules'));
             exit();
@@ -1910,7 +1914,7 @@ class ALTAPAY extends PaymentModule
         $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
         if (!is_object($terminal)) {
             $message = 'Could not determine remote terminal - possibly currency mismatch';
-            Logger::addLog($message, 3, 0, $this->name, $this->id, true);
+            PrestaShopLogger::addLog($message, 3, 0, $this->name, $this->id, true);
 
             return [
                 'success'          => false,
@@ -2045,7 +2049,7 @@ class ALTAPAY extends PaymentModule
                 throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not login to the Merchant API: ' . $resErrMsg, $resErrCode);
             }
         } catch (Exception $e) {
-            Logger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
+            PrestaShopLogger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
 
             return [
                 'success'          => false,
@@ -2092,7 +2096,7 @@ class ALTAPAY extends PaymentModule
                 'payment_form_url' => $response->getRedirectURL(),
             ];
         } catch (Exception $e) {
-            Logger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
+            PrestaShopLogger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
 
             return [
                 'success'          => false,

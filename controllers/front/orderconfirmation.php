@@ -10,6 +10,11 @@
 class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontController
 {
     /**
+     * @var bool
+     */
+    public $display_column_left;
+
+    /**
      * Method to follow when order is being successfully processed
      * @return void
      * @throws PrestaShopDatabaseException

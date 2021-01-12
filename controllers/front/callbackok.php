@@ -95,7 +95,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 // Unexpected scenario
                 $moduleName = $this->module->name;
                 $moduleID   = $this->module->id;
-                Logger::addLog('Callback ok received but payment was unsuccessful', 3, '1004', $moduleName, $moduleID,
+                PrestaShopLogger::addLog('Callback ok received but payment was unsuccessful', 3, '1004', $moduleName, $moduleID,
                     true);
                 echo $this->module->l('This payment method is not available 1004.', 'callbackok');
 
