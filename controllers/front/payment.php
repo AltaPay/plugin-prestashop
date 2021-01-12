@@ -59,7 +59,8 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction` 
 				(id_cart, payment_form_url, unique_id, amount, date_add) VALUES ' .
                    "('" . $cart->id . "', '" . $payment_form_url . "', '" . $result['uniqueid'] . "', '"
-                   . $result['amount'] . "', '" . time() . "')";
+                   . $result['amount'] . "', '" . time() . "')" .
+                   ' ON DUPLICATE KEY UPDATE `amount` = ' . $result['amount'];
             Db::getInstance()->Execute($sql);
 
             // Redirect user to payment form url
