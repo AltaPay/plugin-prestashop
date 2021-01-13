@@ -2269,7 +2269,8 @@ class ALTAPAY extends PaymentModule
         if ($orderDetails) {
             $orderDetails = json_encode($orderDetails);
             $sql          = 'INSERT INTO ' . _DB_PREFIX_ . 'altapay_cartInfo (id_cart, productDetails, date_add) VALUES ' . "('" . $cartID . "', '"
-                            . $orderDetails . "', '" . time() . "')";
+                            . $orderDetails . "', '" . time() . "')" .
+                            ' ON DUPLICATE KEY UPDATE `productDetails` = ' . "'".$orderDetails."'";
             Db::getInstance()->Execute($sql);
         }
 
