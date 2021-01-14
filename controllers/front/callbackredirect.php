@@ -12,6 +12,7 @@ class AltapayCallbackredirectModuleFrontController extends ModuleFrontController
     /**
      * Method to follow when callback redirect is being triggered
      * @return void
+     * @throws PrestaShopException
      */
     public function postProcess()
     {

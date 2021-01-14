@@ -14,6 +14,7 @@ class ALTAPAYdeletecreditcardModuleFrontController extends ModuleFrontController
      * Method to follow when saved credit card is being deleted from user account page
      *
      * @return void
+     * @throws PrestaShopDatabaseException
      */
     public function postProcess()
     {

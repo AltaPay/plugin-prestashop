@@ -7,13 +7,12 @@
  * file that was distributed with this source code.
  */
 
-class Terminal extends ObjectModel
+class Altapay_Models_Terminal extends \ObjectModel
 {
     public $id_terminal;
+    public $currency;
     public $remote_name;
     public $payment_type;
-    public $currency;
-
     /** @var bool Enabled or disabled */
     public $active;
     public $position;
@@ -36,34 +35,41 @@ class Terminal extends ObjectModel
 
     /**
      * Method to get saved terminals from database
-     * @return array
+     *
+     * @return array|false|PDOStatement|resource|null
+     * @throws PrestaShopDatabaseException
      */
     public static function getTerminals()
     {
-        return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS("
+        return \Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS("
 			SELECT * FROM `"._DB_PREFIX_."altapay_terminals` ORDER BY `id_terminal` ASC
 		");
     }
 
     /**
      * Method to get active terminals from database
-     * @return array
+     *
+     * @return array|false|PDOStatement|resource|null
+     * @throws PrestaShopDatabaseException
      */
     public static function getActiveTerminals()
     {
-        return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS("
+        return \Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS("
 			SELECT * FROM `"._DB_PREFIX_."altapay_terminals` WHERE active = 1 ORDER BY `display_name` ASC
 		");
     }
 
     /**
      * Method to get terminals against a given currency from database
+     *
      * @param bool $currency
-     * @return array
+     *
+     * @return array|false|PDOStatement|resource|null
+     * @throws PrestaShopDatabaseException
      */
     public static function getActiveTerminalsForCurrency($currency = false)
     {
-        return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS("
+        return \Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS("
             SELECT * FROM `"
             ._DB_PREFIX_."altapay_terminals` WHERE active = 1 AND currency = '".$currency."' ORDER BY `display_name` ASC
 		");

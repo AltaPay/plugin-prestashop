@@ -10,8 +10,15 @@
 class ALTAPAYshowsavedcreditcardsModuleFrontController extends ModuleFrontController
 {
     /**
+     * @var bool
+     */
+    public $display_column_left;
+
+    /**
      * Method for displaying saved credit cards in user account page
      * @return void
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public function initContent()
     {

@@ -25,7 +25,7 @@
 function transactionInfo($transactionInfo = array())
 {
     $pluginName    = 'altapay';
-    $pluginVersion = '3.1.0';
+    $pluginVersion = '3.3.1';
 
     // Transaction info
     $transactionInfo['ecomPlatform']      = 'PrestaShop';
