@@ -5,6 +5,9 @@ parameters:
   paths:
     - %currentWorkingDirectory%
   reportUnmatchedIgnoredErrors: false
-  level: max
+  level: 0
   excludes_analyse:
     - %currentWorkingDirectory%/vendor/*
+  scanDirectories:
+    - ../../
+    - ../../classes/
