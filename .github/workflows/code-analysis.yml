@@ -17,7 +17,6 @@ jobs:
        uses: shivammathur/setup-php@v2
        with:
          php-version: ${{ matrix.php-versions }}
-         extensions: intl #optional
          ini-values: "post_max_size=256M" #optional
          
      - name: Install prestashop                              
@@ -38,8 +37,6 @@ jobs:
        #working-directory: prestashop/modules/altapay
      - name: Install composer and run PhpStan
        run: |
-         pwd
-         ls -al
          composer install
          _PS_ROOT_DIR_=./ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
        working-directory: prestashop/modules/altapay
