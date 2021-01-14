@@ -21,8 +21,7 @@
  *
  * @return array
  */
-
-function transactionInfo($transactionInfo = array())
+function transactionInfo($transactionInfo = [])
 {
     $pluginName    = 'altapay';
     $pluginVersion = '3.3.1';
@@ -46,13 +45,13 @@ function determinePaymentMethodForDisplay($response)
 {
     $paymentNature = $response->getPrimaryPayment()->getPaymentNature();
 
-    if ($paymentNature === "Wallet") {
+    if ($paymentNature === 'Wallet') {
         return $response->getPrimaryPayment()->getPaymentSchemeName();
     }
-    if ($paymentNature === "CreditCard") {
+    if ($paymentNature === 'CreditCard') {
         return $paymentNature;
     }
-    if ($paymentNature === "CreditCardWallet") {
+    if ($paymentNature === 'CreditCardWallet') {
         return $response->getPrimaryPayment()->getPaymentSchemeName();
     }
 
@@ -103,7 +102,7 @@ function getOrderFromUniqueId($uniqueId)
  *
  * @return bool
  */
-function markAsCaptured($paymentId, $orderlines = array())
+function markAsCaptured($paymentId, $orderlines = [])
 {
     $sql = 'UPDATE ' . _DB_PREFIX_ . 'altapay_order SET requireCapture = 0 WHERE payment_id = ' . $paymentId
            . ' LIMIT 1';
@@ -143,7 +142,7 @@ function markAsCaptured($paymentId, $orderlines = array())
  *
  * @return bool
  */
-function markAsRefund($paymentId, $orderlines = array())
+function markAsRefund($paymentId, $orderlines = [])
 {
     $sqlRequireCapture = 'SELECT requireCapture 
     FROM ' . _DB_PREFIX_ . 'altapay_order WHERE payment_id = ' . $paymentId;
@@ -281,6 +280,7 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
  * @param string $date
  *
  * @return string
+ *
  * @throws Exception
  */
 function convertDateTimeFormat($date)
@@ -290,20 +290,20 @@ function convertDateTimeFormat($date)
     return $dateTime->format('Y-m-d');
 }
 
-
 /**
  * Method for AltaPay api login
  *
  * @return string|AltapayMerchantAPI
+ *
  * @throws Exception
  */
 function apiLogin()
 {
-    $config = Configuration::getMultiple(array(
+    $config = Configuration::getMultiple([
         'ALTAPAY_USERNAME',
         'ALTAPAY_PASSWORD',
         'ALTAPAY_URL'
-    ));
+    ]);
 
     $api = new AltapayMerchantAPI(
         $config['ALTAPAY_URL'],

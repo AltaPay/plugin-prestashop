@@ -6,15 +6,14 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 require_once _PS_MODULE_DIR_ . 'altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
 
 class AltapayPaymentModuleFrontController extends ModuleFrontController
 {
-     /**
-      * @var bool
-      */
-     public $display_column_left;
+    /**
+     * @var bool
+     */
+    public $display_column_left;
 
     /**
      * Method to follow when payment is being initiated with payment method
@@ -37,7 +36,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         */
         $controller       = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
         $payment_form_url = $this->context->link->getPageLink($controller, true, null,
-                "step=3&altapay_unavailable=1") . '#altapay_unavailable';
+                'step=3&altapay_unavailable=1') . '#altapay_unavailable';
 
         $payment_method = Tools::getValue('method', false);
 

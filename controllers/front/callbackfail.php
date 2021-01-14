@@ -6,13 +6,13 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 require_once _PS_MODULE_DIR_ . 'altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
 
 class AltapayCallbackfailModuleFrontController extends ModuleFrontController
 {
     /**
      * Method to add external assets
+     *
      * @return void
      */
     public function setMedia()
@@ -23,7 +23,9 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
 
     /**
      * Method to follow when callback fail is being triggered
+     *
      * @throws Exception
+     *
      * @return void
      */
     public function postProcess()
@@ -46,7 +48,6 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             $q = 'UPDATE `' . _DB_PREFIX_ . 'altapay_transaction` set `is_cancelled`=1 WHERE `unique_id`=\'' .$pI. '\'';
             Db::getInstance()->Execute($q);
 
-
             // Redirect back to either standard or quick checkout process
             $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
             $pLink = $this->context->link->getPageLink($controller);
@@ -59,7 +60,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             $mNa = $this->module->name;
             $mId = $this->module->id;
             PrestaShopLogger::addLog('Payment failure for cart ' . $cId . '. Error Message: ' . $mErM, 3, 2001, $mNa, $mId, true);
-            $this->context->smarty->assign(array(
+            $this->context->smarty->assign([
                 'errorText' => $response->getCardHolderErrorMessage(),
                 'unique_id' => $response->getPrimaryPayment()->getShopOrderId(),
                 'payment_id' => $response->getPrimaryPayment()->getId(),
@@ -67,7 +68,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                 'this_path_altapay' => $this->module->getPathUri(),
                 'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $mNa . '/',
                 'css_dir' => null,
-            ));
+            ]);
             // PrestaShop 1.6 and PrestaShop 1.7 have different declarations of $this->setTemplate()
             if (_PS_VERSION_ >= '1.7.0.0') {
                 $this->setTemplate('module:altapay/views/templates/front/payment_error17.tpl');

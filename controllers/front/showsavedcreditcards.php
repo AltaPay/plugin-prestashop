@@ -6,7 +6,6 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 class ALTAPAYshowsavedcreditcardsModuleFrontController extends ModuleFrontController
 {
     /**
@@ -16,7 +15,9 @@ class ALTAPAYshowsavedcreditcardsModuleFrontController extends ModuleFrontContro
 
     /**
      * Method for displaying saved credit cards in user account page
+     *
      * @return void
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */

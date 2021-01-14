@@ -15,6 +15,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
      * Method to follow when callback notification is being triggered
      *
      * @return void
+     *
      * @throws Exception
      */
     public function postProcess()
