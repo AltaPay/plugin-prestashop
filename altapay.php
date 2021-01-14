@@ -31,12 +31,12 @@ class ALTAPAY extends PaymentModule
     {
         $this->name                   = 'altapay';
         $this->tab                    = 'payments_gateways';
-        $this->version                = '3.3.0';
+        $this->version                = '3.3.1';
         $this->v16                    = _PS_VERSION_ >= '1.6.1.24';
         $this->v17                    = _PS_VERSION_ >= '1.7.6.9';
         $this->author                 = 'AltaPay A/S';
         $this->is_eu_compatible       = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.6.8'];
+        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.6.9'];
         $this->currencies             = true;
         $this->currencies_mode        = 'checkbox';
         $this->bootstrap              = true;
@@ -777,6 +777,9 @@ class ALTAPAY extends PaymentModule
      * @param array|null $orderLineGiftWrap
      * @param string     $orderID
      * @param bool       $goodWillRefund
+     * @param bool       $isSetBackendDiscount
+     * @param int|float  $backendDiscount
+     * @param bool       $fullCapture
      *
      * @return array
      */
@@ -784,7 +787,10 @@ class ALTAPAY extends PaymentModule
         $orderLines,
         $orderLineGiftWrap = null,
         $orderID,
-        $goodWillRefund = false
+        $goodWillRefund = false,
+        $isSetBackendDiscount = false,
+        $backendDiscount,
+        $fullCapture = false
     ) {
         $i                             = 0;
         $priceAfterDiscountRounded     = 0;
@@ -861,29 +867,7 @@ class ALTAPAY extends PaymentModule
                     $altapayOrderLines[$i]['discount']  = $discountPercentage;
                     $compensationQuantity               += $productQuantity;
                 } else {
-                    $shippingDiscount = 0;
-                    foreach ($cartRuleDiscounts as $cartRuleDiscount) {
-                        if ($cartRuleDiscount['shipping']) {
-                            $shippingDiscount = 100;
-                        }
-                    }
-                    $orderDetail    = new Order((int)$orderID);
-                    $shippingDetail = reset($orderDetail->getShipping());              
-                    // Mandatory keys for orderLines:
-                    $altapayOrderLines[$i]['description'] = $shippingDetail['carrier_name']; // Description of item.
-                    $altapayOrderLines[$i]['itemId']      = $shippingDetail['carrier_name']; // Item number (SKU)
-                    $altapayOrderLines[$i]['quantity']    = 1;
-                    // Unit price excluding sales tax, only two digits.
-                    $altapayOrderLines[$i]['unitPrice'] = $shippingDetail['shipping_cost_tax_excl'];
-                    $altapayOrderLines[$i]['discount']  = $shippingDiscount;
-
-                    /* Optional keys for orderLines
-                       Taxamount should be the total tax amount for order line.
-                    */
-                    $altapayOrderLines[$i]['taxAmount'] = $shippingDetail['shipping_cost_tax_incl']
-                                                          - $shippingDetail['shipping_cost_tax_excl'];
-                    // The type of order line it is. Should be one of the following: shipment|handling|item|refund
-                    $altapayOrderLines[$i]['goodsType'] = 'shipment';
+                    $altapayOrderLines[$i] = $this->getShippingInfo($orderID, $cartRuleDiscounts);
                 }
             } else {
                 continue;
@@ -904,6 +888,21 @@ class ALTAPAY extends PaymentModule
             $altapayOrderLines[$i]['goodsType'] = 'item';
             $i++;
         }
+        if ($isSetBackendDiscount && $backendDiscount > 0) {
+            $altapayOrderLines[$i]['description'] = 'Backend Discount'; // Description of item.
+            $altapayOrderLines[$i]['itemId']      = 'bk-dsc'; // Item number (SKU)
+            $altapayOrderLines[$i]['quantity']    = 1;
+            $altapayOrderLines[$i]['unitPrice']   = '-' . $backendDiscount;
+            // Optional keys for orderLines:
+            $altapayOrderLines[$i]['taxAmount'] = 0;
+            // The type of order line it is. Should be one of the following: shipment|handling|item|refund
+            $altapayOrderLines[$i]['goodsType'] = 'item';
+            $i++;
+        }
+        if ($fullCapture) {
+            $altapayOrderLines[$i] = $this->getShippingInfo($orderID, $cartRuleDiscounts);
+            $i++;
+        }
         if ($compensationAmountPerQuantity > 0) {
             $altapayOrderLines[$i]['description'] = 'compensation'; // Description of item.
             $altapayOrderLines[$i]['itemId']      = 'comp-1'; // Item number (SKU)
@@ -916,6 +915,42 @@ class ALTAPAY extends PaymentModule
             // The type of order line it is. Should be one of the following: shipment|handling|item|refund
             $altapayOrderLines[$i]['goodsType'] = 'item';
         }
+
+        return $altapayOrderLines;
+    }
+
+    /**
+     * @param string $orderID
+     * @param array  $cartRuleDiscounts
+     *
+     * @return array
+     */
+    public function getShippingInfo($orderID, $cartRuleDiscounts)
+    {
+        $shippingDiscount  = 0;
+        $altapayOrderLines = [];
+        $orderDetail       = new Order((int)$orderID);
+        $shippingDetail    = reset($orderDetail->getShipping());
+        foreach ($cartRuleDiscounts as $cartRuleDiscount) {
+            if ($cartRuleDiscount['shipping']) {
+                $shippingDiscount = 100;
+            }
+        }
+        // Mandatory keys for orderLines:
+        $altapayOrderLines['description'] = $shippingDetail['carrier_name']; // Description of item.
+        $altapayOrderLines['itemId']      = $shippingDetail['carrier_name']; // Item number (SKU)
+        $altapayOrderLines['quantity']    = 1;
+        // Unit price excluding sales tax, only two digits.
+        $altapayOrderLines['unitPrice'] = $shippingDetail['shipping_cost_tax_excl'];
+        $altapayOrderLines['discount']  = $shippingDiscount;
+
+        /* Optional keys for orderLines
+           Taxamount should be the total tax amount for order line.
+        */
+        $altapayOrderLines['taxAmount'] = $shippingDetail['shipping_cost_tax_incl']
+                                          - $shippingDetail['shipping_cost_tax_excl'];
+        // The type of order line it is. Should be one of the following: shipment|handling|item|refund
+        $altapayOrderLines['goodsType'] = 'shipment';
 
         return $altapayOrderLines;
     }
@@ -1325,7 +1360,7 @@ class ALTAPAY extends PaymentModule
             return null;
         }
         if ($newStatus->id == $shippedStatus) { // A capture will be made if necessary
-            $this->performCapture($paymentID, $params);
+            $this->performCapture($paymentID, $params, true, true);
         }
 
         return $results;
@@ -1356,13 +1391,24 @@ class ALTAPAY extends PaymentModule
      *
      * @return string
      */
-    public function performCapture($paymentID, $params, $captureRemainedAmount = true)
+    public function performCapture($paymentID, $params, $captureRemainedAmount = true, $statusCapture = false)
     {
         try {
             $api            = new MerchantAPI();
             $productDetails = new OrderDetail;
+            $cart           = $this->context->cart;
+            $orderSummary   = $cart->getSummaryDetails();
             $api->init($this->getAltapayUrl(), $this->getAPIUsername(), $this->getAPIPassword());
-            $paymentDetails      = $api->getPaymentDetails($paymentID);
+            $paymentDetails  = $api->getPaymentDetails($paymentID);
+            $orderDetail     = new Order((int)$params['id_order']);
+            $discountData    = $this->getorderCartRule($params['id_order']);
+            $backendDiscount = 0;
+            foreach ($discountData as $key => $discount) {
+                $idCartRule = $discount['id_cart_rule'];
+                if ($this->enableBackendDiscount($orderSummary['discounts'], $idCartRule)) {
+                    $backendDiscount += $discountData[$key]['value'];
+                }
+            }
             $orderReservedAmount = $paymentDetails->getReservedAmount();
             $orderCapturedAmount = $paymentDetails->getCapturedAmount();
             $amountToCapture     = $orderReservedAmount - $orderCapturedAmount;
@@ -1379,9 +1425,16 @@ class ALTAPAY extends PaymentModule
                     'product_quantity'),
                     $giftWrappingFee,
                     $params['id_order'],
-                    false
+                    false,
+                    true,
+                    $backendDiscount,
+                    true
                 );
-                $api->captureAmount($paymentID, $orderLines, $amountToCapture);
+                if ($statusCapture) {
+                    $api->captureAmount($paymentID, $orderLines, $orderDetail->total_paid);
+                } else {
+                    $api->captureAmount($paymentID, $orderLines, $amountToCapture);
+                }
                 markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($orderLines));
             } elseif ($amountToCapture > 0 && $orderCapturedAmount > 0 && $captureRemainedAmount) {
                 $orderLines = $this->createOrderStatusOrderLines($amountToCapture);
@@ -1390,6 +1443,23 @@ class ALTAPAY extends PaymentModule
         } catch (Exception $e) {
             $this->returnError($paymentID, $e);
         }
+    }
+
+    /**
+     * @param array $appliedDiscount
+     * @param int   $idCartRule
+     *
+     * @return bool
+     */
+    public function enableBackendDiscount($appliedDiscount, $idCartRule)
+    {
+        foreach ($appliedDiscount as $key => $discountData) {
+            if ($discountData['id_cart_rule'] == $idCartRule) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -1442,9 +1512,9 @@ class ALTAPAY extends PaymentModule
         if ($currentOrderStatus) {
             $currentOrderStatus = $params['newOrderStatus']->name;
             foreach ($orderstatusName as $captureOrderStatus) {
-                if ($currentOrderStatus == $captureOrderStatus) {
+                if ($currentOrderStatus == $captureOrderStatus && $currentOrderStatus !== 'Shipped') {
                     $paymentID = $results['payment_id'];
-                    $this->performCapture($paymentID, $params, false);
+                    $this->performCapture($paymentID, $params, false, true);
                 }
             }
         } else {
@@ -2046,6 +2116,13 @@ class ALTAPAY extends PaymentModule
         return $arr;
     }
 
+    public function getorderCartRule($orderID)
+    {
+        $cartDiscount = Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'order_cart_rule WHERE id_order = ' . $orderID);
+
+        return $cartDiscount;
+    }
+
     /**
      * Used to create the capture or refund quantity count in order to store in the db
      *
@@ -2081,7 +2158,7 @@ class ALTAPAY extends PaymentModule
             $productID              = $p['id_product'];
             $discountPercent        = 0;
 
-           if ($vouchers) {
+            if ($vouchers) {
                 $discountPercent = $this->getVoucherDiscounts(
                     $vouchers,
                     $productID,
