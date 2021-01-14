@@ -819,7 +819,7 @@ class ALTAPAY extends PaymentModule
         $altapayOrderLines             = [];
         $discountPercentage            = 0;
         $orderDetail                   = new Order((int)$orderID);
-        $productDetailObject = new OrderDetail();
+        $productDetailObject           = new OrderDetail();
         $productDetail                 = $productDetailObject->getList($orderID);
         $compensationQuantity          = 0;
         $cartRuleDiscounts             = $this->getCartRuleDiscounts($orderDetail);
