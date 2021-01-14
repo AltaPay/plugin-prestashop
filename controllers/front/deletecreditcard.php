@@ -6,14 +6,13 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 class ALTAPAYdeletecreditcardModuleFrontController extends ModuleFrontController
 {
-
     /**
      * Method to follow when saved credit card is being deleted from user account page
      *
      * @return void
+     *
      * @throws PrestaShopDatabaseException
      */
     public function postProcess()

@@ -6,12 +6,10 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-require_once _PS_MODULE_DIR_.'/altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
+require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
 
 class AltapayCallbackopenModuleFrontController extends ModuleFrontController
 {
-
     /**
      * If the payment state is "open", the module will convert the shopping cart to an
      * order using a the defined "Awaiting Payment Processing" order status. The module
@@ -20,7 +18,9 @@ class AltapayCallbackopenModuleFrontController extends ModuleFrontController
      * ALTAPAY will send a notification to the "open" callback URL when the payment moves
      * to "success" or "failure". The module will then update the order status to either
      * "Payment Accepted" or "Payment Error".
+     *
      * @return string
+     *
      * @throws AltapayXmlException
      */
     public function postProcess()

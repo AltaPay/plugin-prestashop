@@ -6,12 +6,18 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontController
 {
     /**
+     * @var bool
+     */
+    public $display_column_left;
+
+    /**
      * Method to follow when order is being successfully processed
+     *
      * @return void
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */

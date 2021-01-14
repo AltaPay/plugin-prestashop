@@ -15,6 +15,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
      * Method to follow when callback notification is being triggered
      *
      * @return void
+     *
      * @throws Exception
      */
     public function postProcess()
@@ -127,7 +128,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 } else {
                     // Unexpected scenario
                     $mNa = $this->module->name;
-                    Logger::addLog('Unexpected scenario: Callback notification was received for Transaction '
+                    PrestaShopLogger::addLog('Unexpected scenario: Callback notification was received for Transaction '
                                    . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
                         $this->module->id, true);
                     $this->unlock($fp);

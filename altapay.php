@@ -6,7 +6,6 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -24,7 +23,11 @@ class ALTAPAY extends PaymentModule
     private $Mhtml = '';
     private $postErrors = [];
     private $paymentMethodIconDir = 'views/img/payment_icons';
-    const ALTAPAY = " {AltaPay} ";
+    const ALTAPAY = ' {AltaPay} ';
+    public $is_eu_compatible;
+    public $v16;
+    public $v17;
+    public $fields_form;
 
     public function __construct()
     {
@@ -32,10 +35,10 @@ class ALTAPAY extends PaymentModule
         $this->tab                    = 'payments_gateways';
         $this->version                = '3.3.1';
         $this->v16                    = _PS_VERSION_ >= '1.6.1.24';
-        $this->v17                    = _PS_VERSION_ >= '1.7.6.9';
+        $this->v17                    = _PS_VERSION_ >= '1.7.7.0';
         $this->author                 = 'AltaPay A/S';
         $this->is_eu_compatible       = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.6.9'];
+        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.7.0'];
         $this->currencies             = true;
         $this->currencies_mode        = 'checkbox';
         $this->bootstrap              = true;
@@ -75,6 +78,7 @@ class ALTAPAY extends PaymentModule
      * Called on install
      *
      * @return bool|string
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -245,6 +249,7 @@ class ALTAPAY extends PaymentModule
      * Create a new order state
      *
      * @return void
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -296,6 +301,7 @@ class ALTAPAY extends PaymentModule
      * Return content for the configuration in back office
      *
      * @return string HTML for display
+     *
      * @throws PrestaShopException
      */
     public function getContent()
@@ -344,6 +350,7 @@ class ALTAPAY extends PaymentModule
      * Form for adding and editing terminals
      *
      * @return string HTML for display
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -548,6 +555,7 @@ class ALTAPAY extends PaymentModule
      * @param bool $objects
      *
      * @return array<int, Terminal>
+     *
      * @throws PrestaShopException
      */
     private function getAltapayTerminals($objects = false)
@@ -571,7 +579,7 @@ class ALTAPAY extends PaymentModule
                 throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not login to the Merchant API: ' . $resErrMsg, $resErrCode);
             }
         } catch (Exception $e) {
-            Logger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
+            PrestaShopLogger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
             Tools::redirectAdmin($this->context->link->getAdminLink('AdminModules', false) . '&configure='
                                  . $this->name . '&errorMessage&token=' . Tools::getAdminTokenLite('AdminModules'));
             exit();
@@ -626,12 +634,13 @@ class ALTAPAY extends PaymentModule
     public function getAltapayUrl()
     {
         return $this->url;
-    } /* ******************************** */
+    }
 
     /**
      * Get field values for add/edit terminal form
      *
      * @return Altapay/Models/Terminal|array
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -778,8 +787,6 @@ class ALTAPAY extends PaymentModule
         }
     }
 
-    /* ******************************** */
-
     /**
      * Method for generating order lines from order backend
      *
@@ -792,6 +799,7 @@ class ALTAPAY extends PaymentModule
      * @param bool      $fullCapture
      *
      * @return array
+     *
      * @throws PrestaShopDatabaseException
      */
     private function populateOrderLinesFromPost(
@@ -811,7 +819,7 @@ class ALTAPAY extends PaymentModule
         $altapayOrderLines             = [];
         $discountPercentage            = 0;
         $orderDetail                   = new Order((int)$orderID);
-        $productDetailObject           = new OrderDetail;
+        $productDetailObject           = new OrderDetail();
         $productDetail                 = $productDetailObject->getList($orderID);
         $compensationQuantity          = 0;
         $cartRuleDiscounts             = $this->getCartRuleDiscounts($orderDetail);
@@ -897,7 +905,7 @@ class ALTAPAY extends PaymentModule
 
             // The type of order line it is. Should be one of the following: shipment|handling|item|refund
             $altapayOrderLines[$i]['goodsType'] = 'item';
-            $i++;
+            ++$i;
         }
         if ($isSetBackendDiscount && $backendDiscount > 0) {
             $altapayOrderLines[$i]['description'] = 'Backend Discount'; // Description of item.
@@ -908,11 +916,11 @@ class ALTAPAY extends PaymentModule
             $altapayOrderLines[$i]['taxAmount'] = 0;
             // The type of order line it is. Should be one of the following: shipment|handling|item|refund
             $altapayOrderLines[$i]['goodsType'] = 'item';
-            $i++;
+            ++$i;
         }
         if ($fullCapture) {
             $altapayOrderLines[$i] = $this->getShippingInfo($orderID, $cartRuleDiscounts);
-            $i++;
+            ++$i;
         }
         if ($compensationAmountPerQuantity > 0) {
             $altapayOrderLines[$i]['description'] = 'compensation'; // Description of item.
@@ -1028,7 +1036,7 @@ class ALTAPAY extends PaymentModule
             $idTerminal = $terminalId;
             $terminal   = new Altapay_Models_Terminal((int)$idTerminal);
         } else {
-            $terminal = new Altapay_Models_Terminal;
+            $terminal = new Altapay_Models_Terminal();
         }
         $altapayTerminal = new AltapayTerminal();
         // Currency supported?
@@ -1072,6 +1080,7 @@ class ALTAPAY extends PaymentModule
      * Method for getting terminal status after creation
      *
      * @return void
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -1090,6 +1099,7 @@ class ALTAPAY extends PaymentModule
      * Info displayed at the top on the module config page
      *
      * @return string
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -1108,6 +1118,7 @@ class ALTAPAY extends PaymentModule
      * Merchant details form
      *
      * @return string
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -1214,6 +1225,7 @@ class ALTAPAY extends PaymentModule
      * List of terminals
      *
      * @return string
+     *
      * @throws PrestaShopDatabaseException
      */
     public function renderTerminalList()
@@ -1357,8 +1369,9 @@ class ALTAPAY extends PaymentModule
      * Captures a payment when the status is changed to Shipped
      *
      * @param array $params
-     *                     
+     *
      * @return array|null
+     *
      * @throws PrestaShopException
      */
     public function hookActionOrderStatusUpdate($params)
@@ -1411,13 +1424,14 @@ class ALTAPAY extends PaymentModule
      * @param bool   $statusCapture
      *
      * @return string
+     *
      * @throws PrestaShopException
      */
     public function performCapture($paymentID, $params, $captureRemainedAmount = true, $statusCapture = false)
     {
         try {
             $api            = new Altapay\classes\MerchantAPI();
-            $productDetails = new OrderDetail;
+            $productDetails = new OrderDetail();
             $cart           = $this->context->cart;
             $orderSummary   = $cart->getSummaryDetails();
             $api->init($this->getAltapayUrl(), $this->getAPIUsername(), $this->getAPIPassword());
@@ -1512,6 +1526,7 @@ class ALTAPAY extends PaymentModule
      * @param array $params
      *
      * @return array|null
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -1554,6 +1569,7 @@ class ALTAPAY extends PaymentModule
      * @param array $params
      *
      * @return bool|string
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -1565,9 +1581,9 @@ class ALTAPAY extends PaymentModule
             return false;
         }
 
-        # collect order info
-        $orderDetail    = new Order((int)$params['id_order']);
-        $productDetail  = $orderDetail->getProducts();
+        // collect order info
+        $orderDetail = new Order((int) $params['id_order']);
+        $productDetail = $orderDetail->getProducts();
         $shippingDetail = $orderDetail->getShipping();
         if ($orderDetail->gift) {
             $giftWrappingFee = $orderDetail->total_wrapping;
@@ -1598,7 +1614,7 @@ class ALTAPAY extends PaymentModule
         }
         $this->smarty->assign('ap_orders', $apOrders);
 
-        # collect info from AltaPay - fail gracefully
+        // collect info from AltaPay - fail gracefully
         $api = new Altapay\classes\MerchantAPI();
         try {
             $api->init($this->getAltapayUrl(), $this->getAPIUsername(), $this->getAPIPassword());
@@ -1608,7 +1624,7 @@ class ALTAPAY extends PaymentModule
             $this->smarty->assign('ap_error', 'Error: ' . $e->getMessage());
         }
 
-        # prepare for view
+        // prepare for view
         $paymentinfo = [
             'Transaction Date' => Tools::htmlentitiesUTF8(date('F j, Y, g:i a', $results['date_add'])),
             'Transaction ID'   => Tools::htmlentitiesUTF8($results['unique_id']),
@@ -1643,6 +1659,7 @@ class ALTAPAY extends PaymentModule
      * @param string $paymentId
      *
      * @return array|false|mysqli_result|PDOStatement|resource|null
+     *
      * @throws PrestaShopDatabaseException
      */
     private function getOrderActions($paymentId)
@@ -1658,6 +1675,7 @@ class ALTAPAY extends PaymentModule
      * @param array $params
      *
      * @return string|void
+     *
      * @throws PrestaShopDatabaseException
      */
     public function hookPayment($params)
@@ -1742,6 +1760,7 @@ class ALTAPAY extends PaymentModule
      * @param array $params
      *
      * @return array|null
+     *
      * @throws PrestaShopDatabaseException
      */
     public function hookPaymentOptions($params)
@@ -1825,6 +1844,7 @@ class ALTAPAY extends PaymentModule
      * Method to get template variable information like path, ssl path, methods
      *
      * @return array
+     *
      * @throws PrestaShopDatabaseException
      */
     public function getTemplateVarInfos()
@@ -1845,9 +1865,11 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Hook triggered at the time of payment returns
+     *
      * @param $params
      *
      * @return string|void
+     *
      * @throws LocalizationException
      */
     public function hookPaymentReturn($params)
@@ -1897,6 +1919,7 @@ class ALTAPAY extends PaymentModule
      * @param string $savedCreditCard
      *
      * @return array If the transaction failed, the array contains information about the failure
+     *
      * @throws Exception
      */
     public function createTransaction($savedCreditCard, $payment_method = false)
@@ -1910,7 +1933,7 @@ class ALTAPAY extends PaymentModule
         $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
         if (!is_object($terminal)) {
             $message = 'Could not determine remote terminal - possibly currency mismatch';
-            Logger::addLog($message, 3, 0, $this->name, $this->id, true);
+            PrestaShopLogger::addLog($message, 3, 0, $this->name, $this->id, true);
 
             return [
                 'success'          => false,
@@ -2045,7 +2068,7 @@ class ALTAPAY extends PaymentModule
                 throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not login to the Merchant API: ' . $resErrMsg, $resErrCode);
             }
         } catch (Exception $e) {
-            Logger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
+            PrestaShopLogger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
 
             return [
                 'success'          => false,
@@ -2092,7 +2115,7 @@ class ALTAPAY extends PaymentModule
                 'payment_form_url' => $response->getRedirectURL(),
             ];
         } catch (Exception $e) {
-            Logger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
+            PrestaShopLogger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
 
             return [
                 'success'          => false,
@@ -2112,6 +2135,7 @@ class ALTAPAY extends PaymentModule
      * @param bool $currency
      *
      * @return Altapay_Models_Terminal|null
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -2160,6 +2184,7 @@ class ALTAPAY extends PaymentModule
      * @param CartCore $cart
      *
      * @return array
+     *
      * @throws PrestaShopException
      */
     private function getOrderLines($cart)
@@ -2239,7 +2264,7 @@ class ALTAPAY extends PaymentModule
 
         if ($cart->gift) {
             $orderLines[$i] = $this->createOrderlines('Gift Wrap', 'giftwrap', 1, 0, $cart->getGiftWrappingPrice(), 0, 'item', '', '', '');
-            $i++;
+            ++$i;
         }
 
         $carrier               = $cart->getSummaryDetails()['carrier'];
@@ -2265,7 +2290,8 @@ class ALTAPAY extends PaymentModule
         if ($orderDetails) {
             $orderDetails = json_encode($orderDetails);
             $sql          = 'INSERT INTO ' . _DB_PREFIX_ . 'altapay_cartInfo (id_cart, productDetails, date_add) VALUES ' . "('" . $cartID . "', '"
-                            . $orderDetails . "', '" . time() . "')";
+                            . $orderDetails . "', '" . time() . "')" .
+                            ' ON DUPLICATE KEY UPDATE `productDetails` = ' . "'".$orderDetails."'";
             Db::getInstance()->Execute($sql);
         }
 
@@ -2309,7 +2335,7 @@ class ALTAPAY extends PaymentModule
         // Unit price excluding sales tax, only two digits.
         $orderLines['unitPrice'] = number_format((100 * $unitPrice) / 100, 2, '.', '');
 
-        /**
+        /*
          * Optional keys for orderLines:
          * Tax amount should be the total tax amount.
          */
@@ -2406,6 +2432,7 @@ class ALTAPAY extends PaymentModule
      * @param int $reductionPercent
      *
      * @return array
+     *
      * @throws PrestaShopDatabaseException
      */
     private function getCartRuleGroupProducts($couponID, $reductionPercent)
@@ -2426,6 +2453,7 @@ class ALTAPAY extends PaymentModule
      * @param int $cartRuleGroupID
      *
      * @return array
+     *
      * @throws PrestaShopDatabaseException
      */
     private function getCartRuleGroupProductIDs($cartRuleGroupID)
@@ -2443,6 +2471,7 @@ class ALTAPAY extends PaymentModule
      * Returns array of applied voucher details from cart
      *
      * @return array
+     *
      * @throws PrestaShopDatabaseException
      */
     private function getVoucherDetails()
@@ -2466,9 +2495,11 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Returns array of cart rule discounts applied on each product from created order
+     *
      * @param array $order
      *
      * @return array
+     *
      * @throws PrestaShopDatabaseException
      */
         private function getCartRuleDiscounts($order)
@@ -2488,6 +2519,7 @@ class ALTAPAY extends PaymentModule
      * @param Exception $exception
      *
      * @return string
+     *
      * @throws PrestaShopException
      */
     public function returnError($paymentID, $exception)

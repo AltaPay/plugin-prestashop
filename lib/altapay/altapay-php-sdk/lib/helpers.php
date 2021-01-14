@@ -1,14 +1,16 @@
 <?php
+
 spl_autoload_register('autoLoader');
 
 /**
  * Method for autoload all the classes within directory
+ *
  * @param string $class
  * @param null $dir
  */
 function autoLoader($class, $dir = null)
 {
-    require_once __DIR__ . DIRECTORY_SEPARATOR . "IAltapayCommunicationLogger.class.php";
+    require_once __DIR__ . DIRECTORY_SEPARATOR . 'IAltapayCommunicationLogger.class.php';
     if (false === strpos($class, 'Altapay')) {
         return;
     }
@@ -18,7 +20,7 @@ function autoLoader($class, $dir = null)
     }
 
     $listDir = scandir(realpath($dir));
-    if (isset($listDir) && !empty($listDir)) {
+    if ($listDir) {
         foreach ($listDir as $listDirkey => $subDir) {
             if ($subDir === '.' || $subDir === '..') {
                 continue;
