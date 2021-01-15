@@ -847,7 +847,7 @@ class ALTAPAY extends PaymentModule
                     $altapayOrderLines[$i]['itemId'] = $itemID; // Item number (SKU)
                     $altapayOrderLines[$i]['quantity'] = $productQuantity;
                     $altapayOrderLines[$i]['unitPrice'] = number_format($unitPrice, 2, '.', '');
-                    $altapayOrderLines[$i]['taxAmount'] = number_format($totalProductsTaxAmount, 2, '.', '');;
+                    $altapayOrderLines[$i]['taxAmount'] = number_format($totalProductsTaxAmount, 2, '.', '');
                     // The type of order line it is. Should be one of the following: shipment|handling|item|refund
                     $altapayOrderLines[$i]['goodsType'] = $goodsType;
                     $altapayOrderLines[$i]['discount'] = number_format($discountPercentage, 2, '.', '');
