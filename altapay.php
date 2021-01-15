@@ -847,10 +847,10 @@ class ALTAPAY extends PaymentModule
                     $altapayOrderLines[$i]['itemId'] = $itemID; // Item number (SKU)
                     $altapayOrderLines[$i]['quantity'] = $productQuantity;
                     $altapayOrderLines[$i]['unitPrice'] = number_format($unitPrice, 2, '.', '');
-                    $altapayOrderLines[$i]['taxAmount'] = $totalProductsTaxAmount;
+                    $altapayOrderLines[$i]['taxAmount'] = number_format($totalProductsTaxAmount, 2, '.', '');;
                     // The type of order line it is. Should be one of the following: shipment|handling|item|refund
                     $altapayOrderLines[$i]['goodsType'] = $goodsType;
-                    $altapayOrderLines[$i]['discount'] = $discountPercentage;
+                    $altapayOrderLines[$i]['discount'] = number_format($discountPercentage, 2, '.', '');
 
                     // Compensation calculation
                     $gatewaySubTotal = ($unitPrice * $productQuantity) + $totalProductsTaxAmount;
@@ -927,13 +927,12 @@ class ALTAPAY extends PaymentModule
         $altapayOrderLines['quantity'] = 1;
         // Unit price excluding sales tax, only two digits.
         $altapayOrderLines['unitPrice'] = number_format($shippingDetail['shipping_cost_tax_excl'], 2, '.', '');
-        $altapayOrderLines['discount'] = $shippingDiscount;
+        $altapayOrderLines['discount'] = number_format($shippingDiscount, 2, '.', '');
 
         /* Optional keys for orderLines
            Taxamount should be the total tax amount for order line.
         */
-        $altapayOrderLines['taxAmount'] = $shippingDetail['shipping_cost_tax_incl']
-                                          - $shippingDetail['shipping_cost_tax_excl'];
+        $altapayOrderLines['taxAmount'] = number_format($shippingDetail['shipping_cost_tax_incl'] - $shippingDetail['shipping_cost_tax_excl'], 2, '.', '');
         // The type of order line it is. Should be one of the following: shipment|handling|item|refund
         $altapayOrderLines['goodsType'] = 'shipment';
 
@@ -2303,7 +2302,7 @@ class ALTAPAY extends PaymentModule
         $orderLines['description'] = $productName; // Description of item.
         $orderLines['itemId'] = $itemID; // Item number (SKU)
         $orderLines['quantity'] = $quantity;
-        $orderLines['discount'] = $discount;
+        $orderLines['discount'] = number_format($discount, 4, '.', '');
         // Unit price excluding sales tax, only two digits.
         $orderLines['unitPrice'] = number_format((100 * $unitPrice) / 100, 2, '.', '');
 
