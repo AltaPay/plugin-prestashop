@@ -846,7 +846,7 @@ class ALTAPAY extends PaymentModule
                     $altapayOrderLines[$i]['description'] = $productName;
                     $altapayOrderLines[$i]['itemId'] = $itemID; // Item number (SKU)
                     $altapayOrderLines[$i]['quantity'] = $productQuantity;
-                    $altapayOrderLines[$i]['unitPrice'] = $unitPrice;
+                    $altapayOrderLines[$i]['unitPrice'] = number_format($unitPrice, 2, '.', '');
                     $altapayOrderLines[$i]['taxAmount'] = $totalProductsTaxAmount;
                     // The type of order line it is. Should be one of the following: shipment|handling|item|refund
                     $altapayOrderLines[$i]['goodsType'] = $goodsType;
@@ -890,7 +890,7 @@ class ALTAPAY extends PaymentModule
             $altapayOrderLines[$i]['description'] = 'Backend Discount'; // Description of item.
             $altapayOrderLines[$i]['itemId'] = 'bk-dsc'; // Item number (SKU)
             $altapayOrderLines[$i]['quantity'] = 1;
-            $altapayOrderLines[$i]['unitPrice'] = '-' . $backendDiscount;
+            $altapayOrderLines[$i]['unitPrice'] = '-' . number_format($backendDiscount, 2, '.', '');
             // Optional keys for orderLines:
             $altapayOrderLines[$i]['taxAmount'] = 0;
             // The type of order line it is. Should be one of the following: shipment|handling|item|refund
@@ -926,7 +926,7 @@ class ALTAPAY extends PaymentModule
         $altapayOrderLines['itemId'] = $shippingDetail['carrier_name']; // Item number (SKU)
         $altapayOrderLines['quantity'] = 1;
         // Unit price excluding sales tax, only two digits.
-        $altapayOrderLines['unitPrice'] = $shippingDetail['shipping_cost_tax_excl'];
+        $altapayOrderLines['unitPrice'] = number_format($shippingDetail['shipping_cost_tax_excl'], 2, '.', '');
         $altapayOrderLines['discount'] = $shippingDiscount;
 
         /* Optional keys for orderLines
@@ -973,7 +973,7 @@ class ALTAPAY extends PaymentModule
         $dummyItemOrderLine['description'] = 'Good-will refund';
         $dummyItemOrderLine['itemId'] = '100200';
         $dummyItemOrderLine['quantity'] = 1;
-        $dummyItemOrderLine['unitPrice'] = $totalAmount;
+        $dummyItemOrderLine['unitPrice'] = number_format($totalAmount, 2, '.', '');
         // Optional keys for orderLines:
         $dummyItemOrderLine['taxAmount'] = '0.00';
         $dummyItemOrderLine['taxPercent'] = '0.00';
