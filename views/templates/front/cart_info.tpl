@@ -13,25 +13,25 @@
         <thead>
         <tr>
             <th class="cart_product first_item">{l s='Product' mod='altapay'}</th>
-            <th class="cart_description item">{l s='Description' mod='altapay'}}</th>
+            <th class="cart_description item">{l s='Description' mod='altapay'}</th>
            {if isset($PS_STOCK_MANAGEMENT) && $PS_STOCK_MANAGEMENT}
-                <th class="cart_availability item text-center">{l s='Availability' mod='altapay'}}</th>
+                <th class="cart_availability item text-center">{l s='Availability' mod='altapay'}</th>
             {/if}
-            <th class="cart_unit item text-right">{l s='Unit price' mod='altapay'}}</th>
-            <th class="cart_quantity item text-center">{l s='Qty' mod='altapay'}}</th>
-            <th class="cart_total last_item text-right">{l s='Total' mod='altapay'}}</th>
+            <th class="cart_unit item text-right">{l s='Unit price' mod='altapay'}</th>
+            <th class="cart_quantity item text-center">{l s='Qty' mod='altapay'}</th>
+            <th class="cart_total last_item text-right">{l s='Total' mod='altapay'}</th>
         </tr>
         </thead>
         <tfoot>
         {if $use_taxes}
             {if isset($priceDisplay)}
                 <tr class="cart_total_price">
-                    <td colspan="4" class="text-right">{if $display_tax_label}{l s='Total products (tax excl.)' mod='altapay'}}{else}{l s='Total products' mod='altapay'}}{/if}</td>
+                    <td colspan="4" class="text-right">{if $display_tax_label}{l s='Total products (tax excl.)' mod='altapay'}{else}{l s='Total products' mod='altapay'}{/if}</td>
                     <td colspan="2" class="price" id="total_product">{displayPrice price=$cart_summary.total_products}</td>
                 </tr>
             {else}
                 <tr class="cart_total_price">
-                    <td colspan="4" class="text-right">{if $display_tax_label}{l s='Total products (tax incl.)' mod='altapay'}}{else}{l s='Total products' mod='altapay'}}{/if}</td>
+                    <td colspan="4" class="text-right">{if $display_tax_label}{l s='Total products (tax incl.)' mod='altapay'}{else}{l s='Total products' mod='altapay'}{/if}</td>
                     <td colspan="2" class="price" id="total_product">{displayPrice price=$cart_summary.total_products_wt}</td>
                 </tr>
             {/if}

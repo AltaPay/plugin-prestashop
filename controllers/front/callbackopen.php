@@ -38,7 +38,7 @@ class AltapayCallbackopenModuleFrontController extends ModuleFrontController
         }
 
         // Load the customer
-        $customer = new Customer((int)$cart->id_customer);
+        $customer = new Customer((int) $cart->id_customer);
 
         // Amount paid is returned as 0, so we use cart amount instead
         $amount_paid = $cart->getOrderTotal(true, Cart::BOTH);
@@ -49,18 +49,18 @@ class AltapayCallbackopenModuleFrontController extends ModuleFrontController
 
         // Create order
         $confOs = Configuration::get('ALTAPAY_OS_PENDING');
-        $curPaid = (int)$currency_paid->id;
+        $curPaid = (int) $currency_paid->id;
         $curSk = $customer->secure_key;
         $cId = $cart->id;
         $this->module->validateOrder($cId, $confOs, $amount_paid, $paymentMethod, null, null, $curPaid, false, $curSk);
 
         // Log order
-        $current_order = new Order((int)$this->module->currentOrder);
+        $current_order = new Order((int) $this->module->currentOrder);
         createAltapayOrder($response, $current_order, 'open');
 
         $curOr = $this->module->currentOrder;
         $mId = $this->module->id;
         $confOr = 'index.php?controller=order-confirmation&id_cart=';
-        Tools::redirect($confOr.$cId.'&id_module='.$mId.'&id_order='.$curOr.'&key='.$curSk);
+        Tools::redirect($confOr . $cId . '&id_module=' . $mId . '&id_order=' . $curOr . '&key=' . $curSk);
     }
 }

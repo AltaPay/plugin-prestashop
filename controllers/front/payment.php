@@ -34,7 +34,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         /* Redirect user back to the checkout payment step,
         * assume a failure occurred creating the URL until a payment URL is received
         */
-        $controller       = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
+        $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
         $payment_form_url = $this->context->link->getPageLink($controller, true, null,
                 'step=3&altapay_unavailable=1') . '#altapay_unavailable';
 

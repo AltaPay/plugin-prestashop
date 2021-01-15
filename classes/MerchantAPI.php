@@ -84,7 +84,7 @@ class MerchantAPI
         $response = $this->api->getPayment($paymentId);
 
         if (is_null($response)) {
-            throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not get payment details of payment '.$paymentId);
+            throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not get payment details of payment ' . $paymentId);
         }
 
         return $response->getPrimaryPayment();
@@ -93,9 +93,9 @@ class MerchantAPI
     /**
      * Method to trigger capture action
      *
-     * @param int   $paymentId
+     * @param int $paymentId
      * @param array $orderLines
-     * @param int   $amount
+     * @param int $amount
      *
      * @return AltapayCaptureResponse
      *
@@ -121,9 +121,9 @@ class MerchantAPI
     /**
      * Method to trigger refund action
      *
-     * @param int   $paymentId
+     * @param int $paymentId
      * @param array $orderLines
-     * @param int   $amount
+     * @param int $amount
      *
      * @return AltapayRefundResponse
      *
@@ -134,7 +134,7 @@ class MerchantAPI
      * @throws AltapayUnauthorizedAccessException
      * @throws AltapayUnknownMerchantAPIException
      */
-    public function refundAmount($paymentId, $orderLines =[], $amount = 0)
+    public function refundAmount($paymentId, $orderLines = [], $amount = 0)
     {
         $response = $this->api->refundCapturedReservation($paymentId, $amount, $orderLines);
 
@@ -149,7 +149,7 @@ class MerchantAPI
     /**
      * Method to trigger release action
      *
-     * @param int    $paymentId
+     * @param int $paymentId
      * @param string $transactionAction
      *
      * @return AltapayReleaseResponse
