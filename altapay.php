@@ -34,8 +34,6 @@ class ALTAPAY extends PaymentModule
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
         $this->version = '3.3.1';
-        $this->v16 = _PS_VERSION_ >= '1.6.1.24';
-        $this->v17 = _PS_VERSION_ >= '1.7.7.0';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.7.0'];
@@ -387,7 +385,7 @@ class ALTAPAY extends PaymentModule
             ];
         }
 
-        if (_PS_VERSION_ >= '1.7.0.0') {
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             $tokenControl = [
                 'type' => 'checkbox',
                 'label' => $this->l('Credit Card Token Control'),
@@ -821,8 +819,8 @@ class ALTAPAY extends PaymentModule
                     $productQuantity = $orderedQuantity;
                     $productTax = $priceWithoutReductionTaxIncl - $basePrice;
                     $goodsType = 'item';
-                    $totalProductsTaxAmount = number_format($productTax * $productQuantity, 2, '.', '');
-                    $unitPrice = number_format($basePrice, 2, '.', '');
+                    $totalProductsTaxAmount = round($productTax * $productQuantity, 2);
+                    $unitPrice = round($basePrice, 2);
                     // Calculation of base price
                     if ($reductionPercent > 0) {
                         $discountPercentage = $reductionPercent;
@@ -857,13 +855,14 @@ class ALTAPAY extends PaymentModule
                     // Compensation calculation
                     $gatewaySubTotal = ($unitPrice * $productQuantity) + $totalProductsTaxAmount;
                     $gatewayTotal = $gatewaySubTotal - ($gatewaySubTotal * ($discountPercentage / 100));
-                    $gatewayTotal = number_format($gatewayTotal, 2, '.', '');
+                    $gatewayTotal = round($gatewayTotal, 2);
                     $cmsSubTotal = ($basePrice * $productQuantity) + ($productTax * $productQuantity);
                     $cmsTotal = $cmsSubTotal - ($cmsSubTotal * ($discountPercentage / 100));
+                    $compensationAmount = $cmsTotal - $gatewayTotal;
                     // Send compensation amount if Gateway total is not equal to cms total
-                    if ($gatewayTotal != $cmsTotal) {
+                    if (($compensationAmount > 0 || $compensationAmount < 0)) {
                         ++$i;
-                        $altapayOrderLines[$i] = $this->compensationOrderlines($itemID, $cmsTotal, $gatewayTotal);
+                        $altapayOrderLines[$i] = $this->compensationOrderlines($itemID, $compensationAmount);
                     }
                 } else {
                     $altapayOrderLines[$i] = $this->getShippingInfo($orderID, $cartRuleDiscounts);
@@ -881,7 +880,7 @@ class ALTAPAY extends PaymentModule
             $altapayOrderLines[$i]['itemId'] = 'giftwrap'; // Item number (SKU)
             $altapayOrderLines[$i]['quantity'] = 1;
             // Unit price excluding sales tax, only two digits.
-            $altapayOrderLines[$i]['unitPrice'] = $giftWrappingFee;
+            $altapayOrderLines[$i]['unitPrice'] = number_format($giftWrappingFee, 2, '.', '');
 
             // The type of order line it is. Should be one of the following: shipment|handling|item|refund
             $altapayOrderLines[$i]['goodsType'] = 'item';
@@ -1476,7 +1475,7 @@ class ALTAPAY extends PaymentModule
             'description' => 'Complete amount Capture',
             'itemId' => 'Capture-1',
             'quantity' => 1,
-            'unitPrice' => (float) number_format($amountToCapture, 2, '.', ''),
+            'unitPrice' => round($amountToCapture, 2),
             'taxAmount' => 0,
             'goodsType' => 'handling',
         ];
@@ -1713,7 +1712,7 @@ class ALTAPAY extends PaymentModule
      */
     public function hookDisplayCustomerAccount()
     {
-        if (_PS_VERSION_ >= '1.7.0.0') {
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             return $this->display(__FILE__, 'savedCreditCards.tpl');
         }
     }
@@ -2224,12 +2223,14 @@ class ALTAPAY extends PaymentModule
             );
             $gatewaySubTotal = ($orderLines[$i]['unitPrice'] * $p['cart_quantity']) + $orderLines[$i]['taxAmount'];
             $gatewayTotal = $gatewaySubTotal - ($gatewaySubTotal * ($discountPercent / 100));
-            $gatewayTotal = number_format($gatewayTotal, 2, '.', '');
+            $gatewayTotal = round($gatewayTotal, 2);
             $cmsSubTotal = ($basePrice * $p['cart_quantity']) + ($singleProductTaxAmount * $p['cart_quantity']);
             $cmsTotal = $cmsSubTotal - ($cmsSubTotal * ($discountPercent / 100));
-            if ($gatewayTotal != $cmsTotal) {
+            $compensationAmount = $cmsTotal - $gatewayTotal;
+            // Send compensation amount if Gateway total is not equal to cms total
+            if (($compensationAmount > 0 || $compensationAmount < 0)) {
                 ++$i;
-                $orderLines[$i] = $this->compensationOrderlines($itemID, $cmsTotal, $gatewayTotal);
+                $orderLines[$i] = $this->compensationOrderlines($itemID, $compensationAmount);
             }
             ++$i;
         }
@@ -2507,18 +2508,17 @@ class ALTAPAY extends PaymentModule
     }
 
     /**
-     * @param int $itemID
-     * @param int|float $cmsTotal
-     * @param int|float $gatewayTotal
+     * @param string $itemID
+     * @param float $compensationAmount
      *
      * @return array
      */
-    public function compensationOrderlines($itemID, $cmsTotal, $gatewayTotal)
+    public function compensationOrderlines($itemID, $compensationAmount)
     {
         $orderLines['description'] = 'compensation'; // Description of item.
         $orderLines['itemId'] = 'comp-' . $itemID; // Item number (SKU)
         $orderLines['quantity'] = 1;
-        $orderLines['unitPrice'] = $cmsTotal - $gatewayTotal;
+        $orderLines['unitPrice'] = number_format($compensationAmount, 2, '.', '');
         $orderLines['taxAmount'] = 0;
         $orderLines['goodsType'] = 'item';
 

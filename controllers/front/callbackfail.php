@@ -70,7 +70,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                 'css_dir' => null,
             ]);
             // PrestaShop 1.6 and PrestaShop 1.7 have different declarations of $this->setTemplate()
-            if (_PS_VERSION_ >= '1.7.0.0') {
+            if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
                 $this->setTemplate('module:altapay/views/templates/front/payment_error17.tpl');
             } else {
                 $this->setTemplate('payment_error.tpl');
