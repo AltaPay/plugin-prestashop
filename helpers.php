@@ -23,15 +23,15 @@
  */
 function transactionInfo($transactionInfo = [])
 {
-    $pluginName    = 'altapay';
+    $pluginName = 'altapay';
     $pluginVersion = '3.3.1';
 
     // Transaction info
-    $transactionInfo['ecomPlatform']      = 'PrestaShop';
-    $transactionInfo['ecomVersion']       = _PS_VERSION_;
-    $transactionInfo['ecomPluginName']    = $pluginName;
+    $transactionInfo['ecomPlatform'] = 'PrestaShop';
+    $transactionInfo['ecomVersion'] = _PS_VERSION_;
+    $transactionInfo['ecomPluginName'] = $pluginName;
     $transactionInfo['ecomPluginVersion'] = $pluginVersion;
-    $transactionInfo['otherInfo']         = 'storeName-' . Configuration::get('PS_SHOP_NAME');
+    $transactionInfo['otherInfo'] = 'storeName-' . Configuration::get('PS_SHOP_NAME');
 
     return $transactionInfo;
 }
@@ -65,13 +65,12 @@ function determinePaymentMethodForDisplay($response)
  *
  * @return bool|Cart
  */
-
 function getCartFromUniqueId($uniqueId)
 {
     $results = Db::getInstance()->getRow('SELECT id_cart 
     FROM `' . _DB_PREFIX_ . 'altapay_transaction` 
     WHERE unique_id=\'' . $uniqueId . '\'');
-    $cart    = new Cart((int)$results['id_cart']);
+    $cart = new Cart((int) $results['id_cart']);
 
     return $cart;
 }
@@ -83,13 +82,12 @@ function getCartFromUniqueId($uniqueId)
  *
  * @return Order
  */
-
 function getOrderFromUniqueId($uniqueId)
 {
     $results = Db::getInstance()->getRow('SELECT id_order 
     FROM `' . _DB_PREFIX_ . 'altapay_order` 
     WHERE unique_id = \'' . $uniqueId . '\'');
-    $order   = new Order((int)$results['id_order']);
+    $order = new Order((int) $results['id_order']);
 
     return $order;
 }
@@ -97,7 +95,7 @@ function getOrderFromUniqueId($uniqueId)
 /**
  * Method for marking and updating status of order as captured in case of a captured action in database
  *
- * @param int   $paymentId
+ * @param int $paymentId
  * @param array $orderlines
  *
  * @return bool
@@ -118,7 +116,7 @@ function markAsCaptured($paymentId, $orderlines = [])
                                             . $paymentId . '" AND product_id = ' . $productId);
 
         if (isset($result['captured'])) {
-            $quantity         += $result['captured'];
+            $quantity += $result['captured'];
             $sqlUpdateCapture = 'UPDATE ' . _DB_PREFIX_ .
                                 'altapay_orderlines SET captured = ' . $quantity .
                                 ' WHERE altapay_payment_id = ' . $paymentId;
@@ -137,7 +135,7 @@ function markAsCaptured($paymentId, $orderlines = [])
 /**
  * Method for marking and updating status of order as refund in case of a refund action in database
  *
- * @param int   $paymentId
+ * @param int $paymentId
  * @param array $orderlines
  *
  * @return bool
@@ -146,7 +144,7 @@ function markAsRefund($paymentId, $orderlines = [])
 {
     $sqlRequireCapture = 'SELECT requireCapture 
     FROM ' . _DB_PREFIX_ . 'altapay_order WHERE payment_id = ' . $paymentId;
-    $result            = Db::getInstance()->getRow($sqlRequireCapture);
+    $result = Db::getInstance()->getRow($sqlRequireCapture);
     // Only payments which have been captured/partial captured will be considered
     if (!isset($result['requireCapture']) || $result['requireCapture'] != 0) {
         return false;
@@ -158,7 +156,7 @@ function markAsRefund($paymentId, $orderlines = [])
         $sqlGetRefundedFieldValue = 'SELECT captured, refunded 
                 FROM ' . _DB_PREFIX_ . 'altapay_orderlines WHERE altapay_payment_id = "'
                                     . $paymentId . '" AND product_id = ' . $productId;
-        $result                   = Db::getInstance()->getRow($sqlGetRefundedFieldValue);
+        $result = Db::getInstance()->getRow($sqlGetRefundedFieldValue);
         if (isset($result['refunded'])) {
             $quantity += $result['refunded'];
             // If the amount of refunded items is bigger than the actual captured amount than set the max amount
@@ -167,7 +165,7 @@ function markAsRefund($paymentId, $orderlines = [])
             }
 
             // Update only of there is a capture for this product
-            $sql = "UPDATE " . _DB_PREFIX_ . "altapay_orderlines SET refunded = "
+            $sql = 'UPDATE ' . _DB_PREFIX_ . 'altapay_orderlines SET refunded = '
                    . $quantity . " WHERE altapay_payment_id = '" . $paymentId . "' AND product_id = " . $productId;
             Db::getInstance()->Execute($sql);
         } else {
@@ -182,7 +180,7 @@ function markAsRefund($paymentId, $orderlines = [])
 /**
  * Method to update latest error message from gateway response in database
  *
- * @param int    $paymentId
+ * @param int $paymentId
  * @param string $latestError
  *
  * @return void
@@ -198,7 +196,7 @@ function saveLastErrorMessage($paymentId, $latestError)
 /**
  * Method for updating payment status in database
  *
- * @param int    $paymentId
+ * @param int $paymentId
  * @param string $paymentStatus
  *
  * @return void
@@ -215,25 +213,25 @@ function updatePaymentStatus($paymentId, $paymentStatus)
  * Method for creating orders at prestashop backend
  *
  * @param AltapayCallbackHandler $response
- * @param array                  $current_order
- * @param string                 $payment_status
+ * @param array $current_order
+ * @param string $payment_status
  *
  * @return void
  */
 function createAltapayOrder($response, $current_order, $payment_status = 'succeeded')
 {
-    $uniqueId        = $response->getPrimaryPayment()->getShopOrderId();
-    $paymentId       = $response->getPrimaryPayment()->getId();
-    $cardMask        = $response->getPrimaryPayment()->getMaskedPan();
-    $cardToken       = $response->getPrimaryPayment()->getCreditCardToken();
+    $uniqueId = $response->getPrimaryPayment()->getShopOrderId();
+    $paymentId = $response->getPrimaryPayment()->getId();
+    $cardMask = $response->getPrimaryPayment()->getMaskedPan();
+    $cardToken = $response->getPrimaryPayment()->getCreditCardToken();
     $cardExpiryMonth = $response->getPrimaryPayment()->getCreditCardExpiryMonth();
-    $cardExpiryYear  = $response->getPrimaryPayment()->getCreditCardExpiryYear();
-    $cardBrand       = $response->getPrimaryPayment()->getPaymentSchemeName();
-    $paymentType     = $response->getPrimaryPayment()->getAuthType();
+    $cardExpiryYear = $response->getPrimaryPayment()->getCreditCardExpiryYear();
+    $cardBrand = $response->getPrimaryPayment()->getPaymentSchemeName();
+    $paymentType = $response->getPrimaryPayment()->getAuthType();
     $paymentTerminal = $response->getPrimaryPayment()->getTerminal();
-    $paymentNature   = $response->getPrimaryPayment()->getPaymentNature();
-    $paymentStatus   = $payment_status;
-    $requireCapture  = 0;
+    $paymentNature = $response->getPrimaryPayment()->getPaymentNature();
+    $paymentStatus = $payment_status;
+    $requireCapture = 0;
     if ($paymentType === 'payment') {
         $requireCapture = 1;
     }
@@ -242,10 +240,10 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
         $cardExpiryDate = $cardExpiryMonth . '/' . $cardExpiryYear;
     }
 
-    $errorCode    = null;
-    $errorText    = null;
+    $errorCode = null;
+    $errorText = null;
     $customerInfo = $response->getPrimaryPayment()->getCustomerInfo();
-    $cardCountry  = $customerInfo->getCountryOfOrigin()->getCountry();
+    $cardCountry = $customerInfo->getCountryOfOrigin()->getCountry();
     //insert into order log
     $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_order`
 		(id_order, unique_id, payment_id, cardMask, cardToken, cardBrand, cardExpiryDate, cardCountry, 
@@ -266,8 +264,8 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
         $payment = $current_order->getOrderPaymentCollection();
         if (isset($payment[0])) {
             $payment[0]->transaction_id = pSQL($uniqueId);
-            $payment[0]->card_number    = pSQL($cardMask);
-            $payment[0]->card_brand     = pSQL($cardBrand);
+            $payment[0]->card_number = pSQL($cardMask);
+            $payment[0]->card_brand = pSQL($cardBrand);
             // $payment[0]->card_expiration = pSQL($cardExp);    //not provided
             $payment[0]->save();
         }
@@ -302,7 +300,7 @@ function apiLogin()
     $config = Configuration::getMultiple([
         'ALTAPAY_USERNAME',
         'ALTAPAY_PASSWORD',
-        'ALTAPAY_URL'
+        'ALTAPAY_URL',
     ]);
 
     $api = new AltapayMerchantAPI(

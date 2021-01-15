@@ -45,14 +45,14 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             $unique_id = Tools::getValue('shop_orderid');
             // Updated transaction record to cancel
             $pI = pSQL($unique_id);
-            $q = 'UPDATE `' . _DB_PREFIX_ . 'altapay_transaction` set `is_cancelled`=1 WHERE `unique_id`=\'' .$pI. '\'';
+            $q = 'UPDATE `' . _DB_PREFIX_ . 'altapay_transaction` set `is_cancelled`=1 WHERE `unique_id`=\'' . $pI . '\'';
             Db::getInstance()->Execute($q);
 
             // Redirect back to either standard or quick checkout process
             $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
             $pLink = $this->context->link->getPageLink($controller);
             $vCan = 'altapay_cancel=1&isPaymentStep=true&step=3#altapay_cancel';
-            $location = $pLink . (strpos($controller, '?') !== false ? '&' : '?') . $vCan ;
+            $location = $pLink . (strpos($controller, '?') !== false ? '&' : '?') . $vCan;
             Tools::redirectLink($location);
         } else {
             $mErM = $response->getMerchantErrorMessage();
@@ -70,7 +70,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                 'css_dir' => null,
             ]);
             // PrestaShop 1.6 and PrestaShop 1.7 have different declarations of $this->setTemplate()
-            if (_PS_VERSION_ >= '1.7.0.0') {
+            if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
                 $this->setTemplate('module:altapay/views/templates/front/payment_error17.tpl');
             } else {
                 $this->setTemplate('payment_error.tpl');

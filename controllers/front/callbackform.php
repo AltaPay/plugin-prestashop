@@ -33,7 +33,7 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
     {
         $css_dir = null;
         // Different conventions of assigning details for Version 1.6 and 1.7 respectively
-        if (_PS_VERSION_ >= '1.7.0.0') {
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             $cart = $this->context->cart;
             $this->context->smarty->assign('pathUri', $this->module->getPathUri());
             $this->context->smarty->assign('summarydetails', $cart->getSummaryDetails());
