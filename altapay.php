@@ -2302,7 +2302,7 @@ class ALTAPAY extends PaymentModule
         $orderLines['description'] = $productName; // Description of item.
         $orderLines['itemId'] = $itemID; // Item number (SKU)
         $orderLines['quantity'] = $quantity;
-        $orderLines['discount'] = number_format($discount, 4, '.', '');
+        $orderLines['discount'] = number_format($discount, 2, '.', '');
         // Unit price excluding sales tax, only two digits.
         $orderLines['unitPrice'] = number_format((100 * $unitPrice) / 100, 2, '.', '');
 
@@ -2310,7 +2310,7 @@ class ALTAPAY extends PaymentModule
          * Optional keys for orderLines:
          * Tax amount should be the total tax amount.
          */
-        $orderLines['taxAmount'] = number_format($taxAmount * $quantity, 4, '.', '');
+        $orderLines['taxAmount'] = number_format($taxAmount * $quantity, 2, '.', '');
         $orderLines['taxPercent'] = number_format(($taxAmount / $unitPrice) * 100, 2, '.', '');
         $orderLines['goodsType'] = $goodsType; // Order line Type - one of the following shipment|handling|item
         if ($unitCode && $imageUrl && $productUrl) {
