@@ -7,6 +7,3 @@ parameters:
   level: 0
   excludes_analyse:
     - %currentWorkingDirectory%/vendor/*
-  scanDirectories:
-    - ../../
-    - ../../classes/
