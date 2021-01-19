@@ -7,7 +7,7 @@ Prerequisites:
 These are the steps that must be followed before running any of the codeanalysis tools.
 1. Download PrestaShop source code from https://download.prestashop.com/download/releases/prestashop_1.7.7.0.zip and extract it.
 2. Then, clone this repository into PrestaShop's 'modules' folder.
-3. Afterwards, clone https://github.com/AltaPay/sdk-php.git anywhere and only copy the contents of it's lib folder into the lib folder of this repository.
+3. Afterwards, clone https://github.com/AltaPay/sdk-php.git anywhere and only copy the contents of it's lib directory into lib/altapay/altapay-php-sdk/lib/ directory of this repository.
 4. Finally, run composer install in this repository as it will install the required packages.
 
 Now, we can use our code analysis tools.
