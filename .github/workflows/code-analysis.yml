@@ -1,0 +1,47 @@
+name: PHP Composer
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  php-stan:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-versions: ['7.4']
+    steps:
+     - name: Install PHP 7.4
+       uses: shivammathur/setup-php@v2
+       with:
+         php-version: ${{ matrix.php-versions }}
+         ini-values: "post_max_size=256M" #optional
+         
+     - name: Install prestashop                              
+       run: |
+         wget https://download.prestashop.com/download/releases/prestashop_1.7.7.0.zip
+         unzip prestashop_1.7.7.0.zip
+         unzip prestashop.zip -d prestashop
+         rm prestashop.zip prestashop_1.7.7.0.zip
+     - run: mkdir prestashop/modules/altapay
+     - uses: actions/checkout@v2 
+       with:
+          path: prestashop/modules/altapay
+     - name: Install SDK                             
+       run: |
+         git clone https://github.com/AltaPay/sdk-php.git
+         cp -r sdk-php/lib/* prestashop/modules/altapay/lib/altapay/altapay-php-sdk/lib/
+         rm -rf sdk-php
+       #working-directory: prestashop/modules/altapay
+     - name: Install composer and run PhpStan
+       run: |
+         composer install
+         _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
+       working-directory: prestashop/modules/altapay
+
+     - name: run PhpCsFixer
+       if: ${{ always() }}
+       run: php vendor/bin/php-cs-fixer fix --dry-run --diff
+       working-directory: prestashop/modules/altapay
