@@ -4,6 +4,6 @@ includes:
 parameters:
   paths:
     - %currentWorkingDirectory%
-  level: 0
+  level: 1
   excludes_analyse:
     - %currentWorkingDirectory%/vendor/*
