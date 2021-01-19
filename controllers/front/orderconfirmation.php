@@ -6,12 +6,18 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontController
 {
     /**
+     * @var bool
+     */
+    public $display_column_left;
+
+    /**
      * Method to follow when order is being successfully processed
+     *
      * @return void
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -21,12 +27,12 @@ class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontControlle
         parent::initContent();
 
         // Assignment of order detail variables
-        $orderID = (int)$_REQUEST['id_order'];
+        $orderID = (int) $_REQUEST['id_order'];
         $order = new Order($orderID);
         $orderPaymentNature = '';
         $productDetails = $order->getProducts();
-        $deliveryAddress = new Address((int)($order->id_address_delivery));
-        $invoiceAddress = new Address((int)($order->id_address_invoice));
+        $deliveryAddress = new Address((int) ($order->id_address_delivery));
+        $invoiceAddress = new Address((int) ($order->id_address_invoice));
         $altapayOrderDetails = getAltapayOrderDetails($orderID);
         $terminalTokenControlStatus = 0;
 
@@ -40,7 +46,7 @@ class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontControlle
                 $cardExpiryDate = $altapayOrderDetail['cardExpiryDate'];
                 $userID = $this->context->customer->id;
 
-                $sql = "SELECT * FROM `" . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE userID = "' . $userID . '" and creditcardNumber ="' . $card . '" ';
+                $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE userID = "' . $userID . '" and creditcardNumber ="' . $card . '" ';
                 $results = Db::getInstance()->executeS($sql);
 
                 $orderTerminalRemoteName = getAltapayOrderDetails($orderID)[0]['paymentTerminal'];

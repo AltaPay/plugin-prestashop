@@ -46,10 +46,11 @@ class MerchantAPI
      */
     private $api_password;
 
-    const ALTAPAY = " {AltaPay} ";
+    const ALTAPAY = ' {AltaPay} ';
 
     /**
      * Method for validation of credentials provided for api connection
+     *
      * @param string $api_url
      * @param string $api_username
      * @param string $api_password
@@ -66,9 +67,11 @@ class MerchantAPI
 
     /**
      * Method to get payment details against payment Id
+     *
      * @param int $paymentId
      *
      * @return AltapayAPIPayment|null
+     *
      * @throws AltapayConnectionFailedException
      * @throws AltapayInvalidResponseException
      * @throws AltapayMerchantAPIException
@@ -81,7 +84,7 @@ class MerchantAPI
         $response = $this->api->getPayment($paymentId);
 
         if (is_null($response)) {
-            throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not get payment details of payment '.$paymentId);
+            throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not get payment details of payment ' . $paymentId);
         }
 
         return $response->getPrimaryPayment();
@@ -90,11 +93,12 @@ class MerchantAPI
     /**
      * Method to trigger capture action
      *
-     * @param int   $paymentId
+     * @param int $paymentId
      * @param array $orderLines
-     * @param int   $amount
+     * @param int $amount
      *
      * @return AltapayCaptureResponse
+     *
      * @throws AltapayConnectionFailedException
      * @throws AltapayInvalidResponseException
      * @throws AltapayMerchantAPIException
@@ -117,11 +121,12 @@ class MerchantAPI
     /**
      * Method to trigger refund action
      *
-     * @param int   $paymentId
+     * @param int $paymentId
      * @param array $orderLines
-     * @param int   $amount
+     * @param int $amount
      *
      * @return AltapayRefundResponse
+     *
      * @throws AltapayConnectionFailedException
      * @throws AltapayInvalidResponseException
      * @throws AltapayMerchantAPIException
@@ -129,7 +134,7 @@ class MerchantAPI
      * @throws AltapayUnauthorizedAccessException
      * @throws AltapayUnknownMerchantAPIException
      */
-    public function refundAmount($paymentId, $orderLines =[], $amount = 0)
+    public function refundAmount($paymentId, $orderLines = [], $amount = 0)
     {
         $response = $this->api->refundCapturedReservation($paymentId, $amount, $orderLines);
 
@@ -144,10 +149,11 @@ class MerchantAPI
     /**
      * Method to trigger release action
      *
-     * @param int    $paymentId
+     * @param int $paymentId
      * @param string $transactionAction
      *
      * @return AltapayReleaseResponse
+     *
      * @throws AltapayConnectionFailedException
      * @throws AltapayInvalidResponseException
      * @throws AltapayMerchantAPIException
@@ -169,8 +175,11 @@ class MerchantAPI
 
     /**
      * Method for validation of merchant details
+     *
      * @throws AltapayMerchantAPIException
+     *
      * @return void
+     *
      * @throws AltapayMerchantAPIException
      */
     private function validateConfiguration()
@@ -189,13 +198,13 @@ class MerchantAPI
         );
         $response = $this->api->login();
         if (!$response->wasSuccessful()) {
-            throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not login to the Merchant API: '.
-                $response->getErrorMessage(), $response->getErrorCode());
+            throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not login to the Merchant API: ' . $response->getErrorMessage(), $response->getErrorCode());
         }
     }
 
     /**
      * @param SimpleXMLElement $xml
+     *
      * @return array
      */
     public function xmlParser($xml)
@@ -209,8 +218,10 @@ class MerchantAPI
 
     /**
      * Method for getting error message response
+     *
      * @param array $xmlResponse
      * @param string $action
+     *
      * @return false|string
      */
     public function errorMsg($xmlResponse, $action)

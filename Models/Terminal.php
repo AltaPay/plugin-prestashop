@@ -6,8 +6,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-class Altapay_Models_Terminal extends \ObjectModel
+class Altapay_Models_Terminal extends ObjectModel
 {
     public $id_terminal;
     public $currency;
@@ -26,7 +25,7 @@ class Altapay_Models_Terminal extends \ObjectModel
             'remote_name' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 255],
             'payment_type' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 32],
             'currency' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 100],
-            'ccTokenControl_' => ['type' => self::TYPE_INT,'required' => true, 'size' => 255],
+            'ccTokenControl_' => ['type' => self::TYPE_INT, 'required' => true, 'size' => 255],
             'icon_filename' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 100],
             'active' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
             'position' => ['type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId'],
@@ -37,26 +36,28 @@ class Altapay_Models_Terminal extends \ObjectModel
      * Method to get saved terminals from database
      *
      * @return array|false|PDOStatement|resource|null
+     *
      * @throws PrestaShopDatabaseException
      */
     public static function getTerminals()
     {
-        return \Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS("
-			SELECT * FROM `"._DB_PREFIX_."altapay_terminals` ORDER BY `id_terminal` ASC
-		");
+        return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('
+			SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals` ORDER BY `id_terminal` ASC
+		');
     }
 
     /**
      * Method to get active terminals from database
      *
      * @return array|false|PDOStatement|resource|null
+     *
      * @throws PrestaShopDatabaseException
      */
     public static function getActiveTerminals()
     {
-        return \Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS("
-			SELECT * FROM `"._DB_PREFIX_."altapay_terminals` WHERE active = 1 ORDER BY `display_name` ASC
-		");
+        return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('
+			SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE active = 1 ORDER BY `display_name` ASC
+		');
     }
 
     /**
@@ -65,13 +66,14 @@ class Altapay_Models_Terminal extends \ObjectModel
      * @param bool $currency
      *
      * @return array|false|PDOStatement|resource|null
+     *
      * @throws PrestaShopDatabaseException
      */
     public static function getActiveTerminalsForCurrency($currency = false)
     {
-        return \Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS("
-            SELECT * FROM `"
-            ._DB_PREFIX_."altapay_terminals` WHERE active = 1 AND currency = '".$currency."' ORDER BY `display_name` ASC
+        return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('
+            SELECT * FROM `'
+            . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND currency = '" . $currency . "' ORDER BY `display_name` ASC
 		");
     }
 }

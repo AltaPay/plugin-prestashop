@@ -6,32 +6,34 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-require_once _PS_MODULE_DIR_.'altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
+require_once _PS_MODULE_DIR_ . 'altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
 
 class AltapayCallbackformModuleFrontController extends ModuleFrontController
 {
     /**
      * Method to add external assets
+     *
      * @return void
      */
     public function setMedia()
     {
         parent::setMedia();
-        $this->addCSS($this->module->getPathUri().'css/altapay.css', 'all');
-        $this->addCSS($this->module->getPathUri().'css/custom_css.css', 'all');
+        $this->addCSS($this->module->getPathUri() . 'css/altapay.css', 'all');
+        $this->addCSS($this->module->getPathUri() . 'css/custom_css.css', 'all');
     }
 
     /**
      * Method to follow when callback form is being requested
+     *
      * @return void
+     *
      * @throws PrestaShopException
      */
     public function postProcess()
     {
         $css_dir = null;
         // Different conventions of assigning details for Version 1.6 and 1.7 respectively
-        if (_PS_VERSION_ >= '1.7.0.0') {
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             $cart = $this->context->cart;
             $this->context->smarty->assign('pathUri', $this->module->getPathUri());
             $this->context->smarty->assign('summarydetails', $cart->getSummaryDetails());
