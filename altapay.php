@@ -11,8 +11,6 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once __DIR__ . '/vendor/autoload.php';
-require_once _PS_MODULE_DIR_ . 'altapay/lib/altapay/altapay-php-sdk/lib/helpers.php';
-require_once _PS_MODULE_DIR_ . 'altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
 
 class ALTAPAY extends PaymentModule
 {
@@ -23,11 +21,9 @@ class ALTAPAY extends PaymentModule
     private $Mhtml = '';
     private $postErrors = [];
     private $paymentMethodIconDir = 'views/img/payment_icons';
-    const ALTAPAY = ' {AltaPay} ';
     public $is_eu_compatible;
-    public $v16;
-    public $v17;
     public $fields_form;
+    private $api_error = '';
 
     public function __construct()
     {
@@ -42,21 +38,9 @@ class ALTAPAY extends PaymentModule
         $this->bootstrap = true;
 
         $config = Configuration::getMultiple([
-            'ALTAPAY_USERNAME',
-            'ALTAPAY_PASSWORD',
-            'ALTAPAY_URL',
             'AUTOCAPTURE_STATUSES',
             'ALTAPAY_TERMINAL',
         ]);
-        if (isset($config['ALTAPAY_USERNAME'])) {
-            $this->username = $config['ALTAPAY_USERNAME'];
-        }
-        if (isset($config['ALTAPAY_PASSWORD'])) {
-            $this->password = $config['ALTAPAY_PASSWORD'];
-        }
-        if (isset($config['ALTAPAY_URL'])) {
-            $this->url = $config['ALTAPAY_URL'];
-        }
         if (isset($config['AUTOCAPTURE_STATUSES'])) {
             $this->captureStatus = $config['AUTOCAPTURE_STATUSES'];
         }
@@ -423,7 +407,7 @@ class ALTAPAY extends PaymentModule
                     'type' => 'select',
                     'label' => $this->l('Icon'),
                     'desc' => $this->l('Upload icons in size 20x20 pixels to ')
-                                  . $this->_path . $this->paymentMethodIconDir,
+                              . $this->_path . $this->paymentMethodIconDir,
                     'name' => 'icon_filename',
                     'required' => true,
                     'options' => [
@@ -518,7 +502,7 @@ class ALTAPAY extends PaymentModule
             'buttons' => [
                 [
                     'href' => AdminController::$currentIndex .
-                               '&configure=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'),
+                              '&configure=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'),
                     'title' => $this->l('Back to list'),
                     'icon' => 'process-icon-back',
                 ],
@@ -556,45 +540,33 @@ class ALTAPAY extends PaymentModule
      */
     private function getAltapayTerminals($objects = false)
     {
-        $cgConf = [];
         $terminalArray = [];
-        $termNature = '';
-        $cgConf['user'] = $this->getAPIUsername();
-        $cgConf['password'] = $this->getAPIPassword();
-        $cgConf['altapay_url'] = $this->getAltapayUrl();
-        $api = null;
         try {
-            $api = new AltapayMerchantAPI($cgConf['altapay_url'], $cgConf['user'], $cgConf['password'],
-                null);
-            $response = $api->login();
-            $responseTerminals = $api->getTerminals();
-            $terminals = $responseTerminals->getTerminals();
-            if (!$response->wasSuccessful()) {
-                $resErrMsg = $response->getErrorMessage();
-                $resErrCode = $response->getErrorCode();
-                throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not login to the Merchant API: ' . $resErrMsg, $resErrCode);
-            }
+            $api = new API\PHP\Altapay\Api\Others\Terminals(getAuth());
+            $response = $api->call();
         } catch (Exception $e) {
             PrestaShopLogger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
             Tools::redirectAdmin($this->context->link->getAdminLink('AdminModules', false) . '&configure='
                                  . $this->name . '&errorMessage&token=' . Tools::getAdminTokenLite('AdminModules'));
             exit();
         }
-        foreach ($terminals as $terminal) {
+
+        foreach ($response->Terminals as $terminal) {
             if (!$objects) {
-                $terminalNature = $terminal->getNature();
-                if (in_array('CreditCard', $terminalNature, true)) {
-                    $termNature = 'CreditCard';
-                } elseif (in_array('Invoice', $terminalNature, true)) {
-                    $termNature = 'Invoice';
+                $terminalNature = $terminal->Natures;
+                $termNature = '';
+                foreach ($terminalNature as $nature) {
+                    if ($nature->Nature === 'CreditCard') {
+                        $termNature = 'CreditCard';
+                    }
                 }
-                $terminalArray[$terminal->getTitle()] = [
-                    'id' => $terminal->getTitle(),
-                    'name' => $terminal->getTitle(),
+                $terminalArray[$terminal->Title] = [
+                    'id' => $terminal->Title,
+                    'name' => $terminal->Title,
                     'nature' => $termNature,
                 ];
             } else {
-                $terminalArray[$terminal->getTitle()] = $terminal;
+                $terminalArray[$terminal->Title] = $terminal;
             }
         }
 
@@ -650,6 +622,32 @@ class ALTAPAY extends PaymentModule
     }
 
     /**
+     * Method for AltaPay api login using credentials provided in AltaPay settings page
+     *
+     * @return bool
+     */
+    public function altapayApiLogin()
+    {
+        try {
+            $api = new API\PHP\Altapay\Api\Test\TestAuthentication(getAuth());
+            $response = $api->call();
+            if (!$response) {
+                return false;
+            }
+        } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
+            $this->api_error = $e->getMessage();
+
+            return false;
+        } catch (Exception $e) {
+            $this->api_error = $e->getMessage();
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Handle payment processing
      * capture, refund, release
      *
@@ -668,33 +666,34 @@ class ALTAPAY extends PaymentModule
         if (!(Tools::getValue('action') && Tools::getValue('payment_id'))) {
             return;
         }
-        // Merchant API
-        $api = new Altapay\classes\MerchantAPI();
-        try {
-            $api->init($this->getAltapayUrl(), $this->getAPIUsername(), $this->getAPIPassword());
-        } catch (Exception $e) {
-            saveLastErrorMessage($paymentID, $e->getMessage());
+
+        if (!$this->altapayApiLogin()) {
+            saveLastErrorMessage($paymentID, $this->api_error);
             echo json_encode(
                 [
                     'status' => 'error',
-                    'message' => 'Connection error: ' . $e->getMessage(),
+                    'message' => 'Connection error: ' . $this->api_error,
                 ]
             );
             exit();
         }
+
         if ($action === 'Capture') { // CAPTURE
             try {
                 $finalOrderLines = $this->populateOrderLinesFromPost($orderLines, $orderID, 0, $orderLineGiftWrap);
-                $api->captureAmount($paymentID, $finalOrderLines, Tools::getValue('amount'));
+                $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
+                $api->setAmount((float) Tools::getValue('amount'));
+                $api->setOrderLines($finalOrderLines);
+                $api->setTransaction($paymentID);
+                $api->call();
                 markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
             } catch (Exception $e) {
                 // Save the latest error message in db
-                $response = json_decode($e->getMessage(), true);
-                saveLastErrorMessage($paymentID, $response['responseMsg']);
+                saveLastErrorMessage($paymentID, $e->getMessage());
                 echo json_encode(
                     [
-                        'status' => $response['responseResult'],
-                        'message' => 'Could not capture reservation. ' . $response['responseMsg'],
+                        'status' => 'error',
+                        'message' => 'Could not capture reservation. ' . $e->getMessage(),
                     ]
                 );
                 exit();
@@ -724,19 +723,19 @@ class ALTAPAY extends PaymentModule
                 if ($finalOrderLines === [] && $goodWillRefund) {
                     $finalOrderLines = $this->createDummyOrderLinesArr($refundAmount);
                 }
-                $api->refundAmount($paymentID, $finalOrderLines, $refundAmount);
-                $refundUpdate = markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
-                if (!$refundUpdate) {
-                    throw new AltapayMerchantAPIException(self::ALTAPAY . 'The refund could not be updated in database');
-                }
+                $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
+                $api->setAmount((float) $refundAmount);
+                $api->setOrderLines($finalOrderLines);
+                $api->setTransaction($paymentID);
+                $api->call();
+                markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
             } catch (Exception $e) {
-                $response = json_decode($e->getMessage(), true);
-                saveLastErrorMessage($paymentID, $response['responseMsg']);
-
+                $message = $e->getMessage();
+                saveLastErrorMessage($paymentID, $message);
                 echo json_encode(
                     [
-                        'status' => $response['responseResult'],
-                        'message' => 'Could not refund payment. ' . $response['responseMsg'],
+                        'status' => 'error',
+                        'message' => 'Could not refund payment. ' . $message,
                     ]
                 );
                 exit();
@@ -751,17 +750,17 @@ class ALTAPAY extends PaymentModule
             exit();
         } elseif ($action === 'Release') { // RELEASE
             try {
-                $api->release($paymentID, $action);
+                $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
+                $api->setTransaction($paymentID);
+                $api->call();
                 updatePaymentStatus($paymentID, 'Payment Released');
             } catch (Exception $e) {
-                $response = json_decode($e->getMessage(), true);
-                saveLastErrorMessage($paymentID, $response['responseMsg']);
+                saveLastErrorMessage($paymentID, $e->getMessage());
 
                 echo json_encode(
                     [
-                        'status' => $response['responseResult'],
-                        'message' => 'Could not release reservation. ' . $response['responseResult'] . ': '
-                                     . $response['responseMsg'],
+                        'status' => 'error',
+                        'message' => 'Could not release reservation. ' . $e->getMessage(),
                     ]
                 );
                 exit();
@@ -843,15 +842,6 @@ class ALTAPAY extends PaymentModule
                         $goodsType = 'refund';
                     }
 
-                    $altapayOrderLines[$i]['description'] = $productName;
-                    $altapayOrderLines[$i]['itemId'] = $itemID; // Item number (SKU)
-                    $altapayOrderLines[$i]['quantity'] = $productQuantity;
-                    $altapayOrderLines[$i]['unitPrice'] = number_format($unitPrice, 2, '.', '');
-                    $altapayOrderLines[$i]['taxAmount'] = number_format($totalProductsTaxAmount, 2, '.', '');
-                    // The type of order line it is. Should be one of the following: shipment|handling|item|refund
-                    $altapayOrderLines[$i]['goodsType'] = $goodsType;
-                    $altapayOrderLines[$i]['discount'] = number_format($discountPercentage, 2, '.', '');
-
                     // Compensation calculation
                     $gatewaySubTotal = ($unitPrice * $productQuantity) + $totalProductsTaxAmount;
                     $gatewayTotal = $gatewaySubTotal - ($gatewaySubTotal * ($discountPercentage / 100));
@@ -859,6 +849,16 @@ class ALTAPAY extends PaymentModule
                     $cmsSubTotal = ($basePrice * $productQuantity) + ($productTax * $productQuantity);
                     $cmsTotal = $cmsSubTotal - ($cmsSubTotal * ($discountPercentage / 100));
                     $compensationAmount = $cmsTotal - $gatewayTotal;
+                    $orderLine = new API\PHP\Altapay\Request\OrderLine(
+                        $productName,
+                        $itemID,
+                        $productQuantity,
+                        number_format($basePrice, 2, '.', '')
+                    );
+                    $orderLine->taxAmount = $totalProductsTaxAmount;
+                    $orderLine->discount = $discountPercentage;
+                    $orderLine->setGoodsType($goodsType);
+                    $altapayOrderLines[$i] = $orderLine;
                     // Send compensation amount if Gateway total is not equal to cms total
                     if (($compensationAmount > 0 || $compensationAmount < 0)) {
                         ++$i;
@@ -874,27 +874,27 @@ class ALTAPAY extends PaymentModule
         }
         if ($orderLineGiftWrap && isset($orderLineGiftWrap[0]) && $orderLineGiftWrap[0] == 1) {
             $orderDetail = new Order((int) $orderID);
-            $giftWrappingFee = $orderDetail->total_wrapping;
-            // Mandatory keys for orderLines:
-            $altapayOrderLines[$i]['description'] = 'Gift Wrap'; // Description of item.
-            $altapayOrderLines[$i]['itemId'] = 'giftwrap'; // Item number (SKU)
-            $altapayOrderLines[$i]['quantity'] = 1;
-            // Unit price excluding sales tax, only two digits.
-            $altapayOrderLines[$i]['unitPrice'] = number_format($giftWrappingFee, 2, '.', '');
-
-            // The type of order line it is. Should be one of the following: shipment|handling|item|refund
-            $altapayOrderLines[$i]['goodsType'] = 'item';
+            $orderLine = new API\PHP\Altapay\Request\OrderLine(
+                'Gift Wrap',
+                'giftwrap',
+                1,
+                $orderDetail->total_wrapping
+            );
+            $orderLine->setGoodsType('item');
+            $altapayOrderLines[$i] = $orderLine;
             ++$i;
         }
         if ($isSetBackendDiscount && $backendDiscount > 0) {
-            $altapayOrderLines[$i]['description'] = 'Backend Discount'; // Description of item.
-            $altapayOrderLines[$i]['itemId'] = 'bk-dsc'; // Item number (SKU)
-            $altapayOrderLines[$i]['quantity'] = 1;
-            $altapayOrderLines[$i]['unitPrice'] = '-' . number_format($backendDiscount, 2, '.', '');
-            // Optional keys for orderLines:
-            $altapayOrderLines[$i]['taxAmount'] = 0;
-            // The type of order line it is. Should be one of the following: shipment|handling|item|refund
-            $altapayOrderLines[$i]['goodsType'] = 'item';
+            $orderLine = new API\PHP\Altapay\Request\OrderLine(
+                'Backend Discount',
+                'bk-dsc',
+                1,
+                '-' . $backendDiscount
+            );
+
+            $orderLine->taxAmount = 0;
+            $orderLine->setGoodsType('item');
+            $altapayOrderLines[$i] = $orderLine;
             ++$i;
         }
         if ($fullCapture) {
@@ -913,7 +913,6 @@ class ALTAPAY extends PaymentModule
     public function getShippingInfo($orderID, $cartRuleDiscounts)
     {
         $shippingDiscount = 0;
-        $altapayOrderLines = [];
         $orderDetail = new Order((int) $orderID);
         $shippingDetail = reset($orderDetail->getShipping());
         foreach ($cartRuleDiscounts as $cartRuleDiscount) {
@@ -921,22 +920,17 @@ class ALTAPAY extends PaymentModule
                 $shippingDiscount = 100;
             }
         }
-        // Mandatory keys for orderLines:
-        $altapayOrderLines['description'] = $shippingDetail['carrier_name']; // Description of item.
-        $altapayOrderLines['itemId'] = $shippingDetail['carrier_name']; // Item number (SKU)
-        $altapayOrderLines['quantity'] = 1;
-        // Unit price excluding sales tax, only two digits.
-        $altapayOrderLines['unitPrice'] = number_format($shippingDetail['shipping_cost_tax_excl'], 2, '.', '');
-        $altapayOrderLines['discount'] = number_format($shippingDiscount, 2, '.', '');
+        $orderLine = new API\PHP\Altapay\Request\OrderLine(
+            $shippingDetail['carrier_name'],
+            $shippingDetail['carrier_name'],
+            1,
+            $shippingDetail['shipping_cost_tax_excl']
+        );
+        $orderLine->taxAmount = $shippingDetail['shipping_cost_tax_incl'] - $shippingDetail['shipping_cost_tax_excl'];
+        $orderLine->discount = $shippingDiscount;
+        $orderLine->setGoodsType('shipment');
 
-        /* Optional keys for orderLines
-           Taxamount should be the total tax amount for order line.
-        */
-        $altapayOrderLines['taxAmount'] = number_format($shippingDetail['shipping_cost_tax_incl'] - $shippingDetail['shipping_cost_tax_excl'], 2, '.', '');
-        // The type of order line it is. Should be one of the following: shipment|handling|item|refund
-        $altapayOrderLines['goodsType'] = 'shipment';
-
-        return $altapayOrderLines;
+        return $orderLine;
     }
 
     /**
@@ -1001,10 +995,22 @@ class ALTAPAY extends PaymentModule
         } else {
             $terminal = new Altapay_Models_Terminal();
         }
-        $altapayTerminal = new AltapayTerminal();
+
+        $api = new API\PHP\Altapay\Api\Others\Terminals(getAuth());
+        $response = $api->call();
+        $allowedCurrencies = [];
+
+        foreach ($response->Terminals as $term) {
+            if ($term->Title === $terminalRemoteName) {
+                foreach ($term->Currencies as $currency) {
+                    $allowedCurrencies[] = $currency->Currency;
+                }
+            }
+        }
+
+        $getVal = Tools::getValue('currency');
         // Currency supported?
-        if (!$altapayTerminal->hasCurrency(Tools::getValue('currency'))) {
-            $getVal = Tools::getValue('currency');
+        if (!in_array($getVal, $allowedCurrencies, true)) {
             $this->Mhtml .= sprintf('<div class="alert alert-danger">Selected terminal does not support currency %s</div>',
                 $getVal);
 
@@ -1156,7 +1162,7 @@ class ALTAPAY extends PaymentModule
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'btnSubmit';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&configure='
-                                            . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
+                                . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->tpl_vars = [
             'fields_value' => $this->getConfigFieldsValues(),
@@ -1392,12 +1398,25 @@ class ALTAPAY extends PaymentModule
     public function performCapture($paymentID, $params, $captureRemainedAmount = true, $statusCapture = false)
     {
         try {
-            $api = new Altapay\classes\MerchantAPI();
             $productDetails = new OrderDetail();
             $cart = $this->context->cart;
             $orderSummary = $cart->getSummaryDetails();
-            $api->init($this->getAltapayUrl(), $this->getAPIUsername(), $this->getAPIPassword());
-            $paymentDetails = $api->getPaymentDetails($paymentID);
+            $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
+            $api->setTransaction($paymentID);
+            $paymentDetails = $api->call();
+
+            $reserved = 0;
+            $captured = 0;
+            $refunded = 0;
+
+            if ($paymentDetails) {
+                foreach ($paymentDetails as $pay) {
+                    $reserved += $pay->ReservedAmount;
+                    $captured += $pay->CapturedAmount;
+                    $refunded += $pay->RefundedAmount;
+                }
+            }
+
             $orderDetail = new Order((int) $params['id_order']);
             $discountData = $this->getorderCartRule($params['id_order']);
             $backendDiscount = 0;
@@ -1407,9 +1426,8 @@ class ALTAPAY extends PaymentModule
                     $backendDiscount += $discountData[$key]['value'];
                 }
             }
-            $orderReservedAmount = $paymentDetails->getReservedAmount();
-            $orderCapturedAmount = $paymentDetails->getCapturedAmount();
-            $amountToCapture = $orderReservedAmount - $orderCapturedAmount;
+
+            $amountToCapture = $reserved - $captured;
             $giftWrappingFee = null;
             if ($productDetails->gift) {
                 $giftWrappingFee = $productDetails->total_wrapping;
@@ -1417,7 +1435,11 @@ class ALTAPAY extends PaymentModule
             if ($amountToCapture == 0) {
                 return null;
             }
-            if ($amountToCapture > 0 && $orderCapturedAmount == 0) {
+
+            $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
+            $api->setTransaction($paymentID);
+
+            if ($amountToCapture > 0 && $captured == 0) {
                 $orderLines = $this->populateOrderLinesFromPost(array_column(
                     $productDetails->getList($params['id_order']),
                     'product_quantity'),
@@ -1428,15 +1450,20 @@ class ALTAPAY extends PaymentModule
                     true,
                     true
                 );
+
+                $api->setOrderLines($orderLines);
                 if ($statusCapture) {
-                    $api->captureAmount($paymentID, $orderLines, $orderDetail->total_paid);
+                    $api->setAmount((float) $orderDetail->total_paid);
                 } else {
-                    $api->captureAmount($paymentID, $orderLines, $amountToCapture);
+                    $api->setAmount((float) $amountToCapture);
                 }
+                $response = $api->call();
                 markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($orderLines));
-            } elseif ($amountToCapture > 0 && $orderCapturedAmount > 0 && $captureRemainedAmount) {
+            } elseif ($amountToCapture > 0 && $captured > 0 && $captureRemainedAmount) {
                 $orderLines = $this->createOrderStatusOrderLines($amountToCapture);
-                $api->captureAmount($paymentID, $orderLines, $amountToCapture);
+                $api->setOrderLines($orderLines);
+                $api->setAmount((float) $amountToCapture);
+                $response = $api->call();
             }
         } catch (Exception $e) {
             $this->returnError($paymentID, $e);
@@ -1547,16 +1574,18 @@ class ALTAPAY extends PaymentModule
         $orderDetail = new Order((int) $params['id_order']);
         $productDetail = $orderDetail->getProducts();
         $shippingDetail = $orderDetail->getShipping();
+
         if ($orderDetail->gift) {
             $giftWrappingFee = $orderDetail->total_wrapping;
             $this->smarty->assign('ap_gift_wrapping', $giftWrappingFee);
         }
         $orderId = $params['id_order'];
         $discounts = $this->getCartRuleDiscounts($orderDetail);
-
         $this->smarty->assign('ap_order_id', $orderId);
         $this->smarty->assign('ap_product_details', $productDetail);
-        $this->smarty->assign('ap_shipping_details', $shippingDetail);
+        if (!empty($shippingDetail[0]['id_order_invoice'])) {
+            $this->smarty->assign('ap_shipping_details', $shippingDetail);
+        }
         $this->smarty->assign('ap_coupon_discount', $discounts);
         $this->smarty->assign('ap_order_detail', $orderDetail->total_discounts);
         $apOrders = [];
@@ -1576,11 +1605,31 @@ class ALTAPAY extends PaymentModule
         }
         $this->smarty->assign('ap_orders', $apOrders);
 
-        // collect info from AltaPay - fail gracefully
-        $api = new Altapay\classes\MerchantAPI();
         try {
-            $api->init($this->getAltapayUrl(), $this->getAPIUsername(), $this->getAPIPassword());
-            $ap_payment = $api->getPaymentDetails($results['payment_id']);
+            $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
+            $api->setTransaction($results['payment_id']);
+            $paymentDetails = $api->call();
+
+            $reserved = 0;
+            $captured = 0;
+            $refunded = 0;
+            $status = isset($paymentDetails[0]->TransactionStatus) ? $paymentDetails[0]->TransactionStatus : '';
+
+            if ($paymentDetails) {
+                foreach ($paymentDetails as $pay) {
+                    $reserved += $pay->ReservedAmount;
+                    $captured += $pay->CapturedAmount;
+                    $refunded += $pay->RefundedAmount;
+                }
+            }
+
+            $ap_payment = [
+                'reserved' => $reserved,
+                'captured' => $captured,
+                'refunded' => $refunded,
+                'status' => $status,
+            ];
+
             $this->smarty->assign('ap_paymentinfo', $ap_payment);
         } catch (Exception $e) {
             $this->smarty->assign('ap_error', 'Error: ' . $e->getMessage());
@@ -1818,7 +1867,7 @@ class ALTAPAY extends PaymentModule
             'this_path' => $this->_path,
             'this_path_altapay' => $this->_path,
             'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $this->name
-                                     . '/',
+                               . '/',
             'methods' => $paymentMethods,
             'PS_STOCK_MANAGEMENT' => Configuration::get('PS_STOCK_MANAGEMENT'),
         ];
@@ -1885,7 +1934,6 @@ class ALTAPAY extends PaymentModule
      */
     public function createTransaction($savedCreditCard, $payment_method = false)
     {
-        // $userType = 'private';
         $customerCreatedDate = null;
         $cart = $this->context->cart;
         $ccToken = null;
@@ -1906,10 +1954,7 @@ class ALTAPAY extends PaymentModule
         }
         $cgConf = [];
         // Config
-        $cgConf['user'] = $this->getAPIUsername();
-        $cgConf['password'] = $this->getAPIPassword();
         $cgConf['payment_type'] = $terminal->payment_type;
-        $cgConf['altapay_url'] = $this->getAltapayUrl();
         $cgConf['currency'] = $this->context->currency->iso_code;
         $cgConf['language'] = $this->context->language->iso_code;
         $cgConf['uniqueid'] = $cart->id;
@@ -1966,48 +2011,45 @@ class ALTAPAY extends PaymentModule
             $this->context->language->id,
             $this->context->shop->id
         );
-        $customer = [];
-        // Customer info
-        $customer['billing_firstname'] = $this->context->customer->firstname;
-        $customer['billing_lastname'] = $this->context->customer->lastname;
-        $customer['email'] = $this->context->customer->email;
 
         // Billing address
         $invoice_address = new Address($this->context->cart->id_address_invoice);
         $country = new Country($invoice_address->id_country);
         $state = new State($invoice_address->id_state);
 
-        $customer['billing_address'] = $invoice_address->address1;
-        $customer['billing_city'] = $invoice_address->city;
-        $customer['billing_postal'] = $invoice_address->postcode;
-        $customer['billing_region'] = $state->iso_code;
-        $customer['billing_country'] = $country->iso_code;
+        $address = new API\PHP\Altapay\Request\Address();
+        $address->Firstname = $this->context->customer->firstname;
+        $address->Lastname = $this->context->customer->lastname;
+        $address->Address = $invoice_address->address1;
+        $address->City = $invoice_address->city;
+        $address->PostalCode = $invoice_address->postcode;
+        $address->Region = $state->iso_code;
+        $address->Country = $country->iso_code;
 
-        // Phone
-        $customer['customer_phone'] = $invoice_address->phone ?: $invoice_address->phone_mobile;
+        $customer = new API\PHP\Altapay\Request\Customer($address);
+        $customer->setEmail($this->context->customer->email);
+        $customer->setPhone($invoice_address->phone ?: $invoice_address->phone_mobile);
 
         // Shipping address
         $sp_address = new Address($this->context->cart->id_address_delivery);
         $sp_country = new Country($sp_address->id_country);
         $sp_state = new State($sp_address->id_state);
-        $customer['shipping_address'] = $sp_address->address1;
-        $customer['shipping_city'] = $sp_address->city;
-        $customer['shipping_postal'] = $sp_address->postcode;
-        $customer['shipping_region'] = $sp_state->iso_code;
-        $customer['shipping_country'] = $sp_country->iso_code;
-        $customer['shipping_firstname'] = $sp_address->firstname;
-        $customer['shipping_lastname'] = $sp_address->lastname;
+
+        $address = new API\PHP\Altapay\Request\Address();
+        $address->Firstname = $sp_address->firstname;
+        $address->Lastname = $sp_address->lastname;
+        $address->Address = $sp_address->address1;
+        $address->City = $sp_address->city;
+        $address->PostalCode = $sp_address->postcode;
+        $address->Region = $sp_state->iso_code;
+        $address->Country = $sp_country->iso_code;
+        $customer->setShipping($address);
 
         //Calling transactionInfo method from helpers file
         $transactionInfo = transactionInfo();
-
-        // Decode the HTML entities from the address data
-        $customer = $this->decodeHtmlEntitiesArrayValues($customer);
-
         $amount = $cart->getOrderTotal(true, Cart::BOTH);
-
         if ($this->context->customer->isLogged()) {
-            $customerCreatedDate = convertDateTimeFormat($this->context->customer->date_add);
+            $customer->setCreatedDate(new \DateTime($this->context->customer->date_add));
         }
 
         if (!is_null($savedCreditCard)) {
@@ -2018,74 +2060,67 @@ class ALTAPAY extends PaymentModule
             }
         }
 
-        $api = null;
-        try {
-            $api = new AltapayMerchantAPI($cgConf['altapay_url'], $cgConf['user'], $cgConf['password'], null);
-            $response = $api->login();
-
-            if (!$response->wasSuccessful()) {
-                $resErrMsg = $response->getErrorMessage();
-                $resErrCode = $response->getErrorCode();
-                throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not login to the Merchant API: ' . $resErrMsg, $resErrCode);
-            }
-        } catch (Exception $e) {
-            PrestaShopLogger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
+        if (!$this->altapayApiLogin()) {
+            PrestaShopLogger::addLog($this->api_error, 3, null, $this->name, $this->id, true);
 
             return [
                 'success' => false,
                 'result' => 'failure',
                 'message' => 'unable to connect to gateway',
-                'additionalInfo' => $e->getMessage(),
+                'additionalInfo' => $this->api_error,
                 'payment_form_url' => false,
             ];
         }
-        try {
-            $response = $api->createPaymentRequest(
-                $cgConf['terminal'],
-                $cgConf['uniqueid'],
-                $amount,
-                $cgConf['currency'],
-                $cgConf['payment_type'],
-                $customer,
-                $cgConf['cookie'],
-                $cgConf['language'],
-                $callback,
-                $transactionInfo,
-                $this->getOrderLines($cart),
-                null,
-                $ccToken,
-                null,
-                null,
-                null,
-                null,
-                null,
-                $customerCreatedDate
-            );
 
-            if (!$response->wasSuccessful()) {
-                $resErrMsg = $response->getErrorMessage();
-                $resErrCode = $response->getErrorCode();
-                throw new AltapayMerchantAPIException(self::ALTAPAY . 'Could not create the payment request: ' . $resErrMsg, $resErrCode);
-            }
+        try {
+            $config = new API\PHP\Altapay\Request\Config();
+            $config->setCallbackOk($callback['callback_ok']);
+            $config->setCallbackFail($callback['callback_fail']);
+            $config->setCallbackOpen($callback['callback_open']);
+            $config->setCallbackNotification($callback['callback_notification']);
+            $config->setCallbackForm($callback['callback_form']);
+            $request = new API\PHP\Altapay\Api\Ecommerce\PaymentRequest(getAuth());
+            $request->setTerminal($cgConf['terminal'])
+                    ->setShopOrderId($cgConf['uniqueid'])
+                    ->setAmount($amount)
+                    ->setCurrency($cgConf['currency'])
+                    ->setCustomerInfo($customer)
+                    ->setConfig($config)
+                    ->setTransactionInfo($transactionInfo)
+                    ->setCookie($cgConf['cookie'])
+                    ->setCcToken($ccToken)
+                    ->setFraudService(null)
+                    ->setLanguage($cgConf['language'])
+                    ->setType($cgConf['payment_type'])
+                    ->setOrderLines($this->getOrderLines($cart));
+            $response = $request->call();
 
             return [
                 'success' => true,
                 'uniqueid' => $cgConf['uniqueid'],
                 'amount' => $amount,
                 'result' => 'Success',
-                'payment_form_url' => $response->getRedirectURL(),
+                'payment_form_url' => $response->Url,
             ];
+        } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
+            $message = $e->getResponse()->getBody();
+        } catch (API\PHP\Altapay\Exceptions\ResponseHeaderException $e) {
+            $message = $e->getHeader()->ErrorMessage;
+        } catch (API\PHP\Altapay\Exceptions\ResponseMessageException $e) {
+            $message = $e->getMessage();
         } catch (Exception $e) {
-            PrestaShopLogger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
-
-            return [
-                'success' => false,
-                'result' => 'failure',
-                'message' => 'unable to obtain payment form url',
-                'additionalInfo' => $e->getMessage(),
-                'payment_form_url' => false,
-            ];
+            $message = $e->getMessage();
         }
+
+        PrestaShopLogger::addLog($message, 3, null, $this->name, $this->id, true);
+
+        return [
+            'success' => false,
+            'result' => 'failure',
+            'message' => 'unable to obtain payment form url',
+            'additionalInfo' => $message,
+            'payment_form_url' => false,
+        ];
     }
 
     /**
@@ -2220,7 +2255,7 @@ class ALTAPAY extends PaymentModule
                 $productImageUrl,
                 $productUrl
             );
-            $gatewaySubTotal = ($orderLines[$i]['unitPrice'] * $p['cart_quantity']) + $orderLines[$i]['taxAmount'];
+            $gatewaySubTotal = ($orderLines[$i]->unitPrice * $p['cart_quantity']) + $orderLines[$i]->taxAmount;
             $gatewayTotal = $gatewaySubTotal - ($gatewaySubTotal * ($discountPercent / 100));
             $gatewayTotal = round($gatewayTotal, 2);
             $cmsSubTotal = ($basePrice * $p['cart_quantity']) + ($singleProductTaxAmount * $p['cart_quantity']);
@@ -2246,24 +2281,26 @@ class ALTAPAY extends PaymentModule
         if ($cartRuleFreeShipping) {
             $shippingDiscountPercent = 100;
         }
-        $orderLines[$i] = $this->createOrderlines(
-            $carrier->delay,
-            $carrier->name,
-            1,
-            $shippingDiscountPercent,
-            $carrierCostWithoutTax,
-            $carrierTax,
-            'shipment',
-            '',
-            '',
-            ''
-        );
+        if (!empty($carrier->name)) {
+            $orderLines[$i] = $this->createOrderlines(
+                $carrier->delay,
+                $carrier->name,
+                1,
+                $shippingDiscountPercent,
+                $carrierCostWithoutTax,
+                $carrierTax,
+                'shipment',
+                '',
+                '',
+                ''
+            );
+        }
 
         if ($orderDetails) {
             $orderDetails = json_encode($orderDetails);
             $sql = 'INSERT INTO ' . _DB_PREFIX_ . 'altapay_cartInfo (id_cart, productDetails, date_add) VALUES ' . "('" . $cartID . "', '"
-                            . $orderDetails . "', '" . time() . "')" .
-                            ' ON DUPLICATE KEY UPDATE `productDetails` = ' . "'" . $orderDetails . "'";
+                   . $orderDetails . "', '" . time() . "')" .
+                   ' ON DUPLICATE KEY UPDATE `productDetails` = ' . "'" . $orderDetails . "'";
             Db::getInstance()->Execute($sql);
         }
 
@@ -2298,28 +2335,22 @@ class ALTAPAY extends PaymentModule
         $imageUrl,
         $productUrl
     ) {
-        // Mandatory keys for orderLines:
-        $orderLines['description'] = $productName; // Description of item.
-        $orderLines['itemId'] = $itemID; // Item number (SKU)
-        $orderLines['quantity'] = $quantity;
-        $orderLines['discount'] = number_format($discount, 2, '.', '');
-        // Unit price excluding sales tax, only two digits.
-        $orderLines['unitPrice'] = number_format((100 * $unitPrice) / 100, 2, '.', '');
+        $orderLine = new API\PHP\Altapay\Request\OrderLine(
+            $productName,
+            $itemID,
+            $quantity,
+            number_format((100 * $unitPrice) / 100, 2, '.', '')
+        );
 
-        /*
-         * Optional keys for orderLines:
-         * Tax amount should be the total tax amount.
-         */
-        $orderLines['taxAmount'] = number_format($taxAmount * $quantity, 2, '.', '');
-        $orderLines['taxPercent'] = number_format(($taxAmount / $unitPrice) * 100, 2, '.', '');
-        $orderLines['goodsType'] = $goodsType; // Order line Type - one of the following shipment|handling|item
-        if ($unitCode && $imageUrl && $productUrl) {
-            $orderLines['unitCode'] = $unitCode;
-            $orderLines['imageUrl'] = $imageUrl;
-            $orderLines['productUrl'] = $productUrl;
-        }
+        $orderLine->taxAmount = number_format($quantity * $taxAmount, 4, '.', '');
+        $orderLine->discount = $discount;
+        $orderLine->taxPercent = $unitPrice > 0 ? number_format(($taxAmount / $unitPrice) * 100, 2, '.', '') : 0;
+        $orderLine->productUrl = $productUrl ? $productUrl : '';
+        $orderLine->imageUrl = $imageUrl ? $imageUrl : '';
+        $orderLine->unitCode = $unitCode;
+        $orderLine->setGoodsType($goodsType);
 
-        return $orderLines;
+        return $orderLine;
     }
 
     /**
@@ -2514,13 +2545,17 @@ class ALTAPAY extends PaymentModule
      */
     public function compensationOrderlines($itemID, $compensationAmount)
     {
-        $orderLines['description'] = 'compensation'; // Description of item.
-        $orderLines['itemId'] = 'comp-' . $itemID; // Item number (SKU)
-        $orderLines['quantity'] = 1;
-        $orderLines['unitPrice'] = number_format($compensationAmount, 2, '.', '');
-        $orderLines['taxAmount'] = 0;
-        $orderLines['goodsType'] = 'item';
+        $orderLine = new API\PHP\Altapay\Request\OrderLine(
+            'compensation',
+            'comp-' . $itemID,
+            1,
+            $compensationAmount
+        );
 
-        return $orderLines;
+        $orderLine->taxAmount = 0;
+        $orderLine->discount = 0;
+        $orderLine->setGoodsType('item');
+
+        return $orderLine;
     }
 }

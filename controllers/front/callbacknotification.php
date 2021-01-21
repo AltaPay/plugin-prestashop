@@ -6,8 +6,6 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
-
 class AltapayCallbacknotificationModuleFrontController extends ModuleFrontController
 {
     /**
@@ -20,10 +18,10 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
     public function postProcess()
     {
         try {
-            $xml = Tools::getValue('xml');
-            $callbackHandler = new AltapayCallbackHandler();
-            $response = $callbackHandler->parseXmlResponse($xml);
-            $shopOrderId = $response->getPrimaryPayment()->getShopOrderId();
+            $postData = Tools::getAllValues();
+            $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
+            $response = $callback->call();
+            $shopOrderId = $response->shopOrderId;
             $fp = fopen(_PS_MODULE_DIR_ . '/altapay/controllers/front/lock.txt', 'r');
             flock($fp, LOCK_EX);
             // Load the cart
@@ -34,18 +32,17 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             }
             // Load the customer
             $customer = new Customer((int) $cart->id_customer);
-            $transactionStatus = $response->getPrimaryPayment()->getCurrentStatus();
-            $shopOrderId = $response->getPrimaryPayment()->getShopOrderId();
+            $transactionStatus = $response->paymentStatus;
             // Check if an order exist
             $order = getOrderFromUniqueId($shopOrderId);
             // NO ORDER FOUND, CREATE?
             if (!Validate::isLoadedObject($order)) {
                 // Payment successful - create order
-                if ($response->wasSuccessful()) {
+                if ($response) {
                     $order_status = (int) Configuration::get('PS_OS_PAYMENT');
-                    $paymentType = $response->getPrimaryPayment()->getAuthType();
-                    $amount_paid = $response->getPrimaryPayment()->getCapturedAmount();
-                    $currency_paid = Currency::getIdByIsoCode($response->getPrimaryPayment()->getCurrency());
+                    $paymentType = $response->Transactions[0]->AuthType;
+                    $amount_paid = $response->Transactions[0]->CapturedAmount;
+                    $currency_paid = Currency::getIdByIsoCode($response->Currency);
                     /* If payment type is 'payment' funds have not yet been captured,
                     * so AltaPay returns 0 as the captured amount.Therefore we assume full payment has been authorized.
                     */

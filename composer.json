@@ -10,17 +10,29 @@
   "prefer-stable": true,
   "config": {
     "preferred-install": "dist",
-    "sort-packages": true
+    "sort-packages": true,
+    "isolate": {
+      "prefix": "API\\PHP",
+      "blacklist": [],
+      "autorun": false,
+      "require-dev": false,
+      "replacements": {}
+    }
   },
   "require": {
-    "php": "^5.6 || ^7.0"
+    "php": "^5.6 || ^7.0",
+    "altapay/api-php": "^3.1",
+    "and/isolate-composer": "dev-master",
+    "symfony/options-resolver": "^3.0"
   },
   "require-dev": {
-        "prestashop/php-dev-tools": "^3.11",
-        "phpstan/phpstan": "^0.12"
-   },
+    "prestashop/php-dev-tools": "^3.11",
+    "phpstan/phpstan": "^0.12"
+  },
   "autoload": {
-    "files": ["helpers.php"],
+    "files": [
+      "helpers.php"
+    ],
     "psr-0": {
       "Altapay_": "Models/"
     },

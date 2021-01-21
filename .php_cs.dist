@@ -6,7 +6,6 @@ $config
     ->setUsingCache(true)
     ->getFinder()
     ->in(__DIR__)
-    ->exclude('vendor')
-    ->exclude('lib/altapay/altapay-php-sdk/lib');
+    ->exclude('vendor');
 
 return $config;
