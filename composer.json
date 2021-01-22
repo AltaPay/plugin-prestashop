@@ -22,7 +22,7 @@
   "require": {
     "php": "^5.6 || ^7.0",
     "altapay/api-php": "^3.1",
-    "and/isolate-composer": "dev-master",
+    "and/isolate-composer": "^1.1",
     "symfony/options-resolver": "^3.0"
   },
   "require-dev": {
