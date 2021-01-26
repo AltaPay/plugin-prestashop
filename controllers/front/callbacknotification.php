@@ -38,11 +38,13 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             // NO ORDER FOUND, CREATE?
             if (!Validate::isLoadedObject($order)) {
                 // Payment successful - create order
-                if ($response) {
+                if ($response && is_array($response->Transactions)) {
+                    $amount_paid = 0;
+                    $paymentType = '';
                     $order_status = (int) Configuration::get('PS_OS_PAYMENT');
-                    $paymentType = $response->Transactions[0]->AuthType;
-                    $amount_paid = $response->Transactions[0]->CapturedAmount;
                     $currency_paid = Currency::getIdByIsoCode($response->Currency);
+                    $amount_paid = $response->Transactions[0]->CapturedAmount;
+                    $paymentType = $response->Transactions[0]->AuthType;
                     /* If payment type is 'payment' funds have not yet been captured,
                     * so AltaPay returns 0 as the captured amount.Therefore we assume full payment has been authorized.
                     */

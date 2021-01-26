@@ -48,12 +48,14 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             }
 
             // Handle success
-            if ($response) {
+            if ($response && is_array($response->Transactions)) {
+                $amountPaid = 0;
+                $transactionID = null;
                 $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
                 $paymentType = $response->type;
-                $amountPaid = $response->Transactions[0]->CapturedAmount;
                 $captureStatus = $response->requireCapture;
                 $currencyPaid = Currency::getIdByIsoCode($response->currency);
+                $amountPaid = $response->Transactions[0]->CapturedAmount;
                 $transactionID = $response->Transactions[0]->TransactionId;
                 /*
                  * If payment type is 'payment' funds have not yet been captured,

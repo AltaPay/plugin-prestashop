@@ -681,6 +681,7 @@ class ALTAPAY extends PaymentModule
         if ($action === 'Capture') { // CAPTURE
             try {
                 $finalOrderLines = $this->populateOrderLinesFromPost($orderLines, $orderID, 0, $orderLineGiftWrap);
+
                 $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
                 $api->setAmount((float) Tools::getValue('amount'));
                 $api->setOrderLines($finalOrderLines);
@@ -707,7 +708,7 @@ class ALTAPAY extends PaymentModule
             exit();
         } elseif ($action === 'Refund') { // REFUND
             try {
-                $refundAmount = Tools::getValue('amount');
+                $refundAmount = (float) Tools::getValue('amount');
                 if (Tools::getValue('goodwillrefund') === 'yes') {
                     $goodWillRefund = true;
                 }
@@ -724,7 +725,7 @@ class ALTAPAY extends PaymentModule
                     $finalOrderLines = $this->createDummyOrderLinesArr($refundAmount);
                 }
                 $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
-                $api->setAmount((float) $refundAmount);
+                $api->setAmount($refundAmount);
                 $api->setOrderLines($finalOrderLines);
                 $api->setTransaction($paymentID);
                 $api->call();
@@ -1409,12 +1410,10 @@ class ALTAPAY extends PaymentModule
             $captured = 0;
             $refunded = 0;
 
-            if ($paymentDetails) {
-                foreach ($paymentDetails as $pay) {
-                    $reserved += $pay->ReservedAmount;
-                    $captured += $pay->CapturedAmount;
-                    $refunded += $pay->RefundedAmount;
-                }
+            foreach ($paymentDetails as $pay) {
+                $reserved += (float) $pay->ReservedAmount;
+                $captured += (float) $pay->CapturedAmount;
+                $refunded += (float) $pay->RefundedAmount;
             }
 
             $orderDetail = new Order((int) $params['id_order']);
@@ -1450,20 +1449,19 @@ class ALTAPAY extends PaymentModule
                     true,
                     true
                 );
-
                 $api->setOrderLines($orderLines);
                 if ($statusCapture) {
                     $api->setAmount((float) $orderDetail->total_paid);
                 } else {
-                    $api->setAmount((float) $amountToCapture);
+                    $api->setAmount($amountToCapture);
                 }
-                $response = $api->call();
+                $api->call();
                 markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($orderLines));
             } elseif ($amountToCapture > 0 && $captured > 0 && $captureRemainedAmount) {
                 $orderLines = $this->createOrderStatusOrderLines($amountToCapture);
                 $api->setOrderLines($orderLines);
-                $api->setAmount((float) $amountToCapture);
-                $response = $api->call();
+                $api->setAmount($amountToCapture);
+                $api->call();
             }
         } catch (Exception $e) {
             $this->returnError($paymentID, $e);
@@ -1606,21 +1604,18 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign('ap_orders', $apOrders);
 
         try {
-            $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
-            $api->setTransaction($results['payment_id']);
-            $paymentDetails = $api->call();
-
             $reserved = 0;
             $captured = 0;
             $refunded = 0;
+            $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
+            $api->setTransaction($results['payment_id']);
+            $paymentDetails = $api->call();
             $status = isset($paymentDetails[0]->TransactionStatus) ? $paymentDetails[0]->TransactionStatus : '';
 
-            if ($paymentDetails) {
-                foreach ($paymentDetails as $pay) {
-                    $reserved += $pay->ReservedAmount;
-                    $captured += $pay->CapturedAmount;
-                    $refunded += $pay->RefundedAmount;
-                }
+            foreach ($paymentDetails as $pay) {
+                $reserved += $pay->ReservedAmount;
+                $captured += $pay->CapturedAmount;
+                $refunded += $pay->RefundedAmount;
             }
 
             $ap_payment = [
@@ -2342,7 +2337,7 @@ class ALTAPAY extends PaymentModule
             number_format((100 * $unitPrice) / 100, 2, '.', '')
         );
 
-        $orderLine->taxAmount = number_format($quantity * $taxAmount, 4, '.', '');
+        $orderLine->taxAmount = number_format($quantity * $taxAmount, 2, '.', '');
         $orderLine->discount = $discount;
         $orderLine->taxPercent = $unitPrice > 0 ? number_format(($taxAmount / $unitPrice) * 100, 2, '.', '') : 0;
         $orderLine->productUrl = $productUrl ? $productUrl : '';
