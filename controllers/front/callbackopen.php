@@ -6,8 +6,6 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
-
 class AltapayCallbackopenModuleFrontController extends ModuleFrontController
 {
     /**
@@ -25,12 +23,10 @@ class AltapayCallbackopenModuleFrontController extends ModuleFrontController
      */
     public function postProcess()
     {
-        $xml = Tools::getValue('xml');
-        $callbackHandler = new AltapayCallbackHandler();
-        $response = $callbackHandler->parseXmlResponse($xml);
-
-        $shopOrderId = $response->getPrimaryPayment()->getShopOrderId();
-
+        $postData = Tools::getAllValues();
+        $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
+        $response = $callback->call();
+        $shopOrderId = $response->shopOrderId;
         // Load the cart
         $cart = getCartFromUniqueId($shopOrderId);
         if (!Validate::isLoadedObject($cart)) {

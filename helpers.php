@@ -43,16 +43,16 @@ function transactionInfo($transactionInfo = [])
  */
 function determinePaymentMethodForDisplay($response)
 {
-    $paymentNature = $response->getPrimaryPayment()->getPaymentNature();
+    $paymentNature = $response->nature;
 
     if ($paymentNature === 'Wallet') {
-        return $response->getPrimaryPayment()->getPaymentSchemeName();
+        return $response->Transactions[0]->PaymentSchemeName;
     }
     if ($paymentNature === 'CreditCard') {
         return $paymentNature;
     }
     if ($paymentNature === 'CreditCardWallet') {
-        return $response->getPrimaryPayment()->getPaymentSchemeName();
+        return $response->Transactions[0]->PaymentSchemeName;
     }
 
     return $paymentNature;
@@ -220,16 +220,16 @@ function updatePaymentStatus($paymentId, $paymentStatus)
  */
 function createAltapayOrder($response, $current_order, $payment_status = 'succeeded')
 {
-    $uniqueId = $response->getPrimaryPayment()->getShopOrderId();
-    $paymentId = $response->getPrimaryPayment()->getId();
-    $cardMask = $response->getPrimaryPayment()->getMaskedPan();
-    $cardToken = $response->getPrimaryPayment()->getCreditCardToken();
-    $cardExpiryMonth = $response->getPrimaryPayment()->getCreditCardExpiryMonth();
-    $cardExpiryYear = $response->getPrimaryPayment()->getCreditCardExpiryYear();
-    $cardBrand = $response->getPrimaryPayment()->getPaymentSchemeName();
-    $paymentType = $response->getPrimaryPayment()->getAuthType();
-    $paymentTerminal = $response->getPrimaryPayment()->getTerminal();
-    $paymentNature = $response->getPrimaryPayment()->getPaymentNature();
+    $uniqueId = $response->shopOrderId;
+    $paymentId = $response->transactionId;
+    $cardMask = $response->Transactions[0]->MaskedPan;
+    $cardToken = $response->Transactions[0]->CreditCardToken;
+    $cardExpiryMonth = $response->Transactions[0]->CreditCardExpiryMonth;
+    $cardExpiryYear = $response->Transactions[0]->CreditCardExpiryYear;
+    $cardBrand = $response->Transactions[0]->PaymentSchemeName;
+    $paymentType = $response->Transactions[0]->AuthType;
+    $paymentTerminal = $response->Transactions[0]->Terminal;
+    $paymentNature = $response->Transactions[0]->PaymentNature;
     $paymentStatus = $payment_status;
     $requireCapture = 0;
     if ($paymentType === 'payment') {
@@ -242,8 +242,8 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
 
     $errorCode = null;
     $errorText = null;
-    $customerInfo = $response->getPrimaryPayment()->getCustomerInfo();
-    $cardCountry = $customerInfo->getCountryOfOrigin()->getCountry();
+    $customerInfo = $response->Transactions[0]->CustomerInfo;
+    $cardCountry = $customerInfo->CountryOfOrigin->Country;
     //insert into order log
     $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_order`
 		(id_order, unique_id, payment_id, cardMask, cardToken, cardBrand, cardExpiryDate, cardCountry, 
@@ -266,56 +266,9 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
             $payment[0]->transaction_id = pSQL($uniqueId);
             $payment[0]->card_number = pSQL($cardMask);
             $payment[0]->card_brand = pSQL($cardBrand);
-            // $payment[0]->card_expiration = pSQL($cardExp);    //not provided
             $payment[0]->save();
         }
     }
-}
-
-/**
- * Method for conversion of date format
- *
- * @param string $date
- *
- * @return string
- *
- * @throws Exception
- */
-function convertDateTimeFormat($date)
-{
-    $dateTime = new DateTime($date);
-
-    return $dateTime->format('Y-m-d');
-}
-
-/**
- * Method for AltaPay api login
- *
- * @return string|AltapayMerchantAPI
- *
- * @throws Exception
- */
-function apiLogin()
-{
-    $config = Configuration::getMultiple([
-        'ALTAPAY_USERNAME',
-        'ALTAPAY_PASSWORD',
-        'ALTAPAY_URL',
-    ]);
-
-    $api = new AltapayMerchantAPI(
-        $config['ALTAPAY_URL'],
-        $config['ALTAPAY_USERNAME'],
-        $config['ALTAPAY_PASSWORD'],
-        null
-    );
-    try {
-        $api->login();
-    } catch (Exception $e) {
-        return $e->getMessage();
-    }
-
-    return $api;
 }
 
 /**
@@ -360,4 +313,19 @@ function getTerminalTokenControlStatus($terminalRemoteName)
            . "'$terminalRemoteName'";
 
     return Db::getInstance()->executeS($sql);
+}
+
+/**
+ * @return Authentication
+ */
+function getAuth()
+{
+    $config = Configuration::getMultiple([
+        'ALTAPAY_USERNAME',
+        'ALTAPAY_PASSWORD',
+        'ALTAPAY_URL',
+    ]);
+
+    return new API\PHP\Altapay\Authentication($config['ALTAPAY_USERNAME'], $config['ALTAPAY_PASSWORD'],
+        $config['ALTAPAY_URL']);
 }

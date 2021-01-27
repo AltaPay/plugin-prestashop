@@ -197,7 +197,6 @@
                                             {/if}
                                         </tr>
                                     {/foreach}
-
                                 </table>
                             </div>
                         </div>
@@ -263,19 +262,19 @@
                                 <tbody>
                                 <tr style="font-weight: bold">
                                     <td>Status</td>
-                                    <td>{$ap_paymentinfo->getCurrentStatus()}</td>
+                                    <td>{$ap_paymentinfo['status']}</td>
                                 </tr>
                                 <tr>
                                     <td>Reserved amount</td>
-                                    <td id="reservedAmount" value="{$ap_paymentinfo->getReservedAmount()}">{$ap_paymentinfo->getReservedAmount()}</td>
+                                    <td id="reservedAmount" value="{$ap_paymentinfo['reserved']}">{$ap_paymentinfo['reserved']}</td>
                                 </tr>
                                 <tr>
                                     <td>Captured amount</td>
-                                    <td id="capturedAmount" value="{$ap_paymentinfo->getCapturedAmount()}">{$ap_paymentinfo->getCapturedAmount()}</td>
+                                    <td id="capturedAmount" value="{$ap_paymentinfo['captured']}">{$ap_paymentinfo['captured']}</td>
                                 </tr>
                                 <tr>
                                     <td>Refunded amount</td>
-                                    <td id="refundedAmount" value="{$ap_paymentinfo->getRefundedAmount()}">{$ap_paymentinfo->getRefundedAmount()}</td>
+                                    <td id="refundedAmount" value="{$ap_paymentinfo['refunded']}">{$ap_paymentinfo['refunded']}</td>
                                 </tr>
                                 </tbody>
                             </table>

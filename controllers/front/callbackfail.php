@@ -6,8 +6,6 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-require_once _PS_MODULE_DIR_ . 'altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
-
 class AltapayCallbackfailModuleFrontController extends ModuleFrontController
 {
     /**
@@ -30,10 +28,10 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
      */
     public function postProcess()
     {
-        $xml = Tools::getValue('xml');
-        $callbackHandler = new AltapayCallbackHandler();
-        $response = $callbackHandler->parseXmlResponse($xml);
-        $shopOrderId = $response->getPrimaryPayment()->getShopOrderId();
+        $postData = Tools::getAllValues();
+        $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
+        $response = $callback->call();
+        $shopOrderId = $response->shopOrderId;
         // Load the cart
         $cart = getCartFromUniqueId($shopOrderId);
         if (!Validate::isLoadedObject($cart)) {
@@ -55,15 +53,15 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             $location = $pLink . (strpos($controller, '?') !== false ? '&' : '?') . $vCan;
             Tools::redirectLink($location);
         } else {
-            $mErM = $response->getMerchantErrorMessage();
+            $mErM = $response->MerchantErrorMessage;
             $cId = $cart->id;
             $mNa = $this->module->name;
             $mId = $this->module->id;
             PrestaShopLogger::addLog('Payment failure for cart ' . $cId . '. Error Message: ' . $mErM, 3, 2001, $mNa, $mId, true);
             $this->context->smarty->assign([
-                'errorText' => $response->getCardHolderErrorMessage(),
-                'unique_id' => $response->getPrimaryPayment()->getShopOrderId(),
-                'payment_id' => $response->getPrimaryPayment()->getId(),
+                'errorText' => $response->CardHolderErrorMessage,
+                'unique_id' => $shopOrderId,
+                'payment_id' => $response->transactionId,
                 'this_path' => $this->module->getPathUri(),
                 'this_path_altapay' => $this->module->getPathUri(),
                 'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $mNa . '/',

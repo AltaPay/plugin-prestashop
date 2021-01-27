@@ -5,5 +5,7 @@ parameters:
   paths:
     - %currentWorkingDirectory%
   level: 0
+  scanDirectories:
+    - %currentWorkingDirectory%/vendor/altapay/
   excludes_analyse:
     - %currentWorkingDirectory%/vendor/*

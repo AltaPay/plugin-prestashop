@@ -29,15 +29,12 @@ jobs:
      - uses: actions/checkout@v2 
        with:
           path: prestashop/modules/altapay
-     - name: Install SDK                             
-       run: |
-         git clone https://github.com/AltaPay/sdk-php.git
-         cp -r sdk-php/lib/* prestashop/modules/altapay/lib/altapay/altapay-php-sdk/lib/
-         rm -rf sdk-php
        #working-directory: prestashop/modules/altapay
      - name: Install composer and run PhpStan
        run: |
          composer install
+         composer isolate
+         composer dump
          _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
        working-directory: prestashop/modules/altapay
 

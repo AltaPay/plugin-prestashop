@@ -6,9 +6,6 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayCallbackHandler.class.php';
-require_once _PS_MODULE_DIR_ . '/altapay/lib/altapay/altapay-php-sdk/lib/AltapayMerchantAPI.class.php';
-
 class AltapayCallbackokModuleFrontController extends ModuleFrontController
 {
     /**
@@ -22,10 +19,11 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
     public function postProcess()
     {
         try {
-            $xml = Tools::getValue('xml');
-            $callbackHandler = new AltapayCallbackHandler();
-            $response = $callbackHandler->parseXmlResponse($xml);
-            $shopOrderId = $response->getPrimaryPayment()->getShopOrderId();
+            $postData = Tools::getAllValues();
+            $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
+            $response = $callback->call();
+            $shopOrderId = $response->shopOrderId;
+
             // This lock prevents orders to be created twice.
             $fp = fopen(_PS_MODULE_DIR_ . '/altapay/controllers/front/lock.txt', 'r');
             flock($fp, LOCK_EX);
@@ -50,13 +48,15 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             }
 
             // Handle success
-            if ($response->wasSuccessful()) {
+            if ($response && is_array($response->Transactions)) {
+                $amountPaid = 0;
+                $transactionID = null;
                 $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
-                $paymentType = $response->getPrimaryPayment()->getAuthType();
-                $amountPaid = $response->getPrimaryPayment()->getCapturedAmount();
-                $captureStatus = Tools::getValue('require_capture');
-                $currencyPaid = Currency::getIdByIsoCode($response->getPrimaryPayment()->getCurrency());
-                $transactionID = Tools::getValue('transaction_id');
+                $paymentType = $response->type;
+                $captureStatus = $response->requireCapture;
+                $currencyPaid = Currency::getIdByIsoCode($response->currency);
+                $amountPaid = $response->Transactions[0]->CapturedAmount;
+                $transactionID = $response->Transactions[0]->TransactionId;
                 /*
                  * If payment type is 'payment' funds have not yet been captured,
                  * so AltaPay returns zero as the captured amount.
@@ -65,11 +65,13 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 if ($paymentType === 'payment') {
                     $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
                     $currencyPaid = new Currency($cart->id_currency);
-                } elseif ($paymentType === 'paymentAndCapture' && $captureStatus === 'true') {
+                } elseif ($paymentType === 'paymentAndCapture' && $captureStatus === true) {
                     $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
                     $currencyPaid = new Currency($cart->id_currency);
-                    $api = apiLogin();
-                    $api->captureReservation($transactionID, $amountPaid, [], null);
+                    $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
+                    $api->setAmount($amountPaid);
+                    $api->setTransaction($transactionID);
+                    $api->call();
                 }
 
                 // Determine payment method for display
