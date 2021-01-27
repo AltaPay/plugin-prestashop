@@ -802,7 +802,6 @@ class ALTAPAY extends PaymentModule
     ) {
         $i = 0;
         $altapayOrderLines = [];
-        $discountPercentage = 0;
         $orderDetail = new Order((int) $orderID);
         $productDetailObject = new OrderDetail();
         $productDetail = $productDetailObject->getList($orderID);
@@ -811,6 +810,7 @@ class ALTAPAY extends PaymentModule
         foreach ($orderLines as $key => $orderedQuantity) {
             if ($orderedQuantity > 0) {
                 $productDetails = $productDetail[$key];
+
                 if ($productDetails) {
                     $productName = $productDetails['product_name'];
                     $reductionPercent = $productDetails['reduction_percent'];
@@ -825,12 +825,11 @@ class ALTAPAY extends PaymentModule
                     if ($reductionPercent > 0) {
                         $discountPercentage = $reductionPercent;
                     } else {
+                        $discountPercentage = 0;
                         foreach ($cartRuleDiscounts as $cartRuleDiscount) {
                             if ($productDetails['product_id'] == $cartRuleDiscount['productID']) {
                                 $discountPercentage = $cartRuleDiscount['discountPercent'];
                                 break;
-                            } else {
-                                $discountPercentage = 0;
                             }
                         }
                     }
@@ -2549,6 +2548,7 @@ class ALTAPAY extends PaymentModule
 
         $orderLine->taxAmount = 0;
         $orderLine->discount = 0;
+        $orderLine->unitCode = 'unit';
         $orderLine->setGoodsType('item');
 
         return $orderLine;
