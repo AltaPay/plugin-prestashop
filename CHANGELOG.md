@@ -7,14 +7,18 @@ PrestaShop 1.6.x and 1.7.x
 
 ## [3.3.1] - 2020-12-03
 ### Added
- - Support for payment captures full reservation after discount is applied from the backend
+- Support for payment captures full reservation after discount is applied from the backend
  
- ### Fixed
- - Fix shipping orderlines issue in full capture
+### Fixed
+- Fix shipping order lines issue in full capture
+- Fix total amount issue after cart change
+- Fix discount issue in virtual product type
+- Fix price mismatch issue
+- Fix issue with catalog discount
 
 ## [3.3.0] - 2020-11-24
 ### Changed
- - Modify licence file with MIT License
+- Modify licence file with MIT License
 
 ### Fixed
 - Fix price mismatch issue in reservation call
