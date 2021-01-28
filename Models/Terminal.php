@@ -73,7 +73,7 @@ class Altapay_Models_Terminal extends ObjectModel
     {
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('
             SELECT * FROM `'
-            . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND currency = '" . $currency . "' ORDER BY `display_name` ASC
+                                                             . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND currency = '" . $currency . "' ORDER BY IF(ISNULL(position), \"\", position) ASC, display_name DESC
 		");
     }
 }
