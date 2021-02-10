@@ -161,7 +161,7 @@
                                             <td>{$value['carrier_name']}</td>
                                             <td><input type="text" name="ap_order_id"
                                                        class="form-control fixed-width-xs"
-                                                       value="{$value['id_order_carrier']}" style="border:none;"
+                                                       value="{$ap_order_id}" style="border:none;"
                                                        readonly/></td>
                                             <td><input type="text" name="ap_attribute_id[{$value['id_order_invoice']}]"
                                                        class="form-control fixed-width-xs"

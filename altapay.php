@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.3.1';
+        $this->version = '3.3.2';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.7.0'];
@@ -355,6 +355,16 @@ class ALTAPAY extends PaymentModule
                 'name' => $filename,
             ];
         }
+
+        $allTerminal = [];
+        $totalTerminals = count(Altapay_Models_Terminal::getTerminals());
+        foreach (range(1, $totalTerminals) as $priority) {
+            $allTerminal[] = [
+                'id' => $priority,
+                'name' => $priority,
+            ];
+        }
+
         $ccTokenControlOptions = [
             [
                 'name' => 'Enable',
@@ -425,6 +435,20 @@ class ALTAPAY extends PaymentModule
                     'required' => true,
                     'options' => [
                         'query' => $this->getAltapayTerminals(),
+                        'id' => 'id',
+                        'name' => 'name',
+                    ],
+                ],
+
+                [
+                    'type' => 'select',
+                    'label' => $this->l('Display priority'),
+                    'desc' => $this->l('A terminal with display priority 1 will be shown at the top of the list.'),
+                    'name' => 'position',
+                    'id' => 'terminalPosition',
+                    'required' => true,
+                    'options' => [
+                        'query' => $allTerminal,
                         'id' => 'id',
                         'name' => 'name',
                     ],
@@ -1026,6 +1050,7 @@ class ALTAPAY extends PaymentModule
             'ccTokenControl_',
             'payment_type',
             'active',
+            'position',
         ];
         foreach ($fields as $fieldName) {
             $terminal->{$fieldName} = Tools::getValue($fieldName);
@@ -1225,6 +1250,11 @@ class ALTAPAY extends PaymentModule
                 'width' => 'auto',
                 'orderby' => false,
                 'search' => false,
+            ],
+            'position' => [
+                'title' => $this->l('Position'),
+                'width' => 'auto',
+                'type' => 'text',
             ],
             'payment_type' => [
                 'title' => $this->l('Payment type'),

@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.3.1';
+    $pluginVersion = '3.3.2';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -257,7 +257,7 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
            . pSQL($paymentTerminal) . "', '"
            . pSQL($paymentStatus) . "', '" . pSQL($paymentNature) . "', '"
            . pSQL($requireCapture) . "', '" . pSQL($errorCode) . "', '"
-           . pSQL($errorText) . "', '" . time() . "')";
+           . pSQL($errorText) . "', '" . time() . "')" . ' ON DUPLICATE KEY UPDATE `paymentStatus` = ' . "'" . $paymentStatus . "'";
     Db::getInstance()->Execute($sql);
 
     if (Validate::isLoadedObject($current_order)) {

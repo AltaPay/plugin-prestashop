@@ -5,6 +5,15 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+
+## [3.3.2] - 2020-12-03
+### Added
+- Support for terminal sorting
+ 
+### Fixed
+- Fix issue with E-payment order statuses
+- Fix terminal configuration saving issue
+
 ## [3.3.1] - 2020-12-03
 ### Added
 - Support for payment captures full reservation after discount is applied from the backend

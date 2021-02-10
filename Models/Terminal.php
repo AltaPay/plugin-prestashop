@@ -9,9 +9,12 @@
 class Altapay_Models_Terminal extends ObjectModel
 {
     public $id_terminal;
-    public $currency;
+    public $display_name;
     public $remote_name;
     public $payment_type;
+    public $currency;
+    public $ccTokenControl_;
+    public $icon_filename;
     /** @var bool Enabled or disabled */
     public $active;
     public $position;
@@ -73,7 +76,7 @@ class Altapay_Models_Terminal extends ObjectModel
     {
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('
             SELECT * FROM `'
-            . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND currency = '" . $currency . "' ORDER BY `display_name` ASC
+                                                             . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND currency = '" . $currency . "' ORDER BY IF(ISNULL(position), \"\", position) ASC, display_name DESC
 		");
     }
 }
