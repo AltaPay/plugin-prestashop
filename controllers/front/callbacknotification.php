@@ -63,7 +63,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     // Log order
                     $current_order = new Order((int) $this->module->currentOrder);
                     createAltapayOrder($response, $current_order, $transactionStatus);
-                    if($transactionStatus == 'cancelled'){
+                    if ($transactionStatus == 'cancelled') {
                         $current_order->setCurrentState(Configuration::get('PS_OS_CANCELED'));
                     }
                     $this->unlock($fp);
