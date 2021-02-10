@@ -10,9 +10,9 @@ then
     exit
   fi
 
-  if ! command -v php7.0
+  if ! command -v php5.6
   then
-    echo "PHP 7.0 package is not currently installed"
+    echo "PHP 5.6 package is not currently installed"
     exit
   fi
 
@@ -22,7 +22,7 @@ then
     exit
   fi
 
-  php7.0 $(command -v composer) install --no-dev -o
+  php5.6 $(command -v composer) install --no-dev -o
   composer isolate
   composer dump -a
   find . -type d -exec cp index.php {} \;
