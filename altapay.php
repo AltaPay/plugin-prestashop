@@ -358,10 +358,10 @@ class ALTAPAY extends PaymentModule
 
         $allTerminal = [];
         $totalTerminals = count(Altapay_Models_Terminal::getTerminals());
-        for ($i = 1; $i <= $totalTerminals; ++$i) {
+        foreach (range(1, $totalTerminals) as $priority) {
             $allTerminal[] = [
-                'id' => $i,
-                'name' => $i,
+                'id' => $priority,
+                'name' => $priority,
             ];
         }
 
