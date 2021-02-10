@@ -39,11 +39,9 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             if (!Validate::isLoadedObject($order)) {
                 // Payment successful - create order
                 if ($response && is_array($response->Transactions)) {
-                    $amount_paid = 0;
-                    $paymentType = '';
                     $order_status = (int) Configuration::get('PS_OS_PAYMENT');
                     $currency_paid = Currency::getIdByIsoCode($response->Currency);
-                    $amount_paid = $response->Transactions[0]->CapturedAmount;
+                    $amount_paid = $response->amount;
                     $paymentType = $response->Transactions[0]->AuthType;
                     /* If payment type is 'payment' funds have not yet been captured,
                     * so AltaPay returns 0 as the captured amount.Therefore we assume full payment has been authorized.
@@ -64,7 +62,10 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     $this->module->validateOrder($cId, $oSt, $amount_paid, $pMeth, null, null, $cpId, false, $cSk);
                     // Log order
                     $current_order = new Order((int) $this->module->currentOrder);
-                    createAltapayOrder($response, $current_order);
+                    createAltapayOrder($response, $current_order, $transactionStatus);
+                    if($transactionStatus == 'cancelled'){
+                        $current_order->setCurrentState(Configuration::get('PS_OS_CANCELED'));
+                    }
                     $this->unlock($fp);
                     exit('Order created');
                 } else {

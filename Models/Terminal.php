@@ -9,9 +9,12 @@
 class Altapay_Models_Terminal extends ObjectModel
 {
     public $id_terminal;
-    public $currency;
+    public $display_name;
     public $remote_name;
     public $payment_type;
+    public $currency;
+    public $ccTokenControl_;
+    public $icon_filename;
     /** @var bool Enabled or disabled */
     public $active;
     public $position;
