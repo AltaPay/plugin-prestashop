@@ -35,8 +35,8 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $transactionStatus = $response->paymentStatus;
             // Check if an order exist
             $order = getOrderFromUniqueId($shopOrderId);
-            $errorStatus = ['cancelled', 'epayment_declined', 'epayment_cancelled'];
-            if (!in_array($transactionStatus, $errorStatus)) {
+            $errorStatus = ['cancelled', 'epayment_cancelled'];
+            if (!in_array($transactionStatus, $errorStatus, true)) {
                 // NO ORDER FOUND, CREATE?
                 if (!Validate::isLoadedObject($order)) {
                     // Payment successful - create order
@@ -78,25 +78,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     exit('Order found but is not currently pending - ignoring');
                 } // Pending order found, update
                 elseif (Validate::isLoadedObject($order)) {
-                    if ($transactionStatus === 'captured') {
-                        // Update to Payment Accepted
-                        $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
-
-                        // Update payment status to 'succeeded'
-                        $oId = $order->id;
-                        $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
-                    SET `paymentStatus` = \'succeeded\' WHERE `id_order` = ' . $oId;
-                        Db::getInstance()->Execute($sql);
-
-                        $payment = $order->getOrderPaymentCollection();
-                        if (isset($payment[0])) {
-                            $payment[0]->transaction_id = pSQL($shopOrderId);
-                            $payment[0]->save();
-                        }
-
-                        $this->unlock($fp);
-                        exit('Order status updated to Accepted');
-                    } elseif ($transactionStatus === 'preauth' || $transactionStatus === 'bank_payment_finalized') {
+                    if ($transactionStatus === 'preauth' || $transactionStatus === 'bank_payment_finalized' || $transactionStatus === 'captured') {
                         /*
                          * preauth occurs for wallet transactions where payment type is 'payment'.
                          * Funds are still waiting to be captured.
@@ -115,6 +97,13 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         }
                         $this->unlock($fp);
                         exit('Order status updated to Accepted');
+                    } elseif ($transactionStatus === 'epayment_declined') {
+                        // Update payment status to 'declined'
+                        $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
+                        SET `paymentStatus` = \'declined\' WHERE `id_order` = ' . $order->id;
+                        Db::getInstance()->Execute($sql);
+                        $this->unlock($fp);
+                        exit('Order status updated to Error');
                     } else {
                         // Unexpected scenario
                         $mNa = $this->module->name;
@@ -128,9 +117,13 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             } else {
                 // Unexpected scenario
                 $mNa = $this->module->name;
-                PrestaShopLogger::addLog('Callback notification was received for Transaction '
-                                         . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
-                    $this->module->id, true);
+                PrestaShopLogger::addLog('Callback notification was received for Transaction ' . $shopOrderId . ' with payment status ' . $transactionStatus,
+                3,
+                '1005',
+                $mNa,
+                $this->module->id,
+                true
+            );
                 $this->unlock($fp);
                 exit('Unrecognized status received ' . $transactionStatus);
             }
