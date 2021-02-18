@@ -5,6 +5,11 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.3.3] - 2020-12-03
+ 
+### Fixed
+- Fix issue with cancel functionality
+- Fix price mismatch issue in case of fixed discount using Klana payment method
 
 ## [3.3.2] - 2020-12-03
 ### Added
