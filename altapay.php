@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.3.2';
+        $this->version = '3.3.3';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.7.0'];
@@ -830,18 +830,20 @@ class ALTAPAY extends PaymentModule
         $productDetailObject = new OrderDetail();
         $productDetail = $productDetailObject->getList($orderID);
         $cartRuleDiscounts = $this->getCartRuleDiscounts($orderDetail);
+        $cart = new Cart($orderDetail->id_cart);
 
         foreach ($orderLines as $key => $orderedQuantity) {
             if ($orderedQuantity > 0) {
                 $productDetails = $productDetail[$key];
-
+                $cartDetails = $cart->getProducts()[$key];
                 if ($productDetails) {
-                    $productName = $productDetails['product_name'];
-                    $reductionPercent = $productDetails['reduction_percent'];
-                    $priceWithoutReductionTaxIncl = $productDetails['unit_price_tax_incl'] / (1 - ($reductionPercent / 100));
-                    $basePrice = $productDetails['original_product_price'];
+                    $rateBasePrice = 1 + ($cartDetails['rate'] / 100);
+                    //Calculation of base price
+                    $basePrice = $cartDetails['price_without_reduction'] / $rateBasePrice;
+                    $productTax = $cartDetails['price_without_reduction'] - $basePrice;
+                    $productName = $cartDetails['name'];
                     $productQuantity = $orderedQuantity;
-                    $productTax = $priceWithoutReductionTaxIncl - $basePrice;
+                    $reductionPercent = $productDetails['reduction_percent'];
                     $goodsType = 'item';
                     $totalProductsTaxAmount = round($productTax * $productQuantity, 2);
                     $unitPrice = round($basePrice, 2);
@@ -880,7 +882,7 @@ class ALTAPAY extends PaymentModule
                         number_format($basePrice, 2, '.', '')
                     );
                     $orderLine->taxAmount = $totalProductsTaxAmount;
-                    $orderLine->discount = $discountPercentage;
+                    $orderLine->discount = round($discountPercentage, 2);
                     $orderLine->setGoodsType($goodsType);
                     $altapayOrderLines[$i] = $orderLine;
                     // Send compensation amount if Gateway total is not equal to cms total
@@ -1981,7 +1983,7 @@ class ALTAPAY extends PaymentModule
         $cgConf['payment_type'] = $terminal->payment_type;
         $cgConf['currency'] = $this->context->currency->iso_code;
         $cgConf['language'] = $this->context->language->iso_code;
-        $cgConf['uniqueid'] = $cart->id;
+        $cgConf['uniqueid'] = uniqid('PS');
         $cgConf['terminal'] = $terminal->remote_name;
         $cgConf['cookie'] = isset($_SERVER['HTTP_COOKIE']) ? $_SERVER['HTTP_COOKIE'] : null;
 
