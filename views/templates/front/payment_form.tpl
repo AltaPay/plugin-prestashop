@@ -44,10 +44,15 @@
         text-align: center;
         margin: 40px auto;
     }
+    #card_info.cvv_less .cvc_row {
+        display: none;
+    }
 </style>
 </header>
-<div id="card_info"><p class="payment_msg">{l s="Please enter your details below" mod="altapay"}</p>
-<form id="PensioPaymentForm" ></form>
+
+<div id="card_info" {if ($cssClass)} class = "cvv_less" {/if}>
+<p class="payment_msg">{l s="Please enter your details below" mod="altapay"}</p>
+<form id="PensioPaymentForm"></form>
     <input type="button" class="btn btn-success PensioSubmitButton customPayButton" disabled="disabled" value="{l s='Confirm' mod='altapay'}" style="display:none;">
 
 </div>

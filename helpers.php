@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.3.3';
+    $pluginVersion = '3.3.4';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -328,4 +328,20 @@ function getAuth()
 
     return new API\PHP\Altapay\Authentication($config['ALTAPAY_USERNAME'], $config['ALTAPAY_PASSWORD'],
         $config['ALTAPAY_URL']);
+}
+/**
+ * @param int $cartId
+ * @param string $shopOrderId
+ *
+ * @return array
+ */
+function getCvvLess($cartId, $shopOrderId)
+{
+    $sql = 'SELECT term.`cvvLess`
+    FROM `' . _DB_PREFIX_ . 'altapay_transaction` trans
+    INNER JOIN `' . _DB_PREFIX_ . 'altapay_terminals` term ON trans.`terminal_name` = term.`remote_name`
+    WHERE trans.`id_cart` = ' . (int) $cartId . '
+        AND trans.`unique_id` = ' . "'$shopOrderId'";
+
+    return Db::getInstance()->getValue($sql);
 }
