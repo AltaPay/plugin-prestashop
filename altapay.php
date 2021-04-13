@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.3.3';
+        $this->version = '3.3.4';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.7.0'];
@@ -149,6 +149,14 @@ class ALTAPAY extends PaymentModule
         ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
         }
 
+        if (!Db::getInstance()->Execute('SELECT terminal_name from `' . _DB_PREFIX_ . 'altapay_transaction`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ .
+                                            'altapay_transaction` ADD COLUMN terminal_name varchar(255) NULL AFTER amount')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
         // This table contains the payment methods / terminals
         if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_terminals`')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_terminals`  TO `' . _DB_PREFIX_ . 'altapay_terminals`  ';
@@ -157,20 +165,27 @@ class ALTAPAY extends PaymentModule
             $sql1 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_terminals`  add column ccTokenControl_ int(255) NOT NULL AFTER currency';
             Db::getInstance()->Execute($sql1);
         } else {
-            Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . "altapay_terminals` (
+            Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'altapay_terminals` (
             `id_terminal` int(11) NOT NULL AUTO_INCREMENT,
             `display_name` varchar(255) DEFAULT NULL,
             `icon_filename` varchar(100) DEFAULT NULL,
             `remote_name` varchar(255) DEFAULT NULL,
             `payment_type` varchar(32) DEFAULT NULL,
             `currency` varchar(100) DEFAULT NULL,
-            `ccTokenControl_` int(255) NOT NULL DEFAULT '0',
-            `position` int(11) NOT NULL DEFAULT '0',
-            `active` int(11) NOT NULL DEFAULT '0',
+            `ccTokenControl_` int(255) NOT NULL DEFAULT \'0\',
+            `position` int(11) NOT NULL DEFAULT \'0\',
+            `active` int(11) NOT NULL DEFAULT \'0\',
             PRIMARY KEY (`id_terminal`)
-        ) ENGINE=" . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
+        ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
         }
 
+        if (!Db::getInstance()->Execute('SELECT cvvLess from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN cvvLess BOOLEAN NOT NULL DEFAULT 0')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
         // This table contains count of captured/refunded order lines
         if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_orderlines`')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_orderlines`  TO `' . _DB_PREFIX_ . 'altapay_orderlines`  ';
@@ -436,6 +451,26 @@ class ALTAPAY extends PaymentModule
                     'options' => [
                         'query' => $this->getAltapayTerminals(),
                         'id' => 'id',
+                        'name' => 'name',
+                    ],
+                ],
+                [
+                    'type' => 'select',
+                    'label' => $this->l('CVV Less'),
+                    'name' => 'cvvLess',
+                    'required' => true,
+                    'options' => [
+                        'query' => [
+                            [
+                                'id_option' => '0',
+                                'name' => 'No',
+                            ],
+                            [
+                                'id_option' => '1',
+                                'name' => 'Yes',
+                            ],
+                        ],
+                        'id' => 'id_option',
                         'name' => 'name',
                     ],
                 ],
@@ -1053,6 +1088,7 @@ class ALTAPAY extends PaymentModule
             'payment_type',
             'active',
             'position',
+            'cvvLess',
         ];
         foreach ($fields as $fieldName) {
             $terminal->{$fieldName} = Tools::getValue($fieldName);
