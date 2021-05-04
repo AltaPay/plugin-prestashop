@@ -1,5 +1,5 @@
 
 .DS_Store
 .idea
- vendor/
- .php_cs.cache
+/vendor/
+.php_cs.cache
