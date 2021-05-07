@@ -25,7 +25,7 @@ class Order
     }
     
     addproduct(){
-        cy.get('#blocknewproducts > .first-in-line.first-item-of-tablet-line > .product-container > .right-block > h5 > .product-name').click()
+        cy.get('#homefeatured > li.ajax_block_product.col-xs-12.col-sm-4.col-md-3.first-in-line.first-item-of-tablet-line.first-item-of-mobile-line').click()
         cy.get('.icon-plus').click().click()
         cy.get('.exclusive > span').click()
         cy.get('.button-medium > span').click()
