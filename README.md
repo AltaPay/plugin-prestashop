@@ -25,7 +25,7 @@ Next, Php-CS-Fixer is being used for fixing php coding standard relared issues. 
 
 ## Prerequisites: 
 
-1) Magento2 should be installed on publically accessible URL
+1) PrestaShop 1.6 should be installed with the default theme on publically accessible URL
 2) Cypress should be installed
 
 ## Steps 
