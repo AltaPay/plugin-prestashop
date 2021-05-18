@@ -25,10 +25,6 @@
     "and/isolate-composer": "^1.1",
     "symfony/options-resolver": "^3.0"
   },
-  "require-dev": {
-    "prestashop/php-dev-tools": "^3.11",
-    "phpstan/phpstan": "^0.12"
-  },
   "autoload": {
     "files": [
       "helpers.php"
