@@ -1,9 +1,9 @@
 {
-  "url":"http://52.48.95.216/prestashop/prestashop",
-  "usrname_cust":"saadidrees57@gmail.com",
-  "pass_cust":"admin@123",
-  "url_admin":"http://52.48.95.216/prestashop/prestashop/admin6455nw9r3",
-  "usrname_admin":"demo@example.com",
-  "pass_admin":"admin@123"
+  "url":"http://yourdomain.com",
+  "usrname_cust":"shop_login@mail.com",
+  "pass_cust":"shop_password",
+  "url_admin":"http://yourdomain.com/admin",
+  "usrname_admin":"admin_user",
+  "pass_admin":"admin_password"
   
 }
