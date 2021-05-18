@@ -23,11 +23,11 @@ then
   fi
 
   php5.6 $(command -v composer) install --no-dev -o
-  composer isolate
-  composer dump -a
+  php5.6 $(command -v composer) isolate
+  php5.6 $(command -v composer) dump -a
   find . -type d -exec cp index.php {} \;
-  mkdir -p dist/altapay
-  zip dist/altapay.zip -r * -x "dist/*" build.sh guide.md .gitignore phpunit.xml.dist phpstan.neon.dist phpstan.neon composer.json composer.lock @
+  mkdir -p dist/altapay && rsync -av --exclude={'dist','docker','build.sh','guide.md','.gitignore','phpstan.neon','composer.json','composer.lock'} * dist/altapay
+  cd dist/ && zip altapay.zip -r *
 else
   echo "Zip package is not currently installed"
 fi
