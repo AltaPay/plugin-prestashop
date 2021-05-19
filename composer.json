@@ -34,10 +34,7 @@
       "helpers.php"
     ],
     "psr-0": {
-      "Altapay_": "Models/"
-    },
-    "psr-4": {
-      "Altapay\\": "classes/"
+      "": "src/"
     }
   }
 }
