@@ -1,0 +1,7 @@
+{
+  "shopURL":"http://yoursite.com",
+  "adminURL":"http://yoursite.com/wp-admin",
+  "adminUsername":"admin_username",
+  "adminPass":"admin_password"
+  
+}
