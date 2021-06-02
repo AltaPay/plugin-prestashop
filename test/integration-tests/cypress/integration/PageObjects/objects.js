@@ -1,3 +1,4 @@
+//prestashop_test
 require('cypress-xpath')
 
 class Order
@@ -8,20 +9,9 @@ class Order
     visit()
     {
         cy.fixture('config').then((url)=>{
-        cy.visit(url.url) 
-        cy.get('.login').click()   
+        cy.visit(url.shopURL) 
+  
             })    
-    }
-
-    signin(){
-        cy.fixture('config').then((signin)=>{
-        cy.get('#email').type(signin.usrname_cust)
-        cy.get('#passwd').type(signin.pass_cust)
-        cy.get('#SubmitLogin > span').click()
-        cy.wait(1000)
-        cy.get('.logo').click()
-        cy.wait(1000)
-        })
     }
     
     addproduct(){
@@ -30,10 +20,20 @@ class Order
         cy.get('.exclusive > span').click()
         cy.get('.button-medium > span').click()
         cy.get('.cart_navigation > .button > span').click()
-        cy.get('.cart_navigation > .button > span').click()
+        //Guest checkout
+        cy.get('#guest_email').type('demo@example.com')
+        cy.get('#firstname').type('Testperson-dk')
+        cy.get('#lastname').type('Testperson-dk')
+        cy.get('#address1').type('Sæffleberggate 56,1 mf')
+        cy.get('#postcode').type('6800')
+        cy.get('#city').type('Varde')
+        cy.get('#id_country').select('Denmark')
+        cy.get('#phone_mobile').type('20123456')
+        cy.get('.cart_navigation > .button > span').click()   
+        cy.get('.cart_navigation > .button > span').click().wait(2000)
         cy.get('label').click()
         cy.get('.cart_navigation > .button > span').click().wait(2000)
-        
+
     }
 
     cc_payment(){
@@ -43,8 +43,7 @@ class Order
         cy.get('#eyear').type('2023')
         cy.get('#cvcInput').type('123')
         cy.get('#cardholderNameInput').type('testname')
-        cy.get('#pensioCreditCardPaymentSubmitButton').click().wait(2000)
-        cy.get('.dark > strong').should('include.text', 'placed on')
+        cy.get('#pensioCreditCardPaymentSubmitButton').click().wait(4000)
 
     }
 
@@ -52,19 +51,15 @@ class Order
 
         cy.get(':nth-child(2) > .col-xs-12 > .payment_module > .altapay').click().wait(1000)
         cy.get('[id=submitbutton]').click().wait(3000)
-        cy.get('[id=klarna-pay-later-fullscreen]').then(function($iFrame){
+        cy.get('[id=klarna-pay-later-fullscreen]').wait(5000).then(function($iFrame){
             const mobileNum = $iFrame.contents().find('[id=invoice_kp-purchase-approval-form-phone-number]')
             cy.wrap(mobileNum).type('(452) 012-3456')
             const personalNum = $iFrame.contents().find('[id=invoice_kp-purchase-approval-form-national-identification-number]')
             cy.wrap(personalNum).type('1012201234')
             const submit = $iFrame.contents().find('[id=invoice_kp-purchase-approval-form-continue-button]')
-            cy.wrap(submit).click()
+            cy.wrap(submit).click().wait(4000)
             
         })
-        
-        cy.wait(1000)
-        cy.get('.dark > strong').should('include.text', 'placed on')
-        
         
     }
 
@@ -72,11 +67,11 @@ class Order
     {
             cy.clearCookies()
             cy.fixture('config').then((admin)=>{
-            cy.visit(admin.url_admin)
-            cy.get('#email').type(admin.usrname_admin)
-            cy.get('#passwd').type(admin.pass_admin)
+            cy.visit(admin.adminURL)
+            cy.get('#email').type(admin.adminUsername)
+            cy.get('#passwd').type(admin.adminPass).wait(2000)
             cy.get('.ladda-label').click()
-            cy.visit('http://52.48.95.216/prestashop/prestashop/admin6455nw9r3').wait(3000)
+            cy.visit(admin.adminURL).wait(3000)
             })
 
     }
@@ -113,9 +108,7 @@ class Order
         cy.get('#altapay > div > div > div.row.panel-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'refunded')
         
     }
-
-
-    
+ 
 
 }
 
