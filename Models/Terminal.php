@@ -18,6 +18,7 @@ class Altapay_Models_Terminal extends ObjectModel
     /** @var bool Enabled or disabled */
     public $active;
     public $position;
+    public $cvvLess;
 
     public static $definition = [
         'table' => 'altapay_terminals',
@@ -32,6 +33,7 @@ class Altapay_Models_Terminal extends ObjectModel
             'icon_filename' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 100],
             'active' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
             'position' => ['type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId'],
+            'cvvLess' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
         ],
     ];
 

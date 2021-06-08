@@ -52,12 +52,15 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         if ($result['success']) {
             $payment_form_url = $result['payment_form_url'];
 
+            $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
+
             // Insert into transaction log
             $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction` 
-				(id_cart, payment_form_url, unique_id, amount, date_add) VALUES ' .
+				(id_cart, payment_form_url, unique_id, amount, terminal_name, date_add) VALUES ' .
                    "('" . $cart->id . "', '" . $payment_form_url . "', '" . $result['uniqueid'] . "', '"
-                   . $result['amount'] . "', '" . time() . "')" .
+                   . $result['amount'] . "', '" . $terminal->remote_name . "' , '" . time() . "')" .
                    ' ON DUPLICATE KEY UPDATE `amount` = ' . $result['amount'];
+
             Db::getInstance()->Execute($sql);
 
             // Redirect user to payment form url
@@ -66,5 +69,33 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             // Redirect user back to checkout with a generic error
             Tools::redirect($payment_form_url);
         }
+    }
+
+    /**
+     * Get the remote name of the terminal associated with
+     * this payment method. Will check if currency matches the remote terminal.
+     *
+     * @param bool $terminal_id
+     * @param bool $currency
+     *
+     * @return Altapay_Models_Terminal|null
+     *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     */
+    private function getTerminal($terminal_id = false, $currency = false)
+    {
+        if ($terminal_id === false || $currency === false) {
+            return null;
+        }
+
+        $terminal = new Altapay_Models_Terminal($terminal_id);
+        $terminalId = $terminal->id_terminal;
+        $terminalCurr = $terminal->currency;
+        if ($terminalId === null || Tools::strtolower($terminalCurr) !== Tools::strtolower($currency)) {
+            return null;
+        }
+
+        return $terminal;
     }
 }
