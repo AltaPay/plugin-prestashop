@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.3.5] - 2020-12-03
+### Added
+- Handled fail statuses properly
+
 ## [3.3.4] - 2020-12-03
 ### Added
 - Support for CVV/CVV Less card
