@@ -34,7 +34,6 @@ jobs:
        run: |
          composer install
          composer isolate
-         composer dump
          composer dump-autoload -a
          php vendor/bin/php-cs-fixer fix --dry-run --diff
        working-directory: prestashop/modules/altapay
