@@ -35,12 +35,10 @@ jobs:
          composer install
          composer isolate
          composer dump
-         _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
+         vendor/bin/php-cs-fixer fix --dry-run --diff
        working-directory: prestashop/modules/altapay
 
      - name: run PhpCsFixer
        if: ${{ always() }}
-       run: |
-        composer install
-        vendor/bin/php-cs-fixer fix --dry-run --diff
+       run: _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
        working-directory: prestashop/modules/altapay
