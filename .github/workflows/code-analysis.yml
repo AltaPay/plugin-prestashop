@@ -33,12 +33,13 @@ jobs:
      - name: Install composer and run PhpCsFixer
        run: |
          composer install
-         composer isolate
-         composer dump-autoload -a
          php vendor/bin/php-cs-fixer fix --dry-run --diff
        working-directory: prestashop/modules/altapay
 
-     - name: run PhpStan
+     - name: Composer dependency isolatation and run PhpStan
        if: ${{ always() }}
-       run: _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
+       run: |
+         composer isolate
+         composer dump
+         _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
        working-directory: prestashop/modules/altapay
