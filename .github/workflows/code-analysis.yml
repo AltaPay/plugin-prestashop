@@ -30,12 +30,12 @@ jobs:
        with:
           path: prestashop/modules/altapay
        #working-directory: prestashop/modules/altapay
-     - name: Install composer and run PhpStan
+     - name: Install composer and run PhpCsFixer
        run: |
          composer install
+         php vendor/bin/php-cs-fixer fix --dry-run --diff
          composer isolate
          composer dump
-         php vendor/bin/php-cs-fixer fix --dry-run --diff
        working-directory: prestashop/modules/altapay
 
      - name: run PhpStan
