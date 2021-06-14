@@ -33,9 +33,10 @@ jobs:
      - name: Install composer and run PhpCsFixer
        run: |
          composer install
-         php vendor/bin/php-cs-fixer fix --dry-run --diff
          composer isolate
          composer dump
+         composer dump-autoload -a
+         php vendor/bin/php-cs-fixer fix --dry-run --diff
        working-directory: prestashop/modules/altapay
 
      - name: run PhpStan
