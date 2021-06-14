@@ -33,6 +33,7 @@ jobs:
      - name: Install composer and run PhpStan
        run: |
          composer install
+         composer isolate
          composer dump-autoload
          _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
        working-directory: prestashop/modules/altapay
