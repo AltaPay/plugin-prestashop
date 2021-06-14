@@ -7,7 +7,7 @@ PrestaShop 1.6.x and 1.7.x
 
 ## [3.3.5] - 2020-12-03
 ### Added
-- Handled fail statuses properly
+- Handle "failed" and "error" status as a failed order
 
 ## [3.3.4] - 2020-12-03
 ### Added
