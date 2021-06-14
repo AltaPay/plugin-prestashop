@@ -37,7 +37,9 @@ jobs:
          _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
        working-directory: prestashop/modules/altapay
 
-     - name: Run PhpCsFixer
+     - name: run PhpCsFixer
        if: ${{ always() }}
-       run: vendor/bin/php-cs-fixer fix --dry-run --diff
-       working-directory: prestashop/modules/altapay
+       run: | 
+         composer dump
+         php vendor/bin/php-cs-fixer fix --dry-run --diff
+         working-directory: prestashop/modules/altapay
