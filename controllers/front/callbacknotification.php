@@ -52,7 +52,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             switch ($status) {
                 case 'succeeded':
                 case 'success':
-                    $this->handleNotificationAction($cart, $order, $response, $customer, $transactionStatus);
+                    $this->handleNotificationAction($cart, $order, $response, $customer, $transactionStatus, $shopOrderId);
                     break;
                 case 'cancelled':
                     $this->handleCancelledStatusAction($shopOrderId, $transactionStatus);
@@ -62,7 +62,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     $this->handleFailedStatusAction($msg, $paymentId, $order, $transactionStatus);
                     break;
                 default:
-                    $this->handleCancelledStatusAction($order, $orderId, $transactionStatus);
+                    $this->handleCancelledStatusAction($order, $transactionStatus);
             }
         } catch (PrestaShopException $e) {
             $e->displayMessage();
@@ -90,7 +90,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
         exit('Order status updated to Error');
     }
 
-    public function handleNotificationAction($cart, $order, $response, $customer, $transactionStatus)
+    public function handleNotificationAction($cart, $order, $response, $customer, $transactionStatus, $shopOrderId)
     {
         // NO ORDER FOUND, CREATE?
         if (!Validate::isLoadedObject($order)) {
