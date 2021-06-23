@@ -44,7 +44,12 @@
         text-align: center;
         margin: 40px auto;
     }
-    #card_info.cvv_less .cvc_row {
+
+    #card_info.cvv_less .cvc_row , #card_info.cvv_less .cvc_description_row {
+        display: none;
+    }
+    
+    #card_info.cvv_less .pensio_payment_form_table tr:nth-child(3) {
         display: none;
     }
 </style>
