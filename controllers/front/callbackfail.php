@@ -38,8 +38,8 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             exit('Could not load cart - exiting');
         }
 
-        $status = Tools::getValue('payment_status');
-        if ($status === 'epayment_cancelled') {
+        $status = Tools::getValue('status');
+        if ($status === 'cancelled') {
             $unique_id = Tools::getValue('shop_orderid');
             // Updated transaction record to cancel
             $pI = pSQL($unique_id);
