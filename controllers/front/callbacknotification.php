@@ -39,26 +39,26 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             if (isset($postData['cardholder_message_must_be_shown'])) {
                 $cardHolderMessageMustBeShown = $postData['cardholder_message_must_be_shown'];
             }
-            if (isset($postData['error_message']) && $cardHolderMessageMustBeShown == "true") {
+            if (isset($postData['error_message']) && $cardHolderMessageMustBeShown == 'true') {
                 $msg = $postData['error_message'];
             } else {
-                $msg = "Error with the Payment.";
+                $msg = 'Error with the Payment.';
             }
 
-            if ($status == "cancelled") {
-                $msg = "Payment canceled";
+            if ($status == 'cancelled') {
+                $msg = 'Payment canceled';
             }
 
             switch ($status) {
-                case "succeeded":
-                case "success":
-                    $this->handleNotificationAction($cart, $order ,$response, $customer, $transactionStatus);
+                case 'succeeded':
+                case 'success':
+                    $this->handleNotificationAction($cart, $order, $response, $customer, $transactionStatus);
                     break;
-                case "cancelled":
+                case 'cancelled':
                     $this->handleCancelledStatusAction($shopOrderId, $transactionStatus);
                     break;
-                case "error":
-                case "failed":
+                case 'error':
+                case 'failed':
                     $this->handleFailedStatusAction($msg, $paymentId, $order, $transactionStatus);
                     break;
                 default:
@@ -85,18 +85,18 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
         $order->setCurrentState((int) Configuration::get('PS_OS_CANCELED'));
         // Update payment status to 'declined'
         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
-        SET `paymentStatus` = '.$transactionStatus.' WHERE `id_order` = ' . $order->id;
+        SET `paymentStatus` = ' . $transactionStatus . ' WHERE `id_order` = ' . $order->id;
         Db::getInstance()->Execute($sql);
         exit('Order status updated to Error');
     }
 
-    public function handleNotificationAction($cart, $order ,$response, $customer, $transactionStatus)
-    {      
+    public function handleNotificationAction($cart, $order, $response, $customer, $transactionStatus)
+    {
         // NO ORDER FOUND, CREATE?
         if (!Validate::isLoadedObject($order)) {
             // Payment successful - create order
             if ($response && is_array($response->Transactions)) {
-                $order_status = (int) Configuration::get('PS_OS_PAYMENT');                
+                $order_status = (int) Configuration::get('PS_OS_PAYMENT');
                 $currency_paid = Currency::getIdByIsoCode($response->Currency);
                 $amount_paid = $response->amount;
                 $paymentType = $response->Transactions[0]->AuthType;
@@ -123,7 +123,6 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 createAltapayOrder($response, $current_order, $transactionStatus);
                 exit('Order created');
             } else {
-    
                 exit('Only handling Success state');
             }
         } else {
@@ -137,14 +136,14 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
                 // Update payment status to 'succeeded'
                 $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
-            SET `paymentStatus` = '.$transactionStatus.' WHERE `id_order` = ' . $order->id;
+            SET `paymentStatus` = ' . $transactionStatus . ' WHERE `id_order` = ' . $order->id;
                 Db::getInstance()->Execute($sql);
                 $payment = $order->getOrderPaymentCollection();
                 if (isset($payment[0])) {
                     $payment[0]->transaction_id = pSQL($shopOrderId);
                     $payment[0]->save();
                 }
-    
+
                 exit('Order status updated to Accepted');
             } else {
                 // Unexpected scenario
@@ -152,7 +151,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 PrestaShopLogger::addLog('Unexpected scenario: Callback notification was received for Transaction '
                                          . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
                     $this->module->id, true);
-    
+
                 exit('Unrecognized status received ' . $transactionStatus);
             }
         }
