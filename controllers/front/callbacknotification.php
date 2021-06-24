@@ -31,7 +31,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             // Load the customer
             $customer = new Customer((int) $cart->id_customer);
             $transactionStatus = $response->paymentStatus;
-            $status = strtolower($response->status);
+            $ResultStatus = strtolower($response->Result);
             $order = getOrderFromUniqueId($shopOrderId);
 
             //Set order status, if available from the payment gateway
@@ -45,11 +45,11 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 $msg = 'Error with the Payment.';
             }
 
-            if ($status == 'cancelled') {
+            if ($ResultStatus == 'cancelled') {
                 $msg = 'Payment canceled';
             }
 
-            switch ($status) {
+            switch ($ResultStatus) {
                 case 'succeeded':
                 case 'success':
                     $this->handleNotificationAction($cart, $order, $response, $customer, $transactionStatus, $shopOrderId);
@@ -62,7 +62,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     $this->handleFailedStatusAction($msg, $paymentId, $order, $transactionStatus);
                     break;
                 default:
-                    $this->handleCancelledStatusAction($order, $transactionStatus);
+                    $this->handleUnExpectedStatusAction($shopOrderId, $transactionStatus);
             }
         } catch (PrestaShopException $e) {
             $e->displayMessage();
@@ -71,11 +71,23 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
     public function handleCancelledStatusAction($shopOrderId, $transactionStatus)
     {
+        // Payment canceled
+        $mNa = $this->module->name;
+        PrestaShopLogger::addLog('Callback notification was received for Transaction '
+                                    . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
+            $this->module->id, true);
+
+        exit('Payment canceled');
+    }
+
+    public function handleUnExpectedStatusAction($shopOrderId, $transactionStatus)
+    {
         // Unexpected scenario
         $mNa = $this->module->name;
         PrestaShopLogger::addLog('Unexpected scenario: Callback notification was received for Transaction '
                                     . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
             $this->module->id, true);
+
         exit('Unrecognized status received ' . $transactionStatus);
     }
 
@@ -87,7 +99,8 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
         SET `paymentStatus` = ' . $transactionStatus . ' WHERE `id_order` = ' . $order->id;
         Db::getInstance()->Execute($sql);
-        exit('Order status updated to Error');
+
+        exit('Order status updated to canceled');
     }
 
     public function handleNotificationAction($cart, $order, $response, $customer, $transactionStatus, $shopOrderId)

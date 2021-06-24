@@ -32,13 +32,30 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
         $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
         $response = $callback->call();
         $shopOrderId = $response->shopOrderId;
+        $cardHolderMessageMustBeShown = false;
+        $merchantError = '';
+
+        if (isset($postData['cardholder_message_must_be_shown'])) {
+            $cardHolderMessageMustBeShown = $postData['cardholder_message_must_be_shown'];
+        }
+        if (isset($postData['error_message']) && isset($postData['merchant_error_message'])) {
+            if ($postData['error_message'] != $postData['merchant_error_message']) {
+                $merchantError = $postData['merchant_error_message'];
+            }
+        }
+        if (isset($postData['error_message']) && $cardHolderMessageMustBeShown == 'true') {
+            $errorMessage = $postData['error_message'];
+        } else {
+            $errorMessage = 'Error with the Payment.';
+        }
+
         // Load the cart
         $cart = getCartFromUniqueId($shopOrderId);
         if (!Validate::isLoadedObject($cart)) {
             exit('Could not load cart - exiting');
         }
 
-        $status = Tools::getValue('status');
+        $status = strtolower($response->Result);
         if ($status === 'cancelled') {
             $unique_id = Tools::getValue('shop_orderid');
             // Updated transaction record to cancel
@@ -53,11 +70,14 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             $location = $pLink . (strpos($controller, '?') !== false ? '&' : '?') . $vCan;
             Tools::redirectLink($location);
         } else {
-            $mErM = $response->MerchantErrorMessage;
+            if (!empty($merchantError)) {
+                $errorMessage = $errorMessage . '|' . $merchantError;
+            }
+
             $cId = $cart->id;
             $mNa = $this->module->name;
             $mId = $this->module->id;
-            PrestaShopLogger::addLog('Payment failure for cart ' . $cId . '. Error Message: ' . $mErM, 3, 2001, $mNa, $mId, true);
+            PrestaShopLogger::addLog('Payment failure for cart ' . $cId . '. Error Message: ' . $errorMessage, 3, 2001, $mNa, $mId, true);
             $this->context->smarty->assign([
                 'errorText' => $response->CardHolderErrorMessage,
                 'unique_id' => $shopOrderId,
