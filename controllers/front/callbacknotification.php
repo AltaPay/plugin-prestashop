@@ -31,7 +31,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             // Load the customer
             $customer = new Customer((int) $cart->id_customer);
             $transactionStatus = $response->paymentStatus;
-            $ResultStatus = strtolower($response->Result);
+            $resultStatus = strtolower($response->Result);
             $order = getOrderFromUniqueId($shopOrderId);
 
             //Set order status, if available from the payment gateway
@@ -45,11 +45,11 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 $msg = 'Error with the Payment.';
             }
 
-            if ($ResultStatus == 'cancelled') {
+            if ($resultStatus == 'cancelled') {
                 $msg = 'Payment canceled';
             }
 
-            switch ($ResultStatus) {
+            switch ($resultStatus) {
                 case 'succeeded':
                 case 'success':
                     $this->handleNotificationAction($cart, $order, $response, $customer, $transactionStatus, $shopOrderId);
