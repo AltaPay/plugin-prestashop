@@ -1,30 +1,31 @@
 <?php
+
 require_once __DIR__ . '/modules/altapay/vendor/autoload.php';
-require(dirname(__FILE__) . '/config/config.inc.php');
-require(dirname(__FILE__) . '/init.php');
+require dirname(__FILE__) . '/config/config.inc.php';
+require dirname(__FILE__) . '/init.php';
 
 // Settings
-$apiUser = "~gatewayusername~";
-$apiPass = "~gatewaypass~";
-$url     = "~gatewayurl~";
+$apiUser = '~gatewayusername~';
+$apiPass = '~gatewaypass~';
+$url = '~gatewayurl~';
 
 Configuration::updateValue('ALTAPAY_USERNAME', $apiUser);
 Configuration::updateValue('ALTAPAY_PASSWORD', $apiPass);
 Configuration::updateValue('ALTAPAY_URL', $url);
 
 try {
-    $api      = new API\PHP\Altapay\Api\Test\TestAuthentication(getAuth());
+    $api = new API\PHP\Altapay\Api\Test\TestAuthentication(getAuth());
     $response = $api->call();
     if (!$response) {
-        echo "API credentials are incorrect";
+        echo 'API credentials are incorrect';
         exit();
     }
 } catch (API\PHP\Altapay\Exceptions\ClientException | \Exception $e) {
-    echo "Error:" . $e->getMessage();
+    echo 'Error:' . $e->getMessage();
     exit();
 }
 
-$currency = "DKK";
+$currency = 'DKK';
 
 try {
     $api = new API\PHP\Altapay\Api\Others\Terminals(getAuth());
@@ -46,8 +47,8 @@ try {
         }
     }
 } catch (API\PHP\Altapay\Exceptions\ClientException | \Exception $e) {
-    echo "Error:" . $e->getMessage();
+    echo 'Error:' . $e->getMessage();
     exit();
 }
 
-echo "Settings are imported successfully";
+echo 'Settings are imported successfully';
