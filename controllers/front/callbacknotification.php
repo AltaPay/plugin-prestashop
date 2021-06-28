@@ -35,7 +35,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $transactionStatus = $response->paymentStatus;
             // Check if an order exist
             $order = getOrderFromUniqueId($shopOrderId);
-            $errorStatus = ['cancelled', 'epayment_cancelled'];
+            $errorStatus = ['cancelled', 'epayment_cancelled', 'error', 'failed'];
             if (!in_array($transactionStatus, $errorStatus, true)) {
                 // NO ORDER FOUND, CREATE?
                 if (!Validate::isLoadedObject($order)) {
