@@ -19,10 +19,7 @@ try {
         echo "API credentials are incorrect";
         exit();
     }
-} catch (ClientException $e) {
-    echo "Error:" . $e->getMessage();
-    exit();
-} catch (Exception $e) {
+} catch (API\PHP\Altapay\Exceptions\ClientException | \Exception $e) {
     echo "Error:" . $e->getMessage();
     exit();
 }
@@ -48,7 +45,7 @@ try {
             $terminal->save();
         }
     }
-} catch (\API\PHP\GuzzleHttp\Exception\ClientException | Exception $e) {
+} catch (API\PHP\Altapay\Exceptions\ClientException | \Exception $e) {
     echo "Error:" . $e->getMessage();
     exit();
 }
