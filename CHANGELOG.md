@@ -6,6 +6,11 @@ PrestaShop 1.6.x and 1.7.x
 # Changelog
 
 ## [3.3.5] - 2021-06-14
+### Fixed
+- Hide CVV field when it is optional
+- Support notification callback with different transaction statuses
+
+## [3.3.5] - 2021-06-14
 ### Added
 - Handle "failed" and "error" status as a failed order
 
