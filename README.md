@@ -1,4 +1,4 @@
-#  Altapay for PrestaShop #
+#  AltaPay for PrestaShop #
 
 
 ## Code Analysis ##
@@ -10,7 +10,9 @@ These are the steps that must be followed before running any of the codeanalysis
 3. Afterwards, run the following commands
 
     `composer install`
+
     `composer isolate`
+
     `composer dump -o`
 
 Now, we can use our code analysis tools.
@@ -22,22 +24,21 @@ It'll print out any errors detected by PHPStan.
 Note: _PS_ROOT_DIR_ should point to prestashop root directory. And, path at the end of command denotes the path of directory, in this case our repository/plugin, where we need to run phpstan. 
 
 Next, Php-CS-Fixer is being used for fixing php coding standard relared issues. It's config file .php_cs.dist is also available in this repository. 
-1. To visualize the issues reported by Php-CS-Fixer, before actually fixing them, use command 
-`php vendor/bin/php-cs-fixer fix --dry-run --diff` and it'll print out any issues detected
+1. To visualize the issues reported by Php-CS-Fixer, before actually fixing them, use command
+`php vendor/bin/php-cs-fixer fix --dry-run --diff` and it'll print out any issues detected.
+
 2. Then, you can fix these which issues by running command 'php vendor/bin/php-cs-fixer fix' 
 
 
-# How to run cypress test successfully in your environment 
+## How to run cypress tests
 
-## Prerequisites: 
+### Prerequisites: 
 
-1) PrestaShop 1.6 should be installed with the default theme on publically accessible URL
-2) Cypress should be installed
+* PrestaShop 1.6 should be installed with the default theme on publically accessible URL
+* Cypress should be installed
 
-## Steps 
+### Steps 
 
-1) Install dependencies `npm i`
-
-2) Update "cypress/fixtures/config.json" 
-
-3) Execute `./node_modules/.bin/cypress run` in the terminal to run all the tests
+* Install dependencies `npm i`
+* Update "cypress/fixtures/config.json"
+* Execute `./node_modules/.bin/cypress run` in the terminal to run all the tests
