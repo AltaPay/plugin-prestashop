@@ -48,7 +48,7 @@ try {
             $terminal->save();
         }
     }
-} catch (API\PHP\Altapay\Exceptions\ClientException | Exception $e) {
+} catch (API\PHP\GuzzleHttp\Exception\ClientException | Exception $e) {
     echo "Error:" . $e->getMessage();
     exit();
 }
