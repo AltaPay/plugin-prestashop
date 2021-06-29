@@ -67,6 +67,21 @@ jobs:
       with:
         time: '20s' 
    
+     # Setting branch name for running cypress tests
+    - name: Set env TEST_BRANCH_NAME
+      run: |
+          if [[ $GITHUB_EVENT_NAME == 'pull_request' ]]; then
+              echo "TEST_BRANCH_NAME=${{ github.head_ref }}" >> "$GITHUB_ENV"
+          else
+              echo "TEST_BRANCH_NAME=master" >> "$GITHUB_ENV"
+          fi  	
+   
+      
+     # Setting prestashop version name for installation
+    - name: Set env PRESTASHOP_VERSION
+      run: echo "PRESTASHOP_VERSION=1.6.1.24" >> "$GITHUB_ENV"
+  	
+   
     # Run Ansible playbook
     - name: Run playbook
       uses: dawidd6/action-ansible-playbook@v2
@@ -77,7 +92,7 @@ jobs:
         options: |
           -u ubuntu
           -i inventory
-          --extra-vars "branch_name=altapay-config gatewayURL=${{ secrets.GATEWAYURL }} gatewayUser=${{ secrets.GATEWAYUSER }} gatewayPass=${{ secrets.GATEWAYPASS }}"   
+          --extra-vars "branch_name=altapay-config gatewayURL=${{ secrets.GATEWAYURL }} gatewayUser=${{ secrets.GATEWAYUSER }} gatewayPass=${{ secrets.GATEWAYPASS }} prestashop_version=${{env.PRESTASHOP_VERSION}}"   
 
 
     # Export IP for use in cypress tests config
@@ -86,18 +101,19 @@ jobs:
         testvar=$(sed '4!d' inventory)
         echo $testvar
         echo "IP=$testvar">> $GITHUB_ENV
-        echo $IP
       working-directory: ../plugin-infrastructure/deploy/plugins
 
 
-    # Setting branch name for running cypress tests
-    - name: Set env TEST_BRANCH_NAME
+     # Setting directory for running cypress tests
+    - name: Set env TEST_DIRECTORY
       run: |
-          if [[ $GITHUB_EVENT_NAME == 'pull_request' ]]; then
-              echo "TEST_BRANCH_NAME=${{ github.head_ref }}" >> "$GITHUB_ENV"
+          if env.PRESTASHOP_VERSION == '1.6.1.24'; then
+              echo "TEST_DIRECTORY=test/integration-tests/1.6.1.x" >> "$GITHUB_ENV"
           else
-              echo "TEST_BRANCH_NAME=master" >> "$GITHUB_ENV"
+              echo "TEST_DIRECTORY=test/integration-tests/1.7.7.x" >> "$GITHUB_ENV"
           fi  	
+
+
     # Run Cypress tests   
     - uses: actions/checkout@v1
       with:
@@ -111,15 +127,15 @@ jobs:
       with:
         name: "config.json"
         json: '{"shopURL": "http://${{env.IP}}","adminURL": "http://${{env.IP}}/admin123","adminUsername": "${{secrets.CMS_ADMIN_EMAIL}}","adminPass": "${{secrets.SHOP_ADMIN_PASS}}"}'
-        dir: test/integration-tests/cypress/fixtures/
+        dir: "${{env.TEST_DIRECTORY}}/cypress/fixtures/"
 
     - name: Install Cypress Dependencies 
       run: npm i
-      working-directory: test/integration-tests
+      working-directory: "${{env.TEST_DIRECTORY}}"
 
     - name: Run Cypress tests 
       run: ./node_modules/.bin/cypress run --config video=false
-      working-directory: test/integration-tests
+      working-directory: "${{env.TEST_DIRECTORY}}"
 
       # after the test run completes
       # store screenshots
@@ -131,5 +147,5 @@ jobs:
       if: failure()
       with:
         name: cypress-screenshots
-        path: ./test/integration-tests/cypress/screenshots
+        path: "./${{env.TEST_DIRECTORY}}/cypress/screenshots"
 
