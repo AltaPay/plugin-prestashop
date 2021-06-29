@@ -4,10 +4,6 @@
         "runMode": 2,
         "openMode": 2
     } ,
-    
-    "pageLoadTimeout": 70000,
-    
-        "viewportWidth": 1000,
-        "viewportHeight": 700
+ 
                    
     }
