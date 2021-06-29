@@ -79,7 +79,8 @@ jobs:
       
      # Setting prestashop version name for installation
     - name: Set env PRESTASHOP_VERSION
-      run: echo "PRESTASHOP_VERSION=1.6.1.24" >> "$GITHUB_ENV"
+      run: |
+        echo "PRESTASHOP_VERSION=1.6.1.24" >> "$GITHUB_ENV"
   	
    
     # Run Ansible playbook
