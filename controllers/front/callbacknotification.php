@@ -139,34 +139,18 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 exit('Only handling Success state');
             }
         } else {
-            if ($transactionStatus === 'preauth' || $transactionStatus === 'bank_payment_finalized' || $transactionStatus === 'captured') {
-                /*
-                 * preauth occurs for wallet transactions where payment type is 'payment'.
-                 * Funds are still waiting to be captured.
-                 * For this scenario we change the order status to 'payment accepted'.
-                 * bank_payment_finalized is for ePayments.
-                 */
-                $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
-                // Update payment status to 'succeeded'
-                $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
-            SET `paymentStatus` = ' . $transactionStatus . ' WHERE `id_order` = ' . $order->id;
-                Db::getInstance()->Execute($sql);
-                $payment = $order->getOrderPaymentCollection();
-                if (isset($payment[0])) {
-                    $payment[0]->transaction_id = pSQL($shopOrderId);
-                    $payment[0]->save();
-                }
-
-                exit('Order status updated to Accepted');
-            } else {
-                // Unexpected scenario
-                $mNa = $this->module->name;
-                PrestaShopLogger::addLog('Unexpected scenario: Callback notification was received for Transaction '
-                                         . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
-                    $this->module->id, true);
-
-                exit('Unrecognized status received ' . $transactionStatus);
+            $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+            // Update payment status to 'succeeded'
+            $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
+        SET `paymentStatus` = ' . $transactionStatus . ' WHERE `id_order` = ' . $order->id;
+            Db::getInstance()->Execute($sql);
+            $payment = $order->getOrderPaymentCollection();
+            if (isset($payment[0])) {
+                $payment[0]->transaction_id = pSQL($shopOrderId);
+                $payment[0]->save();
             }
+
+            exit('Order status updated to Accepted');
         }
     }
 }
