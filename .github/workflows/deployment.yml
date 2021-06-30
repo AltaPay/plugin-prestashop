@@ -107,7 +107,7 @@ jobs:
      # Setting directory for running cypress tests
     - name: Set env TEST_DIRECTORY
       run: |
-          if ${{env.PRESTASHOP_VERSION}} == '1.6.1.24'; then
+          if ${{env.PRESTASHOP_VERSION}} == 1.6.1.24; then
               echo "TEST_DIRECTORY=test/integration-tests-1.6.1.x" >> "$GITHUB_ENV"
           else
               echo "TEST_DIRECTORY=test/integration-tests-1.7.7.x" >> "$GITHUB_ENV"
@@ -126,7 +126,7 @@ jobs:
       uses: jsdaniell/create-json@1.1.2
       with:
         name: "config.json"
-        json: '{"shopURL": "http://${{env.IP}}","adminURL": "http://${{env.IP}}/admin123","adminUsername": "${{secrets.CMS_ADMIN_EMAIL}}","adminPass": "${{secrets.CMS_ADMIN_PASS}}"}'
+        json: '{"shopURL": "http://${{env.IP}}","adminURL": "http://${{env.IP}}/admin123","adminUsername": "t@t.com","adminPass": "${{secrets.CMS_ADMIN_PASS}}"}'
         dir: "${{env.TEST_DIRECTORY}}/cypress/fixtures/"
 
     - name: Install Cypress Dependencies 
