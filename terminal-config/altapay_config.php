@@ -12,6 +12,7 @@ $url = '~gatewayurl~';
 Configuration::updateValue('ALTAPAY_USERNAME', $apiUser);
 Configuration::updateValue('ALTAPAY_PASSWORD', $apiPass);
 Configuration::updateValue('ALTAPAY_URL', $url);
+Configuration::updateValue('PS_GUEST_CHECKOUT_ENABLED', 1);
 
 try {
     $api = new API\PHP\Altapay\Api\Test\TestAuthentication(getAuth());
