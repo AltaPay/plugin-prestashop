@@ -48,7 +48,7 @@ class Order
 
     klarna_payment(){
 
-        cy.get(':nth-child(2) > .col-xs-12 > .payment_module > .altapay').click().wait(1000)
+        cy.contains('EmbraceIT Klarna DKK Test Terminal').click().wait(1000)
         cy.get('[id=submitbutton]').click().wait(3000)
         cy.get('[id=klarna-pay-later-fullscreen]').wait(5000).then(function($iFrame){
             const mobileNum = $iFrame.contents().find('[id=invoice_kp-purchase-approval-form-phone-number]')
@@ -79,7 +79,13 @@ class Order
 
         // 1.6.X
         cy.get('#maintab-AdminParentOrders > .title').click()
-        
+        //Exception handle
+        Cypress.on('uncaught:exception', (err, runnable) => {
+            // returning false here prevents Cypress from
+            // failing the test
+            return false
+        })
+
         cy.get('tbody > :nth-child(1) > .fixed-width-xs').click().wait(1000)
         //Capture
         cy.get('[id=transactionOptions]').then(function($iFrame){
