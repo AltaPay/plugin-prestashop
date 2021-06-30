@@ -80,7 +80,7 @@ jobs:
      # Setting prestashop version name for installation
     - name: Set env PRESTASHOP_VERSION
       run: |
-           echo "PRESTASHOP_VERSION=1.6.1.24" >> "$GITHUB_ENV"
+           echo "PRESTASHOP_VERSION='1.6.1.24'" >> "$GITHUB_ENV"
            
     # Run Ansible playbook
     - name: Run playbook
@@ -107,7 +107,7 @@ jobs:
      # Setting directory for running cypress tests
     - name: Set env TEST_DIRECTORY
       run: |
-          if ${{env.PRESTASHOP_VERSION}} == 1.6.1.24; then
+          if ${{env.PRESTASHOP_VERSION}} == '1.6.1.24'; then
               echo "TEST_DIRECTORY=test/integration-tests-1.6.1.x" >> "$GITHUB_ENV"
           else
               echo "TEST_DIRECTORY=test/integration-tests-1.7.7.x" >> "$GITHUB_ENV"
