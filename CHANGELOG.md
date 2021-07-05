@@ -5,7 +5,7 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
-## [3.3.5] - 2021-06-14
+## [3.3.6] - 2021-07-05
 ### Fixed
 - Add configuration to enable/disable CVV field
 - Support notification callback with different transaction statuses
