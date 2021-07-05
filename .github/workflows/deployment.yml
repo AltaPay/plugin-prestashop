@@ -121,7 +121,7 @@ jobs:
       uses: jsdaniell/create-json@1.1.2
       with:
         name: "config.json"
-        json: '{"shopURL": "http://${{env.IP}}","adminURL": "http://${{env.IP}}/admin123","adminUsername": "t@t.com","adminPass": "${{secrets.CMS_ADMIN_PASS}}", "CC_TERMINAL_NAME": "${{secrets.CC_TERMINAL_NAME}}", "KLARNA_DKK_TERMINAL_NAME": "${{secrets.KLARNA_DKK_TERMINAL_NAME}}", "SUBSCRIPTION_TERMINAL_NAME": "${{secrets.SUBSCRIPTION_TERMINAL_NAME}}"}'
+        json: '{"shopURL": "http://${{env.IP}}","adminURL": "http://${{env.IP}}/admin123","adminUsername": "${{secrets.CMS_ADMIN_EMAIL}}","adminPass": "${{secrets.CMS_ADMIN_PASS}}", "CC_TERMINAL_NAME": "${{secrets.CC_TERMINAL_NAME}}", "KLARNA_DKK_TERMINAL_NAME": "${{secrets.KLARNA_DKK_TERMINAL_NAME}}", "SUBSCRIPTION_TERMINAL_NAME": "${{secrets.SUBSCRIPTION_TERMINAL_NAME}}"}'
         dir: "${{env.TEST_DIRECTORY}}/cypress/fixtures/"
 
     - name: Install Cypress Dependencies 
