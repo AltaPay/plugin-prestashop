@@ -31,7 +31,7 @@ jobs:
       with:
         repository: AltaPay/plugin-infrastructure
         token: ${{ secrets.ACCESS_TOKEN }}
-        ref: 'origin/prestashop'
+        ref: 'origin/main'
 
     # Install version 0.14.4 of Terraform CLI
     - name: Setup Terraform
@@ -92,7 +92,7 @@ jobs:
         options: |
           -u ubuntu
           -i inventory
-          --extra-vars "branch_name=altapay-config gatewayURL=${{ secrets.GATEWAYURL }} gatewayUser=${{ secrets.GATEWAYUSER }} gatewayPass=${{ secrets.GATEWAYPASS }} prestashop_version=${{env.PRESTASHOP_VERSION}}"   
+          --extra-vars "branch_name=${{env.TEST_BRANCH_NAME}} gatewayURL=${{ secrets.GATEWAYURL }} gatewayUser=${{ secrets.GATEWAYUSER }} gatewayPass=${{ secrets.GATEWAYPASS }} prestashop_version=${{env.PRESTASHOP_VERSION}}"   
 
 
     # Export IP for use in cypress tests config
@@ -113,7 +113,7 @@ jobs:
     - uses: actions/checkout@v1
       with:
         repository: AltaPay/plugin-prestashop
-        ref: 'origin/cypress-test'
+        ref: 'origin/master'
         path: plugin-prestashop
 
     - name: Create Cypress fixture config json
