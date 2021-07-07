@@ -35,9 +35,9 @@ class Order
 
     }
 
-    cc_payment(){
-        cy.fixture('config').then((cc)=>{
-            cy.contains(cc.CC_TERMINAL_NAME).click().wait(1000)
+    cc_payment(CC_TERMINAL_NAME){        
+        cy.contains(CC_TERMINAL_NAME).click({force: true})
+
         cy.get('[id=creditCardNumberInput]').type('4111111111111111')
         cy.get('#emonth').type('01')
         cy.get('#eyear').type('2023')
@@ -45,13 +45,12 @@ class Order
         cy.get('#cardholderNameInput').type('testname')
         cy.get('#pensioCreditCardPaymentSubmitButton').click().wait(4000)
 
-    })
+    
     }
 
-    klarna_payment(){
+        klarna_payment(KLARNA_DKK_TERMINAL_NAME){
+            cy.contains(KLARNA_DKK_TERMINAL_NAME).click({force: true})
 
-        cy.fixture('config').then((klarna)=>{
-            cy.contains(klarna.KLARNA_DKK_TERMINAL_NAME).click().wait(1000)
         cy.get('[id=submitbutton]').click().wait(3000)
         cy.get('[id=klarna-pay-later-fullscreen]').wait(5000).then(function($iFrame){
             const mobileNum = $iFrame.contents().find('[id=invoice_kp-purchase-approval-form-phone-number]')
@@ -61,7 +60,6 @@ class Order
             const submit = $iFrame.contents().find('[id=invoice_kp-purchase-approval-form-continue-button]')
             cy.wrap(submit).click().wait(4000)
             
-        })
     })
         
     }
