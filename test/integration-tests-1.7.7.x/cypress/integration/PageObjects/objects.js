@@ -101,7 +101,7 @@ class Order
 
     capture(){
 
-        // 1.6.X
+        // This tests work with 1.7.X. Uncomment when the new version is supported.
         // cy.get('#maintab-AdminParentOrders > .title').click()
         
         // cy.get('tbody > :nth-child(1) > .fixed-width-xs').click().wait(1000)
