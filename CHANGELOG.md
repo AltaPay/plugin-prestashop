@@ -5,17 +5,26 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
-## [3.3.4] - 2020-12-03
+## [3.3.6] - 2021-07-05
+### Fixed
+- Add configuration to enable/disable CVV field
+- Support notification callback with different transaction statuses
+
+## [3.3.5] - 2021-06-14
+### Added
+- Handle "failed" and "error" status as a failed order
+
+## [3.3.4] - 2021-04-13
 ### Added
 - Support for CVV/CVV Less card
 
-## [3.3.3] - 2020-12-03
+## [3.3.3] - 2021-02-19
  
 ### Fixed
 - Fix issue with cancel functionality
 - Fix price mismatch issue in case of fixed discount using Klana payment method
 
-## [3.3.2] - 2020-12-03
+## [3.3.2] - 2021-02-10
 ### Added
 - Support for terminal sorting
  
@@ -23,7 +32,7 @@ PrestaShop 1.6.x and 1.7.x
 - Fix issue with E-payment order statuses
 - Fix terminal configuration saving issue
 
-## [3.3.1] - 2020-12-03
+## [3.3.1] - 2020-01-27
 ### Added
 - Support for payment captures full reservation after discount is applied from the backend
  

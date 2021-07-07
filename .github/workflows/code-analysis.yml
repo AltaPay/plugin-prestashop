@@ -1,4 +1,4 @@
-name: PHP Composer
+name: PHP Code Analysis
 
 on:
   push:
@@ -21,24 +21,25 @@ jobs:
          
      - name: Install prestashop                              
        run: |
-         wget https://download.prestashop.com/download/releases/prestashop_1.7.7.0.zip
-         unzip prestashop_1.7.7.0.zip
+         wget https://download.prestashop.com/download/releases/prestashop_1.7.7.4.zip
+         unzip prestashop_1.7.7.4.zip
          unzip prestashop.zip -d prestashop
-         rm prestashop.zip prestashop_1.7.7.0.zip
+         rm prestashop.zip prestashop_1.7.7.4.zip
      - run: mkdir prestashop/modules/altapay
      - uses: actions/checkout@v2 
        with:
           path: prestashop/modules/altapay
        #working-directory: prestashop/modules/altapay
-     - name: Install composer and run PhpStan
+     - name: Install composer and run PhpCsFixer
        run: |
          composer install
+         php vendor/bin/php-cs-fixer fix --dry-run --diff
+       working-directory: prestashop/modules/altapay
+
+     - name: Composer dependency isolatation and run PhpStan
+       if: ${{ always() }}
+       run: |
          composer isolate
          composer dump
          _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
-       working-directory: prestashop/modules/altapay
-
-     - name: run PhpCsFixer
-       if: ${{ always() }}
-       run: php vendor/bin/php-cs-fixer fix --dry-run --diff
        working-directory: prestashop/modules/altapay
