@@ -3,6 +3,6 @@
   "adminURL":"http://yoursite.com/admin",
   "adminUsername":"admin_Username",
   "adminPass":"admin_Password",
-  "CC_TERMINAL_NAME":"EmbraceIT Test Terminal",
-  "KLARNA_DKK_TERMINAL_NAME":"EmbraceIT Klarna DKK Test Terminal"
+  "CC_TERMINAL_NAME":"Your Credit Card Terminal Name",
+  "KLARNA_DKK_TERMINAL_NAME":"Your Klarna DKK Terminal Name"
 }
