@@ -3,4 +3,5 @@ dist
 .idea
 vendor/
 .php_cs.cache
-Test/Integration Test/node_modules
+test/integration-tests-1.6.1.x/node_modules
+test/integration-tests-1.7.7.x/node_modules

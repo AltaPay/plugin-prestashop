@@ -1,0 +1,13 @@
+{ "chromeWebSecurity": false,
+    "retries": {
+    
+        "runMode": 2,
+        "openMode": 0
+    } ,
+    
+    "pageLoadTimeout": 70000,
+    
+        "viewportWidth": 1366,
+        "viewportHeight": 786
+                   
+    }
