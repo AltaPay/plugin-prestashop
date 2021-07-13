@@ -92,7 +92,7 @@ jobs:
         options: |
           -u ubuntu
           -i inventory
-          --extra-vars "branch_name=${{env.TEST_BRANCH_NAME}} gatewayURL=${{ secrets.GATEWAYURL }} gatewayUser=${{ secrets.GATEWAYUSER }} gatewayPass=${{ secrets.GATEWAYPASS }} prestashop_version=${{env.PRESTASHOP_VERSION}}"   
+          --extra-vars "branch_name=${{env.TEST_BRANCH_NAME}} gatewayURL=${{ secrets.GATEWAYURL }} gatewayUser=${{ secrets.GATEWAYUSER }} gatewayPass=${{ secrets.GATEWAYPASS }} prestashop_version=${{env.PRESTASHOP_VERSION}} prestashop_admin_email=${{secrets.CMS_ADMIN_EMAIL}} prestashop_admin_pwd=${{secrets.CMS_ADMIN_PASS}}"   
 
 
     # Export IP for use in cypress tests config
