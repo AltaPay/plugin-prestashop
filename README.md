@@ -2,6 +2,14 @@
 
 Integrates your PrestaShop web shop to the AltaPay payments gateway.
 
+## Compatibility
+Prestashop 1.6
+
+## Installation
+
+- Download the latest release zip file from the [Releases](https://github.com/AltaPay/plugin-prestashop/releases) tab
+- Go to "Admin -> Modules -> Upload new module" and drag the zip file into the upload box
+
 ## Code Analysis
 
 ### Prerequisites:
