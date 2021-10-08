@@ -1,19 +1,26 @@
 #  AltaPay for PrestaShop #
 
+Integrates your PrestaShop web shop to the AltaPay payments gateway.
 
-## Code Analysis ##
+## Compatibility
+Prestashop 1.6
 
-Prerequisites:
+## Installation
+
+- Download the latest release zip file from the [Releases](https://github.com/AltaPay/plugin-prestashop/releases) tab
+- Go to "Admin -> Modules -> Upload new module" and drag the zip file into the upload box
+
+## Code Analysis
+
+### Prerequisites:
 These are the steps that must be followed before running any of the codeanalysis tools.
 1. Download PrestaShop source code from https://download.prestashop.com/download/releases/prestashop_1.7.6.4.zip and extract it.
 2. Then, clone this repository into PrestaShop's 'modules' folder.
 3. Afterwards, run the following commands
 
-    `composer install`
-
-    `composer isolate`
-
-    `composer dump -o`
+        composer install
+        composer isolate
+        composer dump -o
 
 Now, we can use our code analysis tools.
 
@@ -42,3 +49,18 @@ Next, Php-CS-Fixer is being used for fixing php coding standard relared issues. 
 * Install dependencies `npm i`
 * Update "cypress/fixtures/config.json"
 * Execute `./node_modules/.bin/cypress run` in the terminal to run all the tests
+
+## Changelog
+
+See [Changelog](CHANGELOG.md) for all the release notes.
+
+## License
+
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
+
+## Documentation
+
+For more details please see [AltaPay docs](https://documentation.altapay.com/)
+
+## Contact
+Feel free to contact our support team (support@altapay.com) if you need any assistance.
