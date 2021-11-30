@@ -45,7 +45,7 @@ For testing please use “https://testgateway.altapaysecure.com”
 
 ![process_transactions](https://github.com/AltaPay/plugin-prestashop/blob/Documentation/Docs/Configuration/Configuring%20the%20PrestaShop_2.jpg)
 
-# FAQ on the PrestaShop Plugin
+# FAQs
 
 **PHP Warning: Input variables exceeded 1000. To increase the limit change max_input_vars in php.ini.**
 > For orders that contain too many products, this PHP warning may be issued. You will have to edit your php.ini file and restart your server.
@@ -54,18 +54,24 @@ For testing please use “https://testgateway.altapaysecure.com”
 **Parameters: description/unitPrice/quantity are required for each orderline, but was not set for line: xxxx**
 > The same problem as above. The request is being truncated because the number of variables are exceeding the max_input_vars limit.
 
-# Contacting Support
+# Providing error logs to support team
 
-You are always welcome to contact AltaPay Support if you are experiencing difficulties.
+You are always welcome to contact AltaPay support (support@altapay.com) if you are experiencing difficulties.
 
 **In your Prestashop system, the ‘Transaction ID’ is the ID which matches the ‘Order ID’ within the AltaPay backend. Please do not use the Prestashop Order ID as reference ID when talking to AltaPay support.**
 
-# Checking and providing Error logs to support team
+It is recommended to provide as much information as possible to support team.
 
-**Path of error log vary for server to server**
+**You can find the CMS logs by following the below steps:**
 
-**For Apache server** You can find it on **/var/log/apache2/error.log**
+From Admin Dashboard navigate to **"Advanced Parameters > Logs"** 
+
+**Web server error logs**
+
+**For Apache server** You can find it on **/var/log/apache2/error.log** 
  
-**For Nginx** it would be **/var/log/nginx/error.log.**
+**For Nginx** it would be **/var/log/nginx/error.log** 
 
-After getting the logs from the mentioned path, you may proceed further with the support team.
+**_Note: Your path may vary from the mentioned above._**
+
+
