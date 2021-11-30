@@ -59,3 +59,13 @@ For testing please use “https://testgateway.altapaysecure.com”
 You are always welcome to contact AltaPay Support if you are experiencing difficulties.
 
 **In your Prestashop system, the ‘Transaction ID’ is the ID which matches the ‘Order ID’ within the AltaPay backend. Please do not use the Prestashop Order ID as reference ID when talking to AltaPay support.**
+
+# Checking and providing Error logs to support team
+
+**Path of error log vary for server to server**
+
+**For Apache server** You can find it on **/var/log/apache2/error.log**
+ 
+**For Nginx** it would be **/var/log/nginx/error.log.**
+
+After getting the logs from the mentioned path, you may proceed further with the support team.
