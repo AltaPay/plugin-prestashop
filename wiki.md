@@ -1,6 +1,41 @@
-# Installing the PrestaShop Plugin
+# AltaPay PrestaShop Plugin
 
-**Prerequisites.**
+AltaPay, headquartered in Denmark, is an internationally focused fintech company within payments with the mission to make payments less complicated. We help our merchants grow and expand their business across payment channels by offering a fully integrated seamless omni-channel experience for online, mobile and instore payments, creating transparency and reducing the need for manual tasks with one centralized payment platform.
+
+AltaPay’s platform automizes, simplifies, and protects the transaction flow for shop owners and global retail and e-commerce companies, supporting and integrating smoothly into the major ERP systems. AltaPay performs as a Payment Service Provider operating under The Payment Card Industry Data Security Standard (PCI DSS).
+
+# PrestaShop Payment plugin installation guide
+
+Installing this plug-in will enable the web shop to handle card transactions through AltaPay's gateway.
+
+**Table of Contents**
+
+[Prerequisites](#prerequisites)
+
+[Installation](#installation)
+
+[Configuration](#configuration)
+
+[FAQs](#faqs)
+
+# Prerequisites
+
+Before configuring the plugin, you need the below information. These can
+be provided by AltaPay.
+
+1.  AltaPay credentials:
+
+-   Username
+
+-   Password
+
+2.  AltaPay gateway information:
+
+-   Terminal
+
+-   Gateway
+-   
+# Installation
 
 1. AltaPay only supports PrestaShop version 1.6.x
 Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Add a new module” from the top-right corner.
@@ -19,11 +54,7 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 
 ![installed_successfully](https://github.com/AltaPay/plugin-prestashop/blob/Documentation/Docs/Installation/Installing%20the%20PrestaShop_3.png)
 
-# Configuring the PrestaShop Plugin
-
-**Prerequisites.**
-
-For testing please use “https://testgateway.altapaysecure.com”
+# Configuration
 
 1. Go to ‘Modules and Services’ > ‘Modules and Services’ and find the AltaPay PrestaShop module. This can be done by searching for ‘AltaPay’ or go to ‘Payment and Gateways’ and find the module. 
 2. Click on ‘Configure’ for the module. 
@@ -54,7 +85,7 @@ For testing please use “https://testgateway.altapaysecure.com”
 **Parameters: description/unitPrice/quantity are required for each orderline, but was not set for line: xxxx**
 > The same problem as above. The request is being truncated because the number of variables are exceeding the max_input_vars limit.
 
-# Providing error logs to support team
+## Providing error logs to support team
 
 You are always welcome to contact AltaPay support (support@altapay.com) if you are experiencing difficulties.
 
