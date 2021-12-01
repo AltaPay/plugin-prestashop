@@ -67,7 +67,7 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 
 5. When setting up a terminal you must select the icon and name that is going to be shown in the check flow.  The currency must correspond with the currency on the terminal at AltaPay.  The payment type indicates if the money would be captured on reservation (‘Authorize and capture’) or the merchant would have to capture, when delivering the goods.
 
-![terminal_config](https://github.com/AltaPay/plugin-prestashop/blob/Documentation/Docs/Configuration/prestashop_configure_altapay_terminal_details.png)
+![terminal_config](https://github.com/AltaPay/plugin-prestashop/blob/Documentation/Docs/Configuration/prestashop_configure_altapay_terminal_detail.png)
 
 6. When you have set up your terminals you are ready to process transactions through AltaPay.
 
