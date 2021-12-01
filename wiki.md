@@ -79,8 +79,10 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 # Troubleshooting
 
 **PHP Warning: Input variables exceeded 1000. To increase the limit change max_input_vars in php.ini.**
-> For orders that contain too many products, this PHP warning may be issued. You will have to edit your php.ini file and restart your server.
-> The variable that you must change is called max_input_vars. This is the maximum number of variables that can be sent in a request. You can change it, for example, to 3000. The default is 1000.
+
+- Open your php.ini file
+- Edit the max_input_vars variable. This specifies the maximum number of variables that can be sent in a request. The default is 1000. Increase it to, say, 3000.
+- Restart your server.
 
 **Parameters: description/unitPrice/quantity are required for each orderline, but was not set for line: xxxx**
 > The same problem as above. The request is being truncated because the number of variables are exceeding the max_input_vars limit.
