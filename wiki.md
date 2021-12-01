@@ -18,6 +18,8 @@ Installing this plug-in will enable the web shop to handle card transactions thr
 
 [FAQs](#faqs)
 
+[Troubleshooting](#troubleshooting)
+
 # Prerequisites
 
 Before configuring the plugin, you need the below information. These can
@@ -84,6 +86,8 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 
 **Parameters: description/unitPrice/quantity are required for each orderline, but was not set for line: xxxx**
 > The same problem as above. The request is being truncated because the number of variables are exceeding the max_input_vars limit.
+
+# Troubleshooting
 
 ## Providing error logs to support team
 
