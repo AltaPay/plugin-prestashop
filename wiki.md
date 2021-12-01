@@ -16,8 +16,6 @@ Installing this plug-in will enable the web shop to handle card transactions thr
 
 [Configuration](#configuration)
 
-[FAQs](#faqs)
-
 [Troubleshooting](#troubleshooting)
 
 # Prerequisites
@@ -78,7 +76,8 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 
 ![process_transactions](https://github.com/AltaPay/plugin-prestashop/blob/Documentation/Docs/Configuration/Configuring%20the%20PrestaShop_2.jpg)
 
-# FAQs
+
+# Troubleshooting
 
 **PHP Warning: Input variables exceeded 1000. To increase the limit change max_input_vars in php.ini.**
 > For orders that contain too many products, this PHP warning may be issued. You will have to edit your php.ini file and restart your server.
@@ -87,7 +86,6 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 **Parameters: description/unitPrice/quantity are required for each orderline, but was not set for line: xxxx**
 > The same problem as above. The request is being truncated because the number of variables are exceeding the max_input_vars limit.
 
-# Troubleshooting
 
 ## Providing error logs to support team
 
