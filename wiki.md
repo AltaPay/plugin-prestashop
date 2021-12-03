@@ -90,11 +90,9 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 
 ## Providing error logs to support team
 
-You are always welcome to contact AltaPay support (support@altapay.com) if you are experiencing difficulties.
 
 **In your Prestashop system, the ‘Transaction ID’ is the ID which matches the ‘Order ID’ within the AltaPay backend. Please do not use the Prestashop Order ID as reference ID when talking to AltaPay support.**
 
-It is recommended to provide as much information as possible to support team.
 
 **You can find the CMS logs by following the below steps:**
 
