@@ -4,4 +4,8 @@ dist
 vendor/
 .php_cs.cache
 test/integration-tests-1.6.1.x/node_modules
+test/integration-tests-1.6.1.x/cypress/screenshots
+test/integration-tests-1.6.1.x/cypress/videos
 test/integration-tests-1.7.7.x/node_modules
+test/integration-tests-1.7.7.x/cypress/screenshots
+test/integration-tests-1.7.7.x/cypress/videos
