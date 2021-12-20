@@ -113,7 +113,7 @@ jobs:
     - uses: actions/checkout@v1
       with:
         repository: AltaPay/plugin-prestashop
-        ref: 'origin/main'
+        ref: 'origin/cypress-tests'
         path: plugin-prestashop
 
     - name: Create Cypress fixture config json
