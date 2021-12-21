@@ -192,7 +192,7 @@ class Order
         cy.get('#moduleQuicksearch').type('Alta')
         cy.get(':nth-child(20) > .actions > .btn-group-action > .btn-group > a.btn').click()
         cy.fixture('config').then((admin) => {
-        cy.contains(admin.iDEAl_EUR_TERMINAL).click()
+        cy.contains(admin.iDEAL_EUR_TERMINAL).click()
         })
         cy.get('#altapay_terminals_form_submit_btn').click()
     }
@@ -208,8 +208,8 @@ class Order
         cy.get('#altapay_terminals_form_submit_btn').click()
     }
 
-    ideal_payment(iDEAl_EUR_TERMINAL){        
-        cy.contains(iDEAl_EUR_TERMINAL).click({force: true})
+    ideal_payment(iDEAL_EUR_TERMINAL){        
+        cy.contains(iDEAL_EUR_TERMINAL).click({force: true})
         cy.get('#idealIssuer').select('AltaPay test issuer 1')
         cy.get('#pensioPaymentIdealSubmitButton').click()
         cy.get('[type="text"]').type('shahbaz.anjum123-facilitator@gmail.com')
