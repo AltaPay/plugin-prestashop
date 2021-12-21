@@ -142,7 +142,7 @@ describe('Presta 1.6', function () {
 
             }
             else {
-                cy.log('CC_TERMINAL_NAME skipped')
+                cy.log('KLARNA_DKK_TERMINAL_NAME skipped')
             }
         })
     })
@@ -216,7 +216,7 @@ describe('Presta 1.6', function () {
 
             }
             else {
-                cy.log('CC_TERMINAL_NAME skipped')
+                cy.log('KLARNA_DKK_TERMINAL_NAME skipped')
             }
         })
     })
@@ -286,7 +286,7 @@ describe('Presta 1.6', function () {
 
             }
             else {
-                cy.log('CC_TERMINAL_NAME skipped')
+                cy.log('KLARNA_DKK_TERMINAL_NAME skipped')
             }
         })
     })
