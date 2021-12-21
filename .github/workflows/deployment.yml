@@ -139,9 +139,10 @@ jobs:
       # Alternative: create and commit an empty cypress/screenshots folder
       # to always have something to upload
     - uses: actions/upload-artifact@v1
-      if: failure()
+      #if: failure()
       with:
         name: cypress-screenshots
         path: "./${{env.TEST_DIRECTORY}}/cypress/screenshots"
+        if-no-files-found: 'ignore'
 
 
