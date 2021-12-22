@@ -1,4 +1,3 @@
-//prestashop_test
 require('cypress-xpath')
 
 class Order
@@ -60,8 +59,7 @@ class Order
             const submit = $iFrame.contents().find('[id=invoice_kp-purchase-approval-form-continue-button]')
             cy.wrap(submit).click().wait(4000)
             
-    })
-        
+    })    
     }
 
     admin()
@@ -83,8 +81,6 @@ class Order
         cy.get('#maintab-AdminParentOrders > .title').click()
         //Exception handle
         Cypress.on('uncaught:exception', (err, runnable) => {
-            // returning false here prevents Cypress from
-            // failing the test
             return false
         })
 
@@ -94,14 +90,11 @@ class Order
             const capture = $iFrame.contents().find('[id=btn-capture]')
             cy.wrap(capture).click({force: true})
             cy.get('#popup_ok').click()
-            cy.get('#popup_ok').click()
-
-        
-            
-            
+            cy.get('#popup_ok').click()   
         })
         cy.get('#altapay > div > div > div.row.panel-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'captured')
-        
+    }
+    refund(){
         //Refund
         cy.get('[id=transactionOptions]').then(function($iFrame){
             const capture = $iFrame.contents().find('[id=btn-refund]')
@@ -117,12 +110,151 @@ class Order
             cy.get('#popup_ok').click()
         })
         cy.get('#altapay > div > div > div.row.panel-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'refunded')
+    }   
+
+    addpartial_product(){
+        cy.get('#blocknewproducts > .last-line.last-item-of-tablet-line > .product-container > .right-block > .button-container > .ajax_add_to_cart_button > span').click()
+        cy.get('.continue > span').click()
+    }
+    partial_capture(){
+        // 1.6.X
+        cy.get('#maintab-AdminParentOrders > .title').click()
+        //Exception handle
+        Cypress.on('uncaught:exception', (err, runnable) => {
+            return false
+        })
+
+        cy.get('tbody > :nth-child(1) > .fixed-width-xs').click().wait(1000)
+        cy.get(':nth-child(2) > :nth-child(10) > .form-control').clear().type("1").click()
+        cy.get('[id=transactionOptions]').then(function($iFrame){
+            const capture = $iFrame.contents().find('[id=btn-capture]')
+            cy.wrap(capture).click({force: true})
+            cy.get('#popup_ok').click()
+            cy.get('#popup_ok').click()   
+        })
+        cy.get('#altapay > div > div > div.row.panel-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'captured')
+    }
+    partial_refund(){
+        // 1.6.X
+        cy.get('#maintab-AdminParentOrders > .title').click()
+        //Exception handle
+        Cypress.on('uncaught:exception', (err, runnable) => {
+            // returning false here prevents Cypress from
+            // failing the test
+            return false
+        })
+
+        cy.get('tbody > :nth-child(1) > .fixed-width-xs').click().wait(1000)
+        cy.get(':nth-child(2) > :nth-child(10) > .form-control').clear().type("1").click()
+        cy.get('[id=transactionOptions]').then(function($iFrame){
+            const capture = $iFrame.contents().find('[id=btn-refund]')
+            cy.wrap(capture).click({force: true})
+            cy.get('#popup_ok').click()
+            cy.get('#popup_ok').click()   
+        })
+        cy.get('#altapay > div > div > div.row.panel-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'refunded')
+    }
+    release_payment(){
+         // 1.6.X
+         cy.get('#maintab-AdminParentOrders > .title').click()
+         //Exception handle
+         Cypress.on('uncaught:exception', (err, runnable) => {
+             // returning false here prevents Cypress from
+             // failing the test
+             return false
+         })
+        cy.get('tbody > :nth-child(1) > .fixed-width-xs').click().wait(1000)
+        //cy.get(':nth-child(2) > :nth-child(10) > .form-control').clear().type("1").click()
+        cy.get('[id=transactionOptions]').then(function($iFrame){
+            const capture = $iFrame.contents().find('[id=btn-release]')
+            cy.wrap(capture).click({force: true})
+            cy.get('#popup_ok').click()
+            cy.get('#popup_ok').click() 
+        })
+        cy.get('#altapay > div > div > div.row.panel-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'released')
+    }
+    change_currency_to_EUR_for_iDEAL(){
+        cy.get('#maintab-AdminParentLocalization > .title').trigger('mouseover')
+        cy.get('#subtab-AdminCurrencies').click()
+        cy.get('.edit').click()
+        cy.get('#name').clear().type('Euro')
+        cy.get('#iso_code').clear().type('EUR')
+        cy.get('#iso_code_num').clear().type('978')
+        cy.get('#sign').clear().type('€')
+        cy.get('#conversion_rate').clear().type('1')
+        cy.get('#currency_form_submit_btn').click()       
+    }
+
+    re_save_EUR_currency_config(){
+        // Re-save EUR Terminal Config
+        cy.get('#maintab-AdminParentModules > .title').trigger('mouseover')
+        cy.get('#subtab-AdminModules').click()
+        cy.get('#moduleQuicksearch').type('Alta')
+        cy.get(':nth-child(20) > .actions > .btn-group-action > .btn-group > a.btn').click()
+        cy.fixture('config').then((admin) => {
+        cy.contains(admin.iDEAL_EUR_TERMINAL).click()
+        })
+        cy.get('#altapay_terminals_form_submit_btn').click()
+    }
+
+    re_save_DKK_currency_config(){
+        cy.get('#maintab-AdminParentModules > .title').trigger('mouseover')
+        cy.get('#subtab-AdminModules').click()
+        cy.get('#moduleQuicksearch').type('Alta')
+        cy.get(':nth-child(20) > .actions > .btn-group-action > .btn-group > a.btn').click()
+        cy.fixture('config').then((admin) => {
+        cy.contains(admin.CC_TERMINAL_NAME).click()
+        })
+        cy.get('#altapay_terminals_form_submit_btn').click()
+    }
+
+    ideal_payment(iDEAL_EUR_TERMINAL){        
+        cy.contains(iDEAL_EUR_TERMINAL).click({force: true})
+        cy.get('#idealIssuer').select('AltaPay test issuer 1')
+        cy.get('#pensioPaymentIdealSubmitButton').click()
+        cy.get('[type="text"]').type('shahbaz.anjum123-facilitator@gmail.com')
+        cy.get('[type="password"]').type('Altapay@12345')
+        cy.get('#SignInButton').click()
+        cy.get(':nth-child(3) > #successSubmit').click().wait(1000)
+    }
+    ideal_refund(){
+        cy.get('#maintab-AdminParentOrders > .title').click()
+        cy.get('tbody > :nth-child(1) > .fixed-width-xs').click().wait(1000)
+         cy.get('[id=transactionOptions]').then(function($iFrame){
+            const capture = $iFrame.contents().find('[id=btn-refund]')
+            cy.wrap(capture).click({force: true})
+            cy.get(':nth-child(2) > :nth-child(10) > .form-control').type('3').click()
+            
+        })
+            
+        cy.get('[id=transactionOptions]').then(function($iFrame){
+            const capture = $iFrame.contents().find('[id=btn-refund]')
+            cy.wrap(capture).click({force: true})
+            cy.get('#popup_ok').click()
+            cy.get('#popup_ok').click()
+        })
+        cy.get('#altapay > div > div > div.row.panel-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'bank_payment_refunded')
+    }
+
+    change_currency_to_DKK(){
+        cy.get('#maintab-AdminParentLocalization > .title').trigger('mouseover')
+        cy.get('#subtab-AdminCurrencies').click()
+        cy.get('.edit').click()
+        cy.get('#name').clear().type('Danish Krone')
+        cy.get('#iso_code').clear().type('DKK')
+        cy.get('#iso_code_num').clear().type('208')
+        cy.get('#sign').clear().type('Kr')
+        cy.get('#conversion_rate').clear().type('1')
+        cy.get('#currency_form_submit_btn').click()
         
     }
- 
+    clear_cache(){
+        cy.wait(1000)
+        cy.get('#maintab-AdminTools > .title').trigger('mouseover')
+        cy.get('#subtab-AdminPerformance').click()
+        cy.get('#page-header-desc-configuration-clear_cache').click().wait(2000)
+    }
  }
 
     
-
-
 export default Order
