@@ -2,9 +2,7 @@ import Order from '../PageObjects/objects'
 
 describe('Presta 1.6', function () {
 
-
     it('CC full capture and refund', function () {
-
         const ord = new Order()
         ord.clrcookies()
         ord.visit()
@@ -13,7 +11,7 @@ describe('Presta 1.6', function () {
                 ord.admin()
                 ord.change_currency_to_DKK()
                 ord.clear_cache()
-                ord.re_save_EUR_currency_config()
+                ord.re_save_DKK_currency_config()
                 ord.visit()
             }
         })
@@ -39,6 +37,15 @@ describe('Presta 1.6', function () {
         })
     })
 
+    // it('CC full capture and refund dis', function () {
+    //     ccful('fixed')
+    // })
+    // it('CC full capture and refund fixed dis', function () {
+    //     ccful('dis')
+    // })
+
+    
+
     it('Klarna Payment', function () {
 
         const ord = new Order()
@@ -49,7 +56,7 @@ describe('Presta 1.6', function () {
                 ord.admin()
                 ord.change_currency_to_DKK()
                 ord.clear_cache()
-                ord.re_save_EUR_currency_config()
+                ord.re_save_DKK_currency_config()
                 ord.visit()
             }
         })
@@ -69,7 +76,7 @@ describe('Presta 1.6', function () {
                 })
 
             }
-            else {
+            else {  
                 cy.log('KLARNA_DKK_TERMINAL_NAME skipped')
             }
         })
@@ -85,7 +92,7 @@ describe('Presta 1.6', function () {
                 ord.admin()
                 ord.change_currency_to_DKK()
                 ord.clear_cache()
-                ord.re_save_EUR_currency_config()
+                ord.re_save_DKK_currency_config()
                 ord.visit()
             }
         })
@@ -121,7 +128,7 @@ describe('Presta 1.6', function () {
                 ord.admin()
                 ord.change_currency_to_DKK()
                 ord.clear_cache()
-                ord.re_save_EUR_currency_config()
+                ord.re_save_DKK_currency_config()
                 ord.visit()
             }
         })
@@ -157,7 +164,7 @@ describe('Presta 1.6', function () {
                 ord.admin()
                 ord.change_currency_to_DKK()
                 ord.clear_cache()
-                ord.re_save_EUR_currency_config()
+                ord.re_save_DKK_currency_config()
                 ord.visit()
             }
         })
@@ -194,7 +201,7 @@ describe('Presta 1.6', function () {
                 ord.admin()
                 ord.change_currency_to_DKK()
                 ord.clear_cache()
-                ord.re_save_EUR_currency_config()
+                ord.re_save_DKK_currency_config()
                 ord.visit()
             }
         })
@@ -231,7 +238,7 @@ describe('Presta 1.6', function () {
                 ord.admin()
                 ord.change_currency_to_DKK()
                 ord.clear_cache()
-                ord.re_save_EUR_currency_config()
+                ord.re_save_DKK_currency_config()
                 ord.visit()
             }
         })
@@ -266,7 +273,7 @@ describe('Presta 1.6', function () {
                 ord.admin()
                 ord.change_currency_to_DKK()
                 ord.clear_cache()
-                ord.re_save_EUR_currency_config()
+                ord.re_save_DKK_currency_config()
                 ord.visit()
             }
         })

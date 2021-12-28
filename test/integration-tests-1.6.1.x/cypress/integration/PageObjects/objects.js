@@ -1,6 +1,7 @@
 require('cypress-xpath')
 
 class Order
+
 {
     clrcookies(){
         cy.clearCookies()
@@ -12,8 +13,8 @@ class Order
   
             })    
     }
-    
-    addproduct(){
+  
+    addproduct(discount_type=''){
         cy.get('#blocknewproducts > :nth-child(2) > .product-container > .right-block > .button-container > .ajax_add_to_cart_button > span').click() 
         cy.get('.button-medium > span').click()
         cy.get('.cart_navigation > .button > span').click()
@@ -26,7 +27,10 @@ class Order
         cy.get('#city').type('Varde')
         cy.get('#id_country').select('Denmark')
         cy.get('#phone_mobile').type('20123456')
-        cy.get('.cart_navigation > .button > span').click()   
+        cy.get('.cart_navigation > .button > span').click()
+        if(discount_type != ""){
+            cy.get('#discount_name').type(discount_type) 
+        } 
         cy.get('.cart_navigation > .button > span').click().wait(2000)
         cy.get('.cart_navigation > .button > span').click().wait(2000)
         cy.get('label').click()
@@ -189,7 +193,7 @@ class Order
         // Re-save EUR Terminal Config
         cy.get('#maintab-AdminParentModules > .title').trigger('mouseover')
         cy.get('#subtab-AdminModules').click()
-        cy.get('#moduleQuicksearch').type('Alta')
+        cy.get('#moduleQuicksearch').type('Alta').wait(1000)
         cy.get(':nth-child(20) > .actions > .btn-group-action > .btn-group > a.btn').click()
         cy.fixture('config').then((admin) => {
         cy.contains(admin.iDEAL_EUR_TERMINAL).click()
@@ -254,7 +258,41 @@ class Order
         cy.get('#subtab-AdminPerformance').click()
         cy.get('#page-header-desc-configuration-clear_cache').click().wait(2000)
     }
- }
 
-    
+    //Dicounts
+    create_fixed_discount(){
+        cy.get('#maintab-AdminPriceRule > .title').click()
+        cy.get('.label-tooltip > .process-icon-new').click()
+        cy.get('#name_1').clear().type('Discount_F')
+        cy.get('#code').clear().type('fixed')
+        cy.get('#cart_rule_link_actions').click()
+        cy.get('#apply_discount_amount').click()
+        cy.get('#reduction_amount').clear().type('12')
+        cy.get('#cart_rule_link_conditions').click()
+        cy.get(':nth-child(4) > .col-lg-9 > .form-control').clear().type('9999')
+        cy.get(':nth-child(5) > .col-lg-9 > .form-control').clear().type('9999')
+        cy.get('#desc-cart_rule-save').click()
+        cy.get('body').then(($body) => {
+            if ($body.text().includes('This cart rule code is already used')) {
+                cy.get('#desc-cart_rule-cancel').click()
+            }
+        })
+        cy.get('.label-tooltip > .process-icon-new').click()
+        cy.get('#name_1').clear().type('Discount_%')
+        cy.get('#code').clear().type('percentage')
+        cy.get('#cart_rule_link_actions').click()
+        cy.get('#apply_discount_percent').click()
+        cy.get('#reduction_percent').clear().type('7')
+        cy.get('#cart_rule_link_conditions').click()
+        cy.get(':nth-child(4) > .col-lg-9 > .form-control').clear().type('9999')
+        cy.get(':nth-child(5) > .col-lg-9 > .form-control').clear().type('9999')
+        cy.get('#desc-cart_rule-save').click()
+        cy.get('body').then(($body) => {
+            if ($body.text().includes('This cart rule code is already used')) {
+                cy.get('#desc-cart_rule-cancel').click()
+            }
+        })
+    }
+ 
+}
 export default Order
