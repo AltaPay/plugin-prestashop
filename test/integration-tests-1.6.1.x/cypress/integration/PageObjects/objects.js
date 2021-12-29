@@ -30,6 +30,7 @@ class Order
         cy.get('.cart_navigation > .button > span').click()
         if(discount_type != ""){
             cy.get('#discount_name').type(discount_type) 
+            cy.get('fieldset > .button > span').click()
         } 
         cy.get('.cart_navigation > .button > span').click().wait(2000)
         cy.get('.cart_navigation > .button > span').click().wait(2000)
@@ -143,8 +144,6 @@ class Order
         cy.get('#maintab-AdminParentOrders > .title').click()
         //Exception handle
         Cypress.on('uncaught:exception', (err, runnable) => {
-            // returning false here prevents Cypress from
-            // failing the test
             return false
         })
 
@@ -163,12 +162,9 @@ class Order
          cy.get('#maintab-AdminParentOrders > .title').click()
          //Exception handle
          Cypress.on('uncaught:exception', (err, runnable) => {
-             // returning false here prevents Cypress from
-             // failing the test
              return false
          })
         cy.get('tbody > :nth-child(1) > .fixed-width-xs').click().wait(1000)
-        //cy.get(':nth-child(2) > :nth-child(10) > .form-control').clear().type("1").click()
         cy.get('[id=transactionOptions]').then(function($iFrame){
             const capture = $iFrame.contents().find('[id=btn-release]')
             cy.wrap(capture).click({force: true})
@@ -191,8 +187,7 @@ class Order
 
     re_save_EUR_currency_config(){
         // Re-save EUR Terminal Config
-        cy.get('#maintab-AdminParentModules > .title').trigger('mouseover')
-        cy.get('#subtab-AdminModules').click()
+        cy.get('#maintab-AdminParentModules > .title').click()
         cy.get('#moduleQuicksearch').type('Alta').wait(1000)
         cy.get(':nth-child(20) > .actions > .btn-group-action > .btn-group > a.btn').click()
         cy.fixture('config').then((admin) => {
@@ -202,8 +197,7 @@ class Order
     }
 
     re_save_DKK_currency_config(){
-        cy.get('#maintab-AdminParentModules > .title').trigger('mouseover')
-        cy.get('#subtab-AdminModules').click()
+        cy.get('#maintab-AdminParentModules > .title').click()
         cy.get('#moduleQuicksearch').type('Alta')
         cy.get(':nth-child(20) > .actions > .btn-group-action > .btn-group > a.btn').click()
         cy.fixture('config').then((admin) => {
