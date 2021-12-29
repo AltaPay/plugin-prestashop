@@ -2,7 +2,13 @@ import Order from '../PageObjects/objects'
 
 describe('Presta 1.6', function () {
 
-    it('TC#10: CC fixed discount', function () {
+    it('TC#10: Create Discounts', function (){
+        const ord = new Order()
+        ord.admin()
+        ord.create_discounts()
+    })
+
+    it('TC#11: CC fixed discount', function () {
         cy.fixture('config').then((admin) => {
             if (admin.CC_TERMINAL_NAME != "") {
                 process(admin.CC_TERMINAL_NAME, 'cc', 'fixed')
@@ -11,7 +17,7 @@ describe('Presta 1.6', function () {
             }
         })
     })
-    it('TC#11: CC percentage discount', function () {
+    it('TC#12: CC percentage discount', function () {
         cy.fixture('config').then((admin) => {
             if (admin.CC_TERMINAL_NAME != "") {
                 process(admin.CC_TERMINAL_NAME, 'cc', 'percentage')
@@ -21,7 +27,7 @@ describe('Presta 1.6', function () {
         })
     })
 
-    it('TC#12: Klarna fixed discount', function () {
+    it('TC#13: Klarna fixed discount', function () {
         cy.fixture('config').then((admin) => {
             if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
                 process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', 'fixed')
@@ -31,7 +37,7 @@ describe('Presta 1.6', function () {
         })
     })
 
-    it('TC#13: Klarna percentage discount', function () {
+    it('TC#14: Klarna percentage discount', function () {
         cy.fixture('config').then((admin) => {
             if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
                 process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', 'percentage')
@@ -41,7 +47,7 @@ describe('Presta 1.6', function () {
         })
     })
 
-    it('TC#14: iDEAL fixed discount', function () {
+    it('TC#15: iDEAL fixed discount', function () {
         cy.fixture('config').then((admin) => {
             if (admin.iDEAL_EUR_TERMINAL != "") {
                 process(admin.iDEAL_EUR_TERMINAL, 'ideal', 'fixed')
@@ -50,7 +56,7 @@ describe('Presta 1.6', function () {
             }
         })
     })
-    it('TC#15: iDEAL percentage discount', function () {
+    it('TC#16: iDEAL percentage discount', function () {
         cy.fixture('config').then((admin) => {
             if (admin.iDEAL_EUR_TERMINAL != "") {
                 process(admin.iDEAL_EUR_TERMINAL, 'ideal', 'percentage')

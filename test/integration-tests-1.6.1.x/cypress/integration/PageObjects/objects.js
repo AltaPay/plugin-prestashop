@@ -254,7 +254,7 @@ class Order
     }
 
     //Dicounts
-    create_fixed_discount(){
+    create_discounts(){
         cy.get('#maintab-AdminPriceRule > .title').click()
         cy.get('.label-tooltip > .process-icon-new').click()
         cy.get('#name_1').clear().type('Discount_F')
