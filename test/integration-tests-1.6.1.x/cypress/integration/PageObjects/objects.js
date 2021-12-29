@@ -281,38 +281,6 @@ class Order
         }
         })
         })
-
-        // cy.get('#maintab-AdminPriceRule > .title').click()
-        // cy.get('.label-tooltip > .process-icon-new').click()
-        // cy.get('#name_1').clear().type('Discount_F')
-        // cy.get('#code').clear().type('fixed')
-        // cy.get('#cart_rule_link_actions').click()
-        // cy.get('#apply_discount_amount').click()
-        // cy.get('#reduction_amount').clear().type('12')
-        // cy.get('#cart_rule_link_conditions').click()
-        // cy.get(':nth-child(4) > .col-lg-9 > .form-control').clear().type('9999')
-        // cy.get(':nth-child(5) > .col-lg-9 > .form-control').clear().type('9999')
-        // cy.get('#desc-cart_rule-save').click()
-        // cy.get('body').then(($body) => {
-        //     if ($body.text().includes('This cart rule code is already used')) {
-        //         cy.get('#desc-cart_rule-cancel').click()
-        //     }
-        // })
-        // cy.get('.label-tooltip > .process-icon-new').click()
-        // cy.get('#name_1').clear().type('Discount_%')
-        // cy.get('#code').clear().type('percentage')
-        // cy.get('#cart_rule_link_actions').click()
-        // cy.get('#apply_discount_percent').click()
-        // cy.get('#reduction_percent').clear().type('7')
-        // cy.get('#cart_rule_link_conditions').click()
-        // cy.get(':nth-child(4) > .col-lg-9 > .form-control').clear().type('9999')
-        // cy.get(':nth-child(5) > .col-lg-9 > .form-control').clear().type('9999')
-        // cy.get('#desc-cart_rule-save').click()
-        // cy.get('body').then(($body) => {
-        //     if ($body.text().includes('This cart rule code is already used')) {
-        //         cy.get('#desc-cart_rule-cancel').click()
-        //     }
-        // })
     }
  
 }
