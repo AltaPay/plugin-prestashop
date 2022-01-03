@@ -10,8 +10,16 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';?>
+<style>
+    .altapay-sync-btn {
+    position: absolute;
+    top: 46px;
+    left: 48vh;
+}
+</style>
 
+<?php
 class ALTAPAY extends PaymentModule
 {
     public $url;
@@ -334,6 +342,42 @@ class ALTAPAY extends PaymentModule
                     return $this->Mhtml;
                 }
             }
+        } elseif(Tools::isSubmit('synchterminalsync')) {
+            $api = new API\PHP\Altapay\Api\Others\Terminals(getAuth());
+            $response = $api->call();
+            $i = 1;
+            $countryConfigured = $this->context->country->iso_code;
+            $countryConfigured = $this->context->country->iso_code;
+            $terminalExist = $this->getFilterTerminal();
+            $countryAvailable = $this->countryAvailable($response, $countryConfigured);
+            $getVal = Tools::getValue('currency');
+            if(count($terminalExist) > 0) {
+                $this->Mhtml .= '<div class="alert alert-warning">Terminal(s) already set up, please configure them manually.</div>'; 
+            } elseif(!$countryAvailable) {
+                $this->Mhtml .= '<div class="alert alert-warning">Could not find terminals matching your country, please check the Payment methods for terminal config.</div>';                
+            } else {
+            
+                foreach ($response->Terminals as $term) {
+                    $terminal = new Altapay_Models_Terminal($i);
+                    if ($term->Country == $countryConfigured) {
+                        $terminal->display_name = $term->Title;
+                        $terminal->remote_name = $term->Title;
+                        $terminal->icon_filename = ' ';
+                        $terminal->currency = $term->Country;
+                        $terminal->ccTokenControl_ = 0;
+                        $terminal->payment_type = 'payment';
+                        $terminal->position = $i++;
+                        $terminal->cvvLess = 0;
+                        $terminal->active = 1;
+                        $terminal->save();
+                    }
+                    $i++;
+                }
+                $this->Mhtml .= '<div class="alert alert-success">Terminals successfully configured!</div>';  
+            }
+            $this->Mhtml .= $this->displayAltapay();
+
+            return $this->Mhtml;
         } else {  /* Default display */
             $this->Mhtml .= $this->displayAltapay();
 
@@ -1070,8 +1114,9 @@ class ALTAPAY extends PaymentModule
         }
 
         $getVal = Tools::getValue('currency');
+        $active = Tools::getValue('active');
         // Currency supported?
-        if (!in_array($getVal, $allowedCurrencies, true)) {
+        if (!in_array($getVal, $allowedCurrencies, true) && $active==1) {
             $this->Mhtml .= sprintf('<div class="alert alert-danger">Selected terminal does not support currency %s</div>',
                 $getVal);
 
@@ -1139,6 +1184,7 @@ class ALTAPAY extends PaymentModule
     {
         $html = $this->display(__FILE__, 'config.tpl');
         $html .= $this->renderForm();
+        $html .= $this->renderSyncTemrinalForm();
         $html .= $this->renderTerminalList();
 
         return $html;
@@ -1351,6 +1397,10 @@ class ALTAPAY extends PaymentModule
                 $this->postErrors[] = $this->l('Incorrect format for the API URL - Use "https://paymentURL"');
             }
         }
+        if (Tools::getValue('terminal-sync')) {
+            $this->postErrors[] = $this->l('API username is required');
+        }
+
     }
 
     /**
@@ -2621,4 +2671,82 @@ class ALTAPAY extends PaymentModule
 
         return $orderLine;
     }
+    
+    /**
+     * Synchronize terminal form
+     *
+     * @return string
+     *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     */
+    public function renderSyncTemrinalForm()
+    {
+        $fieldsForm = [
+            'form' => [
+                'legend' => [
+                    'title' => $this->l('Synchronize Terminals'),
+                    'icon' => 'icon-cog',
+                ],
+                'input' => [
+                    [
+                        'type' => 'label',
+                        'label' => $this->l('Synchronize Payment Method'),
+                        'required' => true,
+                    ],
+                ],
+                'submit' => [
+                    'title' => $this->l('Sync Terminal'),
+                    'icon' => 'icon-wrench',
+                    'class' => 'btn btn-default altapay-sync-btn',
+                ],
+            ],
+        ];
+        $helper = new HelperForm();
+        $helper->table = 
+        $helper->table = 'altapay_terminals';
+        $helper->show_toolbar = false;
+        $lang = new Language((int) Configuration::get('PS_LANG_DEFAULT'));
+        $helper->default_form_language = $lang->id;
+        $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ?
+            Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
+        $this->fields_form = [];
+        $helper->id = (int) Tools::getValue('id_carrier');
+        $helper->identifier = $this->identifier;
+        $helper->submit_action = 'synchterminalsync';
+        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&configure='
+                                . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
+        $helper->token = Tools::getAdminTokenLite('AdminModules');
+
+        return $helper->generateForm([$fieldsForm]);
+    }
+
+    /**
+     * @return array
+     */
+    private function getFilterTerminal()
+    {
+        $query = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals`';
+        
+        return Db::getInstance()->executeS($query);
+    }
+
+    /**
+     * @param array $response
+     * @param string $countryConfigured
+     *
+     * @return bool
+     */
+    public function countryAvailable($response, $countryConfigured)
+    {
+        $countryExist = false;
+        foreach ($response->Terminals as $term) {
+            if ($term->Country == $countryConfigured) {
+                $countryExist = true;
+            } 
+        }
+        
+        return $countryExist;
+    }
+
 }
