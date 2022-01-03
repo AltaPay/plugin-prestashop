@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.3.7] - 2022-01-03
+### Added
+- Add a button to trigger the sync of the terminals with the gateway
+
 ## [3.3.6] - 2021-07-05
 ### Fixed
 - Add configuration to enable/disable CVV field
