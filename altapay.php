@@ -2694,7 +2694,6 @@ class ALTAPAY extends PaymentModule
             ],
         ];
         $helper = new HelperForm();
-        $helper->table = 
         $helper->table = 'altapay_terminals';
         $helper->show_toolbar = false;
         $lang = new Language((int) Configuration::get('PS_LANG_DEFAULT'));
