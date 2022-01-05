@@ -10,7 +10,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once __DIR__ . '/vendor/autoload.php';?>
+require_once __DIR__ . '/vendor/autoload.php'; ?>
 <style>
  #altapay_terminals_form .panel-footer {
     border-color: transparent;
@@ -344,7 +344,7 @@ class ALTAPAY extends PaymentModule
                     return $this->Mhtml;
                 }
             }
-        } elseif(Tools::isSubmit('synchterminalsync')) {
+        } elseif (Tools::isSubmit('synchterminalsync')) {
             $api = new API\PHP\Altapay\Api\Others\Terminals(getAuth());
             $response = $api->call();
             $countryConfigured = $this->context->country->iso_code;
@@ -353,7 +353,7 @@ class ALTAPAY extends PaymentModule
 
             if(count($terminalExist) > 0) {
                 $this->Mhtml .= '<div class="alert alert-warning">Terminal(s) already set up, please configure them manually.</div>'; 
-            } elseif(!$terminalsForStoreCountry) {
+            } elseif (!$terminalsForStoreCountry) {
                 $this->Mhtml .= '<div class="alert alert-warning">Could not find terminals matching your country, please check the Payment methods for terminal config.</div>';                
             } else {
                 $i = 1;
@@ -374,7 +374,7 @@ class ALTAPAY extends PaymentModule
                     }
                     $i++;
                 }
-                $this->Mhtml .= '<div class="alert alert-success">Terminals successfully configured!</div>';  
+                $this->Mhtml .= '<div class="alert alert-success">Terminals successfully configured!</div>' ;  
             }
             $this->Mhtml .= $this->displayAltapay();
 
@@ -2688,7 +2688,7 @@ class ALTAPAY extends PaymentModule
                 'submit' => [
                     'title' => $this->l('Synchronize'),
                     'icon' => 'icon-wrench',
-                    'class' => 'btn btn-default pull-left'
+                    'class' => 'btn btn-default pull-left',
                 ],
             ],
         ];
