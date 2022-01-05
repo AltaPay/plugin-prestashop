@@ -2683,11 +2683,11 @@ class ALTAPAY extends PaymentModule
         $fieldsForm = [
             'form' => [
                 'legend' => [
-                    'title' => $this->l('Synchronize Terminals'),
+                    'title' => $this->l('Synchronize Payment Methods'),
                     'icon' => 'icon-cog',
                 ],
                 'submit' => [
-                    'title' => $this->l('Sync Terminal'),
+                    'title' => $this->l('Synchronize'),
                     'icon' => 'icon-wrench',
                     'class' => 'btn btn-default pull-left'
                 ],
@@ -2730,14 +2730,13 @@ class ALTAPAY extends PaymentModule
      */
     public function countryAvailable($response, $countryConfigured)
     {
-        $countryExist = false;
         foreach ($response->Terminals as $term) {
             if ($term->Country == $countryConfigured) {
-                $countryExist = true;
+                return true;
             } 
         }
         
-        return $countryExist;
+        return false;
     }
 
 }
