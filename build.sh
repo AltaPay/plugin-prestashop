@@ -22,9 +22,9 @@ then
     exit
   fi
 
-  php5.6 $(command -v composer) install --no-dev
-  php5.6 $(command -v composer) isolate
-  php5.6 $(command -v composer) dump -o
+  php5.6 $(command -v composer) install --no-dev --no-interaction
+  php5.6 $(command -v composer) isolate --no-interaction
+  php5.6 $(command -v composer) dump -o --no-interaction
   find . -type d -exec cp index.php {} \;
   mkdir -p dist/altapay && rsync -av --exclude={'dist','docker','build.sh','guide.md','.gitignore','phpstan.neon','composer.json','composer.lock'} * dist/altapay
   cd dist/ && zip altapay.zip -r *

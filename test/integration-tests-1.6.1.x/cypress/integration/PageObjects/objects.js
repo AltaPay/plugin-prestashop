@@ -1,6 +1,7 @@
 require('cypress-xpath')
 
 class Order
+
 {
     clrcookies(){
         cy.clearCookies()
@@ -12,8 +13,8 @@ class Order
   
             })    
     }
-    
-    addproduct(){
+  
+    addproduct(discount_type=''){
         cy.get('#blocknewproducts > :nth-child(2) > .product-container > .right-block > .button-container > .ajax_add_to_cart_button > span').click() 
         cy.get('.button-medium > span').click()
         cy.get('.cart_navigation > .button > span').click()
@@ -26,7 +27,11 @@ class Order
         cy.get('#city').type('Varde')
         cy.get('#id_country').select('Denmark')
         cy.get('#phone_mobile').type('20123456')
-        cy.get('.cart_navigation > .button > span').click()   
+        cy.get('.cart_navigation > .button > span').click()
+        if(discount_type != ""){
+            cy.get('#discount_name').type(discount_type) 
+            cy.get('fieldset > .button > span').click()
+        } 
         cy.get('.cart_navigation > .button > span').click().wait(2000)
         cy.get('.cart_navigation > .button > span').click().wait(2000)
         cy.get('label').click()
@@ -139,8 +144,6 @@ class Order
         cy.get('#maintab-AdminParentOrders > .title').click()
         //Exception handle
         Cypress.on('uncaught:exception', (err, runnable) => {
-            // returning false here prevents Cypress from
-            // failing the test
             return false
         })
 
@@ -159,12 +162,9 @@ class Order
          cy.get('#maintab-AdminParentOrders > .title').click()
          //Exception handle
          Cypress.on('uncaught:exception', (err, runnable) => {
-             // returning false here prevents Cypress from
-             // failing the test
              return false
          })
         cy.get('tbody > :nth-child(1) > .fixed-width-xs').click().wait(1000)
-        //cy.get(':nth-child(2) > :nth-child(10) > .form-control').clear().type("1").click()
         cy.get('[id=transactionOptions]').then(function($iFrame){
             const capture = $iFrame.contents().find('[id=btn-release]')
             cy.wrap(capture).click({force: true})
@@ -187,9 +187,8 @@ class Order
 
     re_save_EUR_currency_config(){
         // Re-save EUR Terminal Config
-        cy.get('#maintab-AdminParentModules > .title').trigger('mouseover')
-        cy.get('#subtab-AdminModules').click()
-        cy.get('#moduleQuicksearch').type('Alta')
+        cy.get('#maintab-AdminParentModules > .title').click()
+        cy.get('#moduleQuicksearch').type('Alta').wait(1000)
         cy.get(':nth-child(20) > .actions > .btn-group-action > .btn-group > a.btn').click()
         cy.fixture('config').then((admin) => {
         cy.contains(admin.iDEAL_EUR_TERMINAL).click()
@@ -198,8 +197,7 @@ class Order
     }
 
     re_save_DKK_currency_config(){
-        cy.get('#maintab-AdminParentModules > .title').trigger('mouseover')
-        cy.get('#subtab-AdminModules').click()
+        cy.get('#maintab-AdminParentModules > .title').click()
         cy.get('#moduleQuicksearch').type('Alta')
         cy.get(':nth-child(20) > .actions > .btn-group-action > .btn-group > a.btn').click()
         cy.fixture('config').then((admin) => {
@@ -254,7 +252,36 @@ class Order
         cy.get('#subtab-AdminPerformance').click()
         cy.get('#page-header-desc-configuration-clear_cache').click().wait(2000)
     }
- }
 
-    
+    //Dicounts
+    create_discounts(){
+
+        cy.get('#maintab-AdminPriceRule > .title').click()
+        let discount_types = {'fixed':'discount_fixed', 'percentage': 'discount_percentage'}
+
+        Object.entries(discount_types).forEach(([key, value]) => {
+        cy.get('.label-tooltip > .process-icon-new').click()
+        cy.get('#name_1').clear().type(value)
+        cy.get('#code').clear().type(key)
+        cy.get('#cart_rule_link_actions').click()
+        if(key =='fixed'){
+            cy.get('#apply_discount_amount').click()
+            cy.get('#reduction_amount').clear().type('12')
+        }else{
+             cy.get('#apply_discount_percent').click()
+             cy.get('#reduction_percent').clear().type('7')
+        }
+        cy.get('#cart_rule_link_conditions').click()
+        cy.get(':nth-child(4) > .col-lg-9 > .form-control').clear().type('9999')
+        cy.get(':nth-child(5) > .col-lg-9 > .form-control').clear().type('9999')
+        cy.get('#desc-cart_rule-save').click()
+        cy.get('body').then(($body) => {
+        if ($body.text().includes('This cart rule code is already used')) {
+        cy.get('#desc-cart_rule-cancel').click()
+        }
+        })
+        })
+    }
+ 
+}
 export default Order
