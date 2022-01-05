@@ -347,8 +347,6 @@ class ALTAPAY extends PaymentModule
         } elseif(Tools::isSubmit('synchterminalsync')) {
             $api = new API\PHP\Altapay\Api\Others\Terminals(getAuth());
             $response = $api->call();
-            $i = 1;
-            $position = 1;
             $countryConfigured = $this->context->country->iso_code;
             $terminalExist = $this->getAltapayTerminal();
             $terminalsForStoreCountry = $this->countryAvailable($response, $countryConfigured);
@@ -358,6 +356,8 @@ class ALTAPAY extends PaymentModule
             } elseif(!$terminalsForStoreCountry) {
                 $this->Mhtml .= '<div class="alert alert-warning">Could not find terminals matching your country, please check the Payment methods for terminal config.</div>';                
             } else {
+                $i = 1;
+                $position = 1;
                 foreach ($response->Terminals as $term) {
                     $terminal = new Altapay_Models_Terminal($i);
                     if ($term->Country == $countryConfigured) {
@@ -1117,7 +1117,7 @@ class ALTAPAY extends PaymentModule
         $getVal = Tools::getValue('currency');
         $active = Tools::getValue('active');
         // Currency supported?
-        if (!in_array($getVal, $allowedCurrencies, true) && $active==1) {
+        if (!in_array($getVal, $allowedCurrencies, true) && $active) {
             $this->Mhtml .= sprintf('<div class="alert alert-danger">Selected terminal does not support currency %s</div>',
                 $getVal);
 
@@ -1398,7 +1398,6 @@ class ALTAPAY extends PaymentModule
                 $this->postErrors[] = $this->l('Incorrect format for the API URL - Use "https://paymentURL"');
             }
         }
-
     }
 
     /**
