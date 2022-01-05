@@ -61,7 +61,7 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 
 ![enter_credentials](Docs/Configuration/prestashop_setup_altapay_credentials.png)
 
-3. To synchronize the terminals with the gateway, click on the Synchronize button. This will fetch the latest terminals from the gateway and will automatically configure based on the store country.
+3. To synchronize the terminals with the gateway, click on the "Synchronize" button. This will fetch the latest terminals from the gateway and will automatically configure based on the store country.
 
 ![enter_credentials](Docs/Configuration/sync_terminals.png)
 
