@@ -348,13 +348,14 @@ class ALTAPAY extends PaymentModule
             $api = new API\PHP\Altapay\Api\Others\Terminals(getAuth());
             $response = $api->call();
             $i = 1;
+            $position = 1;
             $countryConfigured = $this->context->country->iso_code;
-            $terminalExist = $this->getFilterTerminal();
-            $countryAvailable = $this->countryAvailable($response, $countryConfigured);
+            $terminalExist = $this->getAltapayTerminal();
+            $terminalsForStoreCountry = $this->countryAvailable($response, $countryConfigured);
 
             if(count($terminalExist) > 0) {
                 $this->Mhtml .= '<div class="alert alert-warning">Terminal(s) already set up, please configure them manually.</div>'; 
-            } elseif(!$countryAvailable) {
+            } elseif(!$terminalsForStoreCountry) {
                 $this->Mhtml .= '<div class="alert alert-warning">Could not find terminals matching your country, please check the Payment methods for terminal config.</div>';                
             } else {
                 foreach ($response->Terminals as $term) {
@@ -366,7 +367,7 @@ class ALTAPAY extends PaymentModule
                         $terminal->currency = $this->context->currency->iso_code;
                         $terminal->ccTokenControl_ = 0;
                         $terminal->payment_type = 'payment';
-                        $terminal->position = $i++;
+                        $terminal->position = $position++;
                         $terminal->cvvLess = 0;
                         $terminal->active = 1;
                         $terminal->save();
@@ -2714,7 +2715,7 @@ class ALTAPAY extends PaymentModule
     /**
      * @return array
      */
-    private function getFilterTerminal()
+    private function getAltapayTerminal()
     {
         $query = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals`';
         
