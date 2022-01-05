@@ -12,10 +12,11 @@ if (!defined('_PS_VERSION_')) {
 
 require_once __DIR__ . '/vendor/autoload.php';?>
 <style>
-    .altapay-sync-btn {
-    position: absolute;
-    top: 46px;
-    left: 48vh;
+ #altapay_terminals_form .panel-footer {
+    border-color: transparent;
+    height: auto;
+    margin: 0px 0px 24px;
+    padding-left: 0;
 }
 </style>
 
@@ -310,6 +311,7 @@ class ALTAPAY extends PaymentModule
      */
     public function getContent()
     {
+        global $currency;
         /* Display: add/edit terminal form */
         if (Tools::isSubmit('updatealtapay_terminals') || Tools::isSubmit('addaltapay')) {
             $this->Mhtml .= $this->renderAddForm();
@@ -347,23 +349,21 @@ class ALTAPAY extends PaymentModule
             $response = $api->call();
             $i = 1;
             $countryConfigured = $this->context->country->iso_code;
-            $countryConfigured = $this->context->country->iso_code;
             $terminalExist = $this->getFilterTerminal();
             $countryAvailable = $this->countryAvailable($response, $countryConfigured);
-            $getVal = Tools::getValue('currency');
+
             if(count($terminalExist) > 0) {
                 $this->Mhtml .= '<div class="alert alert-warning">Terminal(s) already set up, please configure them manually.</div>'; 
             } elseif(!$countryAvailable) {
                 $this->Mhtml .= '<div class="alert alert-warning">Could not find terminals matching your country, please check the Payment methods for terminal config.</div>';                
             } else {
-            
                 foreach ($response->Terminals as $term) {
                     $terminal = new Altapay_Models_Terminal($i);
                     if ($term->Country == $countryConfigured) {
                         $terminal->display_name = $term->Title;
                         $terminal->remote_name = $term->Title;
                         $terminal->icon_filename = ' ';
-                        $terminal->currency = $term->Country;
+                        $terminal->currency = $this->context->currency->iso_code;
                         $terminal->ccTokenControl_ = 0;
                         $terminal->payment_type = 'payment';
                         $terminal->position = $i++;
@@ -1396,9 +1396,6 @@ class ALTAPAY extends PaymentModule
             if (!filter_var(Tools::getValue('ALTAPAY_URL'), FILTER_VALIDATE_URL)) {
                 $this->postErrors[] = $this->l('Incorrect format for the API URL - Use "https://paymentURL"');
             }
-        }
-        if (Tools::getValue('terminal-sync')) {
-            $this->postErrors[] = $this->l('API username is required');
         }
 
     }
@@ -2688,17 +2685,10 @@ class ALTAPAY extends PaymentModule
                     'title' => $this->l('Synchronize Terminals'),
                     'icon' => 'icon-cog',
                 ],
-                'input' => [
-                    [
-                        'type' => 'label',
-                        'label' => $this->l('Synchronize Payment Method'),
-                        'required' => true,
-                    ],
-                ],
                 'submit' => [
                     'title' => $this->l('Sync Terminal'),
                     'icon' => 'icon-wrench',
-                    'class' => 'btn btn-default altapay-sync-btn',
+                    'class' => 'btn btn-default pull-left'
                 ],
             ],
         ];
