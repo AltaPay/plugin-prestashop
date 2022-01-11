@@ -351,7 +351,7 @@ class ALTAPAY extends PaymentModule
             $terminalExist = $this->getAltapayTerminal();
             $terminalsForStoreCountry = $this->countryAvailable($response, $countryConfigured);
 
-            if(count($terminalExist) > 0) {
+            if (count($terminalExist) > 0) {
                 $this->Mhtml .= '<div class="alert alert-warning">Terminal(s) already set up, please configure them manually.</div>'; 
             } elseif (!$terminalsForStoreCountry) {
                 $this->Mhtml .= '<div class="alert alert-warning">Could not find terminals matching your country, please check the Payment methods for terminal config.</div>';                
@@ -1185,7 +1185,7 @@ class ALTAPAY extends PaymentModule
     {
         $html = $this->display(__FILE__, 'config.tpl');
         $html .= $this->renderForm();
-        $html .= $this->renderSyncTemrinalForm();
+        $html .= $this->renderSyncTerminalForm();
         $html .= $this->renderTerminalList();
 
         return $html;
@@ -2677,7 +2677,7 @@ class ALTAPAY extends PaymentModule
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
-    public function renderSyncTemrinalForm()
+    public function renderSyncTerminalForm()
     {
         $fieldsForm = [
             'form' => [
