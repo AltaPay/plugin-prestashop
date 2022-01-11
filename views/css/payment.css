@@ -14,6 +14,13 @@ p.payment_module a.altapay:hover {
       background-color: #f6f6f6; 
 }
 
+#altapay_terminals_form .panel-footer {
+      border-color: transparent;
+      height: auto;
+      margin: 0px 0px 24px;
+      padding-left: 0;
+  }
+  
 p.payment_module a.altapay:after {
       display: block;
       content: "\f054";

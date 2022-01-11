@@ -59,7 +59,11 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 1. Go to ‘Modules and Services’ > ‘Modules and Services’ and find the AltaPay PrestaShop module. This can be done by searching for ‘AltaPay’ or go to ‘Payment and Gateways’ and find the module. 
 2. Click on ‘Configure’ for the module. 
 
-![enter_credentials](https://github.com/AltaPay/plugin-prestashop/blob/main/Docs/Configuration/prestashop_setup_altapay_credentials.png)
+![enter_credentials](Docs/Configuration/prestashop_setup_altapay_credentials.png)
+
+3. To synchronize the terminals with the gateway, click on the "Synchronize" button. This will fetch the latest terminals from the gateway and will automatically configure based on the store country.
+
+![enter_credentials](Docs/Configuration/sync_terminals.png)
 
 4. Now, set up the terminals. At the bottom of the module configuration page, you will find a list of “Terminals”. There is a plus sign which you would need to click, to add a new terminal.
 
