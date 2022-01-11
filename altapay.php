@@ -10,17 +10,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once __DIR__ . '/vendor/autoload.php'; ?>
-<style>
- #altapay_terminals_form .panel-footer {
-    border-color: transparent;
-    height: auto;
-    margin: 0px 0px 24px;
-    padding-left: 0;
-}
-</style>
+require_once __DIR__ . '/vendor/autoload.php'; 
 
-<?php
 class ALTAPAY extends PaymentModule
 {
     public $url;
@@ -1436,7 +1427,7 @@ class ALTAPAY extends PaymentModule
 
         $this->context->controller->addJquery();
         $this->context->controller->addJS($this->_path . 'views/js/form.js', 'all');
-
+        $this->context->controller->addCSS(($this->_path).'views/css/payment.css', 'all');
         if ($cookie->altapayError) {
             $this->context->controller->errors[] = $cookie->altapayError;
 
