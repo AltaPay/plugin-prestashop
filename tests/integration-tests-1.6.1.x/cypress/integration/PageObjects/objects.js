@@ -15,7 +15,7 @@ class Order
     }
   
     addproduct(discount_type=''){
-        cy.get('#blocknewproducts > :nth-child(2) > .product-container > .right-block > .button-container > .ajax_add_to_cart_button > span').click() 
+        cy.get('#blocknewproducts > .last-line.last-item-of-tablet-line > .product-container > .right-block > .button-container > .ajax_add_to_cart_button > span').click() 
         cy.get('.button-medium > span').click()
         cy.get('.cart_navigation > .button > span').click()
         //Guest checkout 1.6.X
@@ -56,7 +56,7 @@ class Order
             cy.contains(KLARNA_DKK_TERMINAL_NAME).click({force: true})
 
         cy.get('[id=submitbutton]').click().wait(3000)
-        cy.get('[id=klarna-pay-later-fullscreen]').wait(5000).then(function($iFrame){
+        cy.get('[id=klarna-pay-later-fullscreen]').wait(8000).then(function($iFrame){
             const mobileNum = $iFrame.contents().find('[id=invoice_kp-purchase-approval-form-phone-number]')
             cy.wrap(mobileNum).type('(452) 012-3456')
             const personalNum = $iFrame.contents().find('[id=invoice_kp-purchase-approval-form-national-identification-number]')
@@ -260,28 +260,57 @@ class Order
         let discount_types = {'fixed':'discount_fixed', 'percentage': 'discount_percentage'}
 
         Object.entries(discount_types).forEach(([key, value]) => {
-        cy.get('.label-tooltip > .process-icon-new').click()
-        cy.get('#name_1').clear().type(value)
-        cy.get('#code').clear().type(key)
-        cy.get('#cart_rule_link_actions').click()
-        if(key =='fixed'){
-            cy.get('#apply_discount_amount').click()
-            cy.get('#reduction_amount').clear().type('12')
-        }else{
-             cy.get('#apply_discount_percent').click()
-             cy.get('#reduction_percent').clear().type('7')
-        }
-        cy.get('#cart_rule_link_conditions').click()
-        cy.get(':nth-child(4) > .col-lg-9 > .form-control').clear().type('9999')
-        cy.get(':nth-child(5) > .col-lg-9 > .form-control').clear().type('9999')
-        cy.get('#desc-cart_rule-save').click()
-        cy.get('body').then(($body) => {
-        if ($body.text().includes('This cart rule code is already used')) {
-        cy.get('#desc-cart_rule-cancel').click()
-        }
-        })
+            cy.get('.label-tooltip > .process-icon-new').click()
+            cy.get('#name_1').clear().type(value)
+            cy.get('#code').clear().type(key)
+            cy.get('#cart_rule_link_actions').click()
+            if(key =='fixed'){
+                cy.get('#apply_discount_amount').click()
+                cy.get('#reduction_amount').clear().type('12')
+            }else{
+                cy.get('#apply_discount_percent').click()
+                cy.get('#reduction_percent').clear().type('7')
+            }
+            cy.get('#cart_rule_link_conditions').click()
+            cy.get(':nth-child(4) > .col-lg-9 > .form-control').clear().type('9999')
+            cy.get(':nth-child(5) > .col-lg-9 > .form-control').clear().type('9999')
+            cy.get('#desc-cart_rule-save').click()
+            cy.get('body').then(($body) => {
+                if ($body.text().includes('This cart rule code is already used')) {
+                cy.get('#desc-cart_rule-cancel').click()
+                }
+            })
         })
     }
- 
+    create_spec_discounts(type){
+        cy.get('#maintab-AdminCatalog').click()
+        cy.get('#tr__2_0 > :nth-child(3)').click()
+        cy.get('#link-Prices').click().wait(2000)
+            cy.get("body").then($body => {
+                if ($body.find("#specific_prices_list > tbody a[name='delete_link']").length > 0) {   
+                    cy.get("#specific_prices_list > tbody a[name='delete_link']").then($button => {
+                        $button.click()   
+                  })
+                }
+            })
+        if(type == 'fixed'){
+        cy.get('#show_specific_price').click()
+        cy.get('#sp_reduction').clear().type('5')
+        cy.get('#product-tab-content-Prices > :nth-child(2) > .panel-footer > [name="submitAddproduct"]').click().wait(3000)
+        }
+        else{
+            cy.get("body").then($body => {
+                if ($body.find("#specific_prices_list > tbody a[name='delete_link']").length > 0) {   
+                    cy.get("#specific_prices_list > tbody a[name='delete_link']").then($button => {
+                        $button.click()   
+                  })
+                }
+            })
+            cy.get('#show_specific_price').click()
+            cy.get('#sp_reduction').clear().type('5')
+            cy.get('#sp_reduction_type').select('%')
+            cy.get('#product-tab-content-Prices > :nth-child(2) > .panel-footer > [name="submitAddproductAndStay"] > .process-icon-save').click().wait(3000)
+        }
+    }
 }
 export default Order

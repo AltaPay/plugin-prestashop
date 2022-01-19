@@ -65,6 +65,54 @@ describe('Presta 1.6', function () {
             }
         })
     })
+    it('TC#17: Multiple - CC - Fixed Cart and Fixed Specific Discounts', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.CC_TERMINAL_NAME != "") {
+                const ord = new Order()
+                ord.admin()
+                ord.create_spec_discounts('fixed')
+                process(admin.CC_TERMINAL_NAME, 'cc', 'fixed')
+            } else {
+                cy.log('CC_TERMINAL_NAME skipped')
+            }
+        })
+    })
+    it('TC#18: Multiple - CC - % Cart and % Specific Discounts', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.CC_TERMINAL_NAME != "") {
+                const ord = new Order()
+                ord.admin()
+                ord.create_spec_discounts('percentage')
+                process(admin.CC_TERMINAL_NAME, 'cc', 'percentage')
+            } else {
+                cy.log('CC_TERMINAL_NAME skipped')
+            }
+        })
+    })
+    it('TC#19: Multiple - iDEAL - Fixed Cart and % Specific Discounts', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.iDEAL_EUR_TERMINAL != "") {
+                const ord = new Order()
+                ord.admin()
+                ord.create_spec_discounts('percentage')
+                process(admin.iDEAL_EUR_TERMINAL, 'ideal', 'fixed')
+            } else {
+                cy.log('iDEAL_EUR_TERMINAL skipped')
+            }
+        })
+    })
+    it('TC#20: Multiple - iDEAL - % Cart and % Specific Discounts', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.iDEAL_EUR_TERMINAL != "") {
+                const ord = new Order()
+                ord.admin()
+                ord.create_spec_discounts('percentage')
+                process(admin.iDEAL_EUR_TERMINAL, 'ideal', 'percentage')
+            } else {
+                cy.log('iDEAL_EUR_TERMINAL skipped')
+            }
+        })
+    })
 
     function process(terminal_name, func_name, discount = '') {
         const ord = new Order()

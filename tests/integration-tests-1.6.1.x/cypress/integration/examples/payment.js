@@ -37,7 +37,7 @@ describe('Presta 1.6', function () {
         })
     })
 
-    it('TC#2: Klarna Payment', function () {
+    it('TC#2: Klarna full capture and refund', function () {
 
         const ord = new Order()
         ord.clrcookies()

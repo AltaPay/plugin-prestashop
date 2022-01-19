@@ -107,13 +107,13 @@ jobs:
      # Setting directory for running cypress tests
     - name: Set env TEST_DIRECTORY
       run: |
-              echo "TEST_DIRECTORY=test/integration-tests-1.6.1.x" >> "$GITHUB_ENV"
+              echo "TEST_DIRECTORY=tests/integration-tests-1.6.1.x" >> "$GITHUB_ENV"
               
     # Run Cypress tests   
     - uses: actions/checkout@v1
       with:
         repository: AltaPay/plugin-prestashop
-        ref: 'origin/main'
+        ref: '${{env.TEST_BRANCH_NAME}}'
         path: plugin-prestashop
 
     - name: Create Cypress fixture config json
