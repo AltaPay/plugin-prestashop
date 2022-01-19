@@ -311,10 +311,6 @@ class Order
             cy.get('#sp_reduction_type').select('%')
             cy.get('#product-tab-content-Prices > :nth-child(2) > .panel-footer > [name="submitAddproductAndStay"] > .process-icon-save').click().wait(3000)
         }
-         
-    }
-    create_spec_percent_discounts(){
-        
     }
 }
 export default Order
