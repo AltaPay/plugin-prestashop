@@ -9,12 +9,12 @@
     <div class="col-lg-12">
         <div class="panel">
 
-            <div class="panel-heading">
+            <div class="card-header panel-heading">
                 <img src="{$this_path}/logo.png" height="14" width="14">
                 Payment information
             </div>
 
-            <div class="row panel-body">
+            <div class="card-body" style="background-color: #fff;">
 
                 {if isset($ap_error)}
                     <div class="alert alert-danger">{$ap_error}</div>
@@ -220,7 +220,7 @@
                     </div>
                     <div class="row row-ap">
                         <div class="col-lg-3">
-                            <input name="amount" type="text" id="capture-amount" class="input"
+                            <input name="amount" type="text" id="capture-amount" class="form-control input"
                                    value="{if !$payment_captured}{$payment_amount}{/if}" placeholder="Amount">
                         </div>
                         <div class="col-lg-3">
@@ -231,7 +231,7 @@
 
                     <div class="row row-ap">
                         <div class="col-lg-3">
-                            <input name="amount" type="text" id="refund-amount" class="input" placeholder="Amount">
+                            <input name="amount" type="text" id="refund-amount" class="form-control input" placeholder="Amount">
                         </div>
                         <div class="col-lg-3">
                             <a href="#" class="btn btn-primary" id="btn-refund" data-url="{$ajax_url}"

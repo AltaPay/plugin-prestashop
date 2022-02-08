@@ -87,12 +87,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $currentOrder = new Order((int) $this->module->currentOrder);
                 createAltapayOrder($response, $currentOrder);
                 $this->unlock($fp);
-                if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
-                    Tools::redirect('index.php?fc=module&module=altapay&controller=orderconfirmation&id_order='
-                                    . $this->module->currentOrder);
-                } else {
                     Tools::redirect('index.php?controller=order-detail&id_order=' . $this->module->currentOrder);
-                }
             } else {
                 // Unexpected scenario
                 $moduleName = $this->module->name;
