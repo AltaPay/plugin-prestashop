@@ -1760,6 +1760,8 @@ class ALTAPAY extends PaymentModule
 
         $this->context->controller->addCSS($this->_path . 'views/css/admin_order.css', 'all');
         $this->context->controller->addJS($this->_path . 'views/js/admin_order.js');
+        $this->context->controller->addJS($this->_path . 'views/js/form.js', 'all');
+        $this->context->controller->addCSS(($this->_path) . 'views/css/payment.css', 'all');
 
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             return $this->display(__FILE__, '/views/templates/hook/admin_order17.tpl');
@@ -1872,6 +1874,9 @@ class ALTAPAY extends PaymentModule
     public function hookDisplayBackOfficeHeader($params)
     {
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+            $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
+            $this->context->controller->addJS($this->_path . 'views/js/form.js', 'all');
+            $this->context->controller->addCSS($this->_path . 'views/css/payment.css', 'all');
             $this->context->controller->addJS($this->_path . 'views/js/admin_order.js', 'all');
             $this->context->controller->addJS($this->_path . 'views/js/jquery.alerts.js', 'all');
             $this->context->controller->addCSS($this->_path . 'views/css/admin_order.css', 'all');
