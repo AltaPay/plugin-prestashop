@@ -1,8 +1,8 @@
 name: 'Support Deployment'
-# Only trigger, when the code analysis & deployment workflows succeeded
+# Only trigger, when the deployment workflows succeeded
 on:
   workflow_run:
-    workflows: ["PHP Code Analysis", "Deployment"]
+    workflows: ["Deployment"]
     branches: [main]
     types:
       - completed
