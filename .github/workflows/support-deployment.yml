@@ -1,5 +1,5 @@
 name: 'Support Deployment'
-# Only trigger, when the deployment workflows succeeded
+# Only trigger, when the deployment workflow succeeded
 on:
   workflow_run:
     workflows: ["Deployment"]
