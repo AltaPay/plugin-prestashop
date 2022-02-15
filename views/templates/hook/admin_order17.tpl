@@ -183,11 +183,11 @@
                                                        readonly/>
                                                 {else}
                                                 <input type="number"
-                                                                                  name="ap_coupon_discount"
-                                                                                  class="form-control fixed-width-xs"
-                                                                                  value="0" style="border:none;"
-                                                                                  readonly/>
-                                            {/if}
+                                                        name="ap_coupon_discount"
+                                                        class="form-control fixed-width-xs"
+                                                        value="0" style="border:none;"
+                                                        readonly/>
+                                                {/if}
                                             </td>
                                             {if $freeShipping}
                                                 <td class="ap-total-amount">0</td>
@@ -297,11 +297,8 @@
                     </div>
                 </div>
             </div>
-
         </div>
-
     </div>
-
 </div>
 </div>
 </div>
@@ -335,8 +332,6 @@
                 $("#transactionOptions").hide();
             }
         }
-
-
     });
 </script>
 {/literal}

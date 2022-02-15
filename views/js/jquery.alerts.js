@@ -169,16 +169,6 @@
 					});
 				break;
 			}
-			
-			/*
-			// Make draggable requires jQuery UI draggables 
-			if( $.alerts.draggable ) {
-				try {
-					$("#popup_container").draggable({ handle: $("#popup_title") });
-					$("#popup_title").css({ cursor: 'move' });
-				} catch(e) {  }
-			}
-			*/
 		},
 		
 		_hide: function() {

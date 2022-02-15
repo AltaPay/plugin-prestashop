@@ -12,7 +12,6 @@
 	padding: 0em;
 	margin: 0em;
 }
-
 #popup_container {
 	font-family: AntipastoRegular, sans-serif;
 	font-size: 14px;
@@ -25,42 +24,22 @@
 	-webkit-border-radius: 5px;
 	border-radius: 5px;
 }
-
 #popup_content {
 	/*background: 16px 16px no-repeat url(images/info.gif);*/
 	padding: 1em 1.75em;
 	margin: 0em;
 }
-
-/*
-#popup_content.alert {
-	background-image: url(images/info.gif);
-}
-
-#popup_content.confirm {
-	background-image: url(images/important.gif);
-}
-
-#popup_content.prompt {
-	background-image: url(images/help.gif);
-}
-*/
-
 #popup_message {
 	/*padding-left: 10px;*/
 	margin:0px auto;
 }
-
 #popup_panel {
 	text-align: center;
 	margin: 1em 0em 0em 1em;
 }
-
 #popup_prompt {
 	margin: .5em 0em;
 }
-
-
 #popup_container INPUT[type='button'] {
     width: 100px;
 	height: 30px;
