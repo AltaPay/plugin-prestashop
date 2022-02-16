@@ -118,7 +118,6 @@ $(document).ready(function () {
         if (isNaN(amount)) {
             return;
         }
-
         jConfirm('Are you sure you want to capture <b>' + amount.toFixed(2) + '</b>?', 'Capture', function (r) {
             if (r === true) {
                 altapay.capture(element);
@@ -133,7 +132,6 @@ $(document).ready(function () {
         if (isNaN(amount)) {
             return;
         }
-
         jConfirm('Are you sure you want to refund <b>' + amount.toFixed(2) + '</b>?', 'Refund', function (r) {
             if (r === true) {
                 altapay.refund(element);
@@ -144,7 +142,6 @@ $(document).ready(function () {
     $('#btn-release').click(function (e) {
         e.preventDefault();
         var element = this;
-
         jConfirm('Are you sure you want to release this payment?<br>This cannot be undone!', 'Release', function (r) {
             if (r === true) {
                 altapay.release(element);

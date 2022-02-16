@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 if command -v dpkg-query -l zip
 then
@@ -26,7 +26,7 @@ then
   php5.6 $(command -v composer) isolate --no-interaction
   php5.6 $(command -v composer) dump -o --no-interaction
   find . -type d -exec cp index.php {} \;
-  mkdir -p dist/altapay && rsync -av --exclude={'dist','docker','build.sh','guide.md','.gitignore','phpstan.neon','composer.json','composer.lock'} * dist/altapay
+  mkdir -p dist/altapay && rsync -av --exclude={'dist','docker','Docs','build.sh','guide.md','.gitignore','phpstan.neon','composer.json','composer.lock'} * dist/altapay
   cd dist/ && zip altapay.zip -r *
 else
   echo "Zip package is not currently installed"

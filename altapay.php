@@ -10,7 +10,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once __DIR__ . '/vendor/autoload.php'; 
+require_once __DIR__ . '/vendor/autoload.php';
 
 class ALTAPAY extends PaymentModule
 {
@@ -29,10 +29,10 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.3.7';
+        $this->version = '3.3.8';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.6.4'];
+        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.3'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -343,9 +343,9 @@ class ALTAPAY extends PaymentModule
             $terminalsForStoreCountry = $this->countryAvailable($response, $countryConfigured);
 
             if (count($terminalExist) > 0) {
-                $this->Mhtml .= '<div class="alert alert-warning">Terminal(s) already set up, please configure them manually.</div>'; 
+                $this->Mhtml .= '<div class="alert alert-warning">Terminal(s) already set up, please configure them manually.</div>';
             } elseif (!$terminalsForStoreCountry) {
-                $this->Mhtml .= '<div class="alert alert-warning">Could not find terminals matching your country, please check the Payment methods for terminal config.</div>';                
+                $this->Mhtml .= '<div class="alert alert-warning">Could not find terminals matching your country, please check the Payment methods for terminal config.</div>';
             } else {
                 $i = 1;
                 $position = 1;
@@ -363,9 +363,9 @@ class ALTAPAY extends PaymentModule
                         $terminal->active = 1;
                         $terminal->save();
                     }
-                    $i++;
+                    ++$i;
                 }
-                $this->Mhtml .= '<div class="alert alert-success">Terminals successfully configured!</div>' ;  
+                $this->Mhtml .= '<div class="alert alert-success">Terminals successfully configured!</div>';
             }
             $this->Mhtml .= $this->displayAltapay();
 
@@ -1427,7 +1427,7 @@ class ALTAPAY extends PaymentModule
 
         $this->context->controller->addJquery();
         $this->context->controller->addJS($this->_path . 'views/js/form.js', 'all');
-        $this->context->controller->addCSS(($this->_path).'views/css/payment.css', 'all');
+        $this->context->controller->addCSS(($this->_path) . 'views/css/payment.css', 'all');
         if ($cookie->altapayError) {
             $this->context->controller->errors[] = $cookie->altapayError;
 
@@ -1760,8 +1760,14 @@ class ALTAPAY extends PaymentModule
 
         $this->context->controller->addCSS($this->_path . 'views/css/admin_order.css', 'all');
         $this->context->controller->addJS($this->_path . 'views/js/admin_order.js');
+        $this->context->controller->addJS($this->_path . 'views/js/form.js', 'all');
+        $this->context->controller->addCSS(($this->_path) . 'views/css/payment.css', 'all');
 
-        return $this->display(__FILE__, '/views/templates/hook/admin_order.tpl');
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+            return $this->display(__FILE__, '/views/templates/hook/admin_order17.tpl');
+        } else {
+            return $this->display(__FILE__, '/views/templates/hook/admin_order.tpl');
+        }
     }
 
     /**
@@ -1862,6 +1868,19 @@ class ALTAPAY extends PaymentModule
     {
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             return $this->display(__FILE__, 'savedCreditCards.tpl');
+        }
+    }
+
+    public function hookDisplayBackOfficeHeader($params)
+    {
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+            $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
+            $this->context->controller->addJS($this->_path . 'views/js/form.js', 'all');
+            $this->context->controller->addCSS($this->_path . 'views/css/payment.css', 'all');
+            $this->context->controller->addJS($this->_path . 'views/js/admin_order.js', 'all');
+            $this->context->controller->addJS($this->_path . 'views/js/jquery.alerts.js', 'all');
+            $this->context->controller->addCSS($this->_path . 'views/css/admin_order.css', 'all');
+            $this->context->controller->addCSS($this->_path . 'views/css/jquery.alerts.css', 'all');
         }
     }
 
@@ -2659,7 +2678,7 @@ class ALTAPAY extends PaymentModule
 
         return $orderLine;
     }
-    
+
     /**
      * Synchronize terminal form
      *
@@ -2707,7 +2726,7 @@ class ALTAPAY extends PaymentModule
     private function getAltapayTerminal()
     {
         $query = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals`';
-        
+
         return Db::getInstance()->executeS($query);
     }
 
@@ -2722,10 +2741,9 @@ class ALTAPAY extends PaymentModule
         foreach ($response->Terminals as $term) {
             if ($term->Country == $countryConfigured) {
                 return true;
-            } 
+            }
         }
-        
+
         return false;
     }
-
 }
