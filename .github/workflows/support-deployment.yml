@@ -27,7 +27,7 @@ jobs:
       with:
         repository: AltaPay/plugin-infrastructure
         token: ${{ secrets.ACCESS_TOKEN }}
-        ref: 'origin/variable_host_param'
+        ref: 'origin/main'
 
     # Install version 1.0.8 of Terraform CLI
     - name: Setup Terraform
@@ -79,3 +79,12 @@ jobs:
           -u ubuntu
           -i inventory
           --extra-vars "variable_host=prestashop-support branch_name=main gatewayURL=${{ secrets.GATEWAYURL }} gatewayUser=${{ secrets.GATEWAYUSER }} gatewayPass=${{ secrets.GATEWAYPASS }} prestashop_version=${{env.PRESTASHOP_VERSION}} prestashop_admin_email=${{secrets.CMS_ADMIN_EMAIL}} prestashop_admin_pwd=${{secrets.CMS_ADMIN_PASS}}"   
+
+    # Export URL
+    - name: Export URL
+      run: |
+        testvar=$(sed '4!d' inventory)
+        echo $testvar
+        echo "IP=$testvar">> $GITHUB_ENV
+        echo "http://$IP"
+      working-directory: ../plugin-infrastructure/deploy/plugins
