@@ -47,7 +47,7 @@ jobs:
 
       # Select a Terraform workspace
       - name: Terraform workspace
-        run: terraform workspace select prestashop
+        run: terraform workspace select prestashop17x
         working-directory: ../plugin-infrastructure/provision/plugins
 
 
