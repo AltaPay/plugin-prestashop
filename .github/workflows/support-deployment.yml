@@ -78,7 +78,7 @@ jobs:
         options: |
           -u ubuntu
           -i inventory
-          --extra-vars "variable_host=prestashop-support branch_name=main gatewayURL=${{ secrets.GATEWAYURL }} gatewayUser=${{ secrets.GATEWAYUSER }} gatewayPass=${{ secrets.GATEWAYPASS }} prestashop_version=${{env.PRESTASHOP_VERSION}} prestashop_admin_email=${{secrets.CMS_ADMIN_EMAIL}} prestashop_admin_pwd=${{secrets.CMS_ADMIN_PASS}}"   
+          --extra-vars "variable_host=prestashop-support branch_name=main gatewayURL=${{ secrets.GATEWAYURL }} gatewayUser=${{ secrets.GATEWAYUSER }} gatewayPass=${{ secrets.GATEWAYPASS }} prestashop_version=${{env.PRESTASHOP_VERSION}} prestashop_admin_email=${{secrets.CMS_ADMIN_EMAIL}} prestashop_admin_pwd=${{secrets.CMS_ADMIN_PASS_SUPPORT}}"   
 
     # Export URL
     - name: Export URL
