@@ -6,5 +6,12 @@
         "runMode": 2,
         "openMode": 0
     },
-    "pageLoadTimeout": 90000
+    "pageLoadTimeout": 90000,
+    "env": {
+      "runDiscountsTests": true,
+      "videoCompression": false,
+      "videoUploadOnPasses": false,
+      "NODE_TLS_REJECT_UNAUTHORIZED": 0
+    }
+    
 }
