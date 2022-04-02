@@ -6,14 +6,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "cypress_open": "./node_modules/.bin/cypress open",
-    "cypress_run": "./node_modules/.bin/cypress run"
+    "cypress_run": "./node_modules/.bin/cypress run --config video=false"
   },
   "author": "Idrees",
   "license": "ISC",
-  "dependencies": {
-    "cypress": "^7.2.0"
-  },
   "devDependencies": {
+    "cypress": "^7.2.0",
     "cypress-xpath": "^1.6.2"
   }
 }
