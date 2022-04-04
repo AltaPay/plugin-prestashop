@@ -154,7 +154,7 @@ describe('Presta 1.7', function () {
         cy.fixture('config').then((admin) => {
             if (admin.CC_TERMINAL_NAME != "") {
                 cy.get('body').then(($a) => {
-                    if ($a.find("a:contains('" + admin.CC_TERMINAL_NAME + "')").length) {
+                    if ($a.find("label:contains('" + admin.CC_TERMINAL_NAME + "')").length) {
                         ord.cc_payment(admin.CC_TERMINAL_NAME)
                         ord.admin()
                         ord.partial_capture()
@@ -188,7 +188,7 @@ describe('Presta 1.7', function () {
         cy.fixture('config').then((admin) => {
             if (admin.CC_TERMINAL_NAME != "") {
                 cy.get('body').then(($a) => {
-                    if ($a.find("a:contains('" + admin.CC_TERMINAL_NAME + "')").length) {
+                    if ($a.find("label:contains('" + admin.CC_TERMINAL_NAME + "')").length) {
                         ord.cc_payment(admin.CC_TERMINAL_NAME)
                         ord.admin()
                         ord.capture()
@@ -223,7 +223,7 @@ describe('Presta 1.7', function () {
         cy.fixture('config').then((admin) => {
             if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
                 cy.get('body').then(($a) => {
-                    if ($a.find("a:contains('" + admin.KLARNA_DKK_TERMINAL_NAME + "')").length) {
+                    if ($a.find("label:contains('" + admin.KLARNA_DKK_TERMINAL_NAME + "')").length) {
                         ord.klarna_payment(admin.KLARNA_DKK_TERMINAL_NAME)
                         ord.admin()
                         ord.partial_capture()
@@ -257,7 +257,7 @@ describe('Presta 1.7', function () {
         cy.fixture('config').then((admin) => {
             if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
                 cy.get('body').then(($a) => {
-                    if ($a.find("a:contains('" + admin.KLARNA_DKK_TERMINAL_NAME + "')").length) {
+                    if ($a.find("label:contains('" + admin.KLARNA_DKK_TERMINAL_NAME + "')").length) {
                         ord.klarna_payment(admin.KLARNA_DKK_TERMINAL_NAME)
                         ord.admin()
                         ord.capture()
