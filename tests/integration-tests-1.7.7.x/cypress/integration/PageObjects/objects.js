@@ -3,16 +3,16 @@ require('cypress-xpath')
 class Order
 
 {
-    visit()
-    {
-        cy.clearCookies()
+    visit(){
         cy.fixture('config').then((url)=>{
         cy.visit(url.shopURL) 
         })    
     }
   
-    addproduct(discount_type=''){
-        cy.get(":nth-child(6) > .product-miniature > .thumbnail-container > .product-description > .h3 > a ").click()
+    addproduct(){
+        cy.fixture('config').then((url)=>{
+            cy.visit(url.shopURL + '/7-mug-the-adventure-begins.html')
+            }) 
         cy.get('.add > .btn').click()
         cy.get('.cart-content-btn > .btn-primary').click()
         cy.get('.text-sm-center > .btn').click()
@@ -210,6 +210,18 @@ class Order
             cy.contains(admin.CC_TERMINAL_NAME).click().wait(1000)
         })
         cy.get('#altapay_terminals_form_submit_btn').click()
+    }
+
+    addpartial_product(){
+        cy.fixture('config').then((url)=>{
+            cy.visit(url.shopURL + '/6-mug-the-best-is-yet-to-come.html')
+            cy.get('.add > .btn').click()
+            cy.get('.cart-content-btn > .btn-primary').click()
+        })
+    }
+    
+    partial_capture(){
+       
     }
 }
 export default Order
