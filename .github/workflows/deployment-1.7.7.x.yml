@@ -131,7 +131,8 @@ jobs:
       - name: Run Cypress tests
         run: ./node_modules/.bin/cypress run 
         working-directory: "${{env.TEST_DIRECTORY}}"
-
+        
+        # --config video=false
         # after the test run completes
         # store screenshots
         # NOTE: screenshots will be generated only if E2E test failed
