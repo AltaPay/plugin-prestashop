@@ -188,8 +188,6 @@ class Order
     }
 
     change_currency_to_DKK(){
-        // cy.get('.mi-language').click()
-        // cy.get('#subtab-AdminParentLocalization > .link').click()
         cy.get('#subtab-AdminCurrencies').click()
         cy.get('body').then(($body) => {
             if ($body.text().includes('Euro')) {
@@ -299,8 +297,7 @@ class Order
                 }
             })
         if(type == 'fixed'){
-        //cy.get('#show_specific_price').click()
-        cy.get('#form_step2_specific_price_sp_reduction').clear().type('5')
+        cy.get('#form_step2_specific_price_sp_reduction').clear().type('2')
         cy.get('#form_step2_specific_price_save').click().wait(3000)
         }
         else{
@@ -311,8 +308,7 @@ class Order
                   })
                 }
             })
-            //cy.get('#show_specific_price').click()
-            cy.get('#form_step2_specific_price_sp_reduction').clear().type('5')
+            cy.get('#form_step2_specific_price_sp_reduction').clear().type('1')
             cy.get('#form_step2_specific_price_sp_reduction_type').select('%')
             cy.get('#form_step2_specific_price_save').click().wait(3000)
         }
