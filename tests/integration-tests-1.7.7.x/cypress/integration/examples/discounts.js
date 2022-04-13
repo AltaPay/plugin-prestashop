@@ -2,11 +2,11 @@ import Order from '../PageObjects/objects'
 
 describe('Presta 1.6', function () {
 
-    // it('TC#10: Create Discounts', function () {
-    //     const ord = new Order()
-    //     ord.admin()
-    //     ord.create_discounts()
-    // })
+    it('TC#10: Create Discounts', function () {
+        const ord = new Order()
+        ord.admin()
+        ord.create_discounts()
+    })
 
     it('TC#11: CC fixed discount', function () {
         cy.fixture('config').then((admin) => {
