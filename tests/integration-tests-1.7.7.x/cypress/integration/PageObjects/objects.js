@@ -9,12 +9,17 @@ class Order
         })    
     }
   
-    addproduct(){
+    addproduct(discount_type=''){
         cy.fixture('config').then((url)=>{
             cy.visit(url.shopURL + '/7-mug-the-adventure-begins.html')
-            }) 
+        }) 
         cy.get('.add > .btn').click()
         cy.get('.cart-content-btn > .btn-primary').click()
+        if(discount_type != ""){
+            cy.get('.display-promo > .collapse-button').click()
+            cy.get('.promo-input').type(discount_type) 
+            cy.get('form > .btn').click()
+        }
         cy.get('.text-sm-center > .btn').click()
         cy.get('#field-id_gender-1').click()
         cy.get(':nth-child(4) > .col-md-6 > #field-email').type('demo1@example.com')
@@ -69,7 +74,7 @@ class Order
             cy.get('.ladda-label').click().wait(3000)
             cy.get('body').then(($p) => {
                 if ($p.find('.onboarding-welcome > .onboarding-button-shut-down').length) {
-                    cy.get('.onboarding-welcome > .onboarding-button-shut-down').click()
+                    cy.get('.onboarding-welcome > .onboarding-button-shut-down').click().wait(3000)
                 }
             })
             })
@@ -183,6 +188,8 @@ class Order
     }
 
     change_currency_to_DKK(){
+        // cy.get('.mi-language').click()
+        // cy.get('#subtab-AdminParentLocalization > .link').click()
         cy.get('#subtab-AdminCurrencies').click()
         cy.get('body').then(($body) => {
             if ($body.text().includes('Euro')) {
@@ -240,6 +247,75 @@ class Order
         cy.get('#popup_ok').click()
         cy.get('#popup_ok').click()
         cy.get('#altapay > div > div > div.card-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'refunded')
+    }
+    //Discount Cases
+    create_discounts(){
+
+        cy.get('.mi-store').click()
+       
+        let discount_types = {'fixed':'discount_fixed', 'percentage': 'discount_percentage'}
+
+        Object.entries(discount_types).forEach(([key, value]) => {
+            cy.get('#subtab-AdminParentCartRules > .link').click()
+            cy.get('#page-header-desc-cart_rule-new_cart_rule').click()
+            cy.get('#name_1').clear().type(value)
+            cy.get('#code').clear().type(key)
+            cy.get('#cart_rule_link_actions').click()
+            if(key =='fixed'){
+                cy.get('#apply_discount_amount').click()
+                cy.get('#reduction_amount').clear().type('12')
+            }else{
+                cy.get('#apply_discount_percent').click()
+                cy.get('#reduction_percent').clear().type('7')
+            }
+            cy.get('#cart_rule_link_conditions').click()
+            cy.get(':nth-child(4) > .col-lg-9 > .form-control').clear().type('9999')
+            cy.get(':nth-child(5) > .col-lg-9 > .form-control').clear().type('9999')
+            cy.get('#desc-cart_rule-save').click()
+            cy.get('body').then(($body) => {
+                if ($body.text().includes('This cart rule code is already used')) {
+                cy.get('.alert > .close').click()
+                }
+            })
+        })
+    }
+
+    create_spec_discounts(type){
+        cy.get('.mi-store').click()
+        cy.get('#subtab-AdminProducts').click().wait(1000)
+        cy.contains('Mug The adventure begins').click().wait(2000)
+        Cypress.on('uncaught:exception', (err, runnable) => {
+            return false
+          })
+          cy.get('#tab_step2 > .nav-link').click()
+          cy.get('#js-open-create-specific-price-form').click()
+            cy.get("body").then($body => {
+                if ($body.find(".js-delete").length > 0) {   
+                    cy.get(".js-delete").then($button => {
+                        $button.click()
+                        cy.wait(1000)
+                        cy.get('.modal-footer > .btn-primary').click()  
+                  })
+                }
+            })
+        if(type == 'fixed'){
+        //cy.get('#show_specific_price').click()
+        cy.get('#form_step2_specific_price_sp_reduction').clear().type('5')
+        cy.get('#form_step2_specific_price_save').click().wait(3000)
+        }
+        else{
+            cy.get("body").then($body => {
+                if ($body.find("#specific_prices_list > tbody a[name='delete_link']").length > 0) {   
+                    cy.get("#specific_prices_list > tbody a[name='delete_link']").then($button => {
+                        $button.click()   
+                  })
+                }
+            })
+            //cy.get('#show_specific_price').click()
+            cy.get('#form_step2_specific_price_sp_reduction').clear().type('5')
+            cy.get('#form_step2_specific_price_sp_reduction_type').select('%')
+            cy.get('#form_step2_specific_price_save').click().wait(3000)
+        }
     }
 }
 export default Order
