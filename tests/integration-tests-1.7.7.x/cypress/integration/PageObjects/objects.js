@@ -191,6 +191,9 @@ class Order
     }
 
     change_currency_to_DKK(){
+        cy.get('.mi-extension').click()
+        cy.get('.mi-language').click().wait(1000)
+        cy.get('#subtab-AdminParentLocalization').click()
         cy.get('#subtab-AdminCurrencies').click()
         cy.get('body').then(($body) => {
             if ($body.text().includes('Euro')) {

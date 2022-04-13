@@ -8,60 +8,60 @@ describe('Presta 1.6', function () {
     //     ord.create_discounts()
     // })
 
-    // it('TC#11: CC fixed discount', function () {
-    //     cy.fixture('config').then((admin) => {
-    //         if (admin.CC_TERMINAL_NAME != "") {
-    //             process(admin.CC_TERMINAL_NAME, 'cc', 'fixed')
-    //         } else {
-    //             cy.log('CC_TERMINAL_NAME skipped')
-    //         }
-    //     })
-    // })
-    // it('TC#12: CC percentage discount', function () {
-    //     cy.fixture('config').then((admin) => {
-    //         if (admin.CC_TERMINAL_NAME != "") {
-    //             process(admin.CC_TERMINAL_NAME, 'cc', 'percentage')
-    //         } else {
-    //             cy.log('CC_TERMINAL_NAME skipped')
-    //         }
-    //     })
-    // })
+    it('TC#11: CC fixed discount', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.CC_TERMINAL_NAME != "") {
+                process(admin.CC_TERMINAL_NAME, 'cc', 'fixed')
+            } else {
+                cy.log('CC_TERMINAL_NAME skipped')
+            }
+        })
+    })
+    it('TC#12: CC percentage discount', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.CC_TERMINAL_NAME != "") {
+                process(admin.CC_TERMINAL_NAME, 'cc', 'percentage')
+            } else {
+                cy.log('CC_TERMINAL_NAME skipped')
+            }
+        })
+    })
 
-    // it('TC#13: CC - Fixed Specific Discounts', function () {
-    //     cy.fixture('config').then((admin) => {
-    //         if (admin.CC_TERMINAL_NAME != "") {
-    //             const ord = new Order()
-    //             ord.admin()
-    //             ord.create_spec_discounts('fixed')
-    //             process(admin.CC_TERMINAL_NAME, 'cc', '')
-    //         } else {
-    //             cy.log('CC_TERMINAL_NAME skipped')
-    //         }
-    //     })
-    // })
+    it('TC#13: CC - Fixed Specific Discounts', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.CC_TERMINAL_NAME != "") {
+                const ord = new Order()
+                ord.admin()
+                ord.create_spec_discounts('fixed')
+                process(admin.CC_TERMINAL_NAME, 'cc', '')
+            } else {
+                cy.log('CC_TERMINAL_NAME skipped')
+            }
+        })
+    })
 
-    // it('TC#14: CC - Percentage Specific Discounts', function () {
-    //     cy.fixture('config').then((admin) => {
-    //         if (admin.CC_TERMINAL_NAME != "") {
-    //             const ord = new Order()
-    //             ord.admin()
-    //             ord.create_spec_discounts('percentage')
-    //             process(admin.CC_TERMINAL_NAME, 'cc', '')
-    //         } else {
-    //             cy.log('CC_TERMINAL_NAME skipped')
-    //         }
-    //     })
-    // })
+    it('TC#14: CC - Percentage Specific Discounts', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.CC_TERMINAL_NAME != "") {
+                const ord = new Order()
+                ord.admin()
+                ord.create_spec_discounts('percentage')
+                process(admin.CC_TERMINAL_NAME, 'cc', '')
+            } else {
+                cy.log('CC_TERMINAL_NAME skipped')
+            }
+        })
+    })
 
-    // it('TC#15: iDEAL fixed discount', function () {
-    //     cy.fixture('config').then((admin) => {
-    //         if (admin.iDEAL_EUR_TERMINAL != "") {
-    //             process(admin.iDEAL_EUR_TERMINAL, 'ideal', 'fixed')
-    //         } else {
-    //             cy.log('iDEAL_EUR_TERMINAL skipped')
-    //         }
-    //     })
-    // })
+    it('TC#15: iDEAL fixed discount', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.iDEAL_EUR_TERMINAL != "") {
+                process(admin.iDEAL_EUR_TERMINAL, 'ideal', 'fixed')
+            } else {
+                cy.log('iDEAL_EUR_TERMINAL skipped')
+            }
+        })
+    })
     it('TC#16: iDEAL percentage discount', function () {
         cy.fixture('config').then((admin) => {
             if (admin.iDEAL_EUR_TERMINAL != "") {
