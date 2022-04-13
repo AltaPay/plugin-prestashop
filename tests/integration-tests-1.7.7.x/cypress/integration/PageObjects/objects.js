@@ -113,8 +113,9 @@ class Order
     }
 
     change_currency_to_EUR_for_iDEAL(){
-        cy.get('.mi-language').click()
-        cy.get('#subtab-AdminParentLocalization > .link').click()
+        cy.get('.mi-extension').click()
+        cy.get('.mi-language').click().wait(1000)
+        cy.get('#subtab-AdminParentLocalization').click()
         cy.get('#subtab-AdminCurrencies').click()
         cy.get('body').then(($body) => {
             if ($body.text().includes('€')) {
@@ -126,7 +127,7 @@ class Order
                 cy.get('.select2-selection').type('Euro (EUR){enter}').wait(2000)
                 cy.get('#save-button').click()
                 cy.get('#page-header-desc-configuration-add').click()
-                cy.get('.select2-selection').type('Euro (EUR){enter}')
+                cy.get('.select2-selection').type('Euro (EUR){enter}').wait(2000)
                 cy.get('#save-button').click()
             }
         })
@@ -162,6 +163,7 @@ class Order
     ideal_payment(iDEAL_EUR_TERMINAL){        
         cy.contains('Pay with ' +iDEAL_EUR_TERMINAL).click({force: true})
         cy.get('.condition-label > .js-terms').click()
+        cy.get('.ps-shown-by-js > .btn').click()
         cy.get('#idealIssuer').select('AltaPay test issuer 1')
         cy.get('#pensioPaymentIdealSubmitButton').click()
         cy.get('[type="text"]').type('shahbaz.anjum123-facilitator@gmail.com')
