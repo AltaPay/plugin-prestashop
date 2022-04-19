@@ -205,10 +205,11 @@ class Order
     }
 
     set_default_currency_DKK(){
-        cy.get('.mi-language').click()
-        cy.get('#subtab-AdminParentLocalization > .link').click()
+        cy.get('#subtab-AdminLocalization').click()
         cy.get('#select2-form_default_currency-container').click().get('#form_default_currency').select('Danish Krone (DKK)',{force: true})
         cy.get('#form-configuration-save-button').click().wait(2000)
+        cy.get('#subtab-AdminCurrencies').click()
+        cy.get('#input-false-admin_currencies_toggle_status-2').click()
     }
 
     re_save_DKK_currency_config(){
@@ -267,10 +268,10 @@ class Order
             cy.get('#cart_rule_link_actions').click()
             if(key =='fixed'){
                 cy.get('#apply_discount_amount').click()
-                cy.get('#reduction_amount').clear().type('12')
+                cy.get('#reduction_amount').clear().type('3')
             }else{
                 cy.get('#apply_discount_percent').click()
-                cy.get('#reduction_percent').clear().type('7')
+                cy.get('#reduction_percent').clear().type('5')
             }
             cy.get('#cart_rule_link_conditions').click()
             cy.get(':nth-child(4) > .col-lg-9 > .form-control').clear().type('9999')
