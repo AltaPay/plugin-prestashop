@@ -18,7 +18,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('TC#13: Klarna fixed discount', function () {
+    it('TC#12: Klarna fixed discount', function () {
         cy.fixture('config').then((admin) => {
             if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
                 process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', 'fixed')
@@ -28,7 +28,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('TC#12: CC percentage discount', function () {
+    it('TC#13: CC percentage discount', function () {
         cy.fixture('config').then((admin) => {
             if (admin.CC_TERMINAL_NAME != "") {
                 process(admin.CC_TERMINAL_NAME, 'cc', 'percentage')
@@ -48,7 +48,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('TC#13: CC - Fixed Specific Discounts', function () {
+    it('TC#15: CC - Fixed Specific Discounts', function () {
         cy.fixture('config').then((admin) => {
             if (admin.CC_TERMINAL_NAME != "") {
                 const ord = new Order()
@@ -61,7 +61,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('TC#13: Klarna - Fixed Specific Discounts', function () {
+    it('TC#16: Klarna - Fixed Specific Discounts', function () {
         cy.fixture('config').then((admin) => {
             if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
                 const ord = new Order()
@@ -74,7 +74,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('TC#14: CC - Percentage Specific Discounts', function () {
+    it('TC#17: CC - Percentage Specific Discounts', function () {
         cy.fixture('config').then((admin) => {
             if (admin.CC_TERMINAL_NAME != "") {
                 const ord = new Order()
@@ -87,7 +87,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('TC#13: Klarna - Fixed Specific Discounts', function () {
+    it('TC#18: Klarna - Fixed Specific Discounts', function () {
         cy.fixture('config').then((admin) => {
             if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
                 const ord = new Order()
@@ -100,7 +100,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('TC#15: Multiple - CC - Fixed Cart & Fixed Specific Discounts', function () {
+    it('TC#19: Multiple - CC - Fixed Cart & Fixed Specific Discounts', function () {
         cy.fixture('config').then((admin) => {
             if (admin.CC_TERMINAL_NAME != "") {
                 const ord = new Order()
@@ -113,20 +113,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('TC#15: Multiple - Klarna - Fixed Cart & Fixed Specific Discounts', function () {
-        cy.fixture('config').then((admin) => {
-            if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
-                const ord = new Order()
-                ord.admin()
-                ord.create_spec_discounts('fixed')
-                process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', 'fixed')
-            } else {
-                cy.log('KLARNA_DKK_TERMINAL_NAME skipped')
-            }
-        })
-    })
-
-    it('TC#16: Multiple - CC - Percentage Cart & Fixed Specific Discounts', function () {
+    it('TC#20: Multiple - CC - Percentage Cart & Fixed Specific Discounts', function () {
         cy.fixture('config').then((admin) => {
             if (admin.CC_TERMINAL_NAME != "") {
                 const ord = new Order()
@@ -139,20 +126,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('TC#16: Multiple - Klarna - Percentage Cart & Fixed Specific Discounts', function () {
-        cy.fixture('config').then((admin) => {
-            if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
-                const ord = new Order()
-                ord.admin()
-                ord.create_spec_discounts('fixed')
-                process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', 'percentage')
-            } else {
-                cy.log('KLARNA_DKK_TERMINAL_NAME skipped')
-            }
-        })
-    })
-
-    it('TC#17: Multiple - CC - Fixed Cart & Percentage Specific Discounts', function () {
+    it('TC#21: Multiple - CC - Fixed Cart & Percentage Specific Discounts', function () {
         cy.fixture('config').then((admin) => {
             if (admin.CC_TERMINAL_NAME != "") {
                 const ord = new Order()
@@ -165,7 +139,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('TC#18: iDEAL fixed discount', function () {
+    it('TC#22: iDEAL fixed discount', function () {
         cy.fixture('config').then((admin) => {
             if (admin.iDEAL_EUR_TERMINAL != "") {
                 process(admin.iDEAL_EUR_TERMINAL, 'ideal', 'fixed')
@@ -174,7 +148,7 @@ describe('Presta 1.7', function () {
             }
         })
     })
-    it('TC#19: iDEAL percentage discount', function () {
+    it('TC#23: iDEAL percentage discount', function () {
         cy.fixture('config').then((admin) => {
             if (admin.iDEAL_EUR_TERMINAL != "") {
                 process(admin.iDEAL_EUR_TERMINAL, 'ideal', 'percentage')
@@ -184,7 +158,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('TC#20: Multiple - iDEAL - Fixed Cart & Percentage Specific Discounts', function () {
+    it('TC#24: Multiple - iDEAL - Fixed Cart & Percentage Specific Discounts', function () {
         cy.fixture('config').then((admin) => {
             if (admin.iDEAL_EUR_TERMINAL != "") {
                 const ord = new Order()
@@ -197,7 +171,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('TC#21: Multiple - iDEAL - Percentage Cart & Fixed Specific Discounts', function () {
+    it('TC#25: Multiple - iDEAL - Percentage Cart & Fixed Specific Discounts', function () {
         cy.fixture('config').then((admin) => {
             if (admin.iDEAL_EUR_TERMINAL != "") {
                 const ord = new Order()

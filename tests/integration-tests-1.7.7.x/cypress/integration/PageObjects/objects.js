@@ -11,7 +11,7 @@ class Order
   
     addproduct(discount_type=''){
         cy.fixture('config').then((url)=>{
-            cy.visit(url.shopURL + '/7-mug-the-adventure-begins.html')
+            cy.visit(url.shopURL + '/en/home-accessories/6-mug-the-best-is-yet-to-come.html')
         }) 
         cy.get('.add > .btn').click()
         cy.get('.cart-content-btn > .btn-primary').click()
@@ -53,19 +53,19 @@ class Order
     klarna_payment(KLARNA_DKK_TERMINAL_NAME){
         cy.contains('Pay with '+KLARNA_DKK_TERMINAL_NAME).click({force: true})
         cy.get('.condition-label > .js-terms').click()
-        cy.get('.ps-shown-by-js > .btn').click().wait(2000)
+        cy.get('.ps-shown-by-js > .btn').wait(2000).click().wait(8000)
         cy.get('[id=submitbutton]').click().wait(3000)
-        cy.get('[id=klarna-pay-later-fullscreen]').wait(8000).then(function($iFrame){
+        cy.get('[id=klarna-pay-later-fullscreen]').wait(4000).then(function($iFrame){
             const mobileNum = $iFrame.contents().find('[id=email_or_phone]')
             cy.wrap(mobileNum).type('20222222')
             const continueBtn = $iFrame.contents().find('[id=onContinue]')
             cy.wrap(continueBtn).click().wait(4000)
         })
-        cy.get('[id=klarna-pay-later-fullscreen]').wait(8000).then(function($iFrame){
+        cy.get('[id=klarna-pay-later-fullscreen]').wait(4000).then(function($iFrame){
             const otp = $iFrame.contents().find('[id=otp_field]')
             cy.wrap(otp).type('123456').wait(4000)
         })  
-        cy.get('[id=klarna-pay-later-fullscreen]').wait(8000).then(function($iFrame){
+        cy.get('[id=klarna-pay-later-fullscreen]').wait(4000).then(function($iFrame){
             const contbtn = $iFrame.contents().find('[id=invoice_kp-purchase-review-continue-button]')
             cy.wrap(contbtn).click().wait(4000)
         })
@@ -294,7 +294,7 @@ class Order
     create_spec_discounts(type){
         cy.get('.mi-store').click()
         cy.get('#subtab-AdminProducts').click().wait(1000)
-        cy.contains('Mug The adventure begins').click().wait(2000)
+        cy.contains('Mug The best is yet to come').click().wait(2000)
         Cypress.on('uncaught:exception', (err, runnable) => {
             return false
           })
