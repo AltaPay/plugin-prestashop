@@ -17,12 +17,33 @@ describe('Presta 1.7', function () {
             }
         })
     })
+
+    it('TC#13: Klarna fixed discount', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
+                process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', 'fixed')
+            } else {
+                cy.log('KLARNA_DKK_TERMINAL_NAME skipped')
+            }
+        })
+    })
+
     it('TC#12: CC percentage discount', function () {
         cy.fixture('config').then((admin) => {
             if (admin.CC_TERMINAL_NAME != "") {
                 process(admin.CC_TERMINAL_NAME, 'cc', 'percentage')
             } else {
                 cy.log('CC_TERMINAL_NAME skipped')
+            }
+        })
+    })
+
+    it('TC#14: Klarna percentage discount', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
+                process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', 'percentage')
+            } else {
+                cy.log('KLARNA_DKK_TERMINAL_NAME skipped')
             }
         })
     })
@@ -40,6 +61,19 @@ describe('Presta 1.7', function () {
         })
     })
 
+    it('TC#13: Klarna - Fixed Specific Discounts', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
+                const ord = new Order()
+                ord.admin()
+                ord.create_spec_discounts('fixed')
+                process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', '')
+            } else {
+                cy.log('KLARNA_DKK_TERMINAL_NAME skipped')
+            }
+        })
+    })
+
     it('TC#14: CC - Percentage Specific Discounts', function () {
         cy.fixture('config').then((admin) => {
             if (admin.CC_TERMINAL_NAME != "") {
@@ -49,6 +83,19 @@ describe('Presta 1.7', function () {
                 process(admin.CC_TERMINAL_NAME, 'cc', '')
             } else {
                 cy.log('CC_TERMINAL_NAME skipped')
+            }
+        })
+    })
+
+    it('TC#13: Klarna - Fixed Specific Discounts', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
+                const ord = new Order()
+                ord.admin()
+                ord.create_spec_discounts('percentage')
+                process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', '')
+            } else {
+                cy.log('KLARNA_DKK_TERMINAL_NAME skipped')
             }
         })
     })
@@ -66,6 +113,19 @@ describe('Presta 1.7', function () {
         })
     })
 
+    it('TC#15: Multiple - Klarna - Fixed Cart & Fixed Specific Discounts', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
+                const ord = new Order()
+                ord.admin()
+                ord.create_spec_discounts('fixed')
+                process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', 'fixed')
+            } else {
+                cy.log('KLARNA_DKK_TERMINAL_NAME skipped')
+            }
+        })
+    })
+
     it('TC#16: Multiple - CC - Percentage Cart & Fixed Specific Discounts', function () {
         cy.fixture('config').then((admin) => {
             if (admin.CC_TERMINAL_NAME != "") {
@@ -75,6 +135,19 @@ describe('Presta 1.7', function () {
                 process(admin.CC_TERMINAL_NAME, 'cc', 'percentage')
             } else {
                 cy.log('CC_TERMINAL_NAME skipped')
+            }
+        })
+    })
+
+    it('TC#16: Multiple - Klarna - Percentage Cart & Fixed Specific Discounts', function () {
+        cy.fixture('config').then((admin) => {
+            if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
+                const ord = new Order()
+                ord.admin()
+                ord.create_spec_discounts('fixed')
+                process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', 'percentage')
+            } else {
+                cy.log('KLARNA_DKK_TERMINAL_NAME skipped')
             }
         })
     })
