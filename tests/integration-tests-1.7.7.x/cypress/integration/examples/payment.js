@@ -1,6 +1,5 @@
 import Order from '../PageObjects/objects'
 describe('Presta 1.7', function () {
-if(Cypress.env('runPaymentsTests')){
 
     it('TC#1: CC full capture and refund', function () {
         const ord = new Order()
@@ -330,5 +329,4 @@ if(Cypress.env('runPaymentsTests')){
             }
         })
     })
-}
 })

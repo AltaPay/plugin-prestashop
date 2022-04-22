@@ -1,5 +1,5 @@
 import Order from '../PageObjects/objects'
-
+if(Cypress.env('runDiscountsTests')){
 describe('Presta 1.7', function () {
 
     it('TC#10: Create Discounts', function () {
@@ -87,7 +87,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('TC#18: Klarna - Fixed Specific Discounts', function () {
+    it('TC#18: Klarna - Percentage Specific Discounts', function () {
         cy.fixture('config').then((admin) => {
             if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
                 const ord = new Order()
@@ -236,5 +236,5 @@ describe('Presta 1.7', function () {
         })
 
     }
-
 })
+}

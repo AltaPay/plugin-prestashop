@@ -8,7 +8,7 @@
     },
     "pageLoadTimeout": 180000,
     "env": {
-      "runPaymentsTests": false,
+      "runDiscountsTests": false,
       "videoCompression": false,
       "videoUploadOnPasses": false,
       "NODE_TLS_REJECT_UNAUTHORIZED": 0
