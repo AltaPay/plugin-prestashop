@@ -9,25 +9,30 @@ class Order
         })    
     }
   
-    addproduct(){
+    addproduct(discount_type=''){
         cy.fixture('config').then((url)=>{
-            cy.visit(url.shopURL + '/7-mug-the-adventure-begins.html')
-            }) 
+            cy.visit(url.shopURL + '/en/home-accessories/6-mug-the-best-is-yet-to-come.html')
+        }) 
         cy.get('.add > .btn').click()
         cy.get('.cart-content-btn > .btn-primary').click()
+        if(discount_type != ""){
+            cy.get('.display-promo > .collapse-button').click()
+            cy.get('.promo-input').type(discount_type) 
+            cy.get('form > .btn').click()
+        }
         cy.get('.text-sm-center > .btn').click()
         cy.get('#field-id_gender-1').click()
         cy.get(':nth-child(4) > .col-md-6 > #field-email').type('demo1@example.com')
-        cy.get('#field-firstname').type('Testperson-dk')
-        cy.get('#field-lastname').type('Testperson-dk')
+        cy.get('#field-firstname').type('Test')
+        cy.get('#field-lastname').type('Person-dk')
         cy.get(':nth-child(11) > .col-md-6 > .custom-checkbox > label').click()
         cy.get(':nth-child(9) > .col-md-6 > .custom-checkbox > label').click()
         cy.get(':nth-child(8) > .col-md-6 > .custom-checkbox > label').click()
         cy.get(':nth-child(10) > .col-md-6 > .custom-checkbox > label').click()
         cy.get('#customer-form > .form-footer > .continue').click()
-        cy.get('#field-address1').type('Sæffleberggate 56,1 mf')
-        cy.get('#field-postcode').type('6800')
-        cy.get('#field-city').type('Varde')
+        cy.get('#field-address1').type('Nygårdsvej 65')
+        cy.get('#field-postcode').type('2100')
+        cy.get('#field-city').type('København ')
         cy.get('#field-id_country').select('Denmark')
         cy.get('.js-address-form > .form-footer > .continue').click()
         cy.get('#js-delivery > .continue').click()
@@ -48,16 +53,22 @@ class Order
     klarna_payment(KLARNA_DKK_TERMINAL_NAME){
         cy.contains('Pay with '+KLARNA_DKK_TERMINAL_NAME).click({force: true})
         cy.get('.condition-label > .js-terms').click()
-        cy.get('.ps-shown-by-js > .btn').click().wait(2000)
+        cy.get('.ps-shown-by-js > .btn').wait(2000).click().wait(8000)
         cy.get('[id=submitbutton]').click().wait(3000)
-        cy.get('[id=klarna-pay-later-fullscreen]').wait(8000).then(function($iFrame){
-            const mobileNum = $iFrame.contents().find('[id=invoice_kp-purchase-approval-form-phone-number]')
-            cy.wrap(mobileNum).type('(452) 012-3456')
-            const personalNum = $iFrame.contents().find('[id=invoice_kp-purchase-approval-form-national-identification-number]')
-            cy.wrap(personalNum).type('1012201234')
-            const submit = $iFrame.contents().find('[id=invoice_kp-purchase-approval-form-continue-button]')
-            cy.wrap(submit).click().wait(4000)
-        })    
+        cy.get('[id=klarna-pay-later-fullscreen]').wait(4000).then(function($iFrame){
+            const mobileNum = $iFrame.contents().find('[id=email_or_phone]')
+            cy.wrap(mobileNum).type('20222222')
+            const continueBtn = $iFrame.contents().find('[id=onContinue]')
+            cy.wrap(continueBtn).click().wait(4000)
+        })
+        cy.get('[id=klarna-pay-later-fullscreen]').wait(4000).then(function($iFrame){
+            const otp = $iFrame.contents().find('[id=otp_field]')
+            cy.wrap(otp).type('123456').wait(4000)
+        })  
+        cy.get('[id=klarna-pay-later-fullscreen]').wait(4000).then(function($iFrame){
+            const contbtn = $iFrame.contents().find('[id=invoice_kp-purchase-review-continue-button]')
+            cy.wrap(contbtn).click().wait(4000)
+        })
     }
 
     admin(){
@@ -69,7 +80,7 @@ class Order
             cy.get('.ladda-label').click().wait(3000)
             cy.get('body').then(($p) => {
                 if ($p.find('.onboarding-welcome > .onboarding-button-shut-down').length) {
-                    cy.get('.onboarding-welcome > .onboarding-button-shut-down').click()
+                    cy.get('.onboarding-welcome > .onboarding-button-shut-down').click().wait(3000)
                 }
             })
             })
@@ -108,8 +119,9 @@ class Order
     }
 
     change_currency_to_EUR_for_iDEAL(){
-        cy.get('.mi-language').click()
-        cy.get('#subtab-AdminParentLocalization > .link').click()
+        cy.get('.mi-extension').click()
+        cy.get('.mi-language').click().wait(1000)
+        cy.get('#subtab-AdminParentLocalization').click()
         cy.get('#subtab-AdminCurrencies').click()
         cy.get('body').then(($body) => {
             if ($body.text().includes('€')) {
@@ -121,7 +133,7 @@ class Order
                 cy.get('.select2-selection').type('Euro (EUR){enter}').wait(2000)
                 cy.get('#save-button').click()
                 cy.get('#page-header-desc-configuration-add').click()
-                cy.get('.select2-selection').type('Euro (EUR){enter}')
+                cy.get('.select2-selection').type('Euro (EUR){enter}').wait(2000)
                 cy.get('#save-button').click()
             }
         })
@@ -156,6 +168,8 @@ class Order
 
     ideal_payment(iDEAL_EUR_TERMINAL){        
         cy.contains('Pay with ' +iDEAL_EUR_TERMINAL).click({force: true})
+        cy.get('.condition-label > .js-terms').click()
+        cy.get('.ps-shown-by-js > .btn').click()
         cy.get('#idealIssuer').select('AltaPay test issuer 1')
         cy.get('#pensioPaymentIdealSubmitButton').click()
         cy.get('[type="text"]').type('shahbaz.anjum123-facilitator@gmail.com')
@@ -183,6 +197,9 @@ class Order
     }
 
     change_currency_to_DKK(){
+        cy.get('.mi-extension').click()
+        cy.get('.mi-language').click().wait(1000)
+        cy.get('#subtab-AdminParentLocalization').click()
         cy.get('#subtab-AdminCurrencies').click()
         cy.get('body').then(($body) => {
             if ($body.text().includes('Euro')) {
@@ -194,10 +211,11 @@ class Order
     }
 
     set_default_currency_DKK(){
-        cy.get('.mi-language').click()
-        cy.get('#subtab-AdminParentLocalization > .link').click()
+        cy.get('#subtab-AdminLocalization').click()
         cy.get('#select2-form_default_currency-container').click().get('#form_default_currency').select('Danish Krone (DKK)',{force: true})
         cy.get('#form-configuration-save-button').click().wait(2000)
+        cy.get('#subtab-AdminCurrencies').click()
+        cy.get('#input-false-admin_currencies_toggle_status-2').click()
     }
 
     re_save_DKK_currency_config(){
@@ -240,6 +258,73 @@ class Order
         cy.get('#popup_ok').click()
         cy.get('#popup_ok').click()
         cy.get('#altapay > div > div > div.card-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'refunded')
+    }
+    //Discount Cases
+    create_discounts(){
+
+        cy.get('.mi-store').click()
+       
+        let discount_types = {'fixed':'discount_fixed', 'percentage': 'discount_percentage'}
+
+        Object.entries(discount_types).forEach(([key, value]) => {
+            cy.get('#subtab-AdminParentCartRules > .link').click()
+            cy.get('#page-header-desc-cart_rule-new_cart_rule').click()
+            cy.get('#name_1').clear().type(value)
+            cy.get('#code').clear().type(key)
+            cy.get('#cart_rule_link_actions').click()
+            if(key =='fixed'){
+                cy.get('#apply_discount_amount').click()
+                cy.get('#reduction_amount').clear().type('3')
+            }else{
+                cy.get('#apply_discount_percent').click()
+                cy.get('#reduction_percent').clear().type('5')
+            }
+            cy.get('#cart_rule_link_conditions').click()
+            cy.get(':nth-child(4) > .col-lg-9 > .form-control').clear().type('9999')
+            cy.get(':nth-child(5) > .col-lg-9 > .form-control').clear().type('9999')
+            cy.get('#desc-cart_rule-save').click()
+            cy.get('body').then(($body) => {
+                if ($body.text().includes('This cart rule code is already used')) {
+                cy.get('.alert > .close').click()
+                }
+            })
+        })
+    }
+
+    create_spec_discounts(type){
+        cy.get('.mi-store').click()
+        cy.get('#subtab-AdminProducts').click().wait(1000)
+        cy.contains('Mug The best is yet to come').click().wait(2000)
+        Cypress.on('uncaught:exception', (err, runnable) => {
+            return false
+          })
+          cy.get('#tab_step2 > .nav-link').click()
+          cy.get('#js-open-create-specific-price-form').click()
+            cy.get("body").then($body => {
+                if ($body.find(".js-delete").length > 0) {   
+                    cy.get(".js-delete").then($button => {
+                        $button.click()
+                        cy.wait(1000)
+                        cy.get('.modal-footer > .btn-primary').click()  
+                  })
+                }
+            })
+        if(type == 'fixed'){
+        cy.get('#form_step2_specific_price_sp_reduction').clear().type('2')
+        cy.get('#form_step2_specific_price_save').click().wait(3000)
+        }
+        else{
+            cy.get("body").then($body => {
+                if ($body.find("#specific_prices_list > tbody a[name='delete_link']").length > 0) {   
+                    cy.get("#specific_prices_list > tbody a[name='delete_link']").then($button => {
+                        $button.click()   
+                  })
+                }
+            })
+            cy.get('#form_step2_specific_price_sp_reduction').clear().type('1')
+            cy.get('#form_step2_specific_price_sp_reduction_type').select('%')
+            cy.get('#form_step2_specific_price_save').click().wait(3000)
+        }
     }
 }
 export default Order

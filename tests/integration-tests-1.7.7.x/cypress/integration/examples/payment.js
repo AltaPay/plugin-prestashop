@@ -39,7 +39,7 @@ describe('Presta 1.7', function () {
         const ord = new Order()
         ord.visit()
         cy.get('body').then(($body) => {
-            if ($body.text().includes('€')) {
+            if ($body.text().includes('kr')  === false) {
                 ord.admin()
                 ord.change_currency_to_DKK()
                 ord.re_save_DKK_currency_config()
