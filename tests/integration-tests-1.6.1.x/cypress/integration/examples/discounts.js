@@ -1,5 +1,5 @@
 import Order from '../PageObjects/objects'
-
+if(Cypress.env('runDiscountsTests')){
 describe('Presta 1.6', function () {
 
     it('TC#10: Create Discounts', function (){
@@ -164,7 +164,6 @@ describe('Presta 1.6', function () {
                 cy.log(terminal_name + ' not found in page')
             }
         })
-
     }
-
 })
+}
