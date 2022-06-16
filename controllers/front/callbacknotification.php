@@ -105,7 +105,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
     public function handleNotificationAction($cart, $order, $response, $customer, $transactionStatus, $shopOrderId)
     {
-        $log_file = _PS_MODULE_DIR_.'altapay/logs/ignoredata'.uniqid().'.txt';  
+        $log_file = _PS_MODULE_DIR_.'altapay/logs/logOrderId-'.uniqid().'.txt';  
         // NO ORDER FOUND, CREATE?
         if (!Validate::isLoadedObject($order)) {
             // Payment successful - create order
