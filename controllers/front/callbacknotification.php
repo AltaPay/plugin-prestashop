@@ -23,6 +23,10 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $response = $callback->call();
             $shopOrderId = $response->shopOrderId;
             $paymentId = $response->transactionId;
+
+            $log_file = _PS_MODULE_DIR_.'altapay/logs/logOrderId-'.uniqid().'.txt';  
+            file_put_contents($log_file, print_r("Order attempt", true));
+            
             // Load the cart
             $cart = getCartFromUniqueId($shopOrderId);
             if (!Validate::isLoadedObject($cart)) {
@@ -140,12 +144,10 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             } else {
                 exit('Only handling Success state');
             }
-        }
-        elseif ($order->getCurrentState() != Configuration::get('ALTAPAY_OS_PENDING')) { //pending     
+        } elseif ($order->getCurrentState() != Configuration::get('ALTAPAY_OS_PENDING')) { //pending     
             file_put_contents($log_file, print_r("Ignore Order - ".$order->id, true));
             exit('Order found but is not currently pending - ignoring');
-        }
-        else {   
+        } elseif (Validate::isLoadedObject($order)) {
             file_put_contents($log_file, print_r("Already created Order - ".$order->id, true));
             $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
             // Update payment status to 'succeeded'
