@@ -105,6 +105,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
     public function handleNotificationAction($cart, $order, $response, $customer, $transactionStatus, $shopOrderId)
     {
+        $log_file = _PS_MODULE_DIR_.'altapay/logs/ignoredata'.uniqid().'.txt';  
         // NO ORDER FOUND, CREATE?
         if (!Validate::isLoadedObject($order)) {
             // Payment successful - create order
@@ -113,6 +114,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 $currency_paid = Currency::getIdByIsoCode($response->Currency);
                 $amount_paid = $response->amount;
                 $paymentType = $response->Transactions[0]->AuthType;
+                file_put_contents($log_file, print_r("Create Order - ".$shopOrderId, true));
                 /* If payment type is 'payment' funds have not yet been captured,
                 * so AltaPay returns 0 as the captured amount.Therefore we assume full payment has been authorized.
                 */
@@ -138,7 +140,13 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             } else {
                 exit('Only handling Success state');
             }
-        } else {
+        }
+        elseif ($order->getCurrentState() != Configuration::get('ALTAPAY_OS_PENDING')) { //pending     
+            file_put_contents($log_file, print_r("Ignore Order - ".$order->id, true));
+            exit('Order found but is not currently pending - ignoring');
+        }
+        else {   
+            file_put_contents($log_file, print_r("Already created ORder - ".$order->id, true));
             $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
             // Update payment status to 'succeeded'
             $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
