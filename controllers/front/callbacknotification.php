@@ -146,7 +146,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             exit('Order found but is not currently pending - ignoring');
         }
         else {   
-            file_put_contents($log_file, print_r("Already created ORder - ".$order->id, true));
+            file_put_contents($log_file, print_r("Already created Order - ".$order->id, true));
             $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
             // Update payment status to 'succeeded'
             $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
