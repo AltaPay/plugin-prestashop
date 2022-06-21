@@ -17,9 +17,6 @@
       "autorun": false,
       "require-dev": false,
       "replacements": {}
-    },
-    "allow-plugins": {
-      "and/isolate-composer": true
     }
   },
   "require": {
