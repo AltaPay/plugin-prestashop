@@ -10,9 +10,9 @@ then
     exit
   fi
 
-  if ! command -v php5.6
+  if ! command -v php7.2
   then
-    echo "PHP 5.6 package is not currently installed"
+    echo "PHP 7.2 package is not currently installed"
     exit
   fi
 
@@ -22,9 +22,9 @@ then
     exit
   fi
 
-  php5.6 $(command -v composer) install --no-dev --no-interaction
-  php5.6 $(command -v composer) isolate --no-interaction
-  php5.6 $(command -v composer) dump -o --no-interaction
+  php7.2 $(command -v composer) install --no-dev --no-interaction
+  php7.2 $(command -v composer) isolate --no-interaction
+  php7.2 $(command -v composer) dump -o --no-interaction
   find . -type d -exec cp index.php {} \;
   mkdir -p dist/altapay && rsync -av --exclude={'dist','docker','Docs','build.sh','guide.md','.gitignore','phpstan.neon','composer.json','composer.lock'} * dist/altapay
   cd dist/ && zip altapay.zip -r *
