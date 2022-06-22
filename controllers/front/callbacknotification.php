@@ -1,4 +1,5 @@
 <?php
+
 /**
  * AltaPay module for PrestaShop
  *
@@ -17,12 +18,12 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
      */
     public function postProcess()
     {
+        $fp = fopen(_PS_MODULE_DIR_ . '/altapay/controllers/front/lock.txt', 'r');
         try {
             $postData = Tools::getAllValues();
             $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
             $response = $callback->call();
             $shopOrderId = $response->shopOrderId;
-            $fp = fopen(_PS_MODULE_DIR_ . '/altapay/controllers/front/lock.txt', 'r');
             flock($fp, LOCK_EX);
             // Load the cart
             $cart = getCartFromUniqueId($shopOrderId);
@@ -31,7 +32,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 exit('Could not load cart - exiting');
             }
             // Load the customer
-            $customer = new Customer((int) $cart->id_customer);
+            $customer = new Customer((int)$cart->id_customer);
             $transactionStatus = $response->paymentStatus;
 
             $resultStatus = strtolower($response->Result);
@@ -43,31 +44,36 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 if (!Validate::isLoadedObject($order)) {
                     // Payment successful - create order
                     if ($response && is_array($response->Transactions)) {
-                        $order_status = (int) Configuration::get('PS_OS_PAYMENT');
-                        $currency_paid = Currency::getIdByIsoCode($response->Currency);
-                        $amount_paid = $response->amount;
+                        $currency = Currency::getIdByIsoCode($response->Currency);
+                        $amount = $response->amount;
                         $paymentType = $response->Transactions[0]->AuthType;
-                        /* If payment type is 'payment' funds have not yet been captured,
+                        /*
+                        If payment type is 'payment' funds have not yet been captured,
                         * so AltaPay returns 0 as the captured amount.Therefore we assume full payment has been authorized.
                         */
                         if ($paymentType === 'payment') {
-                            $amount_paid = $cart->getOrderTotal(true, Cart::BOTH);
-                            $currency_paid = new Currency($cart->id_currency);
+                            $amount = $cart->getOrderTotal(true, Cart::BOTH);
+                            $currency = new Currency($cart->id_currency);
                         }
                         // Determine payment method for display
                         $paymentMethod = determinePaymentMethodForDisplay($response);
 
                         // Create an order with 'payment accepted' status
-                        $cSk = $customer->secure_key;
-                        $cpId = (int) $currency_paid->id;
-                        $cId = $cart->id;
-                        $oSt = $order_status;
-                        $pMeth = $paymentMethod;
-                        $this->module->validateOrder($cId, $oSt, $amount_paid, $pMeth, null, null, $cpId, false, $cSk);
+                        $this->module->validateOrder(
+                            $cart->id,
+                            (int)Configuration::get('PS_OS_PAYMENT'),
+                            $amount,
+                            $paymentMethod,
+                            null,
+                            null,
+                            (int)$currency->id,
+                            false,
+                            $customer->secure_key
+                        );
                         // Log order
-                        $current_order = new Order((int) $this->module->currentOrder);
+                        $currentOrder = new Order((int)$this->module->currentOrder);
 
-                        createAltapayOrder($response, $current_order, $transactionStatus);
+                        createAltapayOrder($response, $currentOrder, $transactionStatus);
                         $this->unlock($fp);
                         exit('Order created');
                     } else {
@@ -87,7 +93,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                          * For this scenario we change the order status to 'payment accepted'.
                          * bank_payment_finalized is for ePayments.
                          */
-                        $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+                        $order->setCurrentState((int)Configuration::get('PS_OS_PAYMENT'));
                         // Update payment status to 'succeeded'
                         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
                     SET `paymentStatus` = \'succeeded\' WHERE `id_order` = ' . $order->id;
@@ -110,7 +116,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         // Unexpected scenario
                         $mNa = $this->module->name;
                         PrestaShopLogger::addLog('Unexpected scenario: Callback notification was received for Transaction '
-                                                 . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
+                            . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
                             $this->module->id, true);
                         $this->unlock($fp);
                         exit('Unrecognized status received ' . $transactionStatus);
@@ -118,17 +124,26 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 }
             } else {
                 // Unexpected scenario
-                $mNa = $this->module->name;
                 PrestaShopLogger::addLog('Callback notification was received for Transaction ' . $shopOrderId . ' with payment status ' . $transactionStatus,
-                3,
-                '1005',
-                $mNa,
-                $this->module->id,
-                true
-            );
+                    3,
+                    '1005',
+                    $this->module->name,
+                    $this->module->id,
+                    true
+                );
                 $this->unlock($fp);
                 exit('Unrecognized status received ' . $transactionStatus);
             }
+        } catch (PrestaShopException $e) {
+            PrestaShopLogger::addLog('Callback notification issue, Message ' . $e->displayMessage(),
+                3,
+                '1005',
+                $this->module->name,
+                $this->module->id,
+                true
+            );
+
+            $this->unlock($fp);
         } finally {
             $this->unlock($fp);
         }
