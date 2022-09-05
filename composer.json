@@ -27,7 +27,7 @@
     "nikic/php-parser": "4.x-dev",
     "symfony/event-dispatcher":"4.4.18"
   },
-    "require-dev": {
+  "require-dev": {
       "prestashop/php-dev-tools": "^4.0",
       "phpstan/phpstan": "^0.12"
   },

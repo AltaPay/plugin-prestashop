@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.4.0] - 2022-09-05
+### Fixed
+- Support for PrestaShop version 1.7.8.7
+
 ## [3.3.9] - 2022-06-20
 ### Fixed
 - Fix: Duplicate orders issue with iDEAL payments
