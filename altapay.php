@@ -296,7 +296,7 @@ class ALTAPAY extends PaymentModule
     /**
      * Return content for the configuration in back office
      *
-     * @return string HTML for display
+     * @return string void
      *
      * @throws PrestaShopException
      */
@@ -1497,7 +1497,7 @@ class ALTAPAY extends PaymentModule
      * @param bool $captureRemainedAmount
      * @param bool $statusCapture
      *
-     * @return string
+     * @return void
      *
      * @throws PrestaShopException
      */
