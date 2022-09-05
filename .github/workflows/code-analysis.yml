@@ -39,8 +39,8 @@ jobs:
      - name: Composer dependency isolatation and run PhpStan
        if: ${{ always() }}
        run: |
-         composer isolate --no-interaction
-         composer dump -o --no-interaction
+         composer isolate
+         composer dump -o
          _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
        working-directory: prestashop/modules/altapay
        
