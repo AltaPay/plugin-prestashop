@@ -296,7 +296,7 @@ class ALTAPAY extends PaymentModule
     /**
      * Return content for the configuration in back office
      *
-     * @return string HTML for display
+     * @return void HTML for display
      */
 
     public function getContent()
