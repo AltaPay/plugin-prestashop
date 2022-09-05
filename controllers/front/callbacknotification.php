@@ -66,7 +66,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                             $paymentMethod,
                             null,
                             null,
-                            (int)$currency->id,
+                            (int) $currency->id,
                             false,
                             $customer->secure_key
                         );
