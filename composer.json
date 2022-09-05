@@ -25,7 +25,8 @@
     "and/isolate-composer": "^1.1",
     "symfony/options-resolver": "^3.0",
     "nikic/php-parser": "4.x-dev",
-    "symfony/event-dispatcher":"4.4.18"
+    "symfony/event-dispatcher":"4.4.18",
+    "symfony/console":"^3.4.47"
   },
   "require-dev": {
       "prestashop/php-dev-tools": "^4.0",
