@@ -298,7 +298,6 @@ class ALTAPAY extends PaymentModule
      *
      * @return void HTML for display
      */
-
     public function getContent()
     {
         global $currency;
