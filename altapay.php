@@ -296,10 +296,9 @@ class ALTAPAY extends PaymentModule
     /**
      * Return content for the configuration in back office
      *
-     * @return string void
-     *
-     * @throws PrestaShopException
+     * @return string HTML for display
      */
+
     public function getContent()
     {
         global $currency;
