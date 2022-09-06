@@ -15,7 +15,7 @@ class Order
     }
   
     addproduct(discount_type=''){
-        cy.get('#blocknewproducts > .last-line.last-item-of-tablet-line > .product-container > .right-block > .button-container > .ajax_add_to_cart_button > span').click() 
+        cy.get('#blocknewproducts > .last-line.last-item-of-tablet-line > .product-container > .right-block > .button-container > .ajax_add_to_cart_button > span').click()
         cy.get('.button-medium > span').click()
         cy.get('.cart_navigation > .button > span').click()
         //Guest checkout 1.6.X
@@ -63,7 +63,7 @@ class Order
         })
         cy.get('[id=klarna-pay-later-fullscreen]').wait(4000).then(function($iFrame){
             const otp = $iFrame.contents().find('[id=otp_field]')
-            cy.wrap(otp).type('123456').wait(2000)
+            cy.wrap(otp).type('123456').wait(4000)
         })  
         cy.get('[id=klarna-pay-later-fullscreen]').wait(2000).then(function($iFrame){
             const contbtn = $iFrame.contents().find('[id=invoice_kp-purchase-review-continue-button]')
@@ -192,10 +192,10 @@ class Order
     re_save_EUR_currency_config(){
         // Re-save EUR Terminal Config
         cy.get('#maintab-AdminParentModules > .title').click()
-        cy.get('#moduleQuicksearch').type('Alta').wait(1000)
-        cy.get(':nth-child(20) > .actions > .btn-group-action > .btn-group > a.btn').click()
+        cy.get('#moduleQuicksearch').type('Alta').wait(3000)
+        cy.get('#module-list > tbody > tr:visible > .actions > .btn-group-action > .btn-group > a').click()
         cy.fixture('config').then((admin) => {
-        cy.contains(admin.iDEAL_EUR_TERMINAL).click()
+            cy.contains(admin.iDEAL_EUR_TERMINAL).click()
         })
         cy.get('#altapay_terminals_form_submit_btn').click()
     }
@@ -203,7 +203,7 @@ class Order
     re_save_DKK_currency_config(){
         cy.get('#maintab-AdminParentModules > .title').click()
         cy.get('#moduleQuicksearch').type('Alta')
-        cy.get(':nth-child(20) > .actions > .btn-group-action > .btn-group > a.btn').click()
+        cy.get('#module-list > tbody tr:visible > .actions > .btn-group-action > .btn-group > a').click()
         cy.fixture('config').then((admin) => {
         cy.contains(admin.CC_TERMINAL_NAME).click()
         })
