@@ -10,10 +10,8 @@
   },
   "author": "Idrees",
   "license": "ISC",
-  "dependencies": {
-    "cypress": "^7.2.0"
-  },
   "devDependencies": {
-    "cypress-xpath": "^1.6.2"
+      "cypress": "^9.0.0",
+    "cypress-xpath": "^2.0.1"
   }
 }
