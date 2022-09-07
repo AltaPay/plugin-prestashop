@@ -159,7 +159,7 @@ class Order
         cy.get('#subtab-AdminModulesSf > .link').click()
         cy.get('.pstaggerAddTagInput').type('Altapay').wait(1000)
         cy.get('#module-search-button').click()
-        cy.get('.btn-group > .btn-primary-reverse').click().wait(2000)
+        cy.get('.module-short-list:visible  .btn-group > .btn-primary-reverse').click().wait(2000)
         cy.fixture('config').then((admin) => {
             cy.contains(admin.iDEAL_EUR_TERMINAL).click().wait(1000)
         })
@@ -223,7 +223,7 @@ class Order
         cy.get('#subtab-AdminModulesSf > .link').click()
         cy.get('.pstaggerAddTagInput').type('Altapay').wait(1000)
         cy.get('#module-search-button').click()
-        cy.get('.btn-group > .btn-primary-reverse').click().wait(2000)
+        cy.get('.module-short-list:visible  .btn-group > .btn-primary-reverse').click().wait(2000)
         cy.fixture('config').then((admin) => {
             cy.contains(admin.CC_TERMINAL_NAME).click().wait(1000)
         })
