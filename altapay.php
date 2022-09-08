@@ -29,10 +29,10 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.3.9';
+        $this->version = '3.4.0';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.3'];
+        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.7'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -296,9 +296,7 @@ class ALTAPAY extends PaymentModule
     /**
      * Return content for the configuration in back office
      *
-     * @return string HTML for display
-     *
-     * @throws PrestaShopException
+     * @return void HTML for display
      */
     public function getContent()
     {
@@ -1497,7 +1495,7 @@ class ALTAPAY extends PaymentModule
      * @param bool $captureRemainedAmount
      * @param bool $statusCapture
      *
-     * @return string
+     * @return void
      *
      * @throws PrestaShopException
      */

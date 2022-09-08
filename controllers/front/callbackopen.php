@@ -16,8 +16,12 @@ class AltapayCallbackopenModuleFrontController extends ModuleFrontController
      * ALTAPAY will send a notification to the "open" callback URL when the payment moves
      * to "success" or "failure". The module will then update the order status to either
      * "Payment Accepted" or "Payment Error".
+     */
+
+    /**
+     * Method for open callback
      *
-     * @return string
+     * @return void
      *
      * @throws AltapayXmlException
      */

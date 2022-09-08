@@ -32,7 +32,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 exit('Could not load cart - exiting');
             }
             // Load the customer
-            $customer = new Customer((int)$cart->id_customer);
+            $customer = new Customer((int) $cart->id_customer);
             $transactionStatus = $response->paymentStatus;
 
             $resultStatus = strtolower($response->Result);
@@ -61,17 +61,17 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         // Create an order with 'payment accepted' status
                         $this->module->validateOrder(
                             $cart->id,
-                            (int)Configuration::get('PS_OS_PAYMENT'),
+                            (int) Configuration::get('PS_OS_PAYMENT'),
                             $amount,
                             $paymentMethod,
                             null,
                             null,
-                            (int)$currency->id,
+                            (int) $currency->id,
                             false,
                             $customer->secure_key
                         );
                         // Log order
-                        $currentOrder = new Order((int)$this->module->currentOrder);
+                        $currentOrder = new Order((int) $this->module->currentOrder);
 
                         createAltapayOrder($response, $currentOrder, $transactionStatus);
                         $this->unlock($fp);
@@ -93,7 +93,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                          * For this scenario we change the order status to 'payment accepted'.
                          * bank_payment_finalized is for ePayments.
                          */
-                        $order->setCurrentState((int)Configuration::get('PS_OS_PAYMENT'));
+                        $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
                         // Update payment status to 'succeeded'
                         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
                     SET `paymentStatus` = \'succeeded\' WHERE `id_order` = ' . $order->id;

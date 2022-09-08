@@ -21,7 +21,7 @@ describe('Presta 1.7', function () {
     it('TC#12: Klarna fixed discount', function () {
         cy.fixture('config').then((admin) => {
             if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
-                process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', 'fixed')
+                process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', 'fixed', true)
             } else {
                 cy.log('KLARNA_DKK_TERMINAL_NAME skipped')
             }
@@ -41,7 +41,7 @@ describe('Presta 1.7', function () {
     it('TC#14: Klarna percentage discount', function () {
         cy.fixture('config').then((admin) => {
             if (admin.KLARNA_DKK_TERMINAL_NAME != "") {
-                process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', 'percentage')
+                process(admin.KLARNA_DKK_TERMINAL_NAME, 'klarna', 'percentage', true)
             } else {
                 cy.log('KLARNA_DKK_TERMINAL_NAME skipped')
             }
@@ -185,7 +185,7 @@ describe('Presta 1.7', function () {
     })
 
 
-    function process(terminal_name, func_name, discount = '') {
+    function process(terminal_name, func_name, discount = '' , change_product = false) {
         const ord = new Order()
         ord.visit()
         if (func_name == 'ideal') {
@@ -211,7 +211,7 @@ describe('Presta 1.7', function () {
             })
         }
 
-        ord.addproduct(discount)
+        ord.addproduct(discount, change_product)
         cy.get('body').then(($a) => {
             if ($a.find("label:contains('" + terminal_name + "')").length) {
 
