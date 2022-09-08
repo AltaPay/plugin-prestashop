@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2896b9a50c33bc4845bfa9be99aa43d8",
+    "content-hash": "fb42fdb5aaff18f303428c6c60750177",
     "packages": [
         {
             "name": "altapay/api-php",
@@ -60,21 +60,21 @@
         },
         {
             "name": "and/isolate-composer",
-            "version": "1.1",
+            "version": "v1.2.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/logical-and/composer-isolation.git",
-                "reference": "673a824941b4fa5e87bbbf495a40df701546ed88"
+                "reference": "19ae925f0dcda963b723bb7d2105c8291a19b202"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/logical-and/composer-isolation/zipball/673a824941b4fa5e87bbbf495a40df701546ed88",
-                "reference": "673a824941b4fa5e87bbbf495a40df701546ed88",
+                "url": "https://api.github.com/repos/logical-and/composer-isolation/zipball/19ae925f0dcda963b723bb7d2105c8291a19b202",
+                "reference": "19ae925f0dcda963b723bb7d2105c8291a19b202",
                 "shasum": ""
             },
             "require": {
-                "composer-plugin-api": "^1.1",
-                "nikic/php-parser": "~3.0"
+                "composer-plugin-api": "~1.1|~2.0",
+                "nikic/php-parser": "~3.0|~4.10"
             },
             "require-dev": {
                 "composer/composer": "^1.4",
@@ -94,7 +94,7 @@
                 "MIT"
             ],
             "description": "Isolates composer dependencies by prefixing namespace for all vendor code within a project",
-            "time": "2022-06-08T14:16:13+00:00"
+            "time": "2021-01-12T17:39:51+00:00"
         },
         {
             "name": "guzzlehttp/guzzle",
@@ -2746,7 +2746,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
+    "stability-flags": {
+        "and/isolate-composer": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

@@ -17,15 +17,12 @@
       "autorun": false,
       "require-dev": false,
       "replacements": {}
-    },
-    "allow-plugins": {
-      "and/isolate-composer": true
     }
   },
   "require": {
     "php": "^5.6 || ^7.0",
     "altapay/api-php": "^3.2",
-    "and/isolate-composer": "^1.1",
+    "and/isolate-composer": "1.2.x-dev",
     "symfony/event-dispatcher": "4.4.18",
     "symfony/polyfill-php80": "<=1.18.1"
   },
