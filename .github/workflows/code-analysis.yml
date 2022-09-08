@@ -32,7 +32,7 @@ jobs:
        #working-directory: prestashop/modules/altapay
      - name: Install and run PhpCsFixer
        run: |
-         composer install --no-interaction
+         composer update --no-interaction
          php vendor/bin/php-cs-fixer fix --dry-run --diff
        working-directory: prestashop/modules/altapay
 
