@@ -9,9 +9,13 @@ class Order
         })    
     }
   
-    addproduct(discount_type=''){
+    addproduct(discount_type='', change_product = false){
+        var product = '/en/home-accessories/6-mug-the-best-is-yet-to-come.html';
+        if (change_product){
+            product = '/en/art/4-16-the-adventure-begins-framed-poster.html'
+        }
         cy.fixture('config').then((url)=>{
-            cy.visit(url.shopURL + '/en/home-accessories/6-mug-the-best-is-yet-to-come.html')
+            cy.visit(url.shopURL + product)
         }) 
         cy.get('.add > .btn').click()
         cy.get('.cart-content-btn > .btn-primary').click()
