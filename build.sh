@@ -22,7 +22,7 @@ then
     exit
   fi
 
-  php7.2 $(command -v composer) install --no-dev --no-interaction
+  php7.2 $(command -v composer) update --no-dev --no-interaction
   php7.2 $(command -v composer) isolate --no-interaction
   php7.2 $(command -v composer) dump -o --no-interaction
   find . -type d -exec cp index.php {} \;
