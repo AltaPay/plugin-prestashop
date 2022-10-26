@@ -16,6 +16,8 @@ Installing this plug-in will enable the web shop to handle card transactions thr
 
 [Configuration](#configuration)
 
+[Reconcile Orders](#reconcile-orders)
+
 [Troubleshooting](#troubleshooting)
 
 # Prerequisites
@@ -78,6 +80,27 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 ![verify_terminals](https://github.com/AltaPay/plugin-prestashop/blob/main/Docs/Configuration/prestashop_payment_method_page.jpg)
 
 ![process_transactions](https://github.com/AltaPay/plugin-prestashop/blob/main/Docs/Configuration/prestashop_credit_card_payment_page.jpg)
+
+
+# Reconcile Orders
+In order to reconcile payments please follow the steps below:
+
+1. Navigate to the PrestaShop **Admin** page.
+2. Select **Orders** > **Orders** from the left menu.
+3. Select the order you want to view.
+4. Copy the **Reconciliation Identifier** from the **Payment Information** section.
+
+   ![prestashop_order_view](Docs/OrderReconciliation/prestashop_order_view.jpg)
+
+5. Navigate to AltaPay Gateway dashboard
+6. Click on **FUNDING FILES** under **FINANCES** menu
+7. Download the CSV file
+8. Or you can find the payment in the transaction list, open the reconciliation file from there and download a csv file
+9. Open the downloaded CSV file and match the **Reconciliation Identifier** with Magento's **Reconciliation Identifier**.
+
+**Sample AltaPay Gateway CSV:**
+
+![funding_list_csv](Docs/OrderReconciliation/funding_list_csv.png)
 
 
 # Troubleshooting

@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.4.0';
+    $pluginVersion = '3.4.1';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -232,6 +232,7 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
     $paymentNature = $response->Transactions[0]->PaymentNature;
     $paymentStatus = $payment_status;
     $requireCapture = 0;
+    $reconciliation_identifier = sha1($uniqueId);
     if ($paymentType === 'payment') {
         $requireCapture = 1;
     }
@@ -246,11 +247,11 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
     $cardCountry = $customerInfo->CountryOfOrigin->Country;
     //insert into order log
     $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_order`
-		(id_order, unique_id, payment_id, cardMask, cardToken, cardBrand, cardExpiryDate, cardCountry, 
+		(id_order, unique_id, payment_id, reconciliation_identifier, cardMask, cardToken, cardBrand, cardExpiryDate, cardCountry, 
         paymentType, paymentTerminal, paymentStatus, paymentNature, requireCapture, errorCode, errorText, date_add) 
         VALUES ' .
            "('" . $current_order->id . "', '" . pSQL($uniqueId) . "', '"
-           . pSQL($paymentId) . "', '" . pSQL($cardMask) . "', '"
+           . pSQL($paymentId) . "', '" . pSQL($reconciliation_identifier) . "', '" . pSQL($cardMask) . "', '"
            . pSQL($cardToken) . "', '" . pSQL($cardBrand) . "', '"
            . pSQL($cardExpiryDate) . "', '"
            . pSQL($cardCountry) . "', '" . pSQL($paymentType) . "', '"
@@ -342,6 +343,20 @@ function getCvvLess($cartId, $shopOrderId)
     INNER JOIN `' . _DB_PREFIX_ . 'altapay_terminals` term ON trans.`terminal_name` = term.`remote_name`
     WHERE trans.`id_cart` = ' . (int) $cartId . '
         AND trans.`unique_id` = ' . "'$shopOrderId'";
+
+    return Db::getInstance()->getValue($sql);
+}
+
+/**
+ * Method for getting order reconciliation identifier created using plugin
+ *
+ * @param int $orderId
+ *
+ * @return string|null
+ */
+function getAltapayOrderReconciliationIdentifier($orderId)
+{
+    $sql = 'SELECT reconciliation_identifier FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE id_order =' . $orderId;
 
     return Db::getInstance()->getValue($sql);
 }

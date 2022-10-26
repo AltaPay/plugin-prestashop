@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.4.0';
+        $this->version = '3.4.1';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.7'];
@@ -89,11 +89,17 @@ class ALTAPAY extends PaymentModule
             Db::getInstance()->Execute($sql1);
             $sql2 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_order`  add column paymentTerminal varchar(255) NOT NULL AFTER paymentType';
             Db::getInstance()->Execute($sql2);
+            $sql3 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_order`  add column reconciliation_identifier varchar(255) NOT NULL AFTER payment_id';
+            Db::getInstance()->Execute($sql3);
+        }else if(Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'altapay_order`')){
+            $sql4 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_order`  add column reconciliation_identifier varchar(255) NOT NULL AFTER payment_id';
+            Db::getInstance()->Execute($sql4);
         } else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'altapay_order` (
             `id_order` int(10) unsigned NOT NULL,
             `unique_id` varchar(255) NOT NULL,
             `payment_id` varchar(255) NULL,
+            `reconciliation_identifier` varchar(255) NULL,
             `cardMask` varchar(20) NULL,
             `cardToken` varchar(255) NULL,
             `cardBrand` varchar(255) NULL,
@@ -771,6 +777,8 @@ class ALTAPAY extends PaymentModule
             exit();
         }
 
+        $reconciliation_identifier = getAltapayOrderReconciliationIdentifier($orderID);
+
         if ($action === 'Capture') { // CAPTURE
             try {
                 $finalOrderLines = $this->populateOrderLinesFromPost($orderLines, $orderID, 0, $orderLineGiftWrap);
@@ -779,6 +787,9 @@ class ALTAPAY extends PaymentModule
                 $api->setAmount((float) Tools::getValue('amount'));
                 $api->setOrderLines($finalOrderLines);
                 $api->setTransaction($paymentID);
+                if( !empty($reconciliation_identifier)) {
+                    $api->setReconciliationIdentifier($reconciliation_identifier);
+                }
                 $api->call();
                 markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
             } catch (Exception $e) {
@@ -821,6 +832,9 @@ class ALTAPAY extends PaymentModule
                 $api->setAmount($refundAmount);
                 $api->setOrderLines($finalOrderLines);
                 $api->setTransaction($paymentID);
+                if( !empty($reconciliation_identifier)) {
+                    $api->setReconciliationIdentifier($reconciliation_identifier);
+                }
                 $api->call();
                 markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
             } catch (Exception $e) {
@@ -1538,6 +1552,7 @@ class ALTAPAY extends PaymentModule
                 return null;
             }
 
+
             $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
             $api->setTransaction($paymentID);
 
@@ -1564,6 +1579,10 @@ class ALTAPAY extends PaymentModule
                 $orderLines = $this->createOrderStatusOrderLines($amountToCapture);
                 $api->setOrderLines($orderLines);
                 $api->setAmount($amountToCapture);
+                $reconciliation_identifier = getAltapayOrderReconciliationIdentifier($params['id_order']);
+                if( !empty($reconciliation_identifier)) {
+                    $api->setReconciliationIdentifier($reconciliation_identifier);
+                }
                 $api->call();
             }
         } catch (Exception $e) {
@@ -1755,6 +1774,7 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign('this_path', $this->_path);
         $this->smarty->assign('ajax_url', $fet->getAdminLink('AdminModules') . '&configure=' . $tname . '&payment_actions');
         $this->smarty->assign('token', Tools::getAdminTokenLite('AdminModules'));
+        $this->smarty->assign('reconciliation_identifier', $results['reconciliation_identifier']);
 
         $this->context->controller->addCSS($this->_path . 'views/css/admin_order.css', 'all');
         $this->context->controller->addJS($this->_path . 'views/js/admin_order.js');
@@ -2209,7 +2229,8 @@ class ALTAPAY extends PaymentModule
                     ->setFraudService(null)
                     ->setLanguage($cgConf['language'])
                     ->setType($cgConf['payment_type'])
-                    ->setOrderLines($this->getOrderLines($cart));
+                    ->setOrderLines($this->getOrderLines($cart))
+                    ->setSaleReconciliationIdentifier(sha1($cgConf['uniqueid']));
             $response = $request->call();
 
             return [

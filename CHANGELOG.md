@@ -5,9 +5,13 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.4.1] - 2022-10-26
+### Added
+- Support for payment reconciliation.
+
 ## [3.4.0] - 2022-09-05
-### Fixed
-- Add support for PrestaShop version 1.7.8.7
+### Added
+- Support for PrestaShop version 1.7.8.7
 
 ## [3.3.9] - 2022-06-20
 ### Fixed

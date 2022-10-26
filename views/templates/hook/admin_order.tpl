@@ -11,7 +11,7 @@
 
             <div class="panel-heading">
                 <img src="{$this_path}/logo.png" height="14" width="14">
-                Payment information
+                Payment Information
             </div>
 
             <div class="row panel-body">
@@ -253,8 +253,7 @@
 
                     <!-- Details -->
                     {if $ap_paymentinfo}
-                    <div class="row row-ap"
-                    ">
+                    <div class="row row-ap">
                     <div class="col-lg-12">
                         <div class="table-responsive">
                             <table class="table table-bordered">
@@ -297,6 +296,21 @@
                     </div>
                 </div>
             </div>
+
+           <div class="row row-ap">
+                <div class="col-lg-12">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <td style="font-weight: bold">Reconciliation Identifier</td>
+                                <td class="reconciliation_identifier" value="{$reconciliation_identifier}">{$reconciliation_identifier}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
         </div>
 
