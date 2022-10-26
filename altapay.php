@@ -91,7 +91,7 @@ class ALTAPAY extends PaymentModule
             Db::getInstance()->Execute($sql2);
             $sql3 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_order`  add column reconciliation_identifier varchar(255) NOT NULL AFTER payment_id';
             Db::getInstance()->Execute($sql3);
-        } else if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'altapay_order`')){
+        } else if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'altapay_order`')) {
             $sql4 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_order`  add column reconciliation_identifier varchar(255) NOT NULL AFTER payment_id';
             Db::getInstance()->Execute($sql4);
         } else {
