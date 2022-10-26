@@ -152,7 +152,7 @@ class Order
             .invoke('val')
             .then(somevalue => {
                 if (somevalue == "0") {
-                    cy.get('#input-false-admin_currencies_toggle_status-1').click()
+                    cy.get('#input-false-admin_currencies_toggle_status-1').click({force: true})
                 }
             })
     }
