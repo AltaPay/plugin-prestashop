@@ -89,11 +89,8 @@ class ALTAPAY extends PaymentModule
             Db::getInstance()->Execute($sql1);
             $sql2 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_order`  add column paymentTerminal varchar(255) NOT NULL AFTER paymentType';
             Db::getInstance()->Execute($sql2);
-            $sql3 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_order`  add column reconciliation_identifier varchar(255) NOT NULL AFTER payment_id';
+            $sql3 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_order`  add column reconciliation_identifier varchar(255) NULL AFTER payment_id';
             Db::getInstance()->Execute($sql3);
-        } else if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'altapay_order`')) {
-            $sql4 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_order`  add column reconciliation_identifier varchar(255) NOT NULL AFTER payment_id';
-            Db::getInstance()->Execute($sql4);
         } else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'altapay_order` (
             `id_order` int(10) unsigned NOT NULL,
@@ -132,6 +129,17 @@ class ALTAPAY extends PaymentModule
                 return false;
             }
         }
+
+        /* Will add a new column if it doesn't exist.
+        That way we keep the backwards compatibility while adding a new column.*/
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
+             WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_order\' AND COLUMN_NAME = \'reconciliation_identifier\'')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE ' . _DB_PREFIX_ .
+                'altapay_order ADD COLUMN reconciliation_identifier varchar(256) NULL AFTER payment_id')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
 
         /* This table captures each of the transaction details.  An order may or may not exist, and a transaction
        can exist multiple times for each cart */
