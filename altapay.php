@@ -140,6 +140,7 @@ class ALTAPAY extends PaymentModule
 
                 return false;
             }
+        }
 
         /* This table captures each of the transaction details.  An order may or may not exist, and a transaction
        can exist multiple times for each cart */
