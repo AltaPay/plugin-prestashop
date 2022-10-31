@@ -2218,8 +2218,7 @@ class ALTAPAY extends PaymentModule
                     ->setFraudService(null)
                     ->setLanguage($cgConf['language'])
                     ->setType($cgConf['payment_type'])
-                    ->setOrderLines($this->getOrderLines($cart))
-                    ->setSaleReconciliationIdentifier(sha1($cgConf['uniqueid']));
+                    ->setOrderLines($this->getOrderLines($cart));
             $response = $request->call();
 
             return [
