@@ -89,14 +89,11 @@ class ALTAPAY extends PaymentModule
             Db::getInstance()->Execute($sql1);
             $sql2 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_order`  add column paymentTerminal varchar(255) NOT NULL AFTER paymentType';
             Db::getInstance()->Execute($sql2);
-            $sql3 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_order`  add column reconciliation_identifier varchar(255) NULL AFTER payment_id';
-            Db::getInstance()->Execute($sql3);
         } else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'altapay_order` (
             `id_order` int(10) unsigned NOT NULL,
             `unique_id` varchar(255) NOT NULL,
             `payment_id` varchar(255) NULL,
-            `reconciliation_identifier` varchar(255) NULL,
             `cardMask` varchar(20) NULL,
             `cardToken` varchar(255) NULL,
             `cardBrand` varchar(255) NULL,
@@ -124,18 +121,6 @@ class ALTAPAY extends PaymentModule
              WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_order\' AND COLUMN_NAME = \'latestError\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE ' . _DB_PREFIX_ .
                                             'altapay_order ADD COLUMN latestError varchar(256) NULL')) {
-                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
-
-                return false;
-            }
-        }
-
-        /* Will add a new column if it doesn't exist.
-        That way we keep the backwards compatibility while adding a new column.*/
-        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
-             WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_order\' AND COLUMN_NAME = \'reconciliation_identifier\'')) {
-            if (!Db::getInstance()->Execute('ALTER TABLE ' . _DB_PREFIX_ .
-                'altapay_order ADD COLUMN reconciliation_identifier varchar(256) NULL AFTER payment_id')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
@@ -786,8 +771,6 @@ class ALTAPAY extends PaymentModule
             exit();
         }
 
-        $reconciliation_identifier = getAltapayOrderReconciliationIdentifier($orderID);
-
         if ($action === 'Capture') { // CAPTURE
             try {
                 $finalOrderLines = $this->populateOrderLinesFromPost($orderLines, $orderID, 0, $orderLineGiftWrap);
@@ -796,9 +779,6 @@ class ALTAPAY extends PaymentModule
                 $api->setAmount((float) Tools::getValue('amount'));
                 $api->setOrderLines($finalOrderLines);
                 $api->setTransaction($paymentID);
-                if( !empty($reconciliation_identifier)) {
-                    $api->setReconciliationIdentifier($reconciliation_identifier);
-                }
                 $api->call();
                 markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
             } catch (Exception $e) {
@@ -841,9 +821,6 @@ class ALTAPAY extends PaymentModule
                 $api->setAmount($refundAmount);
                 $api->setOrderLines($finalOrderLines);
                 $api->setTransaction($paymentID);
-                if( !empty($reconciliation_identifier)) {
-                    $api->setReconciliationIdentifier($reconciliation_identifier);
-                }
                 $api->call();
                 markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
             } catch (Exception $e) {
@@ -1588,10 +1565,6 @@ class ALTAPAY extends PaymentModule
                 $orderLines = $this->createOrderStatusOrderLines($amountToCapture);
                 $api->setOrderLines($orderLines);
                 $api->setAmount($amountToCapture);
-                $reconciliation_identifier = getAltapayOrderReconciliationIdentifier($params['id_order']);
-                if (!empty($reconciliation_identifier)) {
-                    $api->setReconciliationIdentifier($reconciliation_identifier);
-                }
                 $api->call();
             }
         } catch (Exception $e) {
@@ -1738,6 +1711,7 @@ class ALTAPAY extends PaymentModule
             $reserved = 0;
             $captured = 0;
             $refunded = 0;
+            $reconciliation_identifiers = [];
             $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
             $api->setTransaction($results['payment_id']);
             $paymentDetails = $api->call();
@@ -1747,7 +1721,14 @@ class ALTAPAY extends PaymentModule
                 $reserved += $pay->ReservedAmount;
                 $captured += $pay->CapturedAmount;
                 $refunded += $pay->RefundedAmount;
+                if (isset($pay->ReconciliationIdentifiers) and !empty($pay->ReconciliationIdentifiers)) {
+                    foreach ($pay->ReconciliationIdentifiers as $reconciliation_identifier){
+                        $reconciliation_identifiers[$reconciliation_identifier->Id] = $reconciliation_identifier->Type;
+                    }
+                }
             }
+
+            $this->smarty->assign('reconciliation_identifiers', $reconciliation_identifiers);
 
             $ap_payment = [
                 'reserved' => $reserved,
@@ -1783,7 +1764,6 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign('this_path', $this->_path);
         $this->smarty->assign('ajax_url', $fet->getAdminLink('AdminModules') . '&configure=' . $tname . '&payment_actions');
         $this->smarty->assign('token', Tools::getAdminTokenLite('AdminModules'));
-        $this->smarty->assign('reconciliation_identifier', $results['reconciliation_identifier']);
 
         $this->context->controller->addCSS($this->_path . 'views/css/admin_order.css', 'all');
         $this->context->controller->addJS($this->_path . 'views/js/admin_order.js');

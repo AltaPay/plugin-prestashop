@@ -68,13 +68,9 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 } elseif ($paymentType === 'paymentAndCapture' && $captureStatus === true) {
                     $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
                     $currencyPaid = new Currency($cart->id_currency);
-                    $reconciliation_identifier = getAltapayOrderReconciliationIdentifier($this->module->currentOrder);
                     $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
                     $api->setAmount($amountPaid);
                     $api->setTransaction($transactionID);
-                    if (!empty($reconciliation_identifier)) {
-                        $api->setReconciliationIdentifier($reconciliation_identifier);
-                    }
                     $api->call();
                 }
 

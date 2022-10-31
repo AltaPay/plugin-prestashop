@@ -297,20 +297,28 @@
                 </div>
             </div>
 
-            <div class="row row-ap">
-                <div class="col-lg-12">
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <tbody>
-                            <tr>
-                                <td style="font-weight: bold">Reconciliation Identifier</td>
-                                <td class="reconciliation_identifier" value="{$reconciliation_identifier}">{$reconciliation_identifier}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            {if count($reconciliation_identifiers) gt 0}
+                <div class="row row-ap">
+                    <div class="col-lg-12">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <td style="font-weight: bold">Reconciliation Identifiers</td>
+                                        <td style="font-weight: bold">Transaction Types</td>
+                                    </tr>
+                                    {foreach $reconciliation_identifiers as $reconciliation_identifier => $transaction_type}
+                                        <tr>
+                                            <td>{$reconciliation_identifier}</td>
+                                            <td>{$transaction_type}</td>
+                                        </tr>
+                                    {/foreach}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
+            {/if}
 
         </div>
     </div>
