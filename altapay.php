@@ -1538,7 +1538,6 @@ class ALTAPAY extends PaymentModule
                 return null;
             }
 
-
             $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
             $api->setTransaction($paymentID);
 
@@ -1722,7 +1721,7 @@ class ALTAPAY extends PaymentModule
                 $captured += $pay->CapturedAmount;
                 $refunded += $pay->RefundedAmount;
                 if (isset($pay->ReconciliationIdentifiers) and !empty($pay->ReconciliationIdentifiers)) {
-                    foreach ($pay->ReconciliationIdentifiers as $reconciliation_identifier){
+                    foreach ($pay->ReconciliationIdentifiers as $reconciliation_identifier) {
                         $reconciliation_identifiers[$reconciliation_identifier->Id] = $reconciliation_identifier->Type;
                     }
                 }
