@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-versions: ['7.2']
+        php-versions: ['7.4']
     steps:
-     - name: Install PHP 7.2
+     - name: Install PHP 7.4
        uses: shivammathur/setup-php@v2
        with:
          php-version: ${{ matrix.php-versions }}
