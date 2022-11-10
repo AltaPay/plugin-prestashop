@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.4.0';
+        $this->version = '3.4.1';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.7'];
@@ -1710,6 +1710,7 @@ class ALTAPAY extends PaymentModule
             $reserved = 0;
             $captured = 0;
             $refunded = 0;
+            $reconciliation_identifiers = [];
             $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
             $api->setTransaction($results['payment_id']);
             $paymentDetails = $api->call();
@@ -1719,7 +1720,14 @@ class ALTAPAY extends PaymentModule
                 $reserved += $pay->ReservedAmount;
                 $captured += $pay->CapturedAmount;
                 $refunded += $pay->RefundedAmount;
+                if (isset($pay->ReconciliationIdentifiers) and !empty($pay->ReconciliationIdentifiers)) {
+                    foreach ($pay->ReconciliationIdentifiers as $reconciliation_identifier) {
+                        $reconciliation_identifiers[$reconciliation_identifier->Id] = $reconciliation_identifier->Type;
+                    }
+                }
             }
+
+            $this->smarty->assign('reconciliation_identifiers', $reconciliation_identifiers);
 
             $ap_payment = [
                 'reserved' => $reserved,

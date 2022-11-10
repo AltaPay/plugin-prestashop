@@ -253,8 +253,7 @@
 
                     <!-- Details -->
                     {if $ap_paymentinfo}
-                    <div class="row row-ap"
-                    ">
+                    <div class="row row-ap">
                     <div class="col-lg-12">
                         <div class="table-responsive">
                             <table class="table table-bordered">
@@ -297,6 +296,30 @@
                     </div>
                 </div>
             </div>
+
+            {if count($reconciliation_identifiers) gt 0}
+                <div class="row row-ap">
+                    <div class="col-lg-12">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <td style="font-weight: bold">Reconciliation Identifiers</td>
+                                        <td style="font-weight: bold">Types</td>
+                                    </tr>
+                                    {foreach $reconciliation_identifiers as $reconciliation_identifier => $transaction_type}
+                                        <tr>
+                                            <td>{$reconciliation_identifier}</td>
+                                            <td>{$transaction_type}</td>
+                                        </tr>
+                                    {/foreach}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {/if}
+
         </div>
     </div>
 </div>

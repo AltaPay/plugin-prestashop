@@ -36,7 +36,7 @@ jobs:
          php vendor/bin/php-cs-fixer fix --dry-run --diff
        working-directory: prestashop/modules/altapay
 
-     - name: Composer dependency isolatation
+     - name: Composer dependency isolation
        if: ${{ always() }}
        run: |
          composer isolate --no-interaction
