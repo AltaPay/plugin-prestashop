@@ -44,7 +44,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "API\\PHP\\Altapay\\": "src"
+                    "Altapay\\": "src"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -56,10 +56,6 @@
                 "altapay",
                 "payment"
             ],
-            "support": {
-                "issues": "https://github.com/AltaPay/api-php/issues",
-                "source": "https://github.com/AltaPay/api-php/tree/3.2.8"
-            },
             "time": "2022-11-03T08:09:46+00:00"
         },
         {
@@ -152,7 +148,7 @@
                     "src/functions_include.php"
                 ],
                 "psr-4": {
-                    "API\\PHP\\GuzzleHttp\\": "src/"
+                    "GuzzleHttp\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -255,7 +251,7 @@
                     "src/functions_include.php"
                 ],
                 "psr-4": {
-                    "API\\PHP\\GuzzleHttp\\Promise\\": "src/"
+                    "GuzzleHttp\\Promise\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -348,7 +344,7 @@
             },
             "autoload": {
                 "psr-4": {
-                    "API\\PHP\\GuzzleHttp\\Psr7\\": "src/"
+                    "GuzzleHttp\\Psr7\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -403,10 +399,6 @@
                 "uri",
                 "url"
             ],
-            "support": {
-                "issues": "https://github.com/guzzle/psr7/issues",
-                "source": "https://github.com/guzzle/psr7/tree/2.4.3"
-            },
             "funding": [
                 {
                     "url": "https://github.com/GrahamCampbell",
@@ -473,10 +465,6 @@
                 "parser",
                 "php"
             ],
-            "support": {
-                "issues": "https://github.com/nikic/PHP-Parser/issues",
-                "source": "https://github.com/nikic/PHP-Parser/tree/4.x"
-            },
             "time": "2022-09-10T20:41:13+00:00"
         },
         {
@@ -505,7 +493,7 @@
             },
             "autoload": {
                 "psr-4": {
-                    "API\\PHP\\Psr\\Http\\Client\\": "src/"
+                    "Psr\\Http\\Client\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -554,7 +542,7 @@
             },
             "autoload": {
                 "psr-4": {
-                    "API\\PHP\\Psr\\Http\\Message\\": "src/"
+                    "Psr\\Http\\Message\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -605,7 +593,7 @@
             },
             "autoload": {
                 "psr-4": {
-                    "API\\PHP\\Psr\\Http\\Message\\": "src/"
+                    "Psr\\Http\\Message\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -776,7 +764,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "API\\PHP\\Symfony\\Component\\EventDispatcher\\": ""
+                    "Symfony\\Component\\EventDispatcher\\": ""
                 },
                 "exclude-from-classmap": [
                     "/Tests/"
@@ -847,7 +835,7 @@
             },
             "autoload": {
                 "psr-4": {
-                    "API\\PHP\\Symfony\\Contracts\\EventDispatcher\\": ""
+                    "Symfony\\Contracts\\EventDispatcher\\": ""
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -910,7 +898,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "API\\PHP\\Symfony\\Component\\OptionsResolver\\": ""
+                    "Symfony\\Component\\OptionsResolver\\": ""
                 },
                 "exclude-from-classmap": [
                     "/Tests/"
