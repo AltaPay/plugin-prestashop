@@ -77,9 +77,8 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     $api->setAmount($amountPaid);
                     $api->setTransaction($transactionID);
                     $api->setReconciliationIdentifier($reconciliation_identifier);
-                    $reconciliation_type = 'captured';
                     $api->call();
-                    saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $reconciliation_type);
+                    saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier);
                 }
 
                 // Determine payment method for display
