@@ -357,7 +357,7 @@ function saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier,
 {
          Db::getInstance()->Execute('INSERT INTO `' . _DB_PREFIX_ . 'altapay_order_reconciliation`
 		(id_order, reconciliation_identifier, transaction_type) 
-        VALUES ' ."('" . $orderID . "', '" . pSQL($reconciliation_identifier) . "', '" . pSQL($type) . "'");
+        VALUES ' ."('" . $orderID . "', '" . pSQL($reconciliation_identifier) . "', '" . pSQL($type) . "')");
 }
 
 /**
