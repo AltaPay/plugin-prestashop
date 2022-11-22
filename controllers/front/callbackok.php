@@ -49,14 +49,18 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
 
             // Handle success
             if ($response && is_array($response->Transactions)) {
-                $amountPaid = 0;
-                $transactionID = null;
                 $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
                 $paymentType = $response->type;
                 $captureStatus = $response->requireCapture;
                 $currencyPaid = Currency::getIdByIsoCode($response->currency);
                 $amountPaid = $response->Transactions[0]->CapturedAmount;
                 $transactionID = $response->Transactions[0]->TransactionId;
+                if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
+                    $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
+                    $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+                    saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $reconciliation_type);
+                }
+
                 /*
                  * If payment type is 'payment' funds have not yet been captured,
                  * so AltaPay returns zero as the captured amount.
@@ -68,10 +72,14 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 } elseif ($paymentType === 'paymentAndCapture' && $captureStatus === true) {
                     $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
                     $currencyPaid = new Currency($cart->id_currency);
+                    $reconciliation_identifier = sha1($transactionID.time());
                     $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
                     $api->setAmount($amountPaid);
                     $api->setTransaction($transactionID);
+                    $api->setReconciliationIdentifier($reconciliation_identifier);
+                    $reconciliation_type = 'captured';
                     $api->call();
+                    saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $reconciliation_type);
                 }
 
                 // Determine payment method for display
@@ -97,7 +105,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 echo $this->module->l('This payment method is not available 1004.', 'callbackok');
 
                 /* Redirect user back to the checkout payment step,
-                * assume a failure occured creating the URL until a payment url is received
+                * assume a failure occurred creating the URL until a payment url is received
                 */
                 $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
                 $as = $this->context->link;

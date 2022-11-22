@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.4.1';
+    $pluginVersion = '3.4.2';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -344,4 +344,30 @@ function getCvvLess($cartId, $shopOrderId)
         AND trans.`unique_id` = ' . "'$shopOrderId'";
 
     return Db::getInstance()->getValue($sql);
+}
+
+/**
+ * @param int $orderID
+ * @param string $reconciliation_identifier
+ * @param string $type
+ *
+ * @return void
+ */
+function saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $type = 'captured')
+{
+         Db::getInstance()->Execute('INSERT INTO `' . _DB_PREFIX_ . 'altapay_order_reconciliation`
+		(id_order, reconciliation_identifier, transaction_type) 
+        VALUES ' ."('" . $orderID . "', '" . pSQL($reconciliation_identifier) . "', '" . pSQL($type) . "'");
+}
+
+/**
+ * @param int $orderID
+ *
+ * @return array
+ */
+function getOrderReconciliationIdentifiers($orderID)
+{
+    $sql = 'SELECT reconciliation_identifier, transaction_type FROM `' . _DB_PREFIX_ . 'altapay_order_reconciliation` WHERE id_order =' . $orderID;
+
+    return Db::getInstance()->executeS($sql);
 }

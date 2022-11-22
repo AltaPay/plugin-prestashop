@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.4.2] - 2022-11-23
+### Added
+- Save payment reconciliation data in database to make it available for export .
+
 ## [3.4.1] - 2022-10-26
 ### Added
 - Support for payment reconciliation.
