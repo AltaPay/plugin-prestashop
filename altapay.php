@@ -123,7 +123,6 @@ class ALTAPAY extends PaymentModule
             PRIMARY KEY (`id`)
         ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8');
 
-        Db::getInstance()->Execute('DELETE FROM `' . _DB_PREFIX_ . 'request_sql` WHERE `name` = \'AltaPay Order Reconciliation\'');
         Db::getInstance()->Execute('INSERT INTO `' . _DB_PREFIX_ . 'request_sql` (`name`, `sql`) 
             VALUES (\'AltaPay Order Reconciliation\', "SELECT SQL_CALC_FOUND_ROWS
             a.`id_order` AS `ID`, `reference` AS `Reference`, `total_paid_tax_incl` AS `Total`, `payment` AS `Payment Method`, a.`date_add` AS `Dated`,
@@ -310,6 +309,8 @@ class ALTAPAY extends PaymentModule
      */
     public function uninstall()
     {
+        Db::getInstance()->Execute('DELETE FROM `' . _DB_PREFIX_ . 'request_sql` WHERE `name` = \'AltaPay Order Reconciliation\'');
+
         if (!Configuration::deleteByName('ALTAPAY_USERNAME')
             || !Configuration::deleteByName('ALTAPAY_PASSWORD')
             || !Configuration::deleteByName('ALTAPAY_URL')
