@@ -123,13 +123,11 @@ class ALTAPAY extends PaymentModule
             PRIMARY KEY (`id`)
         ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8');
 
-        if (!Db::getInstance()->getRow('SELECT * FROM `' . _DB_PREFIX_ . 'request_sql` 
-             WHERE `name` = \'AltaPay Order Reconciliation\'')) {
-
-            Db::getInstance()->Execute('INSERT INTO `' . _DB_PREFIX_ . 'request_sql` (`name`, `sql`) 
+        Db::getInstance()->Execute('DELETE FROM `' . _DB_PREFIX_ . 'request_sql` WHERE `name` = \'AltaPay Order Reconciliation\'');
+        Db::getInstance()->Execute('INSERT INTO `' . _DB_PREFIX_ . 'request_sql` (`name`, `sql`) 
             VALUES (\'AltaPay Order Reconciliation\', "SELECT SQL_CALC_FOUND_ROWS
-            a.`id_order`, `reference`, `total_paid_tax_incl`, `payment`, a.`date_add` AS `date_add`,
-            ao.unique_id AS shop_orderid, ao.payment_id AS transaction_id,
+            a.`id_order` AS `ID`, `reference` AS `Reference`, `total_paid_tax_incl` AS `Total`, `payment` AS `Payment Method`, a.`date_add` AS `Dated`,
+            ao.unique_id AS `AltaPay Order ID`, ao.payment_id AS `Transaction ID`,
             aor.reconciliation_identifier  AS `Reconciliation Identifier`, aor.transaction_type AS `Transaction Type`,
             CONCAT(LEFT(c.`firstname`, 1), \'. \', c.`lastname`) AS `Customer`,
             osl.`name` AS `Status`
@@ -143,7 +141,6 @@ class ALTAPAY extends PaymentModule
             WHERE 1
             
             ORDER BY a.`id_order` DESC;")');
-        }
 
 
         /* Will add a new column if it doesn't exist.
