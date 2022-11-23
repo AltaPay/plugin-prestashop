@@ -123,6 +123,28 @@ class ALTAPAY extends PaymentModule
             PRIMARY KEY (`id`)
         ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8');
 
+        if (!Db::getInstance()->getRow('SELECT * FROM `' . _DB_PREFIX_ . 'request_sql` 
+             WHERE name = \'AltaPay Order Reconciliation\'')) {
+
+            Db::getInstance()->Execute('INSERT INTO `' . _DB_PREFIX_ . 'request_sql` (`name`, `sql`) 
+            VALUES (\'AltaPay Order Reconciliation\', "SELECT SQL_CALC_FOUND_ROWS
+            a.`id_order`, `reference`, `total_paid_tax_incl`, `payment`, a.`date_add` AS `date_add`,
+            ao.unique_id AS shop_orderid, ao.payment_id AS transaction_id,
+            aor.reconciliation_identifier  AS `Reconciliation Identifier`, aor.transaction_type AS `Transaction Type`,
+            CONCAT(LEFT(c.`firstname`, 1), \'. \', c.`lastname`) AS `Customer`,
+            osl.`name` AS `Status`
+            FROM `ps_orders` a
+            
+            LEFT JOIN `ps_altapay_order` ao ON (ao.`id_order` = a.`id_order`)
+            LEFT JOIN `ps_altapay_order_reconciliation` aor ON (aor.`id_order` = a.`id_order`)
+            LEFT JOIN `ps_customer` c ON (c.`id_customer` = a.`id_customer`)
+            LEFT JOIN `ps_order_state` os ON (os.`id_order_state` = a.`current_state`)
+            LEFT JOIN `ps_order_state_lang` osl ON (os.`id_order_state` = osl.`id_order_state` AND osl.`id_lang` = 1)
+            WHERE 1
+            
+            ORDER BY a.`id_order` DESC;")');
+        }
+
 
         /* Will add a new column if it doesn't exist.
         That way we keep the backwards compatibility while adding a new column.*/
