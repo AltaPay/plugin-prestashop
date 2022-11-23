@@ -374,8 +374,10 @@ function getOrderReconciliationIdentifiers($orderID)
 
 /**
  * @param int $orderID
+ * @param string $reconciliation_identifier
+ * @param string $type
  *
- * @return array
+ * @return void
  */
 function saveOrderReconciliationIdentifierIfNotExists($orderID, $reconciliation_identifier, $type)
 {
