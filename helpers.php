@@ -371,3 +371,20 @@ function getOrderReconciliationIdentifiers($orderID)
 
     return Db::getInstance()->executeS($sql);
 }
+
+/**
+ * @param int $orderID
+ *
+ * @return array
+ */
+function saveOrderReconciliationIdentifierIfNotExists($orderID, $reconciliation_identifier, $type)
+{
+    $sql = 'SELECT id FROM `' . _DB_PREFIX_ . 'altapay_order_reconciliation` WHERE id_order =' . $orderID .
+        " AND reconciliation_identifier ='" . pSQL($reconciliation_identifier) .
+        "' AND transaction_type ='" . pSQL($type) . "'";
+
+    if (!Db::getInstance()->getRow($sql)) {
+
+        saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $type);
+    }
+}

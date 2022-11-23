@@ -74,6 +74,14 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         $currentOrder = new Order((int) $this->module->currentOrder);
 
                         createAltapayOrder($response, $currentOrder, $transactionStatus);
+
+                        if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
+                            $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
+                            $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+
+                            saveOrderReconciliationIdentifierIfNotExists($currentOrder->id, $reconciliation_identifier, $reconciliation_type);
+                        }
+
                         $this->unlock($fp);
                         exit('Order created');
                     } else {
@@ -103,6 +111,14 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                             $payment[0]->transaction_id = pSQL($shopOrderId);
                             $payment[0]->save();
                         }
+
+                        if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
+                            $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
+                            $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+
+                            saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
+                        }
+
                         $this->unlock($fp);
                         exit('Order status updated to Accepted');
                     } elseif ($transactionStatus === 'epayment_declined') {
