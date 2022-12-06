@@ -6,6 +6,12 @@
  * file that was distributed with this source code.
 *}
 
+<div class="savecard-checkbox">
+    <label for="savecard">
+        <input type="checkbox" name="savecard" class="savecard" id="savecard" />
+        Save this card for future transactions
+    </label>
+</div>
 {if !empty($ccTokenControl) && $customerID}
     <select id="selectCreditCard" class="selectCreditCard">
         <option value="">{l s='Select a saved credit card'}</option>

@@ -68,6 +68,7 @@ class ALTAPAY extends PaymentModule
     {
         if (!parent::install()
             || !$this->registerHook('payment')
+            || !$this->registerHook('header')
             || !$this->registerHook('paymentOptions')
             || !$this->registerHook('paymentReturn')
             || !$this->registerHook('adminOrder')
@@ -203,7 +204,12 @@ class ALTAPAY extends PaymentModule
         if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_saved_credit_card`')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_saved_credit_card`  TO `' . _DB_PREFIX_ . 'altapay_saved_credit_card`  ';
             Db::getInstance()->Execute($sql);
-        } else {
+        } 
+        elseif (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card`')) {    
+            $sql1 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_terminals`  add column ccTokenControl_ int(255) NOT NULL AFTER currency';
+            Db::getInstance()->Execute($sql1);
+        }
+        else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . "altapay_saved_credit_card` (
 		`id` mediumint(9) NOT NULL AUTO_INCREMENT,
 		`time` datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -292,7 +298,12 @@ class ALTAPAY extends PaymentModule
 
         return true;
     }
-
+    function hookHeader($params)
+    {
+        $this->context->controller->addJquery();
+        $this->context->controller->addJS($this->_path . 'js/creditCardFront.js', 'all');
+        $this->context->controller->addCSS($this->_path . 'views/css/payment.css', 'all');
+    }
     /**
      * Return content for the configuration in back office
      *
@@ -2057,7 +2068,7 @@ class ALTAPAY extends PaymentModule
      *
      * @throws Exception
      */
-    public function createTransaction($savedCreditCard, $payment_method = false)
+    public function createTransaction($savecard, $savedCreditCard, $payment_method = false)
     {
         $customerCreatedDate = null;
         $cart = $this->context->cart;
@@ -2196,6 +2207,11 @@ class ALTAPAY extends PaymentModule
                 'payment_form_url' => false,
             ];
         }
+        if(isset($savecard) && $savecard != 0) {
+            $type = "verifyCard";
+        } else {
+            $type = $cgConf['payment_type'];
+        }
 
         try {
             $config = new API\PHP\Altapay\Request\Config();
@@ -2204,6 +2220,7 @@ class ALTAPAY extends PaymentModule
             $config->setCallbackOpen($callback['callback_open']);
             $config->setCallbackNotification($callback['callback_notification']);
             $config->setCallbackForm($callback['callback_form']);
+
             $request = new API\PHP\Altapay\Api\Ecommerce\PaymentRequest(getAuth());
             $request->setTerminal($cgConf['terminal'])
                     ->setShopOrderId($cgConf['uniqueid'])
@@ -2216,15 +2233,17 @@ class ALTAPAY extends PaymentModule
                     ->setCcToken($ccToken)
                     ->setFraudService(null)
                     ->setLanguage($cgConf['language'])
-                    ->setType($cgConf['payment_type'])
+                    ->setType($type)
                     ->setOrderLines($this->getOrderLines($cart));
             $response = $request->call();
-
+            
             return [
                 'success' => true,
                 'uniqueid' => $cgConf['uniqueid'],
+                'terminal' => $cgConf['terminal'],
                 'amount' => $amount,
                 'result' => 'Success',
+                "terminal" => $cgConf['terminal'],
                 'payment_form_url' => $response->Url,
             ];
         } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
