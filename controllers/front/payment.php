@@ -58,7 +58,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
                 $cart->id, 
                 Configuration::get('ALTAPAY_OS_PENDING'), 
                 $result['amount'], 
-                $result['success'], 
+                $result['terminal'], 
                 null, 
                 null, 
                 (int) $currency_paid->id, 
