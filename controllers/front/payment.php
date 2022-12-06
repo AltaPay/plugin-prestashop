@@ -23,7 +23,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         $this->display_column_left = false;
         parent::initContent();
         $savedCreditCard = null;
-
+        $payment_method = Tools::getValue('method', false);
         $cart = $this->context->cart;
         if (!$this->module->checkCurrency($cart)) {
             Tools::redirect('index.php?controller=order');
@@ -36,8 +36,6 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         $payment_form_url = $this->context->link->getPageLink($controller, true, null,
                 'step=3&altapay_unavailable=1') . '#altapay_unavailable';
 
-        $payment_method = Tools::getValue('method', false);
-
         if (isset($_COOKIE['selectedCreditCard'])) {
             $savedCreditCard = $_COOKIE['selectedCreditCard'];
             unset($_COOKIE['selectedCreditCard']);
@@ -46,14 +44,27 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             unset($_COOKIE['selectedCreditCard']);
             setcookie('selectedCreditCard', null, -1, '/');
         }
-
         $result = $this->module->createTransaction($savedCreditCard, $payment_method);
+        
+        // Load the customer
+        $customer = new Customer((int) $cart->id_customer);
+        $currency_paid = new Currency($cart->id_currency);
 
         if ($result['success']) {
             $payment_form_url = $result['payment_form_url'];
-
             $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
-
+            // Create Order with pending status
+            $this->module->validateOrder(
+                $cart->id, 
+                Configuration::get('ALTAPAY_OS_PENDING'), 
+                $result['amount'], 
+                $result['success'], 
+                null, 
+                null, 
+                (int) $currency_paid->id, 
+                false, 
+                $customer->secure_key
+            );
             // Insert into transaction log
             $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction` 
 				(id_cart, payment_form_url, unique_id, amount, terminal_name, date_add) VALUES ' .
