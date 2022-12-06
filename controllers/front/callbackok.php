@@ -41,12 +41,11 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $customer = new Customer((int) $cart->id_customer);
 
             // Load order if it exist
-            $this->id_order = Order::getOrderByCartId((int)($cart->id));
-            $order = new Order((int)($this->id_order));
+            $this->id_order = Order::getOrderByCartId((int) ($cart->id));
+            $order = new Order((int) ($this->id_order));
 
             // Handle success
-            if (Validate::isLoadedObject($order) && $response && is_array($response->Transactions)) 
-            {
+            if (Validate::isLoadedObject($order) && $response && is_array($response->Transactions)) {
                 $paymentType = $response->type;
                 $captureStatus = $response->requireCapture;
                 $currencyPaid = Currency::getIdByIsoCode($response->currency);

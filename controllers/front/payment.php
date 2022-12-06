@@ -45,7 +45,6 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             setcookie('selectedCreditCard', null, -1, '/');
         }
         $result = $this->module->createTransaction($savedCreditCard, $payment_method);
-        
         // Load the customer
         $customer = new Customer((int) $cart->id_customer);
         $currency_paid = new Currency($cart->id_currency);
@@ -55,14 +54,14 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
             // Create Order with pending status
             $this->module->validateOrder(
-                $cart->id, 
-                Configuration::get('ALTAPAY_OS_PENDING'), 
-                $result['amount'], 
-                $result['terminal'], 
-                null, 
-                null, 
-                (int) $currency_paid->id, 
-                false, 
+                $cart->id,
+                Configuration::get('ALTAPAY_OS_PENDING'),
+                $result['amount'],
+                $result['terminal'],
+                null,
+                null,
+                (int) $currency_paid->id,
+                false,
                 $customer->secure_key
             );
             // Insert into transaction log

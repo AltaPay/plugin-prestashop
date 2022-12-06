@@ -2224,7 +2224,7 @@ class ALTAPAY extends PaymentModule
                 'success' => true,
                 'uniqueid' => $cgConf['uniqueid'],
                 'amount' => $amount,
-                "terminal" => $cgConf['terminal'],
+                'terminal' => $cgConf['terminal'],
                 'result' => 'Success',
                 'payment_form_url' => $response->Url,
             ];
