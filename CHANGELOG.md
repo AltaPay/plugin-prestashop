@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.4.2] - 2022-10-26
+### Fixed
+- Fixed order total mismatch between Prestashop and gateway in case multiple tabs are used for ordering
+
 ## [3.4.1] - 2022-10-26
 ### Added
 - Support for payment reconciliation.
