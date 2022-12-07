@@ -18,9 +18,6 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
      */
     public function postProcess()
     {
-        $amountPaid = 0;
-        $transactionID = null;
-
         try {
             $postData = Tools::getAllValues();
             $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
@@ -45,7 +42,9 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $order = new Order((int) ($this->id_order));
 
             // Handle success
-            if (Validate::isLoadedObject($order) && $response && is_array($response->Transactions)) {
+            if (Validate::isLoadedObject($order) && $response && is_array($response->Transactions)) {   
+                $amountPaid = 0;
+                $transactionID = null;
                 $paymentType = $response->type;
                 $captureStatus = $response->requireCapture;
                 $currencyPaid = Currency::getIdByIsoCode($response->currency);
