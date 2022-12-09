@@ -48,15 +48,41 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             }
 
             // Handle success
-            if ($response && is_array($response->Transactions)) {
-                $amountPaid = 0;
-                $transactionID = null;
-                $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
-                $paymentType = $response->type;
+            if ($response && isset($response->Transactions)) {
+                $cardType      = "";
+                $expires       = "";
+                $amountPaid    = 0;
+                $transactionId = $response->transactionId;
+                $orderStatus   = (int)Configuration::get('PS_OS_PAYMENT');
+                $paymentType   = $response->type;
                 $captureStatus = $response->requireCapture;
-                $currencyPaid = Currency::getIdByIsoCode($response->currency);
-                $amountPaid = $response->Transactions[0]->CapturedAmount;
-                $transactionID = $response->Transactions[0]->TransactionId;
+                $currencyPaid  = Currency::getIdByIsoCode($response->currency);
+                $transaction   = $this->getTransaction($response);
+                $customerID    = $this->context->customer->id;
+                $ccToken       = $response->creditCardToken;
+                $maskedPan     = $response->maskedCreditCard;
+                $agreementType = "unscheduled";
+        
+                if (isset($transaction->CapturedAmount)) {
+                    $amountPaid = $transaction->CapturedAmount;
+                }
+                if (isset($transaction->CreditCardExpiry->Month) && isset($transaction->CreditCardExpiry->Year)) {
+                    $expires = $transaction->CreditCardExpiry->Month . '/' . $transaction->CreditCardExpiry->Year;
+                }
+                if (isset($transaction->PaymentSchemeName)) {
+                    $cardType = $transaction->PaymentSchemeName;
+                }
+                // Save card to altapay save vcard table
+                if ($paymentType === "verifyCard") {
+                    $sql = 'INSERT INTO `' . _DB_PREFIX_
+                        . 'altapay_saved_credit_card` (time,userID,agreement_id,agreement_type,cardBrand,creditCardNumber,cardExpiryDate,ccToken) VALUES (Now(),'
+                        . $customerID . ',"' . $transactionId . '","'
+                        . $agreementType . '","' . $cardType . '","'
+                        . $maskedPan . '","' . $expires . '","' . $ccToken
+                        . '")';
+                    Db::getInstance()->executeS($sql);
+                }
+
                 /*
                  * If payment type is 'payment' funds have not yet been captured,
                  * so AltaPay returns zero as the captured amount.
@@ -70,7 +96,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     $currencyPaid = new Currency($cart->id_currency);
                     $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
                     $api->setAmount($amountPaid);
-                    $api->setTransaction($transactionID);
+                    $api->setTransaction($transactionId);
                     $api->call();
                 }
 
@@ -121,5 +147,18 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
     {
         flock($fileOpen, LOCK_UN);
         fclose($fileOpen);
+    }
+
+    public function getTransaction($response) {
+        $max_date = "";
+        $latestTransKey = 0;
+        foreach ($response->Transactions as $key => $transaction) {
+            if ($transaction->CreatedDate > $max_date) {
+                $max_date       = $transaction->CreatedDate;
+                $latestTransKey = $key;
+            }
+        }
+
+        return $response->Transactions[$latestTransKey];
     }
 }

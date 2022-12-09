@@ -13,14 +13,10 @@
     </label>
 </div>
 {if !empty($ccTokenControl) && $customerID}
-    <select id="selectCreditCard" class="selectCreditCard">
+    <select name="ccToken" id="selectCreditCard" class="selectCreditCard">
         <option value="">{l s='Select a saved credit card'}</option>
         {foreach $savedCreditCard as $item}
-            {if !empty($item.cardName)}
-                <option value="{{$item.creditCard}}">{{$item.cardName}}</option>
-            {else}
-                <option value="{{$item.creditCard}}">{{$item.creditCard}} ({{$item.cardExpiryDate}})</option>
-            {/if}
+                <option value="{{$item.id}}">{{$item.creditCard}} ({{$item.cardExpiryDate}})</option>
 
         {/foreach}
     </select>

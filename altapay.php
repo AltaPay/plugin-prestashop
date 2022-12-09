@@ -205,15 +205,18 @@ class ALTAPAY extends PaymentModule
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_saved_credit_card`  TO `' . _DB_PREFIX_ . 'altapay_saved_credit_card`  ';
             Db::getInstance()->Execute($sql);
         } 
-        elseif (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card`')) {    
-            $sql1 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_terminals`  add column ccTokenControl_ int(255) NOT NULL AFTER currency';
-            Db::getInstance()->Execute($sql1);
+        elseif (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card`')) {
+            Db::getInstance()->execute('ALTER TABLE `'._DB_PREFIX_.'altapay_saved_credit_card` ADD `agreement_id` int(255) NOT NULL AFTER userID');
+            Db::getInstance()->execute('ALTER TABLE `'._DB_PREFIX_.'altapay_saved_credit_card` ADD `agreement_type` varchar(255) NOT NULL AFTER agreement_id');
+            Db::getInstance()->execute('ALTER TABLE `'._DB_PREFIX_.'altapay_terminals` ADD `ccTokenControl_` int(255) NOT NULL AFTER currency');
         }
         else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . "altapay_saved_credit_card` (
 		`id` mediumint(9) NOT NULL AUTO_INCREMENT,
 		`time` datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 		`userID` varchar(200) DEFAULT '' NOT NULL,
+		`agreement_id` int(200) DEFAULT '' NOT NULL,
+		`agreement_type` varchar(200) DEFAULT '' NOT NULL,
 		`cardBrand` varchar(200) DEFAULT '' NOT NULL,
 		`creditCardNumber` varchar(200) DEFAULT '' NOT NULL,
 		`cardExpiryDate` varchar(200) DEFAULT '' NOT NULL,
@@ -1930,8 +1933,8 @@ class ALTAPAY extends PaymentModule
             if ($results) {
                 foreach ($results as $result) {
                     $savedCreditCard[] = [
+                        'id' => $result['id'],
                         'creditCard' => $result['creditCardNumber'],
-                        'cardName' => $result['cardName'],
                         'cardExpiryDate' => $result['cardExpiryDate'],
                     ];
                 }
@@ -2073,6 +2076,7 @@ class ALTAPAY extends PaymentModule
         $customerCreatedDate = null;
         $cart = $this->context->cart;
         $ccToken = null;
+        $isReservation = false;
 
         // Terminal
         $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
@@ -2189,12 +2193,14 @@ class ALTAPAY extends PaymentModule
         }
 
         if (!is_null($savedCreditCard)) {
-            $sql = 'SELECT ccToken FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE creditcardNumber ="' . $savedCreditCard . '"';
+            $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="' . $savedCreditCard . '"';
             $results = Db::getInstance()->executeS($sql);
-            foreach ($results as $result) {
-                $ccToken = $result['ccToken'];
-            }
+            // foreach ($results as $result) {
+            //     $ccToken = $result['ccToken'];
+            // }
         }
+
+
 
         if (!$this->altapayApiLogin()) {
             PrestaShopLogger::addLog($this->api_error, 3, null, $this->name, $this->id, true);
@@ -2207,7 +2213,8 @@ class ALTAPAY extends PaymentModule
                 'payment_form_url' => false,
             ];
         }
-        if(isset($savecard) && $savecard != 0) {
+
+        if(!is_null($savecard) && $savecard != 0) {
             $type = "verifyCard";
         } else {
             $type = $cgConf['payment_type'];
@@ -2222,17 +2229,32 @@ class ALTAPAY extends PaymentModule
             $config->setCallbackForm($callback['callback_form']);
 
             $request = new API\PHP\Altapay\Api\Ecommerce\PaymentRequest(getAuth());
+
+            if (!empty($results)) {
+                $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
+                $token   = $results['token'];
+                $request->setCreditCardToken($token);
+                $request->setAgreement(
+                    ["agreement['id']" => $results['agreement_id'],
+                    "agreement['type']" => $results['agreement_type'],
+                    "agreement['unscheduled_type']" => "incremental"
+                    ]
+                );
+                $isReservation = true;
+            }
+            if(!$isReservation) {
+                $request->setConfig($config)
+                        ->setLanguage($cgConf['language']);
+            }
+
             $request->setTerminal($cgConf['terminal'])
                     ->setShopOrderId($cgConf['uniqueid'])
                     ->setAmount($amount)
                     ->setCurrency($cgConf['currency'])
                     ->setCustomerInfo($customer)
-                    ->setConfig($config)
                     ->setTransactionInfo($transactionInfo)
                     ->setCookie($cgConf['cookie'])
-                    ->setCcToken($ccToken)
                     ->setFraudService(null)
-                    ->setLanguage($cgConf['language'])
                     ->setType($type)
                     ->setOrderLines($this->getOrderLines($cart));
             $response = $request->call();

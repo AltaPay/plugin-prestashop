@@ -23,6 +23,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         $this->display_column_left = false;
         parent::initContent();
         $savedCreditCard = null;
+        $saveCard = null;
 
         $cart = $this->context->cart;
         if (!$this->module->checkCurrency($cart)) {
@@ -47,7 +48,16 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             setcookie('selectedCreditCard', null, -1, '/');
         }
 
-        $result = $this->module->createTransaction($savedCreditCard, $payment_method);
+        if (isset($_COOKIE['savecard'])) {
+            $saveCard = $_COOKIE['savecard'];
+            unset($_COOKIE['savecard']);
+            setcookie('savecard', null, -1, '/');
+        } else {
+            unset($_COOKIE['savecard']);
+            setcookie('savecard', null, -1, '/');
+        }
+
+        $result = $this->module->createTransaction($saveCard, $savedCreditCard, $payment_method);
 
         if ($result['success']) {
             $payment_form_url = $result['payment_form_url'];
