@@ -24,6 +24,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         parent::initContent();
         $savedCreditCard = null;
         $saveCard = null;
+        $payment_method = Tools::getValue('method', false);
 
         $cart = $this->context->cart;
         if (!$this->module->checkCurrency($cart)) {
@@ -36,8 +37,6 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
         $payment_form_url = $this->context->link->getPageLink($controller, true, null,
                 'step=3&altapay_unavailable=1') . '#altapay_unavailable';
-
-        $payment_method = Tools::getValue('method', false);
 
         if (isset($_COOKIE['selectedCreditCard'])) {
             $savedCreditCard = $_COOKIE['selectedCreditCard'];
@@ -61,9 +60,19 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
 
         if ($result['success']) {
             $payment_form_url = $result['payment_form_url'];
-
             $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
-
+            // Create Order with pending status
+            $this->module->validateOrder(
+                $cart->id,
+                Configuration::get('ALTAPAY_OS_PENDING'),
+                $result['amount'],
+                $result['terminal'],
+                null,
+                null,
+                (int) $currency_paid->id,
+                false,
+                $customer->secure_key
+            );
             // Insert into transaction log
             $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction` 
 				(id_cart, payment_form_url, unique_id, amount, terminal_name, date_add) VALUES ' .
