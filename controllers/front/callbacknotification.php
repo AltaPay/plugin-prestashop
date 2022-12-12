@@ -108,7 +108,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     } elseif ($transactionStatus === 'epayment_declined') {
                         // Update payment status to 'declined'
                         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
-                        SET `paymentStatus` = \'declined\' WHERE `id_order` = ' . (int)$order->id;
+                        SET `paymentStatus` = \'declined\' WHERE `id_order` = ' . (int) $order->id;
                         Db::getInstance()->Execute($sql);
                         $this->unlock($fp);
                         exit('Order status updated to Error');

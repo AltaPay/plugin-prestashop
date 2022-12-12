@@ -1484,7 +1484,7 @@ class ALTAPAY extends PaymentModule
                                          . 'altapay_transaction ON '
                                          . _DB_PREFIX_ . 'altapay_transaction.unique_id = '
                                          . _DB_PREFIX_ . 'altapay_order.unique_id WHERE id_order='
-                                         . (int)$params['id_order']);
+                                         . (int) $params['id_order']);
     }
 
     /**
