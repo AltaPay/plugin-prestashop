@@ -30,7 +30,7 @@ class ALTAPAYshowsavedcreditcardsModuleFrontController extends ModuleFrontContro
 
         if ($this->context->customer->isLogged()) {
             $customerID = $this->context->customer->id;
-            $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE userID =' . $customerID;
+            $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE userID =' . pSQL($customerID);
             $results = Db::getInstance()->executeS($sql);
             if ($results) {
                 foreach ($results as $result) {

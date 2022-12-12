@@ -19,8 +19,8 @@ class ALTAPAYdeletecreditcardModuleFrontController extends ModuleFrontController
     {
         $customerID = Tools::getValue('customerID', false);
         $cardMask = Tools::getValue('creditCardNumber', false);
-        $sql = 'DELETE FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE creditcardNumber ="' . $cardMask
-                      . '" AND userID="' . $customerID . '"';
+        $sql = 'DELETE FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE creditcardNumber ="' . pSQL($cardMask)
+                      . '" AND userID="' . pSQL($customerID) . '"';
         Db::getInstance()->executeS($sql);
         Tools::redirect('index.php?fc=module&module=altapay&controller=showsavedcreditcards');
     }
