@@ -7,7 +7,7 @@ PrestaShop 1.6.x and 1.7.x
 
 ## [3.4.3] - 2022-12-12
 ### Fixed
-- Sanitize data which is injected into SQL query
+- Sanitize data for SQL query
 
 ## [3.4.2] - 2022-12-09
 ### Fixed
