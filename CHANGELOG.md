@@ -5,7 +5,11 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
-## [3.4.2] - 2022-10-26
+## [3.4.3] - 2022-12-12
+### Fixed
+- Sanitize data which is injected into SQL query
+
+## [3.4.2] - 2022-12-09
 ### Fixed
 - Fixed order total mismatch between Prestashop and gateway in case multiple tabs are used for ordering
 
