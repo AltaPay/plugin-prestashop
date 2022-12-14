@@ -1783,8 +1783,10 @@ class ALTAPAY extends PaymentModule
         $this->context->controller->addJS($this->_path . 'views/js/admin_order.js');
         $this->context->controller->addJS($this->_path . 'views/js/form.js', 'all');
         $this->context->controller->addCSS(($this->_path) . 'views/css/payment.css', 'all');
+ error_log('===========version_compare============'.PHP_EOL,3,'/var/www/html/modules/altapay/altapay.log');
 
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+           
             return $this->display(__FILE__, '/views/templates/hook/admin_order17.tpl');
         } else {
             return $this->display(__FILE__, '/views/templates/hook/admin_order.tpl');

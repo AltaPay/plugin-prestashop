@@ -139,6 +139,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         $transactionID = null;
         $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
         $transaction = $response->Transactions[$latestTransKey];
+        $shopOrderId   = $transaction->ShopOrderId;
         $paymentType   = $transaction->AuthType;
         $amountPaid = $transaction->CapturedAmount ?? 0;
         $transactionID = $transaction->TransactionId ?? '';
@@ -173,6 +174,14 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             $customerSecureKey
         );
 
+        // Insert into transaction log
+        $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction` 
+            (id_cart, unique_id, amount, terminal_name, date_add) VALUES ' .
+                "('" . $cart->id . "', '" . $shopOrderId . "', '"
+                . $amountPaid . "', '" . $paymentMethod . "' , '" . time() . "')" .
+                ' ON DUPLICATE KEY UPDATE `amount` = ' . $amountPaid;
+
+        Db::getInstance()->Execute($sql);
         // Log order
         $currentOrder = new Order((int) $this->module->currentOrder);
         createAltapayOrder($response, $currentOrder, 'succeeded', $latestTransKey);
