@@ -211,11 +211,12 @@ class ALTAPAY extends PaymentModule
             Db::getInstance()->execute('ALTER TABLE `'._DB_PREFIX_.'altapay_terminals` ADD `ccTokenControl_` int(255) NOT NULL AFTER currency');
         }
         else {
+            
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . "altapay_saved_credit_card` (
 		`id` mediumint(9) NOT NULL AUTO_INCREMENT,
 		`time` datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 		`userID` varchar(200) DEFAULT '' NOT NULL,
-		`agreement_id` int(200) DEFAULT '' NOT NULL,
+		`agreement_id` varchar(200) DEFAULT '' NOT NULL,
 		`agreement_type` varchar(200) DEFAULT '' NOT NULL,
 		`cardBrand` varchar(200) DEFAULT '' NOT NULL,
 		`creditCardNumber` varchar(200) DEFAULT '' NOT NULL,
@@ -2077,7 +2078,8 @@ class ALTAPAY extends PaymentModule
         $cart = $this->context->cart;
         $ccToken = null;
         $isReservation = false;
-
+        $agreementData = [];
+        $results = null;
         // Terminal
         $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
         if (!is_object($terminal)) {
@@ -2193,14 +2195,19 @@ class ALTAPAY extends PaymentModule
         }
 
         if (!is_null($savedCreditCard)) {
-            $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="' . $savedCreditCard . '"';
+            $sql = 'SELECT agreement_id, agreement_type, ccToken FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="' . $savedCreditCard . '"';
             $results = Db::getInstance()->executeS($sql);
-            // foreach ($results as $result) {
-            //     $ccToken = $result['ccToken'];
-            // }
+            if ($results) {
+                foreach ($results as $result) {
+                    $ccToken = $result['ccToken'];
+                    $agreementData[] = [
+                        'id' => $result['agreement_id'],
+                        'type' => $result['agreement_type'],
+                        'unscheduled_type' => "incremental",
+                    ];
+                }
+            }
         }
-
-
 
         if (!$this->altapayApiLogin()) {
             PrestaShopLogger::addLog($this->api_error, 3, null, $this->name, $this->id, true);
@@ -2229,17 +2236,12 @@ class ALTAPAY extends PaymentModule
             $config->setCallbackForm($callback['callback_form']);
 
             $request = new API\PHP\Altapay\Api\Ecommerce\PaymentRequest(getAuth());
-
-            if (!empty($results)) {
+ 
+            if ($results) {
                 $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
-                $token   = $results['token'];
+                $token   = $ccToken;
                 $request->setCreditCardToken($token);
-                $request->setAgreement(
-                    ["agreement['id']" => $results['agreement_id'],
-                    "agreement['type']" => $results['agreement_type'],
-                    "agreement['unscheduled_type']" => "incremental"
-                    ]
-                );
+                $request->setAgreement($agreementData[0]);
                 $isReservation = true;
             }
             if(!$isReservation) {
@@ -2260,6 +2262,7 @@ class ALTAPAY extends PaymentModule
             $response = $request->call();
             
             return [
+                'response' => $response,
                 'success' => true,
                 'uniqueid' => $cgConf['uniqueid'],
                 'terminal' => $cgConf['terminal'],
@@ -2544,7 +2547,7 @@ class ALTAPAY extends PaymentModule
         $productPriceAfterDiscount = 0;
         foreach ($vouchers as $key => $voucher) {
             if (in_array($productID, $voucher['products']) || $voucher['products'] === 'all') {
-                if (!$discountPercent && $voucher['reductionPercent'] !== '0.00') {
+                if (!$discountPercent && isset($voucher['reductionPercent']) &&  ($voucher['reductionPercent'] !== '0.00')) {
                     $discountPercent += $voucher['reductionPercent'];
                     $discountedAmount = $basePrice * ($discountPercent / 100);
                     $productPriceAfterDiscount = $basePrice - $discountedAmount;

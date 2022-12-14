@@ -218,18 +218,19 @@ function updatePaymentStatus($paymentId, $paymentStatus)
  *
  * @return void
  */
-function createAltapayOrder($response, $current_order, $payment_status = 'succeeded')
+function createAltapayOrder($response, $current_order, $payment_status = 'succeeded', $latestTransKey = 0)
 {
-    $uniqueId = $response->shopOrderId;
-    $paymentId = $response->transactionId;
-    $cardMask = $response->Transactions[0]->MaskedPan;
-    $cardToken = $response->Transactions[0]->CreditCardToken;
-    $cardExpiryMonth = $response->Transactions[0]->CreditCardExpiryMonth;
-    $cardExpiryYear = $response->Transactions[0]->CreditCardExpiryYear;
-    $cardBrand = $response->Transactions[0]->PaymentSchemeName;
-    $paymentType = $response->Transactions[0]->AuthType;
-    $paymentTerminal = $response->Transactions[0]->Terminal;
-    $paymentNature = $response->Transactions[0]->PaymentNature;
+    $transaction = $response->Transactions[$latestTransKey];
+    $uniqueId = $transaction->ShopOrderId;
+    $paymentId = $transaction->TransactionId;
+    $cardMask = $transaction->CreditCardMaskedPan;
+    $cardToken = $transaction->CreditCardToken;
+    $cardExpiryMonth = $transaction->CreditCardExpiry->Month;
+    $cardExpiryYear = $transaction->CreditCardExpiry->Year;
+    $cardBrand = $transaction->PaymentSchemeName;
+    $paymentType = $transaction->AuthType;
+    $paymentTerminal = $transaction->Terminal;
+    $paymentNature = $transaction->PaymentNature;
     $paymentStatus = $payment_status;
     $requireCapture = 0;
     if ($paymentType === 'payment') {
@@ -242,7 +243,7 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
 
     $errorCode = null;
     $errorText = null;
-    $customerInfo = $response->Transactions[0]->CustomerInfo;
+    $customerInfo = $transaction->CustomerInfo;
     $cardCountry = $customerInfo->CountryOfOrigin->Country;
     //insert into order log
     $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_order`

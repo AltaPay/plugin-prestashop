@@ -47,7 +47,6 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $expires       = "";
                 $amountPaid    = 0;
                 $transactionId = $response->transactionId;
-                $orderStatus   = (int)Configuration::get('PS_OS_PAYMENT');
                 $paymentType   = $response->type;
                 $captureStatus = $response->requireCapture;
                 $currencyPaid  = Currency::getIdByIsoCode($response->currency);
@@ -56,6 +55,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $ccToken       = $response->creditCardToken;
                 $maskedPan     = $response->maskedCreditCard;
                 $agreementType = "unscheduled";
+                $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
         
                 if (isset($transaction->CapturedAmount)) {
                     $amountPaid = $transaction->CapturedAmount;
