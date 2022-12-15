@@ -24,6 +24,11 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $response = $callback->call();
             $shopOrderId = $response->shopOrderId;
 
+        // $terminalRemoteName = $_POST['remote_name'];
+        // $terminalId = getTerminalId($terminalRemoteName)[0]['id_terminal'];
+        
+            // $payment_method = Tools::getValue('method', false);
+          
             // This lock prevents orders to be created twice.
             $fp = fopen(_PS_MODULE_DIR_ . '/altapay/controllers/front/lock.txt', 'r');
             flock($fp, LOCK_EX);
@@ -40,7 +45,10 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             // Load order if it exist
             $this->id_order = Order::getOrderByCartId((int) ($cart->id));
             $order = new Order((int) ($this->id_order));
-
+            $order_payment = OrderPayment::getByOrderId($this->id_order); 
+            error_log('===========postProcess============'.PHP_EOL,3,'/var/www/html/modules/altapay/altapay.log');
+            error_log(print_r($order_payment,true).PHP_EOL,3,'/var/www/html/modules/altapay/altapay.log');
+            error_log('===========postProcess============'.PHP_EOL,3,'/var/www/html/modules/altapay/altapay.log');
             // Handle success
             if ($response && is_array($response->Transactions) && Validate::isLoadedObject($order)) {   
                 $cardType      = "";
@@ -75,6 +83,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                         . $maskedPan . '","' . $expires . '","' . $ccToken
                         . '")';
                     Db::getInstance()->executeS($sql);
+                    $result = $this->module->createTransaction($saveCard, $savedCreditCard, $payment_method);
                 }
 
                 /*

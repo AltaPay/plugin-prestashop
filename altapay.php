@@ -2082,6 +2082,8 @@ class ALTAPAY extends PaymentModule
         $isReservation = false;
         $agreementData = [];
         $results = null;
+        $max_date       = '';
+        $latestTransKey = 0;
         // Terminal
         $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
         if (!is_object($terminal)) {
@@ -2262,17 +2264,28 @@ class ALTAPAY extends PaymentModule
                     ->setType($type)
                     ->setOrderLines($this->getOrderLines($cart));
             $response = $request->call();
-            
+            $responseUrl = $response->Url;
+            $orderStatus = Configuration::get('ALTAPAY_OS_PENDING');  
+            if (strtolower($response->Result) === "success" && $responseUrl == null) {
+                $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
+                $transaction = $response->Transactions[$latestTransKey];
+                $amount = $transaction->CapturedAmount ?? 0;
+                $paymentType = $transaction->AuthType;
+                if ($paymentType === 'payment' || $paymentType === 'paymentAndCapture') {
+                    $amount = $cart->getOrderTotal(true, Cart::BOTH);
+                }
+                $responseUrl =  "reservation";
+            }
+
             return [
-                'response' => $response,
                 'success' => true,
+                'status' => $orderStatus,
                 'uniqueid' => $cgConf['uniqueid'],
                 'terminal' => $cgConf['terminal'],
                 'amount' => $amount,
-                'terminal' => $cgConf['terminal'],
                 'result' => 'Success',
-                "terminal" => $cgConf['terminal'],
-                'payment_form_url' => $response->Url,
+                'payment_form_url' => $responseUrl,
+                'response' => $response
             ];
         } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
             $message = $e->getResponse()->getBody();

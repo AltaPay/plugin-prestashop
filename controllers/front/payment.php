@@ -60,28 +60,14 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         // Load the customer
         $customer = new Customer((int) $cart->id_customer);
         $currency_paid = new Currency($cart->id_currency);
-        $response = $result['response'];
 
-        $max_date       = '';
-        $latestTransKey = 0;
-        if (isset($response->Transactions)) {
-            foreach ($response->Transactions as $key => $data) {
-                if ($data->AuthType === "subscription_payment" && $data->CreatedDate > $max_date) {
-                    $max_date       = $data->CreatedDate;
-                    $latestTransKey = $key;
-                }
-            }
-        }
-        if (strtolower($response->Result) === "success" && $result['payment_form_url'] == null) {
-            $this->handleReservation($response, $latestTransKey, $cart);
-        }
         if ($result['success']) {
             $payment_form_url = $result['payment_form_url'];
             $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
             // Create Order with pending status
             $this->module->validateOrder(
                 $cart->id,
-                Configuration::get('ALTAPAY_OS_PENDING'),
+                $result['status'],
                 $result['amount'],
                 $result['terminal'],
                 null,
@@ -90,17 +76,23 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
                 false,
                 $customer->secure_key
             );
+
             // Insert into transaction log
             $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction` 
 				(id_cart, payment_form_url, unique_id, amount, terminal_name, date_add) VALUES ' .
-                   "('" . $cart->id . "', '" . $payment_form_url . "', '" . $result['uniqueid'] . "', '"
+                   "('" . $cart->id . "', '" . $result['payment_form_url'] . "', '" . $result['uniqueid'] . "', '"
                    . $result['amount'] . "', '" . $terminal->remote_name . "' , '" . time() . "')" .
                    ' ON DUPLICATE KEY UPDATE `amount` = ' . $result['amount'];
 
             Db::getInstance()->Execute($sql);
 
-            // Redirect user to payment form url
-            Tools::redirect($payment_form_url);
+            if ($payment_form_url === "reservation") {
+                $currentOrder = new Order((int) $this->module->currentOrder);
+                createAltapayOrder($result['response'], $currentOrder, "succeeded");
+                Tools::redirect('index.php?controller=order-detail&id_order=' . $this->module->currentOrder);
+            } else {
+                Tools::redirect($payment_form_url);
+            }
         } else {
             // Redirect user back to checkout with a generic error
             Tools::redirect($payment_form_url);
@@ -133,58 +125,5 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         }
 
         return $terminal;
-    }
-
-    public function handleReservation($response, $latestTransKey, $cart) {
-        $transactionID = null;
-        $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
-        $transaction = $response->Transactions[$latestTransKey];
-        $shopOrderId   = $transaction->ShopOrderId;
-        $paymentType   = $transaction->AuthType;
-        $amountPaid = $transaction->CapturedAmount ?? 0;
-        $transactionID = $transaction->TransactionId ?? '';
-        $transStatus = $transaction->TransactionStatus ?? '';
-        $paymentMethod = $transaction->PaymentSchemeName ?? '';
-        $currencyPaid = new Currency($cart->id_currency);
-        $paymentMethod = $transaction->Terminal;
-
-        /*
-        * If payment type is 'payment' funds have not yet been captured,
-        * so AltaPay returns zero as the captured amount.
-        * Therefore we assume full payment has been authorized.
-        */
-        if ($paymentType === 'payment' || $paymentType === 'paymentAndCapture') {
-            $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
-        }
-
-        // Create an order with 'payment accepted' status
-        $currencyPaidID = (int) $currencyPaid->id;
-        // Load the customer
-        $customer = new Customer((int) $cart->id_customer);
-        $customerSecureKey = $customer->secure_key;
-        $this->module->validateOrder(
-            $cart->id,
-            $orderStatus,
-            $amountPaid,
-            $paymentMethod,
-            null,
-            null,
-            $currencyPaidID,
-            false,
-            $customerSecureKey
-        );
-
-        // Insert into transaction log
-        $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction` 
-            (id_cart, unique_id, amount, terminal_name, date_add) VALUES ' .
-                "('" . $cart->id . "', '" . $shopOrderId . "', '"
-                . $amountPaid . "', '" . $paymentMethod . "' , '" . time() . "')" .
-                ' ON DUPLICATE KEY UPDATE `amount` = ' . $amountPaid;
-
-        Db::getInstance()->Execute($sql);
-        // Log order
-        $currentOrder = new Order((int) $this->module->currentOrder);
-        createAltapayOrder($response, $currentOrder, 'succeeded', $latestTransKey);
-        Tools::redirect('index.php?controller=order-detail&id_order=' . $this->module->currentOrder);
     }
 }
