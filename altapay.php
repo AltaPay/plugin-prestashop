@@ -2074,7 +2074,7 @@ class ALTAPAY extends PaymentModule
      *
      * @throws Exception
      */
-    public function createTransaction($savecard, $savedCreditCard, $payment_method = false)
+    public function createTransaction($savecard, $tokenId, $payment_method = false, $transactionId = null)
     {
         $customerCreatedDate = null;
         $cart = $this->context->cart;
@@ -2197,22 +2197,13 @@ class ALTAPAY extends PaymentModule
         if ($this->context->customer->isLogged()) {
             $customer->setCreatedDate(new \DateTime($this->context->customer->date_add));
         }
-
-        if (!is_null($savedCreditCard)) {
-            $sql = 'SELECT agreement_id, agreement_type, ccToken FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="' . $savedCreditCard . '"';
+        $customerId = $this->context->customer->id;
+        if (!is_null($tokenId)) {
+            $sql = 'SELECT agreement_id, agreement_type, ccToken FROM `' 
+            . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="' 
+            . $tokenId . '" AND userID = ' . $customerId;
             $results = Db::getInstance()->executeS($sql);
-            if ($results) {
-                foreach ($results as $result) {
-                    $ccToken = $result['ccToken'];
-                    $agreementData[] = [
-                        'id' => $result['agreement_id'],
-                        'type' => $result['agreement_type'],
-                        'unscheduled_type' => "incremental",
-                    ];
-                }
-            }
         }
-
         if (!$this->altapayApiLogin()) {
             PrestaShopLogger::addLog($this->api_error, 3, null, $this->name, $this->id, true);
 
@@ -2244,16 +2235,19 @@ class ALTAPAY extends PaymentModule
             if ($results) {
                 $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
                 $token   = $ccToken;
+                foreach ($results as $result) {
+                    $ccToken = $result['ccToken'];
+                    $agreementData = [
+                        'id' => $result['agreement_id'],
+                        'type' => $result['agreement_type'],
+                        'unscheduled_type' => "incremental",
+                    ];
+                }
                 $request->setCreditCardToken($token);
-                $request->setAgreement($agreementData[0]);
+                $request->setAgreement($agreementData);
                 $isReservation = true;
             }
-            if(!$isReservation) {
-                $request->setConfig($config)
-                        ->setLanguage($cgConf['language']);
-            }
-
-            $request->setTerminal($cgConf['terminal'])
+            $request->setType($type)->setTerminal($cgConf['terminal'])
                     ->setShopOrderId($cgConf['uniqueid'])
                     ->setAmount($amount)
                     ->setCurrency($cgConf['currency'])
@@ -2261,8 +2255,10 @@ class ALTAPAY extends PaymentModule
                     ->setTransactionInfo($transactionInfo)
                     ->setCookie($cgConf['cookie'])
                     ->setFraudService(null)
-                    ->setType($type)
                     ->setOrderLines($this->getOrderLines($cart));
+            if(!$isReservation) {
+                $request->setConfig($config)->setLanguage($cgConf['language']);
+            }
             $response = $request->call();
             $responseUrl = $response->Url;
             $orderStatus = Configuration::get('ALTAPAY_OS_PENDING');  
@@ -2812,4 +2808,33 @@ class ALTAPAY extends PaymentModule
 
         return false;
     }
+
+    /**
+     * @param string $tokenId
+     * @param int $transId
+     * @param int $customerId
+     *
+     * @return mixed
+     */
+    private function getToken($customerId, $tokenId = null, $transId = null)
+    {
+        $sql = 'SELECT agreement_id, agreement_type, ccToken FROM `' 
+        . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="' 
+        . $tokenId . '" AND userID = ' . $customerId;
+        
+        $results = Db::getInstance()->executeS($sql);
+
+        $model      = $this->dataToken->create();
+        $collection = $model->getCollection()
+            ->addFieldToFilter('customer_id', $customerId);
+        
+        if ($transId == null) {
+            $collection->addFieldToFilter('id', $tokenId);
+        } else {
+            $collection->addFieldToFilter('agreement_id', $transId);
+        }
+        
+        return $collection->getFirstItem()->getData();
+    }
+
 }

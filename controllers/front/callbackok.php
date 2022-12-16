@@ -45,10 +45,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             // Load order if it exist
             $this->id_order = Order::getOrderByCartId((int) ($cart->id));
             $order = new Order((int) ($this->id_order));
-            $order_payment = OrderPayment::getByOrderId($this->id_order); 
-            error_log('===========postProcess============'.PHP_EOL,3,'/var/www/html/modules/altapay/altapay.log');
-            error_log(print_r($order_payment,true).PHP_EOL,3,'/var/www/html/modules/altapay/altapay.log');
-            error_log('===========postProcess============'.PHP_EOL,3,'/var/www/html/modules/altapay/altapay.log');
+            $payment_method = getTerminalId($order->payment)[0]['id_terminal'];
             // Handle success
             if ($response && is_array($response->Transactions) && Validate::isLoadedObject($order)) {   
                 $cardType      = "";
@@ -64,6 +61,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $maskedPan     = $response->maskedCreditCard;
                 $agreementType = "unscheduled";
                 $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+                $message       = "";
         
                 if (isset($transaction->CapturedAmount)) {
                     $amountPaid = $transaction->CapturedAmount;
@@ -74,27 +72,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 if (isset($transaction->PaymentSchemeName)) {
                     $cardType = $transaction->PaymentSchemeName;
                 }
-                // Save card to altapay save vcard table
-                if ($paymentType === "verifyCard") {
-                    $sql = 'INSERT INTO `' . _DB_PREFIX_
-                        . 'altapay_saved_credit_card` (time,userID,agreement_id,agreement_type,cardBrand,creditCardNumber,cardExpiryDate,ccToken) VALUES (Now(),'
-                        . $customerID . ',"' . $transactionId . '","'
-                        . $agreementType . '","' . $cardType . '","'
-                        . $maskedPan . '","' . $expires . '","' . $ccToken
-                        . '")';
-                    Db::getInstance()->executeS($sql);
-                    $result = $this->module->createTransaction($saveCard, $savedCreditCard, $payment_method);
-                }
-
-                /*
-                 * If payment type is 'payment' funds have not yet been captured,
-                 * so AltaPay returns zero as the captured amount.
-                 * Therefore we assume full payment has been authorized.
-                 */
-                if ($paymentType === 'payment') {
-                    $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
-                    $currencyPaid = new Currency($cart->id_currency);
-                } elseif ($paymentType === 'paymentAndCapture' && $captureStatus === true) {
+                if ($paymentType === 'paymentAndCapture' && $captureStatus === true) {
                     $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
                     $currencyPaid = new Currency($cart->id_currency);
                     $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
@@ -102,6 +80,55 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     $api->setTransaction($transactionId);
                     $api->call();
                 }
+                if ($paymentType === "verifyCard") {
+                    $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
+                    $currencyPaid = new Currency($cart->id_currency);
+                    $sql = 'INSERT INTO `' . _DB_PREFIX_
+                        . 'altapay_saved_credit_card` (time,userID,agreement_id,agreement_type,cardBrand,creditCardNumber,cardExpiryDate,ccToken) VALUES (Now(),'
+                        . $customerID . ',"' . $transactionId . '","'
+                        . $agreementType . '","' . $cardType . '","'
+                        . $maskedPan . '","' . $expires . '","' . $ccToken
+                        . '")';
+                    Db::getInstance()->executeS($sql);
+
+                    $agreementData = [
+                        'id' => $transactionId,
+                        'type' => "unscheduled",
+                        'unscheduled_type' => "incremental",
+                    ];
+                    $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
+                    $request->setCreditCardToken($response->creditCardToken)
+                            ->setTerminal($transaction->Terminal)
+                            ->setShopOrderId($response->shopOrderId)
+                            ->setAmount($amountPaid)
+                            ->setCurrency($currencyPaid->iso_code)
+                            ->setAgreement([
+                                'id' => $transactionId,
+                                'type' => "unscheduled",
+                                'unscheduled_type' => "incremental",
+                            ]);
+                    try {
+                        $response = $request->call();
+                    } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
+                        $message = $e->getResponse()->getBody();
+                    } catch (API\PHP\Altapay\Exceptions\ResponseHeaderException $e) {
+                        $message = $e->getHeader()->ErrorMessage;
+                    } catch (API\PHP\Altapay\Exceptions\ResponseMessageException $e) {
+                        $message = $e->getMessage();
+                    } catch (Exception $e) {
+                        $message = $e->getMessage();
+                    }
+                    PrestaShopLogger::addLog('Callback OK issue, Message ' . $message,
+                    3,
+                    '1005',
+                    $this->module->name,
+                    $this->module->id,
+                    true
+                    );
+                    // return $this->module->createTransaction(null, null, $payment_method, $transactionId);
+                }
+
+
                 // Log order
                 createAltapayOrder($response, $order);
                 $this->unlock($fp);
