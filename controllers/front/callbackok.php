@@ -42,7 +42,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $order = new Order((int) ($this->id_order));
 
             // Handle success
-            if ($response && is_array($response->Transactions) && Validate::isLoadedObject($order)) {   
+            if ($response && is_array($response->Transactions) && Validate::isLoadedObject($order)) {
                 $amountPaid = 0;
                 $transactionID = null;
                 $paymentType = $response->type;

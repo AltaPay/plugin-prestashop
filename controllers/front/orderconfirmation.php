@@ -46,7 +46,7 @@ class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontControlle
                 $cardExpiryDate = $altapayOrderDetail['cardExpiryDate'];
                 $userID = $this->context->customer->id;
 
-                $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE userID = "' . $userID . '" and creditcardNumber ="' . $card . '" ';
+                $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE userID = "' . pSQL($userID) . '" and creditcardNumber ="' . pSQL($card) . '" ';
                 $results = Db::getInstance()->executeS($sql);
 
                 $orderTerminalRemoteName = getAltapayOrderDetails($orderID)[0]['paymentTerminal'];
