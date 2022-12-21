@@ -38,7 +38,7 @@ jobs:
      - name: Run PHP-Scoper 
        run: |
          mkdir -p package
-         yes | php7.2 vendor/bin/php-scoper add-prefix --output-dir ./package
+         yes | vendor/bin/php-scoper add-prefix --output-dir ./package
          rsync -a package/vendor/* vendor/
          composer dump-autoload --working-dir ./ --classmap-authoritative
          php vendor/bin/php-cs-fixer fix --dry-run --diff
