@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1c7d1d9cb63f653ea2bb3dd4406d73dd",
+    "content-hash": "fd0e229f952aa66a54e7fafd8e4060a8",
     "packages": [
         {
             "name": "altapay/api-php",
@@ -572,16 +572,16 @@
         },
         {
             "name": "nikic/php-parser",
-            "version": "v4.15.2",
+            "version": "4.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nikic/PHP-Parser.git",
-                "reference": "f59bbe44bf7d96f24f3e2b4ddc21cd52c1d2adbc"
+                "reference": "3182d12b55895a2e71ed6684f9bd5cd13527e94e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/f59bbe44bf7d96f24f3e2b4ddc21cd52c1d2adbc",
-                "reference": "f59bbe44bf7d96f24f3e2b4ddc21cd52c1d2adbc",
+                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/3182d12b55895a2e71ed6684f9bd5cd13527e94e",
+                "reference": "3182d12b55895a2e71ed6684f9bd5cd13527e94e",
                 "shasum": ""
             },
             "require": {
@@ -620,7 +620,7 @@
                 "parser",
                 "php"
             ],
-            "time": "2022-11-12T15:38:23+00:00"
+            "time": "2022-12-14T20:51:15+00:00"
         },
         {
             "name": "psr/container",
@@ -2884,7 +2884,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
+    "stability-flags": {
+        "nikic/php-parser": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
