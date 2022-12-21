@@ -23,7 +23,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
             $response = $callback->call();
             $shopOrderId = $response->shopOrderId;
-          
+
             // This lock prevents orders to be created twice.
             $fp = fopen(_PS_MODULE_DIR_ . '/altapay/controllers/front/lock.txt', 'r');
             flock($fp, LOCK_EX);
