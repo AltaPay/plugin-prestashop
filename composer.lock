@@ -448,23 +448,23 @@
         },
         {
             "name": "humbug/php-scoper",
-            "version": "0.13.10",
+            "version": "0.13.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/humbug/php-scoper.git",
-                "reference": "e56b0d91b344181c9a73119454c05a5498bf56e4"
+                "reference": "d6d7e83e44ec7a61202289159d4600b476e303e6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/humbug/php-scoper/zipball/e56b0d91b344181c9a73119454c05a5498bf56e4",
-                "reference": "e56b0d91b344181c9a73119454c05a5498bf56e4",
+                "url": "https://api.github.com/repos/humbug/php-scoper/zipball/d6d7e83e44ec7a61202289159d4600b476e303e6",
+                "reference": "d6d7e83e44ec7a61202289159d4600b476e303e6",
                 "shasum": ""
             },
             "require": {
                 "composer/package-versions-deprecated": "^1.8",
                 "jetbrains/phpstorm-stubs": "dev-master",
                 "nikic/php-parser": "^4.0",
-                "php": "^7.3",
+                "php": "^7.2",
                 "symfony/console": "^3.2 || ^4.0",
                 "symfony/filesystem": "^3.2 || ^4.0",
                 "symfony/finder": "^3.2 || ^4.0"
@@ -475,8 +475,7 @@
             "require-dev": {
                 "bamarni/composer-bin-plugin": "^1.1",
                 "humbug/box": "^3.8",
-                "phpspec/prophecy-phpunit": "^2.0",
-                "phpunit/phpunit": "^9.0"
+                "phpunit/phpunit": "^8.0"
             },
             "bin": [
                 "bin/php-scoper"
@@ -524,7 +523,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2020-11-29T13:29:20+00:00"
+            "time": "2020-11-06T23:14:56+00:00"
         },
         {
             "name": "jetbrains/phpstorm-stubs",
@@ -532,12 +531,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/JetBrains/phpstorm-stubs.git",
-                "reference": "7b649979b190fece7b1ab8a652978dd7423bd5e2"
+                "reference": "9d035c83c67d0001c0d6e0d44765e1bd9e2e524c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/JetBrains/phpstorm-stubs/zipball/7b649979b190fece7b1ab8a652978dd7423bd5e2",
-                "reference": "7b649979b190fece7b1ab8a652978dd7423bd5e2",
+                "url": "https://api.github.com/repos/JetBrains/phpstorm-stubs/zipball/9d035c83c67d0001c0d6e0d44765e1bd9e2e524c",
+                "reference": "9d035c83c67d0001c0d6e0d44765e1bd9e2e524c",
                 "shasum": ""
             },
             "require-dev": {
@@ -569,7 +568,7 @@
                 "stubs",
                 "type"
             ],
-            "time": "2022-12-18T21:47:40+00:00"
+            "time": "2022-12-20T11:42:37+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -625,20 +624,20 @@
         },
         {
             "name": "psr/container",
-            "version": "1.1.2",
+            "version": "1.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-fig/container.git",
-                "reference": "513e0666f7216c7459170d56df27dfcefe1689ea"
+                "reference": "8622567409010282b7aeebe4bb841fe98b58dcaf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-fig/container/zipball/513e0666f7216c7459170d56df27dfcefe1689ea",
-                "reference": "513e0666f7216c7459170d56df27dfcefe1689ea",
+                "url": "https://api.github.com/repos/php-fig/container/zipball/8622567409010282b7aeebe4bb841fe98b58dcaf",
+                "reference": "8622567409010282b7aeebe4bb841fe98b58dcaf",
                 "shasum": ""
             },
             "require": {
-                "php": ">=7.4.0"
+                "php": ">=7.2.0"
             },
             "type": "library",
             "autoload": {
@@ -665,7 +664,7 @@
                 "container-interop",
                 "psr"
             ],
-            "time": "2021-11-05T16:50:12+00:00"
+            "time": "2021-03-05T17:36:06+00:00"
         },
         {
             "name": "psr/http-client",
