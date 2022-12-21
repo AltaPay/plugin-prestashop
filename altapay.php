@@ -2198,7 +2198,7 @@ class ALTAPAY extends PaymentModule
         if (!is_null($tokenId)) {
             $sql = 'SELECT agreement_id, agreement_type, ccToken FROM `' 
             . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="' 
-            . $tokenId . '" AND userID = ' . $customerId;
+            . pSQL($tokenId) . '" AND userID = ' . pSQL($customerId);
             $results = Db::getInstance()->executeS($sql);
         }
         if (!$this->altapayApiLogin()) {
@@ -2817,7 +2817,7 @@ class ALTAPAY extends PaymentModule
     {
         $sql = 'SELECT agreement_id, agreement_type, ccToken FROM `' 
         . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="' 
-        . $tokenId . '" AND userID = ' . $customerId;
+        . pSQL($tokenId) . '" AND userID = ' . pSQL($customerId);
         
         $results = Db::getInstance()->executeS($sql);
 

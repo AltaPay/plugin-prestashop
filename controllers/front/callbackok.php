@@ -23,11 +23,6 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
             $response = $callback->call();
             $shopOrderId = $response->shopOrderId;
-
-        // $terminalRemoteName = $_POST['remote_name'];
-        // $terminalId = getTerminalId($terminalRemoteName)[0]['id_terminal'];
-        
-            // $payment_method = Tools::getValue('method', false);
           
             // This lock prevents orders to be created twice.
             $fp = fopen(_PS_MODULE_DIR_ . '/altapay/controllers/front/lock.txt', 'r');
@@ -45,7 +40,6 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             // Load order if it exist
             $this->id_order = Order::getOrderByCartId((int) ($cart->id));
             $order = new Order((int) ($this->id_order));
-            $payment_method = getTerminalId($order->payment)[0]['id_terminal'];
             // Handle success
             if ($response && is_array($response->Transactions) && Validate::isLoadedObject($order)) {   
                 $cardType      = "";
@@ -85,9 +79,9 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     $currencyPaid = new Currency($cart->id_currency);
                     $sql = 'INSERT INTO `' . _DB_PREFIX_
                         . 'altapay_saved_credit_card` (time,userID,agreement_id,agreement_type,cardBrand,creditCardNumber,cardExpiryDate,ccToken) VALUES (Now(),'
-                        . $customerID . ',"' . $transactionId . '","'
-                        . $agreementType . '","' . $cardType . '","'
-                        . $maskedPan . '","' . $expires . '","' . $ccToken
+                        . pSQL($customerID) . ',"' . pSQL($transactionId) . '","'
+                        . pSQL($agreementType) . '","' . pSQL($cardType) . '","'
+                        . pSQL($maskedPan) . '","' . pSQL($expires) . '","' . pSQL($ccToken)
                         . '")';
                     Db::getInstance()->executeS($sql);
 
@@ -125,9 +119,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     $this->module->id,
                     true
                     );
-                    // return $this->module->createTransaction(null, null, $payment_method, $transactionId);
                 }
-
 
                 // Log order
                 createAltapayOrder($response, $order);
