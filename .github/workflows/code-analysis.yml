@@ -33,8 +33,16 @@ jobs:
      - name: Install and run PhpCsFixer
        run: |
          composer install --no-interaction
+       working-directory: prestashop/modules/altapay
+
+     - name: Run PHP-Scoper 
+       run: |
+         yes | php7.2 vendor/bin/php-scoper add-prefix --output-dir ./package
+         rsync -a package/vendor/* vendor/
+         composer dump-autoload --working-dir ./ --classmap-authoritative
          php vendor/bin/php-cs-fixer fix --dry-run --diff
        working-directory: prestashop/modules/altapay
+
 
      - name: Composer dependency isolation
        if: ${{ always() }}
