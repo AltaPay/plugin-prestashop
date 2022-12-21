@@ -22,7 +22,7 @@ then
     exit
   fi
 
-  php7.2 $(command -v composer) install --no-dev --no-interaction
+  php7.2 $(command -v composer) update --no-dev --no-interaction
   mkdir -p package && yes | php7.2 vendor/bin/php-scoper add-prefix --output-dir ./package
   rsync -a package/vendor/* vendor/
   find . -type d -exec cp index.php {} \;
