@@ -13,13 +13,19 @@ class Order
   
             })    
     }
-  
-    addproduct(discount_type=''){
-        cy.get('#blocknewproducts > .last-line.last-item-of-tablet-line > .product-container > .right-block > .button-container > .ajax_add_to_cart_button > span').click()
+
+      addproduct(discount_type=''){
+        cy.get('#blocknewproducts > .first-in-line.first-item-of-tablet-line > .product-container > .left-block > .product-image-container > .product_img_link > .replace-2x').click()
+        cy.get('.exclusive > span').click()
         cy.get('.button-medium > span').click()
         cy.get('.cart_navigation > .button > span').click()
-        //Guest checkout 1.6.X
-        cy.get('#guest_email').type('demo@example.com')
+        //Random Username            
+        let text = "";
+        let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        for (let i = 0; i < 10; i++)
+        text += alphabet.charAt(Math.floor(Math.random() * alphabet.length))
+        //Guest checkout 1.6.X         
+        cy.get('#guest_email').type(text + '@example.com')
         cy.get('#firstname').type('Testperson-dk')
         cy.get('#lastname').type('Testperson-dk')
         cy.get('#address1').type('Sæffleberggate 56,1 mf')
