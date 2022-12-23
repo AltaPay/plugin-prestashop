@@ -37,7 +37,7 @@ jobs:
 
      - name: Run PHP-Scoper 
        run: |
-         composer dump --no-interaction
+         composer dump-autoload --working-dir ./ --classmap-authoritative
          php vendor/bin/php-cs-fixer fix --dry-run --diff
        working-directory: prestashop/modules/altapay
 
@@ -45,6 +45,8 @@ jobs:
      - name: Composer dependency isolation
        if: ${{ always() }}
        run: |
+         composer isolate --no-interaction
+         composer dump --no-interaction
          _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
        working-directory: prestashop/modules/altapay
        
