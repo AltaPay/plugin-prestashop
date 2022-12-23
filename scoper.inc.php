@@ -25,6 +25,7 @@ return [
                 'tests',
                 'Tests',
                 'vendor-bin',
+                'vendor/symfony/console'
             ])
             ->in('vendor/altapay'),
             Finder::create()->files()->in('vendor/psr'),
