@@ -27,7 +27,6 @@ return [
                 'vendor-bin',
             ])
             ->in('vendor/altapay'),
-            Finder::create()->files()->in('Models'),
             Finder::create()->files()->in('views'),
             Finder::create()->files()->in('terminal-config'),
             Finder::create()->files()->in('vendor/psr'),
