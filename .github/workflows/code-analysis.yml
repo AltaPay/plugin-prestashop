@@ -38,6 +38,7 @@ jobs:
      - name: Run PHP-Scoper 
        run: |
          composer dump --no-interaction
+         rm -rf scoper.inc.php
          php vendor/bin/php-cs-fixer fix --dry-run --diff
        working-directory: prestashop/modules/altapay
 
