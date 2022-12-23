@@ -14,7 +14,6 @@ return [
     //
     // For more see: https://github.com/humbug/php-scoper#finders-and-paths
     'finders' => [
-        Finder::create()->files()->in('vendor'),
         Finder::create()
             ->files()
             ->ignoreVCS(true)
@@ -27,7 +26,14 @@ return [
                 'Tests',
                 'vendor-bin',
             ])
-            ->in('vendor'),
+            ->in('vendor/altapay'),
+            Finder::create()->files()->in('controllers'),
+            Finder::create()->files()->in('Models'),
+            Finder::create()->files()->in('views'),
+            Finder::create()->files()->in('terminal-config'),
+            Finder::create()->files()->in('vendor/psr'),
+            Finder::create()->files()->in('vendor/ralouphie'),
+            Finder::create()->files()->in('vendor/symfony'),
         Finder::create()->append([
             'composer.json',
         ]),
