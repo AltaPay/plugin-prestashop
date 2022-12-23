@@ -40,7 +40,7 @@ jobs:
        if: ${{ always() }}
        run: |
          mkdir -p package
-         yes | php7.2 vendor/bin/php-scoper add-prefix --output-dir ./package
+         yes | vendor/bin/php-scoper add-prefix --output-dir ./package
          rsync -a package/vendor/* vendor/
          composer dump-autoload --working-dir ./ --classmap-authoritative --no-interaction
          _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
