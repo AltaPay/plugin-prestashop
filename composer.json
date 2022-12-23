@@ -28,7 +28,7 @@
     "symfony/event-dispatcher": "4.4.18"
   },
   "require-dev": {
-    "prestashop/php-dev-tools": "^4.1",
+    "prestashop/php-dev-tools": "^4.0",
     "phpstan/phpstan": "^0.12"
   },
   "autoload": {
