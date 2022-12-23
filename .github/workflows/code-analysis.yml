@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-versions: ['7.4']
+        php-versions: ['7.2']
     steps:
-     - name: Install PHP 7.4
+     - name: Install PHP 7.2
        uses: shivammathur/setup-php@v2
        with:
          php-version: ${{ matrix.php-versions }}
@@ -39,9 +39,7 @@ jobs:
      - name: Composer dependency isolation
        if: ${{ always() }}
        run: |
-         mkdir -p package
-         yes | vendor/bin/php-scoper add-prefix --output-dir ./package
-         rsync -a package/vendor/* vendor/
+         composer isolate --no-interaction
          composer dump-autoload --working-dir ./ --classmap-authoritative --no-interaction
          _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
        working-directory: prestashop/modules/altapay
