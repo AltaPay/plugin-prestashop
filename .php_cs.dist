@@ -6,6 +6,6 @@ $config
     ->setUsingCache(true)
     ->getFinder()
     ->in(__DIR__)
-    ->exclude('vendor');
+    ->exclude('vendor', 'scoper.inc.php');
 
 return $config;
