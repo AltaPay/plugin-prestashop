@@ -38,8 +38,8 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $customer = new Customer((int) $cart->id_customer);
 
             // Load order if it exist
-            $this->id_order = Order::getOrderByCartId((int) ($cart->id));
-            $order = new Order((int) ($this->id_order));
+            $orderId = Order::getOrderByCartId((int) ($cart->id));
+            $order = new Order((int) ($orderId));
 
             // Handle success
             if ($response && is_array($response->Transactions) && Validate::isLoadedObject($order)) {

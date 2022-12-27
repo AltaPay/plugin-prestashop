@@ -25,13 +25,10 @@ return [
                 'tests',
                 'Tests',
                 'vendor-bin',
-                'vendor/symfony/console'
+                'console',
+                'prestashop'
             ])
-            ->in('vendor/altapay'),
-            Finder::create()->files()->in('vendor/psr'),
-            Finder::create()->files()->in('vendor/ralouphie'),
-            Finder::create()->files()->in('vendor/symfony'),
-            Finder::create()->files()->in('vendor/guzzlehttp'),
+            ->in('vendor'),
         Finder::create()->append([
             'composer.json',
         ]),

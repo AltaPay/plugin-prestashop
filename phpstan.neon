@@ -9,3 +9,5 @@ parameters:
     - %currentWorkingDirectory%/vendor/altapay/
   excludes_analyse:
     - %currentWorkingDirectory%/vendor/*
+  excludePaths:
+    - %currentWorkingDirectory%/scoper.inc.php
