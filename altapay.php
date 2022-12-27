@@ -205,9 +205,9 @@ class ALTAPAY extends PaymentModule
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_saved_credit_card`  TO `' . _DB_PREFIX_ . 'altapay_saved_credit_card`  ';
             Db::getInstance()->Execute($sql);
         } elseif (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card`')) {
-            Db::getInstance()->execute('ALTER TABLE `'._DB_PREFIX_.'altapay_saved_credit_card` ADD `agreement_id` int(255) NOT NULL AFTER userID');
-            Db::getInstance()->execute('ALTER TABLE `'._DB_PREFIX_.'altapay_saved_credit_card` ADD `agreement_type` varchar(255) NOT NULL AFTER agreement_id');
-            Db::getInstance()->execute('ALTER TABLE `'._DB_PREFIX_.'altapay_terminals` ADD `ccTokenControl_` int(255) NOT NULL AFTER currency');
+            Db::getInstance()->execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_saved_credit_card` ADD `agreement_id` int(255) NOT NULL AFTER userID');
+            Db::getInstance()->execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_saved_credit_card` ADD `agreement_type` varchar(255) NOT NULL AFTER agreement_id');
+            Db::getInstance()->execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD `ccTokenControl_` int(255) NOT NULL AFTER currency');
         } else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . "altapay_saved_credit_card` (
 		`id` mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -299,7 +299,7 @@ class ALTAPAY extends PaymentModule
 
         return true;
     }
-    function hookHeader($params)
+    public function hookHeader($params)
     {
         $this->context->controller->addJquery();
         $this->context->controller->addJS($this->_path . 'js/creditCardFront.js', 'all');
@@ -2211,7 +2211,7 @@ class ALTAPAY extends PaymentModule
         }
 
         if (!is_null($savecard) && $savecard != 0) {
-            $type = "verifyCard";
+            $type = 'verifyCard';
         } else {
             $type = $cgConf['payment_type'];
         }
@@ -2822,6 +2822,7 @@ class ALTAPAY extends PaymentModule
         } else {
             $collection->addFieldToFilter('agreement_id', $transId);
         }
+        
         return $collection->getFirstItem()->getData();
     }
 

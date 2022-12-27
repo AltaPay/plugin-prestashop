@@ -41,9 +41,9 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $this->id_order = Order::getOrderByCartId((int) ($cart->id));
             $order = new Order((int) ($this->id_order));
             // Handle success
-            if ($response && is_array($response->Transactions) && Validate::isLoadedObject($order)) {   
-                $cardType = "";
-                $expires = "";
+            if ($response && is_array($response->Transactions) && Validate::isLoadedObject($order)) {
+                $cardType = '';
+                $expires = '';
                 $amountPaid = 0;
                 $transactionId = $response->transactionId;
                 $paymentType = $response->type;
@@ -53,9 +53,9 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $customerID = $this->context->customer->id;
                 $ccToken = $response->creditCardToken;
                 $maskedPan = $response->maskedCreditCard;
-                $agreementType = "unscheduled";
+                $agreementType = 'unscheduled';
                 $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
-                $message = "";
+                $message = '';
                 if (isset($transaction->CapturedAmount)) {
                     $amountPaid = $transaction->CapturedAmount;
                 }
@@ -161,7 +161,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
 
     public function getTransaction($response)
     {
-        $max_date = "";
+        $max_date = '';
         $latestTransKey = 0;
         foreach ($response->Transactions as $key => $transaction) {
             if ($transaction->CreatedDate > $max_date) {
