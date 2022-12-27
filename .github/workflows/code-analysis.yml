@@ -40,7 +40,7 @@ jobs:
        if: ${{ always() }}
        run: |
          yes | vendor/bin/php-scoper add-prefix
-         rsync -a build/vendor/* vendor/
+         rsync -a build/vendor/* vendor/ && rm -rf build/
          composer dump-autoload --working-dir ./ --classmap-authoritative --no-interaction
          _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
        working-directory: prestashop/modules/altapay

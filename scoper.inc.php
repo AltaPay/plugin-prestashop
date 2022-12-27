@@ -26,7 +26,7 @@ return [
                 'Tests',
                 'vendor-bin',
                 'console',
-                'prestashop'
+                'prestashop',
             ])
             ->in('vendor'),
         Finder::create()->append([
