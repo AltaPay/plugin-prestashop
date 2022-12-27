@@ -42,21 +42,20 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $order = new Order((int) ($this->id_order));
             // Handle success
             if ($response && is_array($response->Transactions) && Validate::isLoadedObject($order)) {   
-                $cardType      = "";
-                $expires       = "";
-                $amountPaid    = 0;
+                $cardType = "";
+                $expires = "";
+                $amountPaid = 0;
                 $transactionId = $response->transactionId;
-                $paymentType   = $response->type;
+                $paymentType = $response->type;
                 $captureStatus = $response->requireCapture;
-                $currencyPaid  = Currency::getIdByIsoCode($response->currency);
-                $transaction   = $this->getTransaction($response);
-                $customerID    = $this->context->customer->id;
-                $ccToken       = $response->creditCardToken;
-                $maskedPan     = $response->maskedCreditCard;
+                $currencyPaid = Currency::getIdByIsoCode($response->currency);
+                $transaction = $this->getTransaction($response);
+                $customerID = $this->context->customer->id;
+                $ccToken = $response->creditCardToken;
+                $maskedPan = $response->maskedCreditCard;
                 $agreementType = "unscheduled";
                 $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
-                $message       = "";
-        
+                $message = "";
                 if (isset($transaction->CapturedAmount)) {
                     $amountPaid = $transaction->CapturedAmount;
                 }
@@ -74,7 +73,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     $api->setTransaction($transactionId);
                     $api->call();
                 }
-                if ($paymentType === "verifyCard") {
+                if ($paymentType === 'verifyCard') {
                     $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
                     $currencyPaid = new Currency($cart->id_currency);
                     $sql = 'INSERT INTO `' . _DB_PREFIX_
@@ -87,8 +86,8 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
 
                     $agreementData = [
                         'id' => $transactionId,
-                        'type' => "unscheduled",
-                        'unscheduled_type' => "incremental",
+                        'type' => 'unscheduled',
+                        'unscheduled_type' => 'incremental',
                     ];
                     $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
                     $request->setCreditCardToken($response->creditCardToken)
@@ -98,8 +97,8 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                             ->setCurrency($currencyPaid->iso_code)
                             ->setAgreement([
                                 'id' => $transactionId,
-                                'type' => "unscheduled",
-                                'unscheduled_type' => "incremental",
+                                'type' => 'unscheduled',
+                                'unscheduled_type' => 'incremental',
                             ]);
                     try {
                         $response = $request->call();
@@ -160,12 +159,13 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         fclose($fileOpen);
     }
 
-    public function getTransaction($response) {
+    public function getTransaction($response)
+    {
         $max_date = "";
         $latestTransKey = 0;
         foreach ($response->Transactions as $key => $transaction) {
             if ($transaction->CreatedDate > $max_date) {
-                $max_date       = $transaction->CreatedDate;
+                $max_date = $transaction->CreatedDate;
                 $latestTransKey = $key;
             }
         }

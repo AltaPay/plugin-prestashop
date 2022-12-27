@@ -204,14 +204,11 @@ class ALTAPAY extends PaymentModule
         if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_saved_credit_card`')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_saved_credit_card`  TO `' . _DB_PREFIX_ . 'altapay_saved_credit_card`  ';
             Db::getInstance()->Execute($sql);
-        } 
-        elseif (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card`')) {
+        } elseif (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card`')) {
             Db::getInstance()->execute('ALTER TABLE `'._DB_PREFIX_.'altapay_saved_credit_card` ADD `agreement_id` int(255) NOT NULL AFTER userID');
             Db::getInstance()->execute('ALTER TABLE `'._DB_PREFIX_.'altapay_saved_credit_card` ADD `agreement_type` varchar(255) NOT NULL AFTER agreement_id');
             Db::getInstance()->execute('ALTER TABLE `'._DB_PREFIX_.'altapay_terminals` ADD `ccTokenControl_` int(255) NOT NULL AFTER currency');
-        }
-        else {
-            
+        } else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . "altapay_saved_credit_card` (
 		`id` mediumint(9) NOT NULL AUTO_INCREMENT,
 		`time` datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -2079,7 +2076,7 @@ class ALTAPAY extends PaymentModule
         $isReservation = false;
         $agreementData = [];
         $results = null;
-        $max_date       = '';
+        $max_date = '';
         $latestTransKey = 0;
         // Terminal
         $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
@@ -2196,8 +2193,8 @@ class ALTAPAY extends PaymentModule
         }
         $customerId = $this->context->customer->id;
         if (!is_null($tokenId)) {
-            $sql = 'SELECT agreement_id, agreement_type, ccToken FROM `' 
-            . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="' 
+            $sql = 'SELECT agreement_id, agreement_type, ccToken FROM `'
+            . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="'
             . pSQL($tokenId) . '" AND userID = ' . pSQL($customerId);
             $results = Db::getInstance()->executeS($sql);
         }
@@ -2213,7 +2210,7 @@ class ALTAPAY extends PaymentModule
             ];
         }
 
-        if(!is_null($savecard) && $savecard != 0) {
+        if (!is_null($savecard) && $savecard != 0) {
             $type = "verifyCard";
         } else {
             $type = $cgConf['payment_type'];
@@ -2226,18 +2223,16 @@ class ALTAPAY extends PaymentModule
             $config->setCallbackOpen($callback['callback_open']);
             $config->setCallbackNotification($callback['callback_notification']);
             $config->setCallbackForm($callback['callback_form']);
-
             $request = new API\PHP\Altapay\Api\Ecommerce\PaymentRequest(getAuth());
- 
             if ($results) {
                 $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
-                $token   = $ccToken;
+                $token = $ccToken;
                 foreach ($results as $result) {
                     $ccToken = $result['ccToken'];
                     $agreementData = [
                         'id' => $result['agreement_id'],
                         'type' => $result['agreement_type'],
-                        'unscheduled_type' => "incremental",
+                        'unscheduled_type' => 'incremental',
                     ];
                 }
                 $request->setCreditCardToken($token);
@@ -2253,13 +2248,13 @@ class ALTAPAY extends PaymentModule
                     ->setCookie($cgConf['cookie'])
                     ->setFraudService(null)
                     ->setOrderLines($this->getOrderLines($cart));
-            if(!$isReservation) {
+            if (!$isReservation) {
                 $request->setConfig($config)->setLanguage($cgConf['language']);
             }
             $response = $request->call();
             $responseUrl = $response->Url;
-            $orderStatus = Configuration::get('ALTAPAY_OS_PENDING');  
-            if (strtolower($response->Result) === "success" && $responseUrl == null) {
+            $orderStatus = Configuration::get('ALTAPAY_OS_PENDING');
+            if (strtolower($response->Result) === 'success' && $responseUrl == null) {
                 $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
                 $transaction = $response->Transactions[$latestTransKey];
                 $amount = $transaction->CapturedAmount ?? 0;
@@ -2267,7 +2262,7 @@ class ALTAPAY extends PaymentModule
                 if ($paymentType === 'payment' || $paymentType === 'paymentAndCapture') {
                     $amount = $cart->getOrderTotal(true, Cart::BOTH);
                 }
-                $responseUrl =  "reservation";
+                $responseUrl = 'reservation';
             }
 
             return [
@@ -2278,7 +2273,7 @@ class ALTAPAY extends PaymentModule
                 'amount' => $amount,
                 'result' => 'Success',
                 'payment_form_url' => $responseUrl,
-                'response' => $response
+                'response' => $response,
             ];
         } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
             $message = $e->getResponse()->getBody();
@@ -2815,22 +2810,18 @@ class ALTAPAY extends PaymentModule
      */
     private function getToken($customerId, $tokenId = null, $transId = null)
     {
-        $sql = 'SELECT agreement_id, agreement_type, ccToken FROM `' 
-        . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="' 
+        $sql = 'SELECT agreement_id, agreement_type, ccToken FROM `'
+        . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="'
         . pSQL($tokenId) . '" AND userID = ' . pSQL($customerId);
-        
         $results = Db::getInstance()->executeS($sql);
-
-        $model      = $this->dataToken->create();
+        $model = $this->dataToken->create();
         $collection = $model->getCollection()
             ->addFieldToFilter('customer_id', $customerId);
-        
         if ($transId == null) {
             $collection->addFieldToFilter('id', $tokenId);
         } else {
             $collection->addFieldToFilter('agreement_id', $transId);
         }
-        
         return $collection->getFirstItem()->getData();
     }
 

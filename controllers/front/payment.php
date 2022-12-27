@@ -86,9 +86,9 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
 
             Db::getInstance()->Execute($sql);
 
-            if ($payment_form_url === "reservation") {
+            if ($payment_form_url === 'reservation') {
                 $currentOrder = new Order((int) $this->module->currentOrder);
-                createAltapayOrder($result['response'], $currentOrder, "succeeded");
+                createAltapayOrder($result['response'], $currentOrder, 'succeeded');
                 Tools::redirect('index.php?controller=order-detail&id_order=' . $this->module->currentOrder);
             } else {
                 Tools::redirect($payment_form_url);

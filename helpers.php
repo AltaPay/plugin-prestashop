@@ -223,8 +223,8 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
     $latestTransKey = 0;
     if (isset($response) && isset($response->Transactions)) {
         foreach ($response->Transactions as $key => $transaction) {
-            if ($transaction->AuthType === "subscription_payment" && $transaction->CreatedDate > $max_date) {
-                $max_date       = $transaction->CreatedDate;
+            if ($transaction->AuthType === 'subscription_payment' && $transaction->CreatedDate > $max_date) {
+                $max_date = $transaction->CreatedDate;
                 $latestTransKey = $key;
             }
         }
@@ -263,7 +263,7 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
         . pSQL($cardCountry) . "', '" . pSQL($paymentType) . "', '"
         . pSQL($paymentTerminal) . "', '"
         . pSQL($paymentStatus) . "', '" . pSQL($paymentNature) . "', '"
-        . pSQL($requireCapture) . "', '" . time() 
+        . pSQL($requireCapture) . "', '" . time()
         . "')" . ' ON DUPLICATE KEY UPDATE `paymentStatus` = ' . "'" . $paymentStatus . "'";
     Db::getInstance()->Execute($sql);
 
