@@ -24,7 +24,7 @@ class ALTAPAYsavecreditcardModuleFrontController extends ModuleFrontController
 
         if ($this->context->customer->isLogged()) {
             $customerID = $this->context->customer->id;
-            $sql = 'REPLACE  into `' . _DB_PREFIX_ . 'altapay_saved_credit_card` (time,userID,cardBrand,creditCardNumber,cardExpiryDate,ccToken) VALUES (Now(),' . $customerID . ',"' . $cardBrand . '","' . $cardMask . '","' . $cardExpiryDate . '","' . $cardToken . '")';
+            $sql = 'REPLACE  into `' . _DB_PREFIX_ . 'altapay_saved_credit_card` (time,userID,cardBrand,creditCardNumber,cardExpiryDate,ccToken) VALUES (Now(),' . pSQL($customerID) . ',"' . pSQL($cardBrand) . '","' . pSQL($cardMask) . '","' . pSQL($cardExpiryDate) . '","' . pSQL($cardToken) . '")';
             Db::getInstance()->executeS($sql);
         }
         Tools::redirect('index.php?fc=module&module=altapay&controller=showsavedcreditcards');

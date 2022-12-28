@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.4.2';
+        $this->version = '3.4.3';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.7'];
@@ -1484,7 +1484,7 @@ class ALTAPAY extends PaymentModule
                                          . 'altapay_transaction ON '
                                          . _DB_PREFIX_ . 'altapay_transaction.unique_id = '
                                          . _DB_PREFIX_ . 'altapay_order.unique_id WHERE id_order='
-                                         . $params['id_order']);
+                                         . (int) $params['id_order']);
     }
 
     /**
@@ -1787,7 +1787,7 @@ class ALTAPAY extends PaymentModule
      */
     private function getOrderActions($paymentId)
     {
-        $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_orderlines` WHERE altapay_payment_id = "' . $paymentId . '"';
+        $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_orderlines` WHERE altapay_payment_id = "' . pSQL($paymentId) . '"';
 
         return Db::getInstance()->executeS($sql);
     }
@@ -1913,7 +1913,7 @@ class ALTAPAY extends PaymentModule
 
         if ($this->context->customer->isLogged()) {
             $customerID = $this->context->customer->id;
-            $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE userID =' . $customerID;
+            $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE userID =' . pSQL($customerID);
             $results = Db::getInstance()->executeS($sql);
 
             if ($results) {
@@ -2019,7 +2019,7 @@ class ALTAPAY extends PaymentModule
 
         $state = $params['objOrder']->getCurrentState();
         $results = Db::getInstance()->getRow('SELECT * 
-        FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE id_order=' . $params['objOrder']->id);
+        FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE id_order=' . (int) $params['objOrder']->id);
         if ($state == Configuration::get('PS_OS_PAYMENT') || $state == Configuration::get('PS_OS_OUTOFSTOCK')) {
             $this->smarty->assign([
                 'total_to_pay' => Tools::displayPrice($params['total_to_pay'], $params['currencyObj'], false),
@@ -2178,7 +2178,7 @@ class ALTAPAY extends PaymentModule
         }
 
         if (!is_null($savedCreditCard)) {
-            $sql = 'SELECT ccToken FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE creditcardNumber ="' . $savedCreditCard . '"';
+            $sql = 'SELECT ccToken FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE creditcardNumber ="' . pSQL($savedCreditCard) . '"';
             $results = Db::getInstance()->executeS($sql);
             foreach ($results as $result) {
                 $ccToken = $result['ccToken'];
@@ -2295,7 +2295,7 @@ class ALTAPAY extends PaymentModule
 
     public function getorderCartRule($orderID)
     {
-        $cartDiscount = Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'order_cart_rule WHERE id_order = ' . $orderID);
+        $cartDiscount = Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'order_cart_rule WHERE id_order = ' . (int) $orderID);
 
         return $cartDiscount;
     }
@@ -2424,9 +2424,9 @@ class ALTAPAY extends PaymentModule
 
         if ($orderDetails) {
             $orderDetails = json_encode($orderDetails);
-            $sql = 'INSERT INTO ' . _DB_PREFIX_ . 'altapay_cartInfo (id_cart, productDetails, date_add) VALUES ' . "('" . $cartID . "', '"
-                   . $orderDetails . "', '" . time() . "')" .
-                   ' ON DUPLICATE KEY UPDATE `productDetails` = ' . "'" . $orderDetails . "'";
+            $sql = 'INSERT INTO ' . _DB_PREFIX_ . 'altapay_cartInfo (id_cart, productDetails, date_add) VALUES ' . "('" . (int) $cartID . "', '"
+                   . pSQL($orderDetails) . "', '" . pSQL(time()) . "')" .
+                   ' ON DUPLICATE KEY UPDATE `productDetails` = ' . "'" . pSQL($orderDetails) . "'";
             Db::getInstance()->Execute($sql);
         }
 
@@ -2565,7 +2565,7 @@ class ALTAPAY extends PaymentModule
     private function getCartRuleGroupProducts($couponID, $reductionPercent)
     {
         $cartRuleGroupProducts = [];
-        $cartRuleGroups = Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'cart_rule_product_rule_group WHERE id_cart_rule = ' . $couponID);
+        $cartRuleGroups = Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'cart_rule_product_rule_group WHERE id_cart_rule = ' . (int) $couponID);
         foreach ($cartRuleGroups as $cartRuleGroup) {
             $cartRuleGroupProducts['reductionPercent'] = $reductionPercent;
             $cartRuleGroupProducts['products'] = $this->getCartRuleGroupProductIDs($cartRuleGroup['id_product_rule_group']);
@@ -2586,7 +2586,7 @@ class ALTAPAY extends PaymentModule
     private function getCartRuleGroupProductIDs($cartRuleGroupID)
     {
         $productIDs = [];
-        $cartRuleGroups = Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'cart_rule_product_rule_value WHERE id_product_rule = ' . $cartRuleGroupID);
+        $cartRuleGroups = Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'cart_rule_product_rule_value WHERE id_product_rule = ' . (int) $cartRuleGroupID);
         foreach ($cartRuleGroups as $cartRuleGroup) {
             $productIDs[] = $cartRuleGroup['id_item'];
         }
@@ -2632,7 +2632,7 @@ class ALTAPAY extends PaymentModule
     private function getCartRuleDiscounts($order)
     {
         $cartRuleDiscounts = [];
-        $discountPercent = reset(Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'altapay_cartInfo WHERE id_cart = ' . $order->id_cart));
+        $discountPercent = reset(Db::getInstance()->executeS('SELECT * FROM ' . _DB_PREFIX_ . 'altapay_cartInfo WHERE id_cart = ' . (int) $order->id_cart));
 
         if (isset($discountPercent['productDetails'])) {
             $cartRuleDiscounts = json_decode($discountPercent['productDetails'], true) ?: [];
