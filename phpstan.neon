@@ -7,5 +7,6 @@ parameters:
   level: 0
   scanDirectories:
     - %currentWorkingDirectory%/vendor/altapay/
-  excludes_analyse:
+  excludePaths:
     - %currentWorkingDirectory%/vendor/*
+    - %currentWorkingDirectory%/scoper.inc.php

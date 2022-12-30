@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [Unreleased] - 2022-12-28
+### Fixed
+- Fixed workflow issue due to the and/isolated package has been deprecated
+
 ## [3.4.3] - 2022-12-12
 ### Fixed
 - Sanitize data for SQL query
