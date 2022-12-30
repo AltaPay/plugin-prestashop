@@ -2259,8 +2259,10 @@ class ALTAPAY extends PaymentModule
             if (strtolower($response->Result) === 'success' && $responseUrl == null) {
                 $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
                 $transaction = $response->Transactions[$latestTransKey];
-                $amount = $transaction->CapturedAmount ?? 0;
                 $paymentType = $transaction->AuthType;
+                if (isset($transaction->CapturedAmount)) {
+                    $amount = $transaction->CapturedAmount;
+                }
                 if ($paymentType === 'payment' || $paymentType === 'paymentAndCapture') {
                     $amount = $cart->getOrderTotal(true, Cart::BOTH);
                 }
