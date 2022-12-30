@@ -5,7 +5,9 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
-## [Unreleased] - 2022-12-28
+## [3.4.4] - 2022-12-30
+### Added
+- Added support for verifycard functionality
 ### Fixed
 - Fixed workflow issue due to the and/isolated package has been deprecated
 
