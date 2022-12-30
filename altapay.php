@@ -299,12 +299,14 @@ class ALTAPAY extends PaymentModule
 
         return true;
     }
+
     public function hookHeader($params)
     {
         $this->context->controller->addJquery();
         $this->context->controller->addJS($this->_path . 'js/creditCardFront.js', 'all');
         $this->context->controller->addCSS($this->_path . 'views/css/payment.css', 'all');
     }
+
     /**
      * Return content for the configuration in back office
      *
@@ -2800,30 +2802,4 @@ class ALTAPAY extends PaymentModule
 
         return false;
     }
-
-    /**
-     * @param string $tokenId
-     * @param int $transId
-     * @param int $customerId
-     *
-     * @return mixed
-     */
-    private function getToken($customerId, $tokenId = null, $transId = null)
-    {
-        $sql = 'SELECT agreement_id, agreement_type, ccToken FROM `'
-        . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="'
-        . pSQL($tokenId) . '" AND userID = ' . pSQL($customerId);
-        $results = Db::getInstance()->executeS($sql);
-        $model = $this->dataToken->create();
-        $collection = $model->getCollection()
-            ->addFieldToFilter('customer_id', $customerId);
-        if ($transId == null) {
-            $collection->addFieldToFilter('id', $tokenId);
-        } else {
-            $collection->addFieldToFilter('agreement_id', $transId);
-        }
-        
-        return $collection->getFirstItem()->getData();
-    }
-
 }
