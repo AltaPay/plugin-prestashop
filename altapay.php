@@ -141,7 +141,6 @@ class ALTAPAY extends PaymentModule
             
             ORDER BY a.`id_order` DESC;")');
 
-
         /* Will add a new column if it doesn't exist.
         That way we keep the backwards compatibility while adding a new column.*/
         if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
@@ -325,7 +324,7 @@ class ALTAPAY extends PaymentModule
     /**
      * Return content for the configuration in back office
      *
-     * @return void HTML for display
+     * @return string HTML for display
      */
     public function getContent()
     {
@@ -804,7 +803,7 @@ class ALTAPAY extends PaymentModule
             try {
                 $finalOrderLines = $this->populateOrderLinesFromPost($orderLines, $orderID, 0, $orderLineGiftWrap);
 
-                $reconciliation_identifier = sha1($paymentID.time());
+                $reconciliation_identifier = sha1($paymentID . time());
                 $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
                 $api->setAmount((float) Tools::getValue('amount'));
                 $api->setOrderLines($finalOrderLines);
@@ -849,7 +848,7 @@ class ALTAPAY extends PaymentModule
                 if ($finalOrderLines === [] && $goodWillRefund) {
                     $finalOrderLines = $this->createDummyOrderLinesArr($refundAmount);
                 }
-                $reconciliation_identifier = sha1($paymentID.time());
+                $reconciliation_identifier = sha1($paymentID . time());
                 $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
                 $api->setAmount($refundAmount);
                 $api->setOrderLines($finalOrderLines);
@@ -1038,7 +1037,8 @@ class ALTAPAY extends PaymentModule
      * @param string $orderID
      * @param array $cartRuleDiscounts
      *
-     * @return array
+     * @return
+     * \API\PHP\Altapay\Request\OrderLine
      */
     public function getShippingInfo($orderID, $cartRuleDiscounts)
     {
@@ -1573,7 +1573,7 @@ class ALTAPAY extends PaymentModule
                 return null;
             }
 
-            $reconciliation_identifier = sha1($paymentID.time());
+            $reconciliation_identifier = sha1($paymentID . time());
             $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
             $api->setTransaction($paymentID);
             $api->setReconciliationIdentifier($reconciliation_identifier);
@@ -1758,7 +1758,6 @@ class ALTAPAY extends PaymentModule
                 $captured += $pay->CapturedAmount;
                 $refunded += $pay->RefundedAmount;
             }
-
 
             $ap_payment = [
                 'reserved' => $reserved,
@@ -2483,7 +2482,7 @@ class ALTAPAY extends PaymentModule
      * @param string $imageUrl
      * @param string $productUrl
      *
-     * @return array
+     * @return \API\PHP\Altapay\Request\OrderLine
      */
     private function createOrderlines(
         $productName,
@@ -2659,7 +2658,7 @@ class ALTAPAY extends PaymentModule
     /**
      * Returns array of cart rule discounts applied on each product from created order
      *
-     * @param array $order
+     * @param Order $order
      *
      * @return array
      *
@@ -2703,7 +2702,7 @@ class ALTAPAY extends PaymentModule
      * @param string $itemID
      * @param float $compensationAmount
      *
-     * @return array
+     * @return \API\PHP\Altapay\Request\OrderLine
      */
     public function compensationOrderlines($itemID, $compensationAmount)
     {

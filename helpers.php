@@ -39,7 +39,7 @@ function transactionInfo($transactionInfo = [])
 /**
  * @param AltapayCallbackHandler $response
  *
- * @return array<string>
+ * @return string
  */
 function determinePaymentMethodForDisplay($response)
 {
@@ -213,7 +213,7 @@ function updatePaymentStatus($paymentId, $paymentStatus)
  * Method for creating orders at prestashop backend
  *
  * @param AltapayCallbackHandler $response
- * @param array $current_order
+ * @param Order $current_order
  * @param string $payment_status
  *
  * @return void
@@ -316,7 +316,7 @@ function getTerminalTokenControlStatus($terminalRemoteName)
 }
 
 /**
- * @return Authentication
+ * @return \API\PHP\Altapay\Authentication
  */
 function getAuth()
 {
@@ -355,9 +355,9 @@ function getCvvLess($cartId, $shopOrderId)
  */
 function saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $type = 'captured')
 {
-         Db::getInstance()->Execute('INSERT INTO `' . _DB_PREFIX_ . 'altapay_order_reconciliation`
+    Db::getInstance()->Execute('INSERT INTO `' . _DB_PREFIX_ . 'altapay_order_reconciliation`
 		(id_order, reconciliation_identifier, transaction_type) 
-        VALUES ' ."('" . (int) $orderID . "', '" . pSQL($reconciliation_identifier) . "', '" . pSQL($type) . "')");
+        VALUES ' . "('" . (int) $orderID . "', '" . pSQL($reconciliation_identifier) . "', '" . pSQL($type) . "')");
 }
 
 /**
@@ -386,7 +386,6 @@ function saveOrderReconciliationIdentifierIfNotExists($orderID, $reconciliation_
         "' AND transaction_type ='" . pSQL($type) . "'";
 
     if (!Db::getInstance()->getRow($sql)) {
-
         saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $type);
     }
 }
