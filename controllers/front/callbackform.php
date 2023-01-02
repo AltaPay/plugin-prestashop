@@ -31,12 +31,11 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
     {
         $css_dir = null;
         $postData = Tools::getAllValues();
-        $cartId = $this->context->cart->id;
-        $terminalRemoteName = getCvvLess($cartId, $postData['shop_orderid']);
+        $cart = getCartFromUniqueId($postData['shop_orderid']);
+        $terminalRemoteName = getCvvLess($cart->id, $postData['shop_orderid']);
         $this->context->smarty->assign('cssClass', $terminalRemoteName);
         // Different conventions of assigning details for Version 1.6 and 1.7 respectively
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
-            $cart = $this->context->cart;
             $this->context->smarty->assign('pathUri', $this->module->getPathUri());
             $this->context->smarty->assign('summarydetails', $cart->getSummaryDetails());
             $this->context->smarty->assign('products', $cart->getProducts());

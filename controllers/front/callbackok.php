@@ -34,27 +34,23 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $this->unlock($fp);
                 exit('Could not load cart - exiting');
             }
-
             // Load the customer
             $customer = new Customer((int) $cart->id_customer);
 
-            // Check if an order already exists
-            $order = getOrderFromUniqueId($shopOrderId);
-            if (Validate::isLoadedObject($order)) {
-                // An order has already been created from this cart - redirect
-                Tools::redirect('index.php?controller=order-confirmation&id_cart=' . $cart->id . '&id_module='
-                                . $this->module->id . '&id_order=' . $this->module->currentOrder . '&key='
-                                . $customer->secure_key);
-            }
+            // Load order if it exist
+            $orderId = Order::getOrderByCartId((int) ($cart->id));
+            $order = new Order((int) ($orderId));
 
             // Handle success
-            if ($response && is_array($response->Transactions)) {
-                $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
+            if ($response && is_array($response->Transactions) && Validate::isLoadedObject($order)) {
+                $amountPaid = 0;
+                $transactionID = null;
                 $paymentType = $response->type;
                 $captureStatus = $response->requireCapture;
                 $currencyPaid = Currency::getIdByIsoCode($response->currency);
                 $amountPaid = $response->Transactions[0]->CapturedAmount;
                 $transactionID = $response->Transactions[0]->TransactionId;
+                $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
                 if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
                     $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
                     $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
@@ -80,21 +76,10 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     $api->call();
                     saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier);
                 }
-
-                // Determine payment method for display
-                $paymentMethod = determinePaymentMethodForDisplay($response);
-                // Create an order with 'payment accepted' status
-                $currencyPaidID = (int) $currencyPaid->id;
-                $customerSecureKey = $customer->secure_key;
-                $cartID = $cart->id;
-                $this->module->validateOrder($cartID, $orderStatus, $amountPaid, $paymentMethod, null, null,
-                    $currencyPaidID, false, $customerSecureKey);
-
                 // Log order
-                $currentOrder = new Order((int) $this->module->currentOrder);
-                createAltapayOrder($response, $currentOrder);
+                createAltapayOrder($response, $order);
                 $this->unlock($fp);
-                Tools::redirect('index.php?controller=order-detail&id_order=' . $this->module->currentOrder);
+                Tools::redirect('index.php?controller=order-detail&id_order=' . $order->id);
             } else {
                 // Unexpected scenario
                 $moduleName = $this->module->name;

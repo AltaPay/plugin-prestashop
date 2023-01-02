@@ -5,9 +5,20 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
-## [3.4.2] - 2022-11-23
+## [Unreleased] - 2023-01-02
 ### Added
 - Support to export order reconciliation data via PrestaShop 'SQL Manager'.
+
+### Fixed
+- Fixed workflow issue due to the and/isolated package has been deprecated
+
+## [3.4.3] - 2022-12-12
+### Fixed
+- Sanitize data for SQL query
+
+## [3.4.2] - 2022-12-09
+### Fixed
+- Fixed order total mismatch between Prestashop and gateway in case multiple tabs are used for ordering
 
 ## [3.4.1] - 2022-10-26
 ### Added
