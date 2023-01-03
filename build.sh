@@ -26,7 +26,7 @@ then
   yes | php7.2 vendor/bin/php-scoper add-prefix
   rsync -a build/vendor/* vendor/ && rm -rf build/
   find . -type d -exec cp index.php {} \;
-  mkdir -p dist/altapay && rsync -av --exclude={'build','dist','docker','Docs','build.sh','guide.md','.gitignore','phpstan.neon'} * dist/altapay
+  mkdir -p dist/altapay && rsync -av --exclude={'build','dist','docker','Docs','build.sh','guide.md','.gitignore','phpstan.neon','composer.json','composer.lock'} * dist/altapay
   cd dist/altapay/ && php7.2 $(command -v composer) dump-autoload --working-dir ./ --classmap-authoritative
   cd ../ && zip altapay.zip -r *
 else
