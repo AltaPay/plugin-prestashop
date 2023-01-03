@@ -23,7 +23,7 @@ then
   fi
 
   php7.2 $(command -v composer) install --no-dev --no-interaction
-  mkdir -p package && yes | php7.2 vendor/bin/php-scoper add-prefix
+  yes | php7.2 vendor/bin/php-scoper add-prefix
   rsync -a build/vendor/* vendor/ && rm -rf build/
   find . -type d -exec cp index.php {} \;
   mkdir -p dist/altapay && rsync -av --exclude={'build','dist','docker','Docs','build.sh','guide.md','.gitignore','phpstan.neon'} * dist/altapay
