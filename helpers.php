@@ -264,7 +264,7 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
         . pSQL($paymentTerminal) . "', '"
         . pSQL($paymentStatus) . "', '" . pSQL($paymentNature) . "', '"
         . pSQL($requireCapture) . "', '" . time()
-        . "')" . ' ON DUPLICATE KEY UPDATE `paymentStatus` = ' . "'" . $paymentStatus . "'";
+        . "')" . ' ON DUPLICATE KEY UPDATE `paymentStatus` = ' . "'" . pSQL($paymentStatus) . "'";
     Db::getInstance()->Execute($sql);
 
     if (Validate::isLoadedObject($current_order)) {
