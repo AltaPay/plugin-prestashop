@@ -37,7 +37,6 @@ class ALTAPAYshowsavedcreditcardsModuleFrontController extends ModuleFrontContro
                     $savedCreditCard[] = [
                         'userID' => $result['userID'],
                         'creditCard' => $result['creditCardNumber'],
-                        'cardName' => $result['cardName'],
                         'cardBrand' => $result['cardBrand'],
                         'cardExpiryDate' => $result['cardExpiryDate'],
                     ];

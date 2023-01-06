@@ -34,3 +34,7 @@ p.payment_module a.altapay:after {
       width: 14px;
       color: #777; 
 }
+
+.savecard-checkbox {
+      margin-bottom: 14px;
+}

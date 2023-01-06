@@ -7,17 +7,19 @@
 *}
 
 {if !empty($ccTokenControl) && $customerID}
-    <select id="selectCreditCard" class="selectCreditCard">
-        <option value="">{l s='Select a saved credit card'}</option>
-        {foreach $savedCreditCard as $item}
-            {if !empty($item.cardName)}
-                <option value="{{$item.creditCard}}">{{$item.cardName}}</option>
-            {else}
-                <option value="{{$item.creditCard}}">{{$item.creditCard}} ({{$item.cardExpiryDate}})</option>
-            {/if}
+<div class="savecard-checkbox">
+    <label for="savecard">
+        <input type="checkbox" name="savecard" class="savecard" id="savecard" />
+        Save this card for future transactions
+    </label>
+</div>
+<select name="ccToken" id="selectCreditCard" class="selectCreditCard">
+    <option value="">{l s='Select a saved credit card'}</option>
+    {foreach $savedCreditCard as $item}
+            <option value="{{$item.id}}">{{$item.creditCard}} ({{$item.cardExpiryDate}})</option>
 
-        {/foreach}
-    </select>
+    {/foreach}
+</select>
 {/if}
 
 {if isset($smarty.get.altapay_unavailable)}

@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.4.3';
+        $this->version = '3.4.4';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.7'];
@@ -68,6 +68,7 @@ class ALTAPAY extends PaymentModule
     {
         if (!parent::install()
             || !$this->registerHook('payment')
+            || !$this->registerHook('header')
             || !$this->registerHook('paymentOptions')
             || !$this->registerHook('paymentReturn')
             || !$this->registerHook('adminOrder')
@@ -203,11 +204,17 @@ class ALTAPAY extends PaymentModule
         if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_saved_credit_card`')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_saved_credit_card`  TO `' . _DB_PREFIX_ . 'altapay_saved_credit_card`  ';
             Db::getInstance()->Execute($sql);
+        } elseif (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card`')) {
+            Db::getInstance()->execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_saved_credit_card` ADD `agreement_id` int(255) NOT NULL AFTER userID');
+            Db::getInstance()->execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_saved_credit_card` ADD `agreement_type` varchar(255) NOT NULL AFTER agreement_id');
+            Db::getInstance()->execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD `ccTokenControl_` int(255) NOT NULL AFTER currency');
         } else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . "altapay_saved_credit_card` (
 		`id` mediumint(9) NOT NULL AUTO_INCREMENT,
 		`time` datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 		`userID` varchar(200) DEFAULT '' NOT NULL,
+		`agreement_id` varchar(200) DEFAULT '' NOT NULL,
+		`agreement_type` varchar(200) DEFAULT '' NOT NULL,
 		`cardBrand` varchar(200) DEFAULT '' NOT NULL,
 		`creditCardNumber` varchar(200) DEFAULT '' NOT NULL,
 		`cardExpiryDate` varchar(200) DEFAULT '' NOT NULL,
@@ -291,6 +298,13 @@ class ALTAPAY extends PaymentModule
         }
 
         return true;
+    }
+
+    public function hookHeader($params)
+    {
+        $this->context->controller->addJquery();
+        $this->context->controller->addJS($this->_path . 'js/creditCardFront.js', 'all');
+        $this->context->controller->addCSS($this->_path . 'views/css/payment.css', 'all');
     }
 
     /**
@@ -1768,7 +1782,6 @@ class ALTAPAY extends PaymentModule
         $this->context->controller->addJS($this->_path . 'views/js/admin_order.js');
         $this->context->controller->addJS($this->_path . 'views/js/form.js', 'all');
         $this->context->controller->addCSS(($this->_path) . 'views/css/payment.css', 'all');
-
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             return $this->display(__FILE__, '/views/templates/hook/admin_order17.tpl');
         } else {
@@ -1919,8 +1932,8 @@ class ALTAPAY extends PaymentModule
             if ($results) {
                 foreach ($results as $result) {
                     $savedCreditCard[] = [
+                        'id' => $result['id'],
                         'creditCard' => $result['creditCardNumber'],
-                        'cardName' => $result['cardName'],
                         'cardExpiryDate' => $result['cardExpiryDate'],
                     ];
                 }
@@ -2057,12 +2070,16 @@ class ALTAPAY extends PaymentModule
      *
      * @throws Exception
      */
-    public function createTransaction($savedCreditCard, $payment_method = false)
+    public function createTransaction($savecard, $tokenId, $payment_method = false, $transactionId = null)
     {
         $customerCreatedDate = null;
         $cart = $this->context->cart;
         $ccToken = null;
-
+        $isReservation = false;
+        $agreementData = [];
+        $results = null;
+        $max_date = '';
+        $latestTransKey = 0;
         // Terminal
         $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
         if (!is_object($terminal)) {
@@ -2176,15 +2193,13 @@ class ALTAPAY extends PaymentModule
         if ($this->context->customer->isLogged()) {
             $customer->setCreatedDate(new \DateTime($this->context->customer->date_add));
         }
-
-        if (!is_null($savedCreditCard)) {
-            $sql = 'SELECT ccToken FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE creditcardNumber ="' . pSQL($savedCreditCard) . '"';
+        $customerId = $this->context->customer->id;
+        if (!is_null($tokenId)) {
+            $sql = 'SELECT agreement_id, agreement_type, ccToken FROM `'
+            . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="'
+            . pSQL($tokenId) . '" AND userID = ' . pSQL($customerId);
             $results = Db::getInstance()->executeS($sql);
-            foreach ($results as $result) {
-                $ccToken = $result['ccToken'];
-            }
         }
-
         if (!$this->altapayApiLogin()) {
             PrestaShopLogger::addLog($this->api_error, 3, null, $this->name, $this->id, true);
 
@@ -2197,6 +2212,12 @@ class ALTAPAY extends PaymentModule
             ];
         }
 
+        if (!is_null($savecard) && $savecard != 0) {
+            $type = 'verifyCard';
+        } else {
+            $type = $cgConf['payment_type'];
+        }
+
         try {
             $config = new API\PHP\Altapay\Request\Config();
             $config->setCallbackOk($callback['callback_ok']);
@@ -2205,28 +2226,58 @@ class ALTAPAY extends PaymentModule
             $config->setCallbackNotification($callback['callback_notification']);
             $config->setCallbackForm($callback['callback_form']);
             $request = new API\PHP\Altapay\Api\Ecommerce\PaymentRequest(getAuth());
-            $request->setTerminal($cgConf['terminal'])
+            if ($results) {
+                $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
+                $token = $ccToken;
+                foreach ($results as $result) {
+                    $ccToken = $result['ccToken'];
+                    $agreementData = [
+                        'id' => $result['agreement_id'],
+                        'type' => $result['agreement_type'],
+                        'unscheduled_type' => 'incremental',
+                    ];
+                }
+                $request->setCreditCardToken($token);
+                $request->setAgreement($agreementData);
+                $isReservation = true;
+            }
+            $request->setType($type)->setTerminal($cgConf['terminal'])
                     ->setShopOrderId($cgConf['uniqueid'])
                     ->setAmount($amount)
                     ->setCurrency($cgConf['currency'])
                     ->setCustomerInfo($customer)
-                    ->setConfig($config)
                     ->setTransactionInfo($transactionInfo)
                     ->setCookie($cgConf['cookie'])
-                    ->setCcToken($ccToken)
                     ->setFraudService(null)
-                    ->setLanguage($cgConf['language'])
-                    ->setType($cgConf['payment_type'])
                     ->setOrderLines($this->getOrderLines($cart));
+            if (!$isReservation) {
+                $request->setConfig($config)->setLanguage($cgConf['language']);
+            }
             $response = $request->call();
+            $responseUrl = $response->Url;
+            $orderStatus = Configuration::get('ALTAPAY_OS_PENDING');
+            if (strtolower($response->Result) === 'success' && $responseUrl == null) {
+                $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
+                $transaction = $response->Transactions[$latestTransKey];
+                $paymentType = $transaction->AuthType;
+                if (isset($transaction->CapturedAmount)) {
+                    $amount = $transaction->CapturedAmount;
+                }
+                if ($paymentType === 'payment' || $paymentType === 'paymentAndCapture') {
+                    $amount = $cart->getOrderTotal(true, Cart::BOTH);
+                }
+                $responseUrl = 'reservation';
+            }
 
             return [
                 'success' => true,
+                'status' => $orderStatus,
                 'uniqueid' => $cgConf['uniqueid'],
-                'amount' => $amount,
                 'terminal' => $cgConf['terminal'],
+                'amount' => $amount,
                 'result' => 'Success',
-                'payment_form_url' => $response->Url,
+                'payment_form_url' => $responseUrl,
+                'response' => $response,
             ];
         } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
             $message = $e->getResponse()->getBody();
@@ -2503,7 +2554,7 @@ class ALTAPAY extends PaymentModule
         $productPriceAfterDiscount = 0;
         foreach ($vouchers as $key => $voucher) {
             if (in_array($productID, $voucher['products']) || $voucher['products'] === 'all') {
-                if (!$discountPercent && $voucher['reductionPercent'] !== '0.00') {
+                if (!$discountPercent && isset($voucher['reductionPercent']) && ($voucher['reductionPercent'] !== '0.00')) {
                     $discountPercent += $voucher['reductionPercent'];
                     $discountedAmount = $basePrice * ($discountPercent / 100);
                     $productPriceAfterDiscount = $basePrice - $discountedAmount;
