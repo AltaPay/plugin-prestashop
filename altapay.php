@@ -174,14 +174,23 @@ class ALTAPAY extends PaymentModule
             `payment_type` varchar(32) DEFAULT NULL,
             `currency` varchar(100) DEFAULT NULL,
             `ccTokenControl_` int(255) NOT NULL DEFAULT \'0\',
+            `isapplepay_` int(255) NOT NULL DEFAULT \'0\',
             `position` int(11) NOT NULL DEFAULT \'0\',
             `active` int(11) NOT NULL DEFAULT \'0\',
+            `cvvLess` BOOLEAN NOT NULL DEFAULT \'0\',
             PRIMARY KEY (`id_terminal`)
         ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
         }
 
         if (!Db::getInstance()->Execute('SELECT cvvLess from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN cvvLess BOOLEAN NOT NULL DEFAULT 0')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+        if (!Db::getInstance()->Execute('SELECT isapplepay_ from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN isapplepay_ int(255) NOT NULL DEFAULT 0')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
@@ -369,6 +378,7 @@ class ALTAPAY extends PaymentModule
                         $terminal->icon_filename = ' ';
                         $terminal->currency = $this->context->currency->iso_code;
                         $terminal->ccTokenControl_ = 0;
+                        $terminal->isapplepay_ = 0;
                         $terminal->payment_type = 'payment';
                         $terminal->position = $position++;
                         $terminal->cvvLess = 0;
@@ -410,6 +420,7 @@ class ALTAPAY extends PaymentModule
         $iconOptions = [];
         $fieldsForm = [];
         $tokenControl = [];
+        $isApplePay = [];
         $directory = _PS_MODULE_DIR_ . '/' . $this->name . '/' . $this->paymentMethodIconDir;
         $scanned_directory = array_diff(scandir($directory), ['..', '.', '.DS_Store']);
         foreach ($scanned_directory as $filename) {
@@ -434,6 +445,15 @@ class ALTAPAY extends PaymentModule
                 'val' => 1,
             ],
         ];
+
+
+        $isApplePayOptions = [
+            [
+                'name' => 'Enable',
+                'val' => 1,
+            ],
+        ];
+
         $terminals = $this->getAltapayTerminals();
         foreach ($terminals as $terminal) {
             $terminalNature[] = [
@@ -453,6 +473,21 @@ class ALTAPAY extends PaymentModule
                 'lang' => false,
                 'values' => [
                     'query' => $ccTokenControlOptions,
+                    'id' => 'id',
+                    'name' => 'name',
+                ],
+            ];
+
+            $isApplePay = [
+                'type' => 'checkbox',
+                'label' => $this->l('Is Apple Pay?'),
+                'desc' => $this->l('Check this box to enable if the current terminal is Apple Pay'),
+                'name' => 'isapplepay',
+                'id' => 'isapplepay',
+                'required' => false,
+                'lang' => false,
+                'values' => [
+                    'query' => $isApplePayOptions,
                     'id' => 'id',
                     'name' => 'name',
                 ],
@@ -550,6 +585,8 @@ class ALTAPAY extends PaymentModule
                 ],
 
                 $tokenControl,
+
+                $isApplePay,
 
                 [
                     'type' => 'select',
@@ -1120,10 +1157,10 @@ class ALTAPAY extends PaymentModule
         $getVal = Tools::getValue('currency');
         $active = Tools::getValue('active');
         // Currency supported?
-        if (!in_array($getVal, $allowedCurrencies, true) && $active) {
+        if (!empty($allowedCurrencies) && !in_array($getVal, $allowedCurrencies, true) && $active) {
             $this->Mhtml .= sprintf('<div class="alert alert-danger">Selected terminal does not support currency %s</div>',
                 $getVal);
-
+            
             return false;
         }
 
@@ -1138,6 +1175,7 @@ class ALTAPAY extends PaymentModule
             'active',
             'position',
             'cvvLess',
+            'isapplepay_',
         ];
         foreach ($fields as $fieldName) {
             $terminal->{$fieldName} = Tools::getValue($fieldName);
@@ -1334,6 +1372,13 @@ class ALTAPAY extends PaymentModule
             ],
             'ccTokenControl_' => [
                 'title' => $this->l('Token control'),
+                'type' => 'bool',
+                'width' => 'auto',
+                'orderby' => false,
+                'search' => false,
+            ],
+            'isapplepay_' => [
+                'title' => $this->l('Is Apple Pay'),
                 'type' => 'bool',
                 'width' => 'auto',
                 'orderby' => false,
