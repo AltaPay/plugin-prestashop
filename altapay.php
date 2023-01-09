@@ -2102,6 +2102,7 @@ class ALTAPAY extends PaymentModule
      * @param $tokenId
      * @param bool $payment_method
      * @param null $transactionId
+     *
      * @return array If the transaction failed, the array contains information about the failure
      *
      * @throws Exception
