@@ -5,10 +5,13 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
-## [Unreleased] - 2023-01-02
+## [3.4.5] - 2023-01-09
 ### Added
 - Support to export order reconciliation data via PrestaShop 'SQL Manager'.
 
+## [3.4.4] - 2022-12-30
+### Added
+- Added support for verifycard functionality
 ### Fixed
 - Fixed workflow issue due to the and/isolated package has been deprecated
 

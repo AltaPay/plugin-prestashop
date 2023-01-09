@@ -127,3 +127,7 @@ div#order-detail-content {
 .table thead th {
     border-bottom: 3px solid #2fb5d2;
 }
+
+.savecard-checkbox {
+    margin-bottom: 14px;
+}

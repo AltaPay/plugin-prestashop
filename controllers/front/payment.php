@@ -23,7 +23,9 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         $this->display_column_left = false;
         parent::initContent();
         $savedCreditCard = null;
+        $saveCard = null;
         $payment_method = Tools::getValue('method', false);
+
         $cart = $this->context->cart;
         if (!$this->module->checkCurrency($cart)) {
             Tools::redirect('index.php?controller=order');
@@ -44,7 +46,17 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             unset($_COOKIE['selectedCreditCard']);
             setcookie('selectedCreditCard', null, -1, '/');
         }
-        $result = $this->module->createTransaction($savedCreditCard, $payment_method);
+
+        if (isset($_COOKIE['savecard'])) {
+            $saveCard = $_COOKIE['savecard'];
+            unset($_COOKIE['savecard']);
+            setcookie('savecard', null, -1, '/');
+        } else {
+            unset($_COOKIE['savecard']);
+            setcookie('savecard', null, -1, '/');
+        }
+
+        $result = $this->module->createTransaction($saveCard, $savedCreditCard, $payment_method);
         // Load the customer
         $customer = new Customer((int) $cart->id_customer);
         $currency_paid = new Currency($cart->id_currency);
@@ -55,7 +67,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             // Create Order with pending status
             $this->module->validateOrder(
                 $cart->id,
-                Configuration::get('ALTAPAY_OS_PENDING'),
+                $result['status'],
                 $result['amount'],
                 $result['terminal'],
                 null,
@@ -64,6 +76,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
                 false,
                 $customer->secure_key
             );
+
             // Insert into transaction log
             $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction` 
 				(id_cart, payment_form_url, unique_id, amount, terminal_name, date_add) VALUES ' .
@@ -73,8 +86,13 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
 
             Db::getInstance()->Execute($sql);
 
-            // Redirect user to payment form url
-            Tools::redirect($payment_form_url);
+            if ($payment_form_url === 'reservation') {
+                $currentOrder = new Order((int) $this->module->currentOrder);
+                createAltapayOrder($result['response'], $currentOrder, 'succeeded');
+                Tools::redirect('index.php?controller=order-detail&id_order=' . $this->module->currentOrder);
+            } else {
+                Tools::redirect($payment_form_url);
+            }
         } else {
             // Redirect user back to checkout with a generic error
             Tools::redirect($payment_form_url);

@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.4.3';
+    $pluginVersion = '3.4.4';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -220,44 +220,51 @@ function updatePaymentStatus($paymentId, $paymentStatus)
  */
 function createAltapayOrder($response, $current_order, $payment_status = 'succeeded')
 {
-    $uniqueId = $response->shopOrderId;
-    $paymentId = $response->transactionId;
-    $cardMask = $response->Transactions[0]->MaskedPan;
-    $cardToken = $response->Transactions[0]->CreditCardToken;
-    $cardExpiryMonth = $response->Transactions[0]->CreditCardExpiryMonth;
-    $cardExpiryYear = $response->Transactions[0]->CreditCardExpiryYear;
-    $cardBrand = $response->Transactions[0]->PaymentSchemeName;
-    $paymentType = $response->Transactions[0]->AuthType;
-    $paymentTerminal = $response->Transactions[0]->Terminal;
-    $paymentNature = $response->Transactions[0]->PaymentNature;
-    $paymentStatus = $payment_status;
-    $requireCapture = 0;
-    if ($paymentType === 'payment') {
-        $requireCapture = 1;
+    $latestTransKey = 0;
+    if (isset($response) && isset($response->Transactions)) {
+        foreach ($response->Transactions as $key => $transaction) {
+            if ($transaction->AuthType === 'subscription_payment' && $transaction->CreatedDate > $max_date) {
+                $max_date = $transaction->CreatedDate;
+                $latestTransKey = $key;
+            }
+        }
+        $transaction = $response->Transactions[$latestTransKey];
+        $uniqueId = $transaction->ShopOrderId;
+        $paymentId = $transaction->TransactionId;
+        $cardMask = $transaction->CreditCardMaskedPan;
+        $cardToken = $transaction->CreditCardToken;
+        $cardExpiryMonth = $transaction->CreditCardExpiry->Month;
+        $cardExpiryYear = $transaction->CreditCardExpiry->Year;
+        $cardBrand = $transaction->PaymentSchemeName;
+        $paymentType = $transaction->AuthType;
+        $paymentTerminal = $transaction->Terminal;
+        $paymentNature = $transaction->PaymentNature;
+        $paymentStatus = $payment_status;
+        $requireCapture = 0;
+        if ($paymentType === 'payment') {
+            $requireCapture = 1;
+        }
+        $cardExpiryDate = 0;
+        if ($cardExpiryMonth && $cardExpiryYear) {
+            $cardExpiryDate = $cardExpiryMonth . '/' . $cardExpiryYear;
+        }
     }
-    $cardExpiryDate = 0;
-    if ($cardExpiryMonth && $cardExpiryYear) {
-        $cardExpiryDate = $cardExpiryMonth . '/' . $cardExpiryYear;
-    }
-
-    $errorCode = null;
-    $errorText = null;
-    $customerInfo = $response->Transactions[0]->CustomerInfo;
+    $customerInfo = $transaction->CustomerInfo;
     $cardCountry = $customerInfo->CountryOfOrigin->Country;
     //insert into order log
     $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_order`
-		(id_order, unique_id, payment_id, cardMask, cardToken, cardBrand, cardExpiryDate, cardCountry, 
-        paymentType, paymentTerminal, paymentStatus, paymentNature, requireCapture, errorCode, errorText, date_add) 
+        (id_order, unique_id, payment_id, cardMask, cardToken, cardBrand, cardExpiryDate, cardCountry, 
+        paymentType, paymentTerminal, paymentStatus, paymentNature, requireCapture, date_add) 
         VALUES ' .
-           "('" . $current_order->id . "', '" . pSQL($uniqueId) . "', '"
-           . pSQL($paymentId) . "', '" . pSQL($cardMask) . "', '"
-           . pSQL($cardToken) . "', '" . pSQL($cardBrand) . "', '"
-           . pSQL($cardExpiryDate) . "', '"
-           . pSQL($cardCountry) . "', '" . pSQL($paymentType) . "', '"
-           . pSQL($paymentTerminal) . "', '"
-           . pSQL($paymentStatus) . "', '" . pSQL($paymentNature) . "', '"
-           . pSQL($requireCapture) . "', '" . pSQL($errorCode) . "', '"
-           . pSQL($errorText) . "', '" . time() . "')" . ' ON DUPLICATE KEY UPDATE `paymentStatus` = ' . "'" . $paymentStatus . "'";
+        "('" . $current_order->id . "', '" . pSQL($uniqueId) . "', '"
+        . pSQL($paymentId) . "', '" . pSQL($cardMask) . "', '"
+        . pSQL($cardToken) . "', '" . pSQL($cardBrand) . "', '"
+        . pSQL($cardExpiryDate) . "', '"
+        . pSQL($cardCountry) . "', '" . pSQL($paymentType) . "', '"
+        . pSQL($paymentTerminal) . "', '"
+        . pSQL($paymentStatus) . "', '" . pSQL($paymentNature) . "', '"
+        . pSQL($requireCapture) . "', '" . time()
+        . "')" . ' ON DUPLICATE KEY UPDATE `paymentStatus` = ' . "'" . pSQL($paymentStatus) . "'";
     Db::getInstance()->Execute($sql);
 
     if (Validate::isLoadedObject($current_order)) {

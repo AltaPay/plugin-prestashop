@@ -43,39 +43,92 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
 
             // Handle success
             if ($response && is_array($response->Transactions) && Validate::isLoadedObject($order)) {
+                $cardType = '';
+                $expires = '';
                 $amountPaid = 0;
-                $transactionID = null;
+                $transactionId = $response->transactionId;
                 $paymentType = $response->type;
                 $captureStatus = $response->requireCapture;
                 $currencyPaid = Currency::getIdByIsoCode($response->currency);
-                $amountPaid = $response->Transactions[0]->CapturedAmount;
-                $transactionID = $response->Transactions[0]->TransactionId;
+                $transaction = $this->getTransaction($response);
+                $customerID = $this->context->customer->id;
+                $ccToken = $response->creditCardToken;
+                $maskedPan = $response->maskedCreditCard;
+                $agreementType = 'unscheduled';
                 $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
                 if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
                     $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
                     $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
                     saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $reconciliation_type);
                 }
-
-                /*
-                 * If payment type is 'payment' funds have not yet been captured,
-                 * so AltaPay returns zero as the captured amount.
-                 * Therefore we assume full payment has been authorized.
-                 */
-                if ($paymentType === 'payment') {
+                $message = '';
+                if (isset($transaction->CapturedAmount)) {
+                    $amountPaid = $transaction->CapturedAmount;
+                }
+                if (isset($transaction->CreditCardExpiry->Month) && isset($transaction->CreditCardExpiry->Year)) {
+                    $expires = $transaction->CreditCardExpiry->Month . '/' . $transaction->CreditCardExpiry->Year;
+                }
+                if (isset($transaction->PaymentSchemeName)) {
+                    $cardType = $transaction->PaymentSchemeName;
+                }
+                if ($paymentType === 'paymentAndCapture' && $captureStatus === true) {
                     $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
                     $currencyPaid = new Currency($cart->id_currency);
-                } elseif ($paymentType === 'paymentAndCapture' && $captureStatus === true) {
-                    $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
-                    $currencyPaid = new Currency($cart->id_currency);
-                    $reconciliation_identifier = sha1($transactionID . time());
+                    $reconciliation_identifier = sha1($transactionId . time());
                     $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
                     $api->setAmount($amountPaid);
-                    $api->setTransaction($transactionID);
+                    $api->setTransaction($transactionId);
                     $api->setReconciliationIdentifier($reconciliation_identifier);
                     $api->call();
                     saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier);
                 }
+                if ($paymentType === 'verifyCard') {
+                    $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
+                    $currencyPaid = new Currency($cart->id_currency);
+                    $sql = 'INSERT INTO `' . _DB_PREFIX_
+                        . 'altapay_saved_credit_card` (time,userID,agreement_id,agreement_type,cardBrand,creditCardNumber,cardExpiryDate,ccToken) VALUES (Now(),'
+                        . pSQL($customerID) . ',"' . pSQL($transactionId) . '","'
+                        . pSQL($agreementType) . '","' . pSQL($cardType) . '","'
+                        . pSQL($maskedPan) . '","' . pSQL($expires) . '","' . pSQL($ccToken)
+                        . '")';
+                    Db::getInstance()->executeS($sql);
+
+                    $agreementData = [
+                        'id' => $transactionId,
+                        'type' => 'unscheduled',
+                        'unscheduled_type' => 'incremental',
+                    ];
+                    $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
+                    $request->setCreditCardToken($response->creditCardToken)
+                            ->setTerminal($transaction->Terminal)
+                            ->setShopOrderId($response->shopOrderId)
+                            ->setAmount($amountPaid)
+                            ->setCurrency($currencyPaid->iso_code)
+                            ->setAgreement([
+                                'id' => $transactionId,
+                                'type' => 'unscheduled',
+                                'unscheduled_type' => 'incremental',
+                            ]);
+                    try {
+                        $response = $request->call();
+                    } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
+                        $message = $e->getResponse()->getBody();
+                    } catch (API\PHP\Altapay\Exceptions\ResponseHeaderException $e) {
+                        $message = $e->getHeader()->ErrorMessage;
+                    } catch (API\PHP\Altapay\Exceptions\ResponseMessageException $e) {
+                        $message = $e->getMessage();
+                    } catch (Exception $e) {
+                        $message = $e->getMessage();
+                    }
+                    PrestaShopLogger::addLog('Callback OK issue, Message ' . $message,
+                    3,
+                    '1005',
+                    $this->module->name,
+                    $this->module->id,
+                    true
+                    );
+                }
+
                 // Log order
                 createAltapayOrder($response, $order);
                 $this->unlock($fp);
@@ -113,5 +166,19 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
     {
         flock($fileOpen, LOCK_UN);
         fclose($fileOpen);
+    }
+
+    public function getTransaction($response)
+    {
+        $max_date = '';
+        $latestTransKey = 0;
+        foreach ($response->Transactions as $key => $transaction) {
+            if ($transaction->CreatedDate > $max_date) {
+                $max_date = $transaction->CreatedDate;
+                $latestTransKey = $key;
+            }
+        }
+
+        return $response->Transactions[$latestTransKey];
     }
 }

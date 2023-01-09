@@ -11,4 +11,11 @@ $(function () {
         var selectedCreditCard = $(this).children("option:selected").val();
         Cookies.set('selectedCreditCard', selectedCreditCard);
     });
+    $(".savecard").change(function () {
+        var savecard = 0;
+        if($('.savecard').is(":checked")) {
+            savecard = 1;
+        }
+        Cookies.set('savecard', savecard);
+    });
 });
