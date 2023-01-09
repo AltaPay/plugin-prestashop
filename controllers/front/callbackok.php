@@ -34,8 +34,6 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $this->unlock($fp);
                 exit('Could not load cart - exiting');
             }
-            // Load the customer
-            $customer = new Customer((int) $cart->id_customer);
 
             // Load order if it exists
             $orderId = Order::getOrderByCartId((int) ($cart->id));
@@ -93,11 +91,6 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                         . '")';
                     Db::getInstance()->executeS($sql);
 
-                    $agreementData = [
-                        'id' => $transactionId,
-                        'type' => 'unscheduled',
-                        'unscheduled_type' => 'incremental',
-                    ];
                     $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
                     $request->setCreditCardToken($response->creditCardToken)
                             ->setTerminal($transaction->Terminal)

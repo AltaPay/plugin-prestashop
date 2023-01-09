@@ -309,7 +309,7 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Called on uninstall
-     * Leaves tables in place in order to not loose history.
+     * Leaves tables in place in order to not lose history.
      *
      * @return bool
      */
@@ -2098,9 +2098,10 @@ class ALTAPAY extends PaymentModule
     /**
      * Creates the transaction to ALTAPAY which should result in the payment form page URL.
      *
+     * @param $savecard
+     * @param $tokenId
      * @param bool $payment_method
-     * @param string $savedCreditCard
-     *
+     * @param null $transactionId
      * @return array If the transaction failed, the array contains information about the failure
      *
      * @throws Exception
