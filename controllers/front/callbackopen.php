@@ -58,6 +58,13 @@ class AltapayCallbackopenModuleFrontController extends ModuleFrontController
         $current_order = new Order((int) $this->module->currentOrder);
         createAltapayOrder($response, $current_order, 'open');
 
+        if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
+            $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
+            $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+
+            saveOrderReconciliationIdentifierIfNotExists($current_order->id, $reconciliation_identifier, $reconciliation_type);
+        }
+
         $curOr = $this->module->currentOrder;
         $mId = $this->module->id;
         $confOr = 'index.php?controller=order-confirmation&id_cart=';

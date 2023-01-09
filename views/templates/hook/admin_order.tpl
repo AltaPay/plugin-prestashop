@@ -307,10 +307,10 @@
                                     <td style="font-weight: bold">Reconciliation Identifiers</td>
                                     <td style="font-weight: bold">Types</td>
                                 </tr>
-                                {foreach $reconciliation_identifiers as $reconciliation_identifier => $transaction_type}
+                                {foreach $reconciliation_identifiers as $key => $reconciliation_identifier}
                                     <tr>
-                                        <td>{$reconciliation_identifier}</td>
-                                        <td>{$transaction_type}</td>
+                                        <td>{$reconciliation_identifier['reconciliation_identifier']}</td>
+                                        <td>{$reconciliation_identifier['transaction_type']}</td>
                                     </tr>
                                 {/foreach}
                                 </tbody>
