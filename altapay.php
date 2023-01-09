@@ -1994,12 +1994,17 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign(
             $this->getTemplateVarInfos()
         );
-
         $paymentsOptions = [];
+        $userAgent = $_SERVER['HTTP_USER_AGENT'];
         foreach ($paymentMethods as $paymentMethod) {
+            $paymentOptions = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
             $this->context->smarty->assign('ccTokenControl', $paymentMethod['ccTokenControl_']);
             if ($customerID) {
                 $this->context->smarty->assign('customerID', $customerID);
+            }
+            if ($paymentMethod['isapplepay_'] === '1' && !(strstr($userAgent, "AppleWebKit/") && strstr($userAgent, "Safari/") && !strstr($userAgent, "Chrome/")))
+            {
+                continue;
             }
             $actionText = $this->l('Pay with') . ' ' . $paymentMethod['display_name'];
             $paymentOptions = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
