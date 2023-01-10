@@ -34,10 +34,8 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $this->unlock($fp);
                 exit('Could not load cart - exiting');
             }
-            // Load the customer
-            $customer = new Customer((int) $cart->id_customer);
 
-            // Load order if it exist
+            // Load order if it exists
             $orderId = Order::getOrderByCartId((int) ($cart->id));
             $order = new Order((int) ($orderId));
 
@@ -56,6 +54,11 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $maskedPan = $response->maskedCreditCard;
                 $agreementType = 'unscheduled';
                 $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+                if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
+                    $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
+                    $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+                    saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $reconciliation_type);
+                }
                 $message = '';
                 if (isset($transaction->CapturedAmount)) {
                     $amountPaid = $transaction->CapturedAmount;
@@ -69,10 +72,13 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 if ($paymentType === 'paymentAndCapture' && $captureStatus === true) {
                     $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
                     $currencyPaid = new Currency($cart->id_currency);
+                    $reconciliation_identifier = sha1($transactionId . time());
                     $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
                     $api->setAmount($amountPaid);
                     $api->setTransaction($transactionId);
+                    $api->setReconciliationIdentifier($reconciliation_identifier);
                     $api->call();
+                    saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier);
                 }
                 if ($paymentType === 'verifyCard') {
                     $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
@@ -85,11 +91,6 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                         . '")';
                     Db::getInstance()->executeS($sql);
 
-                    $agreementData = [
-                        'id' => $transactionId,
-                        'type' => 'unscheduled',
-                        'unscheduled_type' => 'incremental',
-                    ];
                     $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
                     $request->setCreditCardToken($response->creditCardToken)
                             ->setTerminal($transaction->Terminal)
@@ -134,7 +135,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 echo $this->module->l('This payment method is not available 1004.', 'callbackok');
 
                 /* Redirect user back to the checkout payment step,
-                * assume a failure occured creating the URL until a payment url is received
+                * assume a failure occurred creating the URL until a payment url is received
                 */
                 $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
                 $as = $this->context->link;
@@ -150,7 +151,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
     }
 
     /**
-     * @param string $fileOpen
+     * @param resource $fileOpen
      *
      * @return void
      */
