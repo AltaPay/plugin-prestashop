@@ -2035,11 +2035,13 @@ class ALTAPAY extends PaymentModule
         Media::addJsDef(['baseDir' => $this->context->link->getModuleLink('altapay', 'cardwalletsession')]);
         $this->context->controller->addJquery();
         $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
-        $this->context->controller->registerJavascript(
-            'applepaysdk', // Unique ID
-            'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js', // JS path
-            ['server' => 'remote', 'position' => 'head', 'priority' => 150] // Arguments
-        );
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+            $this->context->controller->registerJavascript(
+                'applepaysdk', // Unique ID
+                'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js', // JS path
+                ['server' => 'remote', 'position' => 'head', 'priority' => 150] // Arguments
+            );
+        }
     }
 
     /**
