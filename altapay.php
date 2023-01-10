@@ -446,7 +446,6 @@ class ALTAPAY extends PaymentModule
             ],
         ];
 
-
         $isApplePayOptions = [
             [
                 'name' => 'Enable',
@@ -1160,7 +1159,7 @@ class ALTAPAY extends PaymentModule
         if (!empty($allowedCurrencies) && !in_array($getVal, $allowedCurrencies, true) && $active) {
             $this->Mhtml .= sprintf('<div class="alert alert-danger">Selected terminal does not support currency %s</div>',
                 $getVal);
-            
+
             return false;
         }
 
@@ -2002,8 +2001,7 @@ class ALTAPAY extends PaymentModule
             if ($customerID) {
                 $this->context->smarty->assign('customerID', $customerID);
             }
-            if ($paymentMethod['isapplepay_'] === '1' && !(strstr($userAgent, "AppleWebKit/") && strstr($userAgent, "Safari/") && !strstr($userAgent, "Chrome/")))
-            {
+            if ($paymentMethod['isapplepay_'] === '1' && !(strstr($userAgent, 'AppleWebKit/') && strstr($userAgent, 'Safari/') && !strstr($userAgent, 'Chrome/'))) {
                 continue;
             }
             $actionText = $this->l('Pay with') . ' ' . $paymentMethod['display_name'];
@@ -2040,7 +2038,7 @@ class ALTAPAY extends PaymentModule
         $this->context->controller->registerJavascript(
             'applepaysdk', // Unique ID
             'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js', // JS path
-            array('server' => 'remote', 'position' => 'head', 'priority' => 150) // Arguments
+            ['server' => 'remote', 'position' => 'head', 'priority' => 150] // Arguments
         );
     }
 
