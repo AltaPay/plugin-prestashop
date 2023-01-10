@@ -15,7 +15,7 @@ class Order
     }
 
       addproduct(discount_type=''){
-        cy.get('#blocknewproducts > .first-in-line.first-item-of-tablet-line > .product-container > .left-block > .product-image-container > .product_img_link > .replace-2x').click()
+        cy.contains('Faded Short Sleeves T-shirt').click()
         cy.get('.exclusive > span').click()
         cy.get('.button-medium > span').click()
         cy.get('.cart_navigation > .button > span').click()
@@ -128,8 +128,9 @@ class Order
     }   
 
     addpartial_product(){
-        cy.get('#blocknewproducts > .last-line.last-item-of-tablet-line > .product-container > .right-block > .button-container > .ajax_add_to_cart_button > span').click()
-        cy.get('.continue > span').click()
+        cy.contains('Blouse').click({force:true})
+        cy.contains('Add to cart').click()
+        cy.get('.logo').click().wait(3000)
     }
     partial_capture(){
         // 1.6.X

@@ -92,11 +92,19 @@ In order to reconcile payments please follow the steps below:
 
    ![prestashop_order_view](Docs/OrderReconciliation/prestashop_order_view.jpg)
 
+Or export the order data to CSV from PrestaShop **SQL Manager** by clicking export button next to the **SQL query Name** `AltaPay Order Reconciliation`.
+   
+   ![prestashop_sql_manager](Docs/OrderReconciliation/prestashop_sql_manager.jpg)
+   
+   ![prestashop_sql_manager_order_export](Docs/OrderReconciliation/prestashop_sql_manager_order_export.png)
+
+
+
 5. Navigate to AltaPay Gateway dashboard
 6. Click on **FUNDING FILES** under **FINANCES** menu
 7. Download the CSV file
 8. Or you can find the payment in the transaction list, open the reconciliation file from there and download a csv file
-9. Open the downloaded CSV file and match the **Reconciliation Identifier** with Magento's **Reconciliation Identifier**.
+9. Open the downloaded CSV file and match the **Reconciliation Identifier** with PrestaShop's **Reconciliation Identifier**.
 
 **Sample AltaPay Gateway CSV:**
 
