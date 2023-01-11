@@ -2073,7 +2073,7 @@ class ALTAPAY extends PaymentModule
             );
         }
     }
-    
+
     /**
      * Method to get template variable information like path, ssl path, methods
      *
