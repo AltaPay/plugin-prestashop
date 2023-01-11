@@ -25,6 +25,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         $savedCreditCard = null;
         $saveCard = null;
         $payment_method = Tools::getValue('method', false);
+        $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
 
         $cart = $this->context->cart;
         if (!$this->module->checkCurrency($cart)) {
@@ -63,7 +64,6 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
 
         if ($result['success']) {
             $payment_form_url = $result['payment_form_url'];
-            $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
             // Create Order with pending status
             $this->module->validateOrder(
                 $cart->id,
