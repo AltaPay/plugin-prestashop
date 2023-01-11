@@ -12,8 +12,7 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
      * Method to follow when card wallet session initiate
      *
      * @return void
-     *
-     * @throws PrestaShopDatabaseException
+     * 
      */
     public function postProcess()
     {

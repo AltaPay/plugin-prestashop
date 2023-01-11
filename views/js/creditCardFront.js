@@ -29,8 +29,8 @@ $(function () {
             return;
         }
         
+        // TODO: get value dynamically in PL-698
         // Define ApplePayPaymentRequest
-        // TODO will add dynamic value once start working on PL-698
         const request = {
             "countryCode": "US",
             "currencyCode": "USD",
