@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.4.4';
+    $pluginVersion = '3.4.5';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -39,7 +39,7 @@ function transactionInfo($transactionInfo = [])
 /**
  * @param AltapayCallbackHandler $response
  *
- * @return array<string>
+ * @return string
  */
 function determinePaymentMethodForDisplay($response)
 {
@@ -213,7 +213,7 @@ function updatePaymentStatus($paymentId, $paymentStatus)
  * Method for creating orders at prestashop backend
  *
  * @param AltapayCallbackHandler $response
- * @param array $current_order
+ * @param Order $current_order
  * @param string $payment_status
  *
  * @return void
@@ -323,7 +323,7 @@ function getTerminalTokenControlStatus($terminalRemoteName)
 }
 
 /**
- * @return Authentication
+ * @return \API\PHP\Altapay\Authentication
  */
 function getAuth()
 {
@@ -351,4 +351,48 @@ function getCvvLess($cartId, $shopOrderId)
         AND trans.`unique_id` = ' . "'$shopOrderId'";
 
     return Db::getInstance()->getValue($sql);
+}
+
+/**
+ * @param int $orderID
+ * @param string $reconciliation_identifier
+ * @param string $type
+ *
+ * @return void
+ */
+function saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $type = 'captured')
+{
+    Db::getInstance()->Execute('INSERT INTO `' . _DB_PREFIX_ . 'altapay_order_reconciliation`
+		(id_order, reconciliation_identifier, transaction_type) 
+        VALUES ' . "('" . (int) $orderID . "', '" . pSQL($reconciliation_identifier) . "', '" . pSQL($type) . "')");
+}
+
+/**
+ * @param int $orderID
+ *
+ * @return array
+ */
+function getOrderReconciliationIdentifiers($orderID)
+{
+    $sql = 'SELECT reconciliation_identifier, transaction_type FROM `' . _DB_PREFIX_ . 'altapay_order_reconciliation` WHERE id_order =' . (int) $orderID;
+
+    return Db::getInstance()->executeS($sql);
+}
+
+/**
+ * @param int $orderID
+ * @param string $reconciliation_identifier
+ * @param string $type
+ *
+ * @return void
+ */
+function saveOrderReconciliationIdentifierIfNotExists($orderID, $reconciliation_identifier, $type)
+{
+    $sql = 'SELECT id FROM `' . _DB_PREFIX_ . 'altapay_order_reconciliation` WHERE id_order =' . (int) $orderID .
+        " AND reconciliation_identifier ='" . pSQL($reconciliation_identifier) .
+        "' AND transaction_type ='" . pSQL($type) . "'";
+
+    if (!Db::getInstance()->getRow($sql)) {
+        saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $type);
+    }
 }
