@@ -31,7 +31,7 @@ class Altapay_Models_Terminal extends ObjectModel
             'payment_type' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 32],
             'currency' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 100],
             'ccTokenControl_' => ['type' => self::TYPE_INT, 'required' => true, 'size' => 255],
-            'applepay' => ['type' => self::TYPE_INT, 'required' => true, 'size' => 255],
+            'applepay' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
             'icon_filename' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 100],
             'active' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
             'position' => ['type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId'],
