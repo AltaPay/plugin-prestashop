@@ -6,10 +6,10 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-class ALTAPAYcardwalletsessionModuleFrontController extends ModuleFrontController
+class AltapaycardwalletsessionModuleFrontController extends ModuleFrontController
 {
     /**
-     * Method to follow when saved credit card is being deleted from user account page
+     * Method to follow when card wallet session initiate
      *
      * @return void
      *
