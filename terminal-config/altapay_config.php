@@ -43,7 +43,7 @@ try {
             $terminal->icon_filename = ' ';
             $terminal->currency = $currency;
             $terminal->ccTokenControl_ = 0;
-            $terminal->isapplepay_ = 0;
+            $terminal->applepay = 0;
             $terminal->payment_type = 'payment';
             $terminal->active = 1;
             $terminal->position = $i++;

@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
         $this->version = '3.4.5';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.7'];
+        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -200,7 +200,7 @@ class ALTAPAY extends PaymentModule
             `payment_type` varchar(32) DEFAULT NULL,
             `currency` varchar(100) DEFAULT NULL,
             `ccTokenControl_` int(255) NOT NULL DEFAULT \'0\',
-            `isapplepay_` int(255) NOT NULL DEFAULT \'0\',
+            `applepay` BOOLEAN NOT NULL DEFAULT \'0\',
             `position` int(11) NOT NULL DEFAULT \'0\',
             `active` int(11) NOT NULL DEFAULT \'0\',
             `cvvLess` BOOLEAN NOT NULL DEFAULT \'0\',
@@ -215,8 +215,8 @@ class ALTAPAY extends PaymentModule
                 return false;
             }
         }
-        if (!Db::getInstance()->Execute('SELECT isapplepay_ from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
-            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN isapplepay_ int(255) NOT NULL DEFAULT 0')) {
+        if (!Db::getInstance()->Execute('SELECT applepay from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN applepay BOOLEAN NOT NULL DEFAULT 0')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
@@ -406,7 +406,7 @@ class ALTAPAY extends PaymentModule
                         $terminal->icon_filename = ' ';
                         $terminal->currency = $this->context->currency->iso_code;
                         $terminal->ccTokenControl_ = 0;
-                        $terminal->isapplepay_ = 0;
+                        $terminal->applepay = 0;
                         $terminal->payment_type = 'payment';
                         $terminal->position = $position++;
                         $terminal->cvvLess = 0;
@@ -448,7 +448,6 @@ class ALTAPAY extends PaymentModule
         $iconOptions = [];
         $fieldsForm = [];
         $tokenControl = [];
-        $isApplePay = [];
         $directory = _PS_MODULE_DIR_ . '/' . $this->name . '/' . $this->paymentMethodIconDir;
         $scanned_directory = array_diff(scandir($directory), ['..', '.', '.DS_Store']);
         foreach ($scanned_directory as $filename) {
@@ -474,13 +473,6 @@ class ALTAPAY extends PaymentModule
             ],
         ];
 
-        $isApplePayOptions = [
-            [
-                'name' => 'Enable',
-                'val' => 1,
-            ],
-        ];
-
         $terminals = $this->getAltapayTerminals();
         foreach ($terminals as $terminal) {
             $terminalNature[] = [
@@ -500,21 +492,6 @@ class ALTAPAY extends PaymentModule
                 'lang' => false,
                 'values' => [
                     'query' => $ccTokenControlOptions,
-                    'id' => 'id',
-                    'name' => 'name',
-                ],
-            ];
-
-            $isApplePay = [
-                'type' => 'checkbox',
-                'label' => $this->l('Is Apple Pay?'),
-                'desc' => $this->l('Check this box to enable if the current terminal is Apple Pay'),
-                'name' => 'isapplepay',
-                'id' => 'isapplepay',
-                'required' => false,
-                'lang' => false,
-                'values' => [
-                    'query' => $isApplePayOptions,
                     'id' => 'id',
                     'name' => 'name',
                 ],
@@ -566,6 +543,26 @@ class ALTAPAY extends PaymentModule
                 ],
                 [
                     'type' => 'select',
+                    'label' => $this->l('Is Apple Pay?'),
+                    'name' => 'applepay',
+                    'required' => true,
+                    'options' => [
+                        'query' => [
+                            [
+                                'id_option' => '0',
+                                'name' => 'No',
+                            ],
+                            [
+                                'id_option' => '1',
+                                'name' => 'Yes',
+                            ],
+                        ],
+                        'id' => 'id_option',
+                        'name' => 'name',
+                    ],
+                ],
+                [
+                    'type' => 'select',
                     'label' => $this->l('CVV Less'),
                     'name' => 'cvvLess',
                     'required' => true,
@@ -612,8 +609,6 @@ class ALTAPAY extends PaymentModule
                 ],
 
                 $tokenControl,
-
-                $isApplePay,
 
                 [
                     'type' => 'select',
@@ -1205,11 +1200,11 @@ class ALTAPAY extends PaymentModule
             'icon_filename',
             'currency',
             'ccTokenControl_',
+            'applepay',
             'payment_type',
             'active',
             'position',
             'cvvLess',
-            'isapplepay_',
         ];
         foreach ($fields as $fieldName) {
             $terminal->{$fieldName} = Tools::getValue($fieldName);
@@ -1411,7 +1406,7 @@ class ALTAPAY extends PaymentModule
                 'orderby' => false,
                 'search' => false,
             ],
-            'isapplepay_' => [
+            'applepay' => [
                 'title' => $this->l('Is Apple Pay'),
                 'type' => 'bool',
                 'width' => 'auto',
@@ -2036,7 +2031,7 @@ class ALTAPAY extends PaymentModule
             if ($customerID) {
                 $this->context->smarty->assign('customerID', $customerID);
             }
-            if ($paymentMethod['isapplepay_'] === '1' && !(strstr($userAgent, 'AppleWebKit/') && strstr($userAgent, 'Safari/') && !strstr($userAgent, 'Chrome/'))) {
+            if ($paymentMethod['applepay'] === '1' && !(strstr($userAgent, 'AppleWebKit/') && strstr($userAgent, 'Safari/') && !strstr($userAgent, 'Chrome/'))) {
                 continue;
             }
             $actionText = $this->l('Pay with') . ' ' . $paymentMethod['display_name'];
@@ -2067,10 +2062,10 @@ class ALTAPAY extends PaymentModule
      */
     public function hookActionFrontControllerSetMedia($params)
     {
-        Media::addJsDef(['baseDir' => $this->context->link->getModuleLink('altapay', 'cardwalletsession')]);
         $this->context->controller->addJquery();
         $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+            Media::addJsDef(['baseDir' => $this->context->link->getModuleLink('altapay', 'cardwalletsession')]);
             $this->context->controller->registerJavascript(
                 'applepaysdk', // Unique ID
                 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js', // JS path
@@ -2078,7 +2073,7 @@ class ALTAPAY extends PaymentModule
             );
         }
     }
-
+    
     /**
      * Method to get template variable information like path, ssl path, methods
      *
