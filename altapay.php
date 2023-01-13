@@ -1148,7 +1148,7 @@ class ALTAPAY extends PaymentModule
         if ($idTerminal = Tools::getValue('id_terminal') && $currentShopId == $shopId) {
             $terminal = new Altapay_Models_Terminal((int) $idTerminal);
         } // New
-        elseif (!($idTerminal = Tools::getValue('id_terminal')) && $terminalId &&  ($currentShopId == $shopId)) {
+        elseif (!($idTerminal = Tools::getValue('id_terminal')) && $terminalId && ($currentShopId == $shopId)) {
             $idTerminal = $terminalId;
             $terminal = new Altapay_Models_Terminal((int) $idTerminal);
         } else {
@@ -1188,7 +1188,7 @@ class ALTAPAY extends PaymentModule
             'active',
             'position',
             'cvvLess',
-            'shop_id'
+            'shop_id',
         ];
         foreach ($fields as $fieldName) {
             $terminal->{$fieldName} = Tools::getValue($fieldName);
