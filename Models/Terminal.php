@@ -19,6 +19,7 @@ class Altapay_Models_Terminal extends ObjectModel
     public $active;
     public $position;
     public $cvvLess;
+    public $shop_id;
 
     public static $definition = [
         'table' => 'altapay_terminals',
@@ -34,6 +35,7 @@ class Altapay_Models_Terminal extends ObjectModel
             'active' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
             'position' => ['type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId'],
             'cvvLess' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
+            'shop_id' => ['type' => self::TYPE_INT],
         ],
     ];
 
@@ -44,10 +46,10 @@ class Altapay_Models_Terminal extends ObjectModel
      *
      * @throws PrestaShopDatabaseException
      */
-    public static function getTerminals()
+    public static function getTerminals($shop_id = null)
     {
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('
-			SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals` ORDER BY `id_terminal` ASC
+			SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE shop_id = '. $shop_id .' ORDER BY `id_terminal` ASC
 		');
     }
 
@@ -58,10 +60,10 @@ class Altapay_Models_Terminal extends ObjectModel
      *
      * @throws PrestaShopDatabaseException
      */
-    public static function getActiveTerminals()
+    public static function getActiveTerminals($shop_id = null)
     {
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('
-			SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE active = 1 ORDER BY `display_name` ASC
+			SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE active = 1 AND shop_id = '. $shop_id . ' ORDER BY `display_name` ASC
 		');
     }
 
@@ -74,11 +76,11 @@ class Altapay_Models_Terminal extends ObjectModel
      *
      * @throws PrestaShopDatabaseException
      */
-    public static function getActiveTerminalsForCurrency($currency = false)
+    public static function getActiveTerminalsForCurrency($currency = false, $shop_id = null)
     {
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('
             SELECT * FROM `'
-                                                             . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND currency = '" . $currency . "' ORDER BY IF(ISNULL(position), \"\", position) ASC, display_name DESC
+                                                             . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND currency = '" . $currency . "'AND shop_id = '".$shop_id."' ORDER BY IF(ISNULL(position), \"\", position) ASC, display_name DESC
 		");
     }
 }
