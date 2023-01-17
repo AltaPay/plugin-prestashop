@@ -1145,8 +1145,9 @@ class ALTAPAY extends PaymentModule
         $shopId = getTerminalId($terminalRemoteName)[0]['shop_id'];
         $currentShopId = (int) Context::getContext()->shop->id;
         // Update existing
-        if ($idTerminal = Tools::getValue('id_terminal') && $currentShopId == $shopId) {
-            $terminal = new Altapay_Models_Terminal((int) $idTerminal);
+        if (Tools::getValue('id_terminal') && $currentShopId == $shopId) {
+            $currentTerminalId = Tools::getValue('id_terminal');
+            $terminal = new Altapay_Models_Terminal((int) $currentTerminalId);
         } // New
         elseif (!($idTerminal = Tools::getValue('id_terminal')) && $terminalId && ($currentShopId == $shopId)) {
             $idTerminal = $terminalId;
