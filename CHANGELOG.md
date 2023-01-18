@@ -7,7 +7,7 @@ PrestaShop 1.6.x and 1.7.x
 
 ## [3.4.6] - 2023-01-09
 ### Added
-Added support with multistore
+- Add support for multistore
 
 ## [3.4.5] - 2023-01-09
 ### Added
