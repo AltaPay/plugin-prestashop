@@ -1141,23 +1141,22 @@ class ALTAPAY extends PaymentModule
     private function postProcessTerminal()
     {
         $terminalRemoteName = $_POST['remote_name'];
-        $terminalId = getTerminalId($terminalRemoteName)[0]['id_terminal'];
-        $shopId = getTerminalId($terminalRemoteName)[0]['shop_id'];
-        $currentShopId = (int) Context::getContext()->shop->id;
+        $currentShopId = (int) $this->context->shop->id;
+        $terminalId = getTerminalId($terminalRemoteName, $currentShopId)[0]['id_terminal'];
         $currentTerminalId = Tools::getValue('id_terminal');
         // Update existing
-        if ($terminalId == $currentTerminalId && $currentShopId == $shopId) {
+        if ($terminalId == $currentTerminalId) {
             $terminal = new Altapay_Models_Terminal((int) $currentTerminalId);
         } // New
-        elseif (($terminalId != $currentTerminalId) && ($currentShopId == $shopId)) {
-            $terminal = new Altapay_Models_Terminal((int) $currentTerminalId);
+        elseif ($terminalId != $currentTerminalId) {
+            $terminal = new Altapay_Models_Terminal((int) $terminalId);
         } else {
             $terminal = new Altapay_Models_Terminal();
         }
 
         $api = new API\PHP\Altapay\Api\Others\Terminals(getAuth());
         $response = $api->call();
-        $allowedCurrencies = [];
+        $allowedCurrencies = array();
 
         foreach ($response->Terminals as $term) {
             if ($term->Title === $terminalRemoteName) {
@@ -1194,7 +1193,7 @@ class ALTAPAY extends PaymentModule
             $terminal->{$fieldName} = Tools::getValue($fieldName);
         }
 
-        $terminal->shop_id = (int) Context::getContext()->shop->id;
+        $terminal->shop_id = (int) $this->context->shop->id;
         // Validate
         $result = $terminal->validateFields(false, true);
 
@@ -1426,7 +1425,7 @@ class ALTAPAY extends PaymentModule
         $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
         $helper->orderBy = 'id_terminal';
         $helper->orderWay = 'ASC';
-        $shop_id = (int) Context::getContext()->shop->id;
+        $shop_id = (int) $this->context->shop->id;
         $content = Altapay_Models_Terminal::getTerminals($shop_id);
 
         return $helper->generateList($content, $fields_list);
@@ -1878,7 +1877,7 @@ class ALTAPAY extends PaymentModule
 
         // Fetch payment methods
         $currency = $this->getCurrencyForCart($params['cart']);
-        $shop_id = (int) Context::getContext()->shop->id;
+        $shop_id = (int) $this->context->shop->id;
         $paymentMethods = Altapay_Models_Terminal::getActiveTerminals($shop_id);
 
         $this->smarty->assign([
@@ -1993,7 +1992,7 @@ class ALTAPAY extends PaymentModule
         $this->context->controller->addCSS($this->_path . 'css/payment.css', 'all');
         // Fetch payment methods
         $currency = $this->getCurrencyForCart($params['cart']);
-        $shop_id = (int) Context::getContext()->shop->id;
+        $shop_id = (int) $this->context->shop->id;
         $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, $shop_id);
 
         $this->smarty->assign(
@@ -2049,7 +2048,7 @@ class ALTAPAY extends PaymentModule
     {
         $cart = $this->context->cart;
         $currency = $this->getCurrencyForCart($cart);
-        $shop_id = (int) Context::getContext()->shop->id;
+        $shop_id = (int) $this->context->shop->id;
         $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, $shop_id);
 
         return [
