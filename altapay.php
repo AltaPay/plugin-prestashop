@@ -1156,7 +1156,7 @@ class ALTAPAY extends PaymentModule
 
         $api = new API\PHP\Altapay\Api\Others\Terminals(getAuth());
         $response = $api->call();
-        $allowedCurrencies = array();
+        $allowedCurrencies = [];
 
         foreach ($response->Terminals as $term) {
             if ($term->Title === $terminalRemoteName) {
