@@ -1873,8 +1873,7 @@ class ALTAPAY extends PaymentModule
 
         // Fetch payment methods
         $currency = $this->getCurrencyForCart($params['cart']);
-        $shop_id = (int) $this->context->shop->id;
-        $paymentMethods = Altapay_Models_Terminal::getActiveTerminals($shop_id);
+        $paymentMethods = Altapay_Models_Terminal::getActiveTerminals((int) $this->context->shop->id);
 
         $this->smarty->assign([
             'this_path' => $this->_path,
