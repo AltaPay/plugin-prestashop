@@ -2019,7 +2019,9 @@ class ALTAPAY extends PaymentModule
                                                          . $paymentMethod['icon_filename']));
             $paymentsOptions[] = $paymentOptions;
         }
-        echo '<script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>';
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
+            echo '<script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>';
+        }
 
         return $paymentsOptions;
     }
@@ -2035,6 +2037,9 @@ class ALTAPAY extends PaymentModule
     {
         $this->context->controller->addJquery();
         $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+            $this->context->controller->registerJavascript('altapay-js-cookie', 'https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js', ['server' => 'remote']);
+        }
     }
 
     /**
