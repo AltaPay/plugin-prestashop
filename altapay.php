@@ -1422,8 +1422,7 @@ class ALTAPAY extends PaymentModule
         $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
         $helper->orderBy = 'id_terminal';
         $helper->orderWay = 'ASC';
-        $shop_id = (int) $this->context->shop->id;
-        $content = Altapay_Models_Terminal::getTerminals($shop_id);
+        $content = Altapay_Models_Terminal::getTerminals((int) $this->context->shop->id);
 
         return $helper->generateList($content, $fields_list);
     }

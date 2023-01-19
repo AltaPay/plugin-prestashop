@@ -302,7 +302,7 @@ function getAltapayOrderDetails($orderID)
  */
 function getTerminalId($terminalRemoteName, $shop_id = 1)
 {
-    $sql = 'SELECT id_terminal, shop_id FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE `remote_name`="' . $terminalRemoteName . '" AND `shop_id` = "' . $shop_id . '"';
+    $sql = 'SELECT id_terminal, shop_id FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE `remote_name`="' . $terminalRemoteName . '" AND `shop_id` = "' . (int) $shop_id . '"';
 
     return Db::getInstance()->executeS($sql);
 }

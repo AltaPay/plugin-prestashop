@@ -72,7 +72,7 @@ class Altapay_Models_Terminal extends ObjectModel
     }
 
     /**
-     * Method to get terminals against a given currency from database
+     * Method to get terminals against a given currency and shop id from database
      *
      * @param bool $currency
      * @param int $shop_id
