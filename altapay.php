@@ -1989,8 +1989,7 @@ class ALTAPAY extends PaymentModule
         $this->context->controller->addCSS($this->_path . 'css/payment.css', 'all');
         // Fetch payment methods
         $currency = $this->getCurrencyForCart($params['cart']);
-        $shop_id = (int) $this->context->shop->id;
-        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, $shop_id);
+        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
 
         $this->smarty->assign(
             $this->getTemplateVarInfos()
