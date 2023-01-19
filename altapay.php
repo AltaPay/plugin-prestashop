@@ -1144,13 +1144,10 @@ class ALTAPAY extends PaymentModule
         $currentShopId = (int) $this->context->shop->id;
         $terminalId = getTerminalId($terminalRemoteName, $currentShopId)[0]['id_terminal'];
         $currentTerminalId = Tools::getValue('id_terminal');
-        // Update existing
-        if ($terminalId == $currentTerminalId) {
+        // Update existing terminal
+        if (!empty($terminalId) && ($terminalId == $currentTerminalId)) {
             $terminal = new Altapay_Models_Terminal((int) $currentTerminalId);
-        } // New
-        elseif ($terminalId != $currentTerminalId) {
-            $terminal = new Altapay_Models_Terminal((int) $terminalId);
-        } else {
+        } else { // Create a new terminal
             $terminal = new Altapay_Models_Terminal();
         }
 
@@ -2053,8 +2050,7 @@ class ALTAPAY extends PaymentModule
     {
         $cart = $this->context->cart;
         $currency = $this->getCurrencyForCart($cart);
-        $shop_id = (int) $this->context->shop->id;
-        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, $shop_id);
+        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
 
         return [
             'this_path' => $this->_path,

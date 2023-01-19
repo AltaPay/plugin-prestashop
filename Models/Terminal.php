@@ -42,6 +42,8 @@ class Altapay_Models_Terminal extends ObjectModel
     /**
      * Method to get saved terminals from database
      *
+     * @param int $shop_id
+     *
      * @return array|false|PDOStatement|resource|null
      *
      * @throws PrestaShopDatabaseException
@@ -55,6 +57,8 @@ class Altapay_Models_Terminal extends ObjectModel
 
     /**
      * Method to get active terminals from database
+     *
+     * @param int $shop_id
      *
      * @return array|false|PDOStatement|resource|null
      *
@@ -71,6 +75,7 @@ class Altapay_Models_Terminal extends ObjectModel
      * Method to get terminals against a given currency from database
      *
      * @param bool $currency
+     * @param int $shop_id
      *
      * @return array|false|PDOStatement|resource|null
      *
@@ -80,7 +85,7 @@ class Altapay_Models_Terminal extends ObjectModel
     {
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('
             SELECT * FROM `'
-                                                             . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND currency = '" . $currency . "'AND shop_id = '" . (int) $shop_id . "' ORDER BY IF(ISNULL(position), \"\", position) ASC, display_name DESC
+                                                             . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND currency = '" . pSQL($currency) . "'AND shop_id = '" . (int) $shop_id . "' ORDER BY IF(ISNULL(position), \"\", position) ASC, display_name DESC
 		");
     }
 }
