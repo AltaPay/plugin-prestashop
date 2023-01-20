@@ -12,7 +12,6 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
      * Method to follow when card wallet session initiate
      *
      * @return void
-     * 
      */
     public function postProcess()
     {
