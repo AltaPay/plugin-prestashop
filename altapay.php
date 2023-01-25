@@ -340,7 +340,6 @@ class ALTAPAY extends PaymentModule
     public function hookHeader($params)
     {
         $this->context->controller->addJquery();
-        $this->context->controller->addJS($this->_path . 'js/creditCardFront.js', 'all');
         $this->context->controller->addCSS($this->_path . 'views/css/payment.css', 'all');
     }
 
@@ -1899,7 +1898,6 @@ class ALTAPAY extends PaymentModule
         }
 
         $this->context->controller->addJquery();
-        $this->context->controller->addJS($this->_path . 'js/creditCardFront.js', 'all');
         $this->context->controller->addCSS($this->_path . 'css/payment.css', 'all');
 
         // Fetch payment methods
@@ -2034,10 +2032,11 @@ class ALTAPAY extends PaymentModule
             if ($paymentMethod['applepay'] === '1' && !(strstr($userAgent, 'AppleWebKit/') && strstr($userAgent, 'Safari/') && !strstr($userAgent, 'Chrome/'))) {
                 continue;
             }
-            $actionText = $this->l('Pay with') . ' ' . $paymentMethod['display_name'];
+            $actionText = $this->l('Pay by') . ' ' . $paymentMethod['display_name'];
             $paymentOptions = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-            $terminal_id = $paymentMethod['id_terminal'];
-            $terminal = ['method' => $terminal_id];
+            $terminalId = $paymentMethod['id_terminal'];
+            $this->context->smarty->assign('terminalId', $terminalId);
+            $terminal = ['method' => $terminalId];
             $template = $this->fetch('module:altapay/views/templates/hook/payment17.tpl');
 
             $paymentOptions->setCallToActionText($actionText)

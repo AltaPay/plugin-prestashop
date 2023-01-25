@@ -38,3 +38,7 @@ p.payment_module a.altapay:after {
 .savecard-checkbox {
       margin-bottom: 14px;
 }
+
+#hidden-terminalid {
+      display: none;
+}

@@ -18,13 +18,14 @@ $(function () {
         }
         Cookies.set('savecard', savecard);
     });
-    $("#payment-confirmation button").click(function (e) {
+    $('#payment-confirmation > .ps-shown-by-js > button').click(function(e) {
         onApplePayButtonClicked();
         return false;
     });
 
     function onApplePayButtonClicked() { 
-
+        var payment_option = $('input[type="radio"][name="payment-option"]:checked').attr('id');
+        var terminalId = $("#"+payment_option+"-additional-information > #hidden-terminalid").text();
         if (!ApplePaySession) {
             return;
         }
@@ -62,7 +63,7 @@ $(function () {
                 type: 'post',
                 data: {
                     validationUrl: event.validationURL,
-                    termminalid: Cookies.get('selectedPaymentId')
+                    termminalid: terminalId
                 },
                 success: function(response) {
                     var responsedata = jQuery.parseJSON(response);
