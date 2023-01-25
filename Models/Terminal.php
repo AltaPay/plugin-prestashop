@@ -51,7 +51,7 @@ class Altapay_Models_Terminal extends ObjectModel
     public static function getTerminals($shop_id = 1)
     {
         try {
-            if (!filter_var($shop_id, FILTER_VALIDATE_INT)) {
+            if (filter_var($shop_id, FILTER_VALIDATE_INT, ["options" => ["min_range" => 1]]) === false) {
                 throw new Exception("Invalid shop id");
             }
 
@@ -79,7 +79,7 @@ class Altapay_Models_Terminal extends ObjectModel
     public static function getActiveTerminals($shop_id = 1)
     {
         try {
-            if (!filter_var($shop_id, FILTER_VALIDATE_INT)) {
+            if (filter_var($shop_id, FILTER_VALIDATE_INT, ["options" => ["min_range" => 1]]) === false) {
                 throw new Exception("Invalid shop id");
             }
             $query = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE active = 1 AND shop_id = ' . (int) $shop_id . ' ORDER BY `display_name` ASC';
@@ -107,7 +107,7 @@ class Altapay_Models_Terminal extends ObjectModel
     public static function getActiveTerminalsForCurrency($currency = false, $shop_id = 1)
     {
         try {
-            if (!filter_var($shop_id, FILTER_VALIDATE_INT)) {
+            if (filter_var($shop_id, FILTER_VALIDATE_INT, ["options" => ["min_range" => 1]]) === false) {
                 throw new Exception("Invalid shop id");
             }
             $query = 'SELECT * FROM `' . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND currency = '" . pSQL($currency) . "' AND shop_id = '" . $shop_id . "' ORDER BY IF(ISNULL(position), \"\", position) ASC, display_name DESC";
