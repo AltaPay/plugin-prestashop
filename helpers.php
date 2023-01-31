@@ -308,6 +308,21 @@ function getTerminalId($terminalRemoteName)
 }
 
 /**
+ * Get terminal id based on terminal remote name
+ *
+ * @param string $terminalRemoteName
+ *
+ * @return array
+ */
+function getTerminalById($terminalId)
+{
+    $sql = 'SELECT remote_name FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE `id_terminal`='
+           . "'$terminalId'";
+
+    return Db::getInstance()->executeS($sql);
+}
+
+/**
  * Get terminal control status based on terminal remote name
  *
  * @param string $terminalRemoteName

@@ -16,7 +16,21 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
     public function postProcess()
     {
         $validationUrl = Tools::getValue('validationUrl');
-        $terminalId = Tools::getValue('termminalid');
-        $domain = $this->context->shop->getBaseURL(true);
+        $terminalId = Tools::getValue('termminalid');  
+        $currentUrl = $this->context->shop->getBaseURL();
+        $domain = parse_url($currentUrl, PHP_URL_HOST);
+        $terminalName = getTerminalById($terminalId)[0]['remote_name'];
+        $request = new API\PHP\Altapay\Api\Payments\CardWalletSession(getAuth());
+        $request->setTerminal($terminalName)
+                ->setValidationUrl($validationUrl)
+                ->setDomain($domain);
+        try {
+            $response = $request->call();
+            if ($response->Result === 'Success') {
+                $this->ajaxDie(Tools::jsonEncode(array('success' => true, 'applePaySession' => $response->ApplePaySession)));
+            }
+        } catch(Exception $e) {
+            $this->ajaxDie(Tools::jsonEncode(array('success' => false, 'error' => $e->getMessage())));
+        }
     }
 }
