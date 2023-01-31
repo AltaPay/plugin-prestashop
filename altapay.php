@@ -1422,7 +1422,7 @@ class ALTAPAY extends PaymentModule
         $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
         $helper->orderBy = 'id_terminal';
         $helper->orderWay = 'ASC';
-        $content = Altapay_Models_Terminal::getTerminals((int) $this->context->shop->id);
+        $content = Altapay_Models_Terminal::getTerminals($this->context->shop->id);
 
         return $helper->generateList($content, $fields_list);
     }
@@ -1873,7 +1873,7 @@ class ALTAPAY extends PaymentModule
 
         // Fetch payment methods
         $currency = $this->getCurrencyForCart($params['cart']);
-        $paymentMethods = Altapay_Models_Terminal::getActiveTerminals((int) $this->context->shop->id);
+        $paymentMethods = Altapay_Models_Terminal::getActiveTerminals($this->context->shop->id);
 
         $this->smarty->assign([
             'this_path' => $this->_path,
@@ -2047,7 +2047,7 @@ class ALTAPAY extends PaymentModule
     {
         $cart = $this->context->cart;
         $currency = $this->getCurrencyForCart($cart);
-        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
+        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, $this->context->shop->id);
 
         return [
             'this_path' => $this->_path,

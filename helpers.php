@@ -302,9 +302,21 @@ function getAltapayOrderDetails($orderID)
  */
 function getTerminalId($terminalRemoteName, $shop_id = 1)
 {
-    $sql = 'SELECT id_terminal, shop_id FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE `remote_name`="' . $terminalRemoteName . '" AND `shop_id` = "' . (int) $shop_id . '"';
+    try {
+        if (filter_var($shop_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+            throw new Exception('Invalid shop id');
+        }
+        $query = 'SELECT id_terminal, shop_id FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE `remote_name`="' . pSQL($terminalRemoteName) . '" AND `shop_id` = "' . (int) $shop_id . '"';
+        $result = Db::getInstance()->executeS($query);
 
-    return Db::getInstance()->executeS($sql);
+        return $result;
+    } catch (Exception $e) {
+        $context = Context::getContext();
+        if (isset($context->controller) && isset($context->controller->errors)) {
+            $context->controller->errors[] = $e->getMessage();
+        }
+        PrestaShopLogger::addLog($e->getMessage(), 4);
+    }
 }
 
 /**
