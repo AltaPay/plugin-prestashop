@@ -295,10 +295,10 @@ function getAltapayOrderDetails($orderID)
 /**
  * Retrieve the ID of a terminal based on its remote name and shop ID.
  *
- * @param string $terminalRemoteName The remote name of the terminal.
- * @param int $shop_id The ID of the shop associated with the terminal (defaults to 1).
- * 
- * @return array|false The terminal information, or false on failure.
+ * @param string $terminalRemoteName
+ * @param int $shop_id
+ *
+ * @return array|false
  */
 function getTerminalId($terminalRemoteName, $shop_id = 1)
 {
