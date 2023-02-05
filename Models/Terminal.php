@@ -20,6 +20,7 @@ class Altapay_Models_Terminal extends ObjectModel
     public $active;
     public $position;
     public $cvvLess;
+    public $shop_id;
 
     public static $definition = [
         'table' => 'altapay_terminals',
@@ -36,51 +37,93 @@ class Altapay_Models_Terminal extends ObjectModel
             'active' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
             'position' => ['type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId'],
             'cvvLess' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
+            'shop_id' => ['type' => self::TYPE_INT],
         ],
     ];
 
     /**
      * Method to get saved terminals from database
      *
+     * @param int $shop_id
+     *
      * @return array|false|PDOStatement|resource|null
      *
      * @throws PrestaShopDatabaseException
      */
-    public static function getTerminals()
+    public static function getTerminals($shop_id = 1)
     {
-        return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('
-			SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals` ORDER BY `id_terminal` ASC
-		');
+        try {
+            if (filter_var($shop_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                throw new Exception('Invalid shop id');
+            }
+
+            $query = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE shop_id = ' . (int) $shop_id . ' ORDER BY `id_terminal` ASC';
+            $result = Db::getInstance()->executeS($query);
+
+            return $result;
+        } catch (Exception $e) {
+            $context = Context::getContext();
+            if (isset($context->controller) && isset($context->controller->errors)) {
+                $context->controller->errors[] = $e->getMessage();
+            }
+            PrestaShopLogger::addLog($e->getMessage(), 4);
+        }
     }
 
     /**
      * Method to get active terminals from database
      *
+     * @param int $shop_id
+     *
      * @return array|false|PDOStatement|resource|null
      *
      * @throws PrestaShopDatabaseException
      */
-    public static function getActiveTerminals()
+    public static function getActiveTerminals($shop_id = 1)
     {
-        return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('
-			SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE active = 1 ORDER BY `display_name` ASC
-		');
+        try {
+            if (filter_var($shop_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                throw new Exception('Invalid shop id');
+            }
+            $query = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE active = 1 AND shop_id = ' . (int) $shop_id . ' ORDER BY `display_name` ASC';
+            $result = Db::getInstance()->executeS($query);
+
+            return $result;
+        } catch (Exception $e) {
+            $context = Context::getContext();
+            if (isset($context->controller) && isset($context->controller->errors)) {
+                $context->controller->errors[] = $e->getMessage();
+            }
+            PrestaShopLogger::addLog($e->getMessage(), 4);
+        }
     }
 
     /**
-     * Method to get terminals against a given currency from database
+     * Method to get terminals against a given currency and shop id from database
      *
      * @param bool $currency
+     * @param int $shop_id
      *
      * @return array|false|PDOStatement|resource|null
      *
      * @throws PrestaShopDatabaseException
      */
-    public static function getActiveTerminalsForCurrency($currency = false)
+    public static function getActiveTerminalsForCurrency($currency = false, $shop_id = 1)
     {
-        return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('
-            SELECT * FROM `'
-                                                             . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND currency = '" . $currency . "' ORDER BY IF(ISNULL(position), \"\", position) ASC, display_name DESC
-		");
+        try {
+            if (filter_var($shop_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                throw new Exception('Invalid shop id');
+            }
+            $query = 'SELECT * FROM `' . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND currency = '" . pSQL($currency) . "' AND shop_id = '" . $shop_id . "' ORDER BY IF(ISNULL(position), \"\", position) ASC, display_name DESC";
+            $result = Db::getInstance()->executeS($query);
+
+            return $result;
+        } catch (Exception $e) {
+            $context = Context::getContext();
+            if (isset($context->controller) && isset($context->controller->errors)) {
+                $context->controller->errors[] = $e->getMessage();
+            }
+            PrestaShopLogger::addLog($e->getMessage(), 4);
+        }
     }
 }
