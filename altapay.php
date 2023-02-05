@@ -203,6 +203,7 @@ class ALTAPAY extends PaymentModule
             `applepay` BOOLEAN NOT NULL DEFAULT \'0\',
             `position` int(11) NOT NULL DEFAULT \'0\',
             `active` int(11) NOT NULL DEFAULT \'0\',
+            `cvvLess` BOOLEAN NOT NULL DEFAULT \'0\',
             `shop_id` int(11) NOT NULL DEFAULT \'1\',
             PRIMARY KEY (`id_terminal`)
         ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
@@ -2080,6 +2081,7 @@ class ALTAPAY extends PaymentModule
                 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js', // JS path
                 ['server' => 'remote', 'position' => 'head', 'priority' => 150] // Arguments
             );
+            $this->context->controller->registerJavascript('altapay-js-cookie', 'https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js', ['server' => 'remote']);
         }
     }
 
