@@ -48,6 +48,7 @@ try {
             $terminal->active = 1;
             $terminal->position = $i++;
             $terminal->cvvLess = 0;
+            $terminal->shop_id = 1;
             $terminal->save();
         }
     }

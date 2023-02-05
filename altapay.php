@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.4.5';
+        $this->version = '3.4.6';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
@@ -203,7 +203,7 @@ class ALTAPAY extends PaymentModule
             `applepay` BOOLEAN NOT NULL DEFAULT \'0\',
             `position` int(11) NOT NULL DEFAULT \'0\',
             `active` int(11) NOT NULL DEFAULT \'0\',
-            `cvvLess` BOOLEAN NOT NULL DEFAULT \'0\',
+            `shop_id` int(11) NOT NULL DEFAULT \'1\',
             PRIMARY KEY (`id_terminal`)
         ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
         }
@@ -217,6 +217,13 @@ class ALTAPAY extends PaymentModule
         }
         if (!Db::getInstance()->Execute('SELECT applepay from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN applepay BOOLEAN NOT NULL DEFAULT 0')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+        if (!Db::getInstance()->Execute('SELECT shop_id from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN shop_id int(11) NOT NULL DEFAULT 1')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
@@ -410,6 +417,7 @@ class ALTAPAY extends PaymentModule
                         $terminal->position = $position++;
                         $terminal->cvvLess = 0;
                         $terminal->active = 1;
+                        $terminal->shop_id = 1;
                         $terminal->save();
                     }
                     ++$i;
@@ -506,6 +514,10 @@ class ALTAPAY extends PaymentModule
                 [
                     'type' => 'hidden',
                     'name' => 'id_terminal',
+                ],
+                [
+                    'type' => 'hidden',
+                    'name' => 'shop_id',
                 ],
                 [
                     'type' => 'text',
@@ -1158,15 +1170,13 @@ class ALTAPAY extends PaymentModule
     private function postProcessTerminal()
     {
         $terminalRemoteName = $_POST['remote_name'];
-        $terminalId = getTerminalId($terminalRemoteName)[0]['id_terminal'];
-        // Update existing
-        if ($idTerminal = Tools::getValue('id_terminal')) {
-            $terminal = new Altapay_Models_Terminal((int) $idTerminal);
-        } // New
-        elseif (!($idTerminal = Tools::getValue('id_terminal')) && $terminalId) {
-            $idTerminal = $terminalId;
-            $terminal = new Altapay_Models_Terminal((int) $idTerminal);
-        } else {
+        $currentShopId = (int) $this->context->shop->id;
+        $terminalId = getTerminalId($terminalRemoteName, $currentShopId)[0]['id_terminal'];
+        $currentTerminalId = Tools::getValue('id_terminal');
+        // Update existing terminal
+        if (!empty($terminalId) && ($terminalId == $currentTerminalId)) {
+            $terminal = new Altapay_Models_Terminal((int) $currentTerminalId);
+        } else { // Create a new terminal
             $terminal = new Altapay_Models_Terminal();
         }
 
@@ -1204,11 +1214,13 @@ class ALTAPAY extends PaymentModule
             'active',
             'position',
             'cvvLess',
+            'shop_id',
         ];
         foreach ($fields as $fieldName) {
             $terminal->{$fieldName} = Tools::getValue($fieldName);
         }
 
+        $terminal->shop_id = (int) $this->context->shop->id;
         // Validate
         $result = $terminal->validateFields(false, true);
 
@@ -1378,11 +1390,6 @@ class ALTAPAY extends PaymentModule
     public function renderTerminalList()
     {
         $fields_list = [
-            'id_terminal' => [
-                'title' => $this->l('ID'),
-                'width' => 100,
-                'type' => 'text',
-            ],
             'display_name' => [
                 'title' => $this->l('Name'),
                 'width' => 140,
@@ -1452,7 +1459,7 @@ class ALTAPAY extends PaymentModule
         $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
         $helper->orderBy = 'id_terminal';
         $helper->orderWay = 'ASC';
-        $content = Altapay_Models_Terminal::getTerminals();
+        $content = Altapay_Models_Terminal::getTerminals($this->context->shop->id);
 
         return $helper->generateList($content, $fields_list);
     }
@@ -1902,7 +1909,7 @@ class ALTAPAY extends PaymentModule
 
         // Fetch payment methods
         $currency = $this->getCurrencyForCart($params['cart']);
-        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code);
+        $paymentMethods = Altapay_Models_Terminal::getActiveTerminals($this->context->shop->id);
 
         $this->smarty->assign([
             'this_path' => $this->_path,
@@ -2016,7 +2023,7 @@ class ALTAPAY extends PaymentModule
         $this->context->controller->addCSS($this->_path . 'css/payment.css', 'all');
         // Fetch payment methods
         $currency = $this->getCurrencyForCart($params['cart']);
-        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code);
+        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
 
         $this->smarty->assign(
             $this->getTemplateVarInfos()
@@ -2047,7 +2054,9 @@ class ALTAPAY extends PaymentModule
                                                          . $paymentMethod['icon_filename']));
             $paymentsOptions[] = $paymentOptions;
         }
-        echo '<script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>';
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
+            echo '<script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>';
+        }
 
         return $paymentsOptions;
     }
@@ -2085,7 +2094,7 @@ class ALTAPAY extends PaymentModule
     {
         $cart = $this->context->cart;
         $currency = $this->getCurrencyForCart($cart);
-        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code);
+        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, $this->context->shop->id);
 
         return [
             'this_path' => $this->_path,
