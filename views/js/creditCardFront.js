@@ -106,9 +106,8 @@ $(function () {
         
         session.onpaymentauthorized = event => {
             // Define ApplePayPaymentAuthorizationResult
-            var url = cardwalletresponseurl;
             $.ajax({
-                url: url,
+                url: cardwalletresponseurl,
                 data: {
                     providerData: JSON.stringify(event.payment.token),
                     method: terminalId
