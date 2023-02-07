@@ -16,7 +16,7 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
     public function postProcess()
     {
         $validationUrl = Tools::getValue('validationUrl');
-        $terminalId = Tools::getValue('termminalid');  
+        $terminalId = Tools::getValue('termminalid');
         $currentUrl = $this->context->shop->getBaseURL();
         $domain = parse_url($currentUrl, PHP_URL_HOST);
         $terminalName = getTerminalById($terminalId)[0]['remote_name'];
@@ -27,10 +27,10 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
         try {
             $response = $request->call();
             if ($response->Result === 'Success') {
-                $this->ajaxDie(Tools::jsonEncode(array('success' => true, 'applePaySession' => $response->ApplePaySession)));
+                $this->ajaxDie(Tools::jsonEncode(['success' => true, 'applePaySession' => $response->ApplePaySession]));
             }
-        } catch(Exception $e) {
-            $this->ajaxDie(Tools::jsonEncode(array('success' => false, 'error' => $e->getMessage())));
+        } catch (Exception $e) {
+            $this->ajaxDie(Tools::jsonEncode(['success' => false, 'error' => $e->getMessage()]));
         }
     }
 }

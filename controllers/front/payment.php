@@ -25,6 +25,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         $savedCreditCard = null;
         $saveCard = null;
         $payment_method = Tools::getValue('method', false);
+        $providerData = Tools::getValue('providerData');
         $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
 
         $cart = $this->context->cart;
@@ -57,7 +58,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             setcookie('savecard', null, -1, '/');
         }
 
-        $result = $this->module->createTransaction($saveCard, $savedCreditCard, $payment_method);
+        $result = $this->module->createTransaction($saveCard, $savedCreditCard, $payment_method, $providerData);
         // Load the customer
         $customer = new Customer((int) $cart->id_customer);
         $currency_paid = new Currency($cart->id_currency);
@@ -86,10 +87,18 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
 
             Db::getInstance()->Execute($sql);
 
-            if ($payment_form_url === 'reservation') {
+            if ($payment_form_url === 'reservation' || $payment_form_url === 'cardwallet') {
                 $currentOrder = new Order((int) $this->module->currentOrder);
                 createAltapayOrder($result['response'], $currentOrder, 'succeeded');
-                Tools::redirect('index.php?controller=order-detail&id_order=' . $this->module->currentOrder);
+                if ($payment_form_url === 'reservation') {
+                    Tools::redirect('index.php?controller=order-detail&id_order=' . $this->module->currentOrder);
+                } else {
+                    $response = [
+                        'status' => $result['response']->Result,
+                        'redirectUrl' => 'index.php?controller=order-detail&id_order=' . $this->module->currentOrder,
+                    ];
+                    echo json_encode($response);
+                }
             } else {
                 Tools::redirect($payment_form_url);
             }

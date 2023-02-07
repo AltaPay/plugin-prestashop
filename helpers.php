@@ -298,7 +298,7 @@ function getAltapayOrderDetails($orderID)
  * @param string $terminalRemoteName
  * @param int $shop_id
  *
- * @return array|false
+ * @return array|void
  */
 function getTerminalId($terminalRemoteName, $shop_id = 1)
 {

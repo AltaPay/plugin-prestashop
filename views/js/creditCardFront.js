@@ -19,8 +19,12 @@ $(function () {
         Cookies.set('savecard', savecard);
     });
     $('#payment-confirmation > .ps-shown-by-js > button').click(function(e) {
-        onApplePayButtonClicked();
-        return false;
+        var payment_option = $('input[type="radio"][name="payment-option"]:checked').attr('id');
+        var terminalId = $("#"+payment_option+"-additional-information > #hidden-terminalid").text();
+        if(terminalId) {
+            onApplePayButtonClicked();
+            return false;
+        }
     });
 
     function onApplePayButtonClicked() { 
@@ -30,11 +34,10 @@ $(function () {
             return;
         }
         
-        // TODO: get value dynamically in PL-698
         // Define ApplePayPaymentRequest
         const request = {
-            "countryCode": "US",
-            "currencyCode": "USD",
+            "countryCode": countryCode,
+            "currencyCode": currencyCode,
             "merchantCapabilities": [
                 "supports3DS"
             ],
@@ -47,7 +50,7 @@ $(function () {
             "total": {
                 "label": "Demo (Card is not charged)",
                 "type": "final",
-                "amount": "1.99"
+                "amount": amountPaid
             }
         };
         
@@ -78,13 +81,10 @@ $(function () {
         
         session.onpaymentmethodselected = event => {
             // Define ApplePayPaymentMethodUpdate based on the selected payment method.
-            // No updates or errors are needed, pass an empty object.
-            // const update = {};
-            // session.completePaymentMethodSelection(update);
             let total = {
                 "label": "ApplePay Altapay",
                 "type": "final",
-                "amount": "1.99"
+                "amount": amountPaid
             }
     
             const update = { "newTotal": total };
@@ -106,31 +106,25 @@ $(function () {
         
         session.onpaymentauthorized = event => {
             // Define ApplePayPaymentAuthorizationResult
-            // const result = {
-            //     "status": ApplePaySession.STATUS_SUCCESS
-            // };
-            // session.completePayment(result);
-            // var method = this.terminal.substr(this.terminal.indexOf(" ") + 1);
-            var url = cardwalletresponseurl;   
-            console.log(event.payment.token); 
+            var url = cardwalletresponseurl;
             $.ajax({
                 url: url,
                 data: {
                     providerData: JSON.stringify(event.payment.token),
-                    paytype: terminalId
+                    method: terminalId
                 },
                 type: 'post',
                 dataType: 'JSON',
                 complete: function(response) {
-                    var status;
-                    var responsestatus = response.responseJSON.Result.toLowerCase();
-                    if (responsestatus === 'success') {
+                    var status
+                    var responseData = response.responseJSON;
+                    if((responseData.status === "Success") && (response.status == 200)) {
                         status = ApplePaySession.STATUS_SUCCESS;
                         session.completePayment(status);
-                        // redirectOnSuccessAction.execute();
+                        window.location.replace(responseData.redirectUrl);
                     } else {
                         status = ApplePaySession.STATUS_FAILURE;
-                        session.completePayment(status);
+                        session.completePayment(status); 
                     }
                 }
             });  
