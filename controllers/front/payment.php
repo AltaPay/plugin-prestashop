@@ -93,6 +93,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
                 if ($payment_form_url === 'reservation') {
                     Tools::redirect('index.php?controller=order-detail&id_order=' . $this->module->currentOrder);
                 } else {
+                    $this->saveReconciliationDetails($result['response'], $cart, $currentOrder);
                     $response = [
                         'status' => $result['response']->Result,
                         'redirectUrl' => 'index.php?controller=order-detail&id_order=' . $this->module->currentOrder,
@@ -134,5 +135,34 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         }
 
         return $terminal;
+    }
+    
+    /**
+     * Saves the reconciliation details for a given order
+     *
+     * @param object $response 
+     * @param object $cart
+     * @param object $order
+     *
+     * @return void
+     */
+    function saveReconciliationDetails($response, $cart, $order) {
+        if (isset($response) && isset($response->Transactions)) {
+            $latestTransKey = 0;
+            foreach ($response->Transactions as $key => $transaction) {
+                if ($transaction->AuthType === 'subscription_payment' && $transaction->CreatedDate > $max_date) {
+                    $max_date = $transaction->CreatedDate;
+                    $latestTransKey = $key;
+                }
+            }
+            $transaction = $response->Transactions[$latestTransKey];
+            $paymentType = $transaction->AuthType;
+            $transactionId = $transaction->TransactionId;
+            if (!empty($transaction->ReconciliationIdentifiers)) {
+                $reconciliation_identifier = $transaction->ReconciliationIdentifiers[0]->Id;
+                $reconciliation_type = $transaction->ReconciliationIdentifiers[0]->Type;
+                saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $reconciliation_type);
+            }
+        }
     }
 }
