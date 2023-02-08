@@ -136,17 +136,18 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
 
         return $terminal;
     }
-    
+
     /**
      * Saves the reconciliation details for a given order
      *
-     * @param object $response 
+     * @param object $response
      * @param object $cart
      * @param object $order
      *
      * @return void
      */
-    function saveReconciliationDetails($response, $cart, $order) {
+    public function saveReconciliationDetails($response, $cart, $order)
+    {
         if (isset($response) && isset($response->Transactions)) {
             $latestTransKey = 0;
             foreach ($response->Transactions as $key => $transaction) {
