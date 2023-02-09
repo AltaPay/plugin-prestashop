@@ -335,7 +335,7 @@ function getTerminalById($terminalId, $shop_id = 1)
         if (filter_var($shop_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
             throw new Exception('Invalid shop id');
         }
-        $query = 'SELECT `remote_name` FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE `id_terminal` = ' . (int)$terminalId . ' AND `shop_id` = ' . $shop_id;
+        $query = 'SELECT `remote_name` FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE `id_terminal` = ' . (int) $terminalId . ' AND `shop_id` = ' . $shop_id;
         $result = Db::getInstance()->executeS($query);
 
         return $result;
