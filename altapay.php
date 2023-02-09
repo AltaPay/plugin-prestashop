@@ -2037,13 +2037,13 @@ class ALTAPAY extends PaymentModule
             if ($customerID) {
                 $this->context->smarty->assign('customerID', $customerID);
             }
-            if ($paymentMethod['applepay'] === '1' && !(strstr($userAgent, 'AppleWebKit/') && strstr($userAgent, 'Safari/') && !strstr($userAgent, 'Chrome/'))) {
+            if ($paymentMethod['applepay'] == '1' && !(strstr($userAgent, 'AppleWebKit/') && strstr($userAgent, 'Safari/') && !strstr($userAgent, 'Chrome/'))) {
                 continue;
             }
             $actionText = $this->l('Pay by') . ' ' . $paymentMethod['display_name'];
             $paymentOptions = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
             $terminalId = $paymentMethod['id_terminal'];
-            if ($paymentMethod['applepay'] === '1') {
+            if ($paymentMethod['applepay'] == '1') {
                 $this->context->smarty->assign('terminalId', $terminalId);
             }
             $terminal = ['method' => $terminalId];
@@ -2076,14 +2076,13 @@ class ALTAPAY extends PaymentModule
         $cart = $this->context->cart;
         $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
         $currency = new Currency($cart->id_currency);
-        $currencyCode = $currency->iso_code;
         $this->context->controller->addJquery();
         $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             Media::addJsDef(['cardwalleturl' => $this->context->link->getModuleLink('altapay', 'cardwalletsession')]);
             Media::addJsDef(['cardwalletresponseurl' => $this->context->link->getModuleLink('altapay', 'payment')]);
             Media::addJsDef(['amountPaid' => $amountPaid]);
-            Media::addJsDef(['currencyCode' => $currencyCode]);
+            Media::addJsDef(['currencyCode' => $currency->iso_code]);
             Media::addJsDef(['countryCode' => $this->context->country->iso_code]);
             $this->context->controller->registerJavascript(
                 'applepaysdk', // Unique ID
@@ -2189,7 +2188,6 @@ class ALTAPAY extends PaymentModule
         $latestTransKey = 0;
         // Terminal
         $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
-        $isApplePay = $terminal->applepay;
         if (!is_object($terminal)) {
             $message = 'Could not determine remote terminal - possibly currency mismatch';
             PrestaShopLogger::addLog($message, 3, 0, $this->name, $this->id, true);
@@ -2334,7 +2332,7 @@ class ALTAPAY extends PaymentModule
             $config->setCallbackNotification($callback['callback_notification']);
             $config->setCallbackForm($callback['callback_form']);
             $request = new API\PHP\Altapay\Api\Ecommerce\PaymentRequest(getAuth());
-            if ($isApplePay) {
+            if ($terminal->applepay) {
                 $request = new API\PHP\Altapay\Api\Payments\CardWalletAuthorize(getAuth());
                 $request->setProviderData($providerData);
             }
@@ -2381,7 +2379,7 @@ class ALTAPAY extends PaymentModule
                     if ($paymentType === 'payment' || $paymentType === 'paymentAndCapture') {
                         $amount = $cart->getOrderTotal(true, Cart::BOTH);
                     }
-                    if (!empty($providerData)) {
+                    if ($terminal->applepay) {
                         $responseUrl = 'cardwallet';
                     }
                 }

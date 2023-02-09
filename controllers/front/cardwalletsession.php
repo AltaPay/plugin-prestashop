@@ -29,6 +29,8 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
             $response = $request->call();
             if ($response->Result === 'Success') {
                 $this->ajaxDie(Tools::jsonEncode(['success' => true, 'applePaySession' => $response->ApplePaySession]));
+            } else {
+                $this->ajaxDie(Tools::jsonEncode(['success' => false, 'error' => "Something went wrong"]));
             }
         } catch (Exception $e) {
             $this->ajaxDie(Tools::jsonEncode(['success' => false, 'error' => $e->getMessage()]));
