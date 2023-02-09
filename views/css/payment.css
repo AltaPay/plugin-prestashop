@@ -42,3 +42,19 @@ p.payment_module a.altapay:after {
 #hidden-terminalid {
       display: none;
 }
+
+body#checkout section.checkout-step .payment-options .payment-option {
+      display: flex;
+      align-items: center;    
+      line-height: 22px;
+      max-height: 22px;
+}
+
+body#checkout section.checkout-step .payment-options .payment-option label {
+      margin-bottom: 0;
+}
+
+body#checkout section.checkout-step .payment-options .payment-option label img{
+      max-width: 60px;
+      margin-left: 15px;
+}
