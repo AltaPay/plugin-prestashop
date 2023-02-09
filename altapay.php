@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.4.6';
+        $this->version = '3.4.7';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
@@ -216,6 +216,13 @@ class ALTAPAY extends PaymentModule
         }
         if (!Db::getInstance()->Execute('SELECT shop_id from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN shop_id int(11) NOT NULL DEFAULT 1')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+        if (!Db::getInstance()->Execute('SELECT custom_message from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN custom_message varchar(255) DEFAULT ""')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
@@ -542,6 +549,13 @@ class ALTAPAY extends PaymentModule
                         'id' => 'id',
                         'name' => 'name',
                     ],
+                ],
+                [
+                    'type' => 'text',
+                    'label' => $this->l('Custom message'),
+                    'desc' => $this->l('Add custom text to display under terminal name'),
+                    'name' => 'custom_message',
+                    'required' => false,
                 ],
                 [
                     'type' => 'select',
@@ -1185,6 +1199,7 @@ class ALTAPAY extends PaymentModule
             'position',
             'cvvLess',
             'shop_id',
+            'custom_message',
         ];
         foreach ($fields as $fieldName) {
             $terminal->{$fieldName} = Tools::getValue($fieldName);
@@ -2000,6 +2015,7 @@ class ALTAPAY extends PaymentModule
                 $this->context->smarty->assign('customerID', $customerID);
             }
             $actionText = $this->l('Pay with') . ' ' . $paymentMethod['display_name'];
+            $this->context->smarty->assign('custom_message', $paymentMethod['custom_message']);
             $paymentOptions = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
             $terminal_id = $paymentMethod['id_terminal'];
             $terminal = ['method' => $terminal_id];
