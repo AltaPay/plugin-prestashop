@@ -45,9 +45,7 @@ p.payment_module a.altapay:after {
 
 body#checkout section.checkout-step .payment-options .payment-option {
       display: flex;
-      align-items: center;    
-      line-height: 22px;
-      max-height: 22px;
+      align-items: center;
 }
 
 body#checkout section.checkout-step .payment-options .payment-option label {
