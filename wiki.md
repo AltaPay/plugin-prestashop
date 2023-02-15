@@ -16,6 +16,8 @@ Installing this plug-in will enable the web shop to handle card transactions thr
 
 [Configuration](#configuration)
 
+[Subscriptions](#subscriptions)
+
 [Reconcile Orders](#reconcile-orders)
 
 [Troubleshooting](#troubleshooting)
@@ -81,6 +83,14 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 
 ![process_transactions](https://github.com/AltaPay/plugin-prestashop/blob/main/Docs/Configuration/prestashop_credit_card_payment_page.jpg)
 
+
+## Subscriptions
+
+AltaPay plugin is compatible with the ['Subscription Products | Recurring Payments Module'](https://addons.prestashop.com/en/recurring-payment-subscription/49381-subscription-products-recurring-payments.html) module to accept recurring payments.
+
+> Note:
+>
+> Currently, AltaPay plugin supports recurring payments with the credit card terminal only.
 
 # Reconcile Orders
 In order to reconcile payments please follow the steps below:
