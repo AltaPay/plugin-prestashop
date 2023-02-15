@@ -1952,12 +1952,14 @@ class ALTAPAY extends PaymentModule
                     $idProduct = $productData['id_product'];
                     $idAttr = $productData['id_product_attribute'];
                     $idCart = $cart->id;
+                    // @phpstan-ignore-line
                     if (WkProductSubscriptionModel::checkIfSubscriptionProduct($idProduct)
                         && WkSubscriptionCartProducts::getByIdProductByIdCart($idCart, $idProduct, $idAttr, true)
                     ) {
                         $show_only_cc_terminal = true;
                         break;
                     }
+                    // @phpstan-ignore-end
                 }
             }
         }
@@ -2091,12 +2093,14 @@ class ALTAPAY extends PaymentModule
                     $idProduct = $productData['id_product'];
                     $idAttr = $productData['id_product_attribute'];
                     $idCart = $cart->id;
+                    // @phpstan-ignore-line
                     if (WkProductSubscriptionModel::checkIfSubscriptionProduct($idProduct)
                         && WkSubscriptionCartProducts::getByIdProductByIdCart($idCart, $idProduct, $idAttr, true)
                     ) {
                         $show_only_cc_terminal = true;
                         break;
                     }
+                    // @phpstan-ignore-end
                 }
             }
         }
@@ -2390,6 +2394,7 @@ class ALTAPAY extends PaymentModule
                     $idProduct = $productData['id_product'];
                     $idAttr = $productData['id_product_attribute'];
                     $idCart = $cart->id;
+                    // @phpstan-ignore-line
                     if (WkProductSubscriptionModel::checkIfSubscriptionProduct($idProduct)
                         && WkSubscriptionCartProducts::getByIdProductByIdCart($idCart, $idProduct, $idAttr, true)
                     ) {
@@ -2397,6 +2402,7 @@ class ALTAPAY extends PaymentModule
                         $results = false;
                         break;
                     }
+                    // @phpstan-ignore-end
                 }
             }
         }
