@@ -423,9 +423,11 @@ function createAltaPayCronjob($orderID, $payload = [], $operation = 'chargeSubsc
 
 /**
  * @param $cart
+ *
  * @return bool
  */
-function cartHasSubscriptionProduct($cart){
+function cartHasSubscriptionProduct($cart)
+{
     $subscription_product_exists = false;
     if (Module::isEnabled('wkproductsubscription')) {
         include_once _PS_MODULE_DIR_ . 'wkproductsubscription/classes/WkSubscriptionRequired.php';
@@ -442,5 +444,6 @@ function cartHasSubscriptionProduct($cart){
             }
         }
     }
+
     return $subscription_product_exists;
 }
