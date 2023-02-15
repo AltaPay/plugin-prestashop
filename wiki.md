@@ -86,7 +86,7 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 
 ## Subscriptions
 
-AltaPay plugin is compatible with the ['Subscription Products | Recurring Payments Module'](https://addons.prestashop.com/en/recurring-payment-subscription/49381-subscription-products-recurring-payments.html) module to accept recurring payments.
+AltaPay plugin is compatible with the [Subscription Products | Recurring Payments Module](https://addons.prestashop.com/en/recurring-payment-subscription/49381-subscription-products-recurring-payments.html) to accept recurring payments.
 
 > Note:
 >
