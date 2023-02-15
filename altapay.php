@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.4.6';
+        $this->version = '3.4.7';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
@@ -77,6 +77,7 @@ class ALTAPAY extends PaymentModule
             || !$this->registerHook('displayCustomerAccount')
             || !$this->registerHook('actionFrontControllerSetMedia')
             || !$this->registerHook('actionOrderStatusPostUpdate')
+            || !$this->registerHook('actionValidateOrder')
         ) {
             return false;
         }
@@ -221,6 +222,20 @@ class ALTAPAY extends PaymentModule
                 return false;
             }
         }
+        if (!Db::getInstance()->Execute('SELECT nature from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN nature text NOT NULL DEFAULT "[]"')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+        if (!Db::getInstance()->Execute('SELECT custom_message from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN custom_message varchar(255) DEFAULT ""')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
         // This table contains count of captured/refunded order lines
         if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_orderlines`')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_orderlines`  TO `' . _DB_PREFIX_ . 'altapay_orderlines`  ';
@@ -247,8 +262,10 @@ class ALTAPAY extends PaymentModule
 		`id` mediumint(9) NOT NULL AUTO_INCREMENT,
 		`time` datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 		`userID` varchar(200) DEFAULT '' NOT NULL,
+		`id_order` int(10) unsigned DEFAULT NULL,
 		`agreement_id` varchar(200) DEFAULT '' NOT NULL,
 		`agreement_type` varchar(200) DEFAULT '' NOT NULL,
+		`agreement_unscheduled_type` varchar(200) DEFAULT '',
 		`cardBrand` varchar(200) DEFAULT '' NOT NULL,
 		`creditCardNumber` varchar(200) DEFAULT '' NOT NULL,
 		`cardExpiryDate` varchar(200) DEFAULT '' NOT NULL,
@@ -256,6 +273,32 @@ class ALTAPAY extends PaymentModule
 		PRIMARY KEY  (`id`)
 		) ENGINE=" . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
         }
+
+        if (!Db::getInstance()->Execute('SELECT agreement_unscheduled_type from `' . _DB_PREFIX_ . 'altapay_saved_credit_card`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . "altapay_saved_credit_card` ADD `agreement_unscheduled_type` varchar(255) DEFAULT '' AFTER agreement_type")) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+
+        if (!Db::getInstance()->Execute('SELECT id_order from `' . _DB_PREFIX_ . 'altapay_saved_credit_card`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_saved_credit_card` ADD `id_order` int(10) unsigned DEFAULT NULL AFTER userID')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+
+        Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . "altapay_crons` (
+		`id` int(11) NOT NULL AUTO_INCREMENT,
+		`time` timestamp DEFAULT CURRENT_TIMESTAMP ,
+		`id_order` int(10) unsigned DEFAULT NULL,
+		`payload` text DEFAULT NULL,
+		`operation` varchar(200) NOT NULL,
+		`status` varchar(200) DEFAULT 'pending' NOT NULL,		
+		PRIMARY KEY  (`id`)
+		) ENGINE=" . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8');
 
         if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_orderlines`
             MODIFY `product_id` varchar(36) NOT NULL')
@@ -410,6 +453,7 @@ class ALTAPAY extends PaymentModule
                         $terminal->cvvLess = 0;
                         $terminal->active = 1;
                         $terminal->shop_id = 1;
+                        $terminal->nature = json_encode($term->Natures);
                         $terminal->save();
                     }
                     ++$i;
@@ -542,6 +586,13 @@ class ALTAPAY extends PaymentModule
                         'id' => 'id',
                         'name' => 'name',
                     ],
+                ],
+                [
+                    'type' => 'text',
+                    'label' => $this->l('Custom message'),
+                    'desc' => $this->l('Add custom text to display under terminal name'),
+                    'name' => 'custom_message',
+                    'required' => false,
                 ],
                 [
                     'type' => 'select',
@@ -831,10 +882,16 @@ class ALTAPAY extends PaymentModule
                 $finalOrderLines = $this->populateOrderLinesFromPost($orderLines, $orderID, 0, $orderLineGiftWrap);
 
                 $reconciliation_identifier = sha1($paymentID . time());
-                $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
-                $api->setAmount((float) Tools::getValue('amount'));
-                $api->setOrderLines($finalOrderLines);
+                $payment_type = getAltapayOrderDetails($orderID)[0]['paymentType'];
+                if ($payment_type == 'subscription') {
+                    $api = new API\PHP\Altapay\Api\Subscription\ChargeSubscription(getAuth());
+                    $api->setAgreement(['id' => $paymentID]);
+                } else {
+                    $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
+                    $api->setOrderLines($finalOrderLines);
+                }
                 $api->setTransaction($paymentID);
+                $api->setAmount((float) Tools::getValue('amount'));
                 $api->setReconciliationIdentifier($reconciliation_identifier);
                 $api->call();
                 markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
@@ -1154,12 +1211,14 @@ class ALTAPAY extends PaymentModule
         $api = new API\PHP\Altapay\Api\Others\Terminals(getAuth());
         $response = $api->call();
         $allowedCurrencies = [];
+        $nature = [];
 
         foreach ($response->Terminals as $term) {
             if ($term->Title === $terminalRemoteName) {
                 foreach ($term->Currencies as $currency) {
                     $allowedCurrencies[] = $currency->Currency;
                 }
+                $nature = json_encode($term->Natures);
             }
         }
 
@@ -1185,12 +1244,14 @@ class ALTAPAY extends PaymentModule
             'position',
             'cvvLess',
             'shop_id',
+            'custom_message',
         ];
         foreach ($fields as $fieldName) {
             $terminal->{$fieldName} = Tools::getValue($fieldName);
         }
 
         $terminal->shop_id = (int) $this->context->shop->id;
+        $terminal->nature = $nature;
         // Validate
         $result = $terminal->validateFields(false, true);
 
@@ -1234,6 +1295,13 @@ class ALTAPAY extends PaymentModule
      */
     protected function displayAltapay()
     {
+        $altapay_recurring_payments_cron_link = $this->context->link->getModuleLink(
+            $this->name,
+            'cron',
+            [],
+            true
+        );
+        $this->smarty->assign('altapay_recurring_payments_cron_link', $altapay_recurring_payments_cron_link);
         $html = $this->display(__FILE__, 'config.tpl');
         $html .= $this->renderForm();
         $html .= $this->renderSyncTerminalForm();
@@ -1875,6 +1943,32 @@ class ALTAPAY extends PaymentModule
         $currency = $this->getCurrencyForCart($params['cart']);
         $paymentMethods = Altapay_Models_Terminal::getActiveTerminals($this->context->shop->id);
 
+        $show_only_cc_terminal = false;
+        if (Module::isEnabled('wkproductsubscription')) {
+            include_once _PS_MODULE_DIR_ . 'wkproductsubscription/classes/WkSubscriptionRequired.php';
+            $cart = $params['cart'];
+            if ($cartProducts = $cart->getProducts()) {
+                foreach ($cartProducts as $productData) {
+                    $idProduct = $productData['id_product'];
+                    $idAttr = $productData['id_product_attribute'];
+                    $idCart = $cart->id;
+                    if (WkProductSubscriptionModel::checkIfSubscriptionProduct($idProduct)
+                        && WkSubscriptionCartProducts::getByIdProductByIdCart($idCart, $idProduct, $idAttr, true)
+                    ) {
+                        $show_only_cc_terminal = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        foreach ($paymentMethods as $key => $paymentMethod) {
+            $nature = json_decode($paymentMethod['nature'], true);
+            if ($show_only_cc_terminal and (count($nature) != 1 or $nature[0]['Nature'] !== 'CreditCard')) {
+                unset($paymentMethods[$key]);
+            }
+        }
+
         $this->smarty->assign([
             'this_path' => $this->_path,
             'this_path_altapay' => $this->_path,
@@ -1988,6 +2082,24 @@ class ALTAPAY extends PaymentModule
         // Fetch payment methods
         $currency = $this->getCurrencyForCart($params['cart']);
         $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
+        $show_only_cc_terminal = false;
+        if (Module::isEnabled('wkproductsubscription')) {
+            include_once _PS_MODULE_DIR_ . 'wkproductsubscription/classes/WkSubscriptionRequired.php';
+            $cart = $params['cart'];
+            if ($cartProducts = $cart->getProducts()) {
+                foreach ($cartProducts as $productData) {
+                    $idProduct = $productData['id_product'];
+                    $idAttr = $productData['id_product_attribute'];
+                    $idCart = $cart->id;
+                    if (WkProductSubscriptionModel::checkIfSubscriptionProduct($idProduct)
+                        && WkSubscriptionCartProducts::getByIdProductByIdCart($idCart, $idProduct, $idAttr, true)
+                    ) {
+                        $show_only_cc_terminal = true;
+                        break;
+                    }
+                }
+            }
+        }
 
         $this->smarty->assign(
             $this->getTemplateVarInfos()
@@ -1995,11 +2107,17 @@ class ALTAPAY extends PaymentModule
 
         $paymentsOptions = [];
         foreach ($paymentMethods as $paymentMethod) {
+            $nature = json_decode($paymentMethod['nature'], true);
+            if ($show_only_cc_terminal and (count($nature) != 1 or $nature[0]['Nature'] !== 'CreditCard')) {
+                continue;
+            }
+
             $this->context->smarty->assign('ccTokenControl', $paymentMethod['ccTokenControl_']);
             if ($customerID) {
                 $this->context->smarty->assign('customerID', $customerID);
             }
             $actionText = $this->l('Pay with') . ' ' . $paymentMethod['display_name'];
+            $this->context->smarty->assign('custom_message', $paymentMethod['custom_message']);
             $paymentOptions = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
             $terminal_id = $paymentMethod['id_terminal'];
             $terminal = ['method' => $terminal_id];
@@ -2261,10 +2379,26 @@ class ALTAPAY extends PaymentModule
             ];
         }
 
+        $type = $cgConf['payment_type'];
+
         if (!is_null($savecard) && $savecard != 0) {
             $type = 'verifyCard';
-        } else {
-            $type = $cgConf['payment_type'];
+        } elseif (Module::isEnabled('wkproductsubscription')) {
+            include_once _PS_MODULE_DIR_ . 'wkproductsubscription/classes/WkSubscriptionRequired.php';
+            if ($cartProducts = $cart->getProducts()) {
+                foreach ($cartProducts as $productData) {
+                    $idProduct = $productData['id_product'];
+                    $idAttr = $productData['id_product_attribute'];
+                    $idCart = $cart->id;
+                    if (WkProductSubscriptionModel::checkIfSubscriptionProduct($idProduct)
+                        && WkSubscriptionCartProducts::getByIdProductByIdCart($idCart, $idProduct, $idAttr, true)
+                    ) {
+                        $type = ($cgConf['payment_type'] == 'payment' ? 'subscription' : 'subscriptionAndCharge');
+                        $results = false;
+                        break;
+                    }
+                }
+            }
         }
 
         try {
@@ -2289,6 +2423,8 @@ class ALTAPAY extends PaymentModule
                 $request->setCreditCardToken($token);
                 $request->setAgreement($agreementData);
                 $isReservation = true;
+            } elseif (in_array($type, ['subscription', 'subscriptionAndCharge'])) {
+                $request->setAgreement(['type' => 'recurring']);
             }
             $request->setType($type)->setTerminal($cgConf['terminal'])
                     ->setShopOrderId($cgConf['uniqueid'])
@@ -2853,5 +2989,19 @@ class ALTAPAY extends PaymentModule
         }
 
         return false;
+    }
+
+    /**
+     * @param array $params
+     *
+     * @return void
+     *
+     * @throws PrestaShopException
+     */
+    public function hookActionValidateOrder(&$params)
+    {
+        if (Module::isEnabled('wkproductsubscription') and $params['order']->payment == $this->displayName) {
+            createAltaPayCronjob($params['order']->id, ['order_total' => $params['order']->total_paid]);
+        }
     }
 }

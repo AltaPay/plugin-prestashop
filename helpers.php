@@ -229,7 +229,7 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
             }
         }
         $transaction = $response->Transactions[$latestTransKey];
-        $uniqueId = $transaction->ShopOrderId;
+        $uniqueId = (($transaction->AuthType === 'subscription_payment') ? "$transaction->ShopOrderId ($transaction->TransactionId)" : $transaction->ShopOrderId);
         $paymentId = $transaction->TransactionId;
         $cardMask = $transaction->CreditCardMaskedPan;
         $cardToken = $transaction->CreditCardToken;
@@ -407,4 +407,16 @@ function saveOrderReconciliationIdentifierIfNotExists($orderID, $reconciliation_
     if (!Db::getInstance()->getRow($sql)) {
         saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $type);
     }
+}
+
+/**
+ * @param int $orderID
+ * @param string $operation
+ *
+ * @return void
+ */
+function createAltaPayCronjob($orderID, $payload = [], $operation = 'chargeSubscription')
+{
+    Db::getInstance()->Execute('INSERT INTO `' . _DB_PREFIX_ . 'altapay_crons` (id_order, payload, operation) 
+        VALUES ' . "('" . (int) $orderID . "', '" . pSQL($operation) . "', '" . pSQL(json_encode($payload)) . "')");
 }

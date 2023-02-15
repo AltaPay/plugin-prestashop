@@ -54,9 +54,9 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $maskedPan = $response->maskedCreditCard;
                 $agreementType = 'unscheduled';
                 $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
-                if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
-                    $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
-                    $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+                if (!empty($transaction->ReconciliationIdentifiers)) {
+                    $reconciliation_identifier = $transaction->ReconciliationIdentifiers[0]->Id;
+                    $reconciliation_type = $transaction->ReconciliationIdentifiers[0]->Type;
                     saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $reconciliation_type);
                 }
                 $message = '';
@@ -120,6 +120,15 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     $this->module->id,
                     true
                     );
+                }
+
+                if (in_array($paymentType, ['subscription', 'subscriptionAndCharge'])) {
+                    $sql = 'INSERT INTO `' . _DB_PREFIX_
+                        . 'altapay_saved_credit_card` (time,userID,agreement_id,agreement_type,id_order) VALUES (Now(),'
+                        . pSQL($customerID) . ',"' . pSQL($transactionId) . '","'
+                        . pSQL('recurring') . '","' . pSQL($order->id)
+                        . '")';
+                    Db::getInstance()->executeS($sql);
                 }
 
                 // Log order
