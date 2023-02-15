@@ -95,11 +95,12 @@ class AltapayCronModuleFrontController extends ModuleFrontController
      */
     private function getParentOrder($id_order)
     {
-        // @phpstan-ignore-line
+        // @phpstan-ignore-next-line
         $subscription_order_table = WkSubscriberOrderModel::$definition['table'];
+        // @phpstan-ignore-next-line
         $subscription_table = WkSubscriberProductModal::$definition['table'];
+        // @phpstan-ignore-next-line
         $subscription_table_pk = WkSubscriberProductModal::$definition['primary'];
-        // @phpstan-ignore-end
 
         $sql = 'SELECT s.first_order_id FROM ' . _DB_PREFIX_ . "$subscription_table s 
                 INNER JOIN " . _DB_PREFIX_ . "$subscription_order_table so ON so.id_subscription=s.$subscription_table_pk 
