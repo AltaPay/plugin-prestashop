@@ -420,3 +420,27 @@ function createAltaPayCronjob($orderID, $payload = [], $operation = 'chargeSubsc
     Db::getInstance()->Execute('INSERT INTO `' . _DB_PREFIX_ . 'altapay_crons` (id_order, payload, operation) 
         VALUES ' . "('" . (int) $orderID . "', '" . pSQL($operation) . "', '" . pSQL(json_encode($payload)) . "')");
 }
+
+/**
+ * @param $cart
+ * @return bool
+ */
+function cartHasSubscriptionProduct($cart){
+    $subscription_product_exists = false;
+    if (Module::isEnabled('wkproductsubscription')) {
+        include_once _PS_MODULE_DIR_ . 'wkproductsubscription/classes/WkSubscriptionRequired.php';
+        if ($cartProducts = $cart->getProducts()) {
+            foreach ($cartProducts as $productData) {
+                $idProduct = $productData['id_product'];
+                $idAttr = $productData['id_product_attribute'];
+                $idCart = $cart->id;
+                // @phpstan-ignore-next-line
+                if (WkProductSubscriptionModel::checkIfSubscriptionProduct($idProduct) && WkSubscriptionCartProducts::getByIdProductByIdCart($idCart, $idProduct, $idAttr, true)) {
+                    $subscription_product_exists = true;
+                    break;
+                }
+            }
+        }
+    }
+    return $subscription_product_exists;
+}

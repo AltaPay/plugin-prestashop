@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.4.7';
+        $this->version = '3.4.8';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
@@ -224,13 +224,6 @@ class ALTAPAY extends PaymentModule
         }
         if (!Db::getInstance()->Execute('SELECT nature from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN nature text NOT NULL DEFAULT "[]"')) {
-                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
-
-                return false;
-            }
-        }
-        if (!Db::getInstance()->Execute('SELECT custom_message from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
-            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN custom_message varchar(255) DEFAULT ""')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
@@ -586,13 +579,6 @@ class ALTAPAY extends PaymentModule
                         'id' => 'id',
                         'name' => 'name',
                     ],
-                ],
-                [
-                    'type' => 'text',
-                    'label' => $this->l('Custom message'),
-                    'desc' => $this->l('Add custom text to display under terminal name'),
-                    'name' => 'custom_message',
-                    'required' => false,
                 ],
                 [
                     'type' => 'select',
@@ -1244,7 +1230,6 @@ class ALTAPAY extends PaymentModule
             'position',
             'cvvLess',
             'shop_id',
-            'custom_message',
         ];
         foreach ($fields as $fieldName) {
             $terminal->{$fieldName} = Tools::getValue($fieldName);
@@ -1943,24 +1928,7 @@ class ALTAPAY extends PaymentModule
         $currency = $this->getCurrencyForCart($params['cart']);
         $paymentMethods = Altapay_Models_Terminal::getActiveTerminals($this->context->shop->id);
 
-        $show_only_cc_terminal = false;
-        if (Module::isEnabled('wkproductsubscription')) {
-            include_once _PS_MODULE_DIR_ . 'wkproductsubscription/classes/WkSubscriptionRequired.php';
-            $cart = $params['cart'];
-            if ($cartProducts = $cart->getProducts()) {
-                foreach ($cartProducts as $productData) {
-                    $idProduct = $productData['id_product'];
-                    $idAttr = $productData['id_product_attribute'];
-                    $idCart = $cart->id;
-                    // @phpstan-ignore-next-line
-                    if (WkProductSubscriptionModel::checkIfSubscriptionProduct($idProduct) && WkSubscriptionCartProducts::getByIdProductByIdCart($idCart, $idProduct, $idAttr, true)) {
-                        $show_only_cc_terminal = true;
-                        break;
-                    }
-                }
-            }
-        }
-
+        $show_only_cc_terminal = cartHasSubscriptionProduct($params['cart']);
         foreach ($paymentMethods as $key => $paymentMethod) {
             $nature = json_decode($paymentMethod['nature'], true);
             if ($show_only_cc_terminal and (count($nature) != 1 or $nature[0]['Nature'] !== 'CreditCard')) {
@@ -2081,23 +2049,7 @@ class ALTAPAY extends PaymentModule
         // Fetch payment methods
         $currency = $this->getCurrencyForCart($params['cart']);
         $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
-        $show_only_cc_terminal = false;
-        if (Module::isEnabled('wkproductsubscription')) {
-            include_once _PS_MODULE_DIR_ . 'wkproductsubscription/classes/WkSubscriptionRequired.php';
-            $cart = $params['cart'];
-            if ($cartProducts = $cart->getProducts()) {
-                foreach ($cartProducts as $productData) {
-                    $idProduct = $productData['id_product'];
-                    $idAttr = $productData['id_product_attribute'];
-                    $idCart = $cart->id;
-                    // @phpstan-ignore-next-line
-                    if (WkProductSubscriptionModel::checkIfSubscriptionProduct($idProduct) && WkSubscriptionCartProducts::getByIdProductByIdCart($idCart, $idProduct, $idAttr, true)) {
-                        $show_only_cc_terminal = true;
-                        break;
-                    }
-                }
-            }
-        }
+        $show_only_cc_terminal = cartHasSubscriptionProduct($params['cart']);
 
         $this->smarty->assign(
             $this->getTemplateVarInfos()
@@ -2115,7 +2067,6 @@ class ALTAPAY extends PaymentModule
                 $this->context->smarty->assign('customerID', $customerID);
             }
             $actionText = $this->l('Pay with') . ' ' . $paymentMethod['display_name'];
-            $this->context->smarty->assign('custom_message', $paymentMethod['custom_message']);
             $paymentOptions = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
             $terminal_id = $paymentMethod['id_terminal'];
             $terminal = ['method' => $terminal_id];
@@ -2381,21 +2332,9 @@ class ALTAPAY extends PaymentModule
 
         if (!is_null($savecard) && $savecard != 0) {
             $type = 'verifyCard';
-        } elseif (Module::isEnabled('wkproductsubscription')) {
-            include_once _PS_MODULE_DIR_ . 'wkproductsubscription/classes/WkSubscriptionRequired.php';
-            if ($cartProducts = $cart->getProducts()) {
-                foreach ($cartProducts as $productData) {
-                    $idProduct = $productData['id_product'];
-                    $idAttr = $productData['id_product_attribute'];
-                    $idCart = $cart->id;
-                    // @phpstan-ignore-next-line
-                    if (WkProductSubscriptionModel::checkIfSubscriptionProduct($idProduct) && WkSubscriptionCartProducts::getByIdProductByIdCart($idCart, $idProduct, $idAttr, true)) {
-                        $type = ($cgConf['payment_type'] == 'payment' ? 'subscription' : 'subscriptionAndCharge');
-                        $results = false;
-                        break;
-                    }
-                }
-            }
+        } elseif (cartHasSubscriptionProduct($cart)) {
+            $type = ($cgConf['payment_type'] == 'payment' ? 'subscription' : 'subscriptionAndCharge');
+            $results = false;
         }
 
         try {

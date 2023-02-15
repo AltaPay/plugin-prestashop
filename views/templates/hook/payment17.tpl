@@ -24,7 +24,4 @@
 
 {if isset($smarty.get.altapay_unavailable)}
     <a id="altapay_unavailable" name="altapay_unavailable"></a>
-    <div class="altapay_unavailable">{l s='Payment service temporary unavailable' mod='altapay'}</div>
-{/if}
-
-<p {if !empty($ccTokenControl) && $customerID} style="padding-top: 10px;" {/if} >{$custom_message}</p>
+    <div class="altapay_unavailable">{l s='Payment service temporary unavailable' mod='altapay'}</div>{/if}

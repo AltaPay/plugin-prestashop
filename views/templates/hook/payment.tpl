@@ -13,7 +13,6 @@
 		<p class="payment_module">
 			<a class="altapay" href="{$link->getModuleLink('altapay', 'payment', ['method'=> $m.id_terminal])|escape:'html'}" title="{$m.display_name}" style="background: url({$base_dir_ssl}modules/altapay/views/img/payment_icons/{$m.icon_filename}) 15px 15px no-repeat #fbfbfb">
 				{$m.display_name}
-				<span style="display: block; font-weight: normal;">{$m.custom_message}</span>
 			</a>
 		</p>
 	</div>
