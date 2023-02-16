@@ -592,18 +592,6 @@ class ALTAPAY extends PaymentModule
                     ],
                 ],
 
-                [
-                    'type' => 'select',
-                    'name' => 'terminal_nature',
-                    'id' => 'terminalNature',
-                    'required' => false,
-                    'options' => [
-                        'query' => $terminalNature,
-                        'id' => 'id',
-                        'name' => 'name',
-                    ],
-                ],
-
                 $tokenControl,
 
                 [
