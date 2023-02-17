@@ -20,6 +20,7 @@ class Altapay_Models_Terminal extends ObjectModel
     public $position;
     public $cvvLess;
     public $shop_id;
+    public $custom_message;
     public $nature;
 
     public static $definition = [
@@ -37,6 +38,7 @@ class Altapay_Models_Terminal extends ObjectModel
             'position' => ['type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId'],
             'cvvLess' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
             'shop_id' => ['type' => self::TYPE_INT],
+            'custom_message' => ['type' => self::TYPE_STRING, 'required' => false, 'size' => 255],
             'nature' => ['type' => self::TYPE_HTML, 'required' => true, 'size' => 3999999999999],
         ],
     ];
