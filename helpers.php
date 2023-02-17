@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.4.6';
+    $pluginVersion = '3.4.7';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -298,7 +298,7 @@ function getAltapayOrderDetails($orderID)
  * @param string $terminalRemoteName
  * @param int $shop_id
  *
- * @return array|false
+ * @return array|void
  */
 function getTerminalId($terminalRemoteName, $shop_id = 1)
 {
