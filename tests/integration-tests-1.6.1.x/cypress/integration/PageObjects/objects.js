@@ -60,6 +60,7 @@ class Order
 
     klarna_payment(KLARNA_DKK_TERMINAL_NAME){
         cy.contains(KLARNA_DKK_TERMINAL_NAME).click({force: true}).wait(4000)
+        cy.get('#radio_pay_later').click().wait(3000)
         cy.get('[id=submitbutton]').click().wait(3000)
         cy.get('[id=klarna-pay-later-fullscreen]').wait(4000).then(function($iFrame){
             const mobileNum = $iFrame.contents().find('[id=email_or_phone]')

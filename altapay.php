@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.4.6';
+        $this->version = '3.4.7';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
@@ -225,6 +225,13 @@ class ALTAPAY extends PaymentModule
         }
         if (!Db::getInstance()->Execute('SELECT shop_id from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN shop_id int(11) NOT NULL DEFAULT 1')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+        if (!Db::getInstance()->Execute('SELECT custom_message from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN custom_message varchar(255) DEFAULT ""')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
@@ -554,6 +561,13 @@ class ALTAPAY extends PaymentModule
                     ],
                 ],
                 [
+                    'type' => 'text',
+                    'label' => $this->l('Custom message'),
+                    'desc' => $this->l('Add custom text to display under terminal name'),
+                    'name' => 'custom_message',
+                    'required' => false,
+                ],
+                [
                     'type' => 'select',
                     'label' => $this->l('Is Apple Pay?'),
                     'name' => 'applepay',
@@ -603,18 +617,6 @@ class ALTAPAY extends PaymentModule
                     'required' => true,
                     'options' => [
                         'query' => $allTerminal,
-                        'id' => 'id',
-                        'name' => 'name',
-                    ],
-                ],
-
-                [
-                    'type' => 'select',
-                    'name' => 'terminal_nature',
-                    'id' => 'terminalNature',
-                    'required' => false,
-                    'options' => [
-                        'query' => $terminalNature,
                         'id' => 'id',
                         'name' => 'name',
                     ],
@@ -1216,6 +1218,7 @@ class ALTAPAY extends PaymentModule
             'position',
             'cvvLess',
             'shop_id',
+            'custom_message',
         ];
         foreach ($fields as $fieldName) {
             $terminal->{$fieldName} = Tools::getValue($fieldName);
@@ -2041,6 +2044,7 @@ class ALTAPAY extends PaymentModule
                 continue;
             }
             $actionText = $this->l('Pay by') . ' ' . $paymentMethod['display_name'];
+            $this->context->smarty->assign('custom_message', $paymentMethod['custom_message']);
             $paymentOptions = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
             $terminalId = $paymentMethod['id_terminal'];
             if ($paymentMethod['applepay'] == '1') {

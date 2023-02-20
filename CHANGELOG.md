@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.4.7] - 2023-02-15
+### Added
+- Add text field under terminal name for custom message
+
 ## [3.4.6] - 2023-01-09
 ### Added
 - Add support for multistore
