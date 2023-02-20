@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.4.8] - 2023-02-15
+### Added
+- Support Apple Pay functionality
+
 ## [3.4.7] - 2023-02-15
 ### Added
 - Add text field under terminal name for custom message
