@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.4.7';
+    $pluginVersion = '3.4.8';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -307,6 +307,35 @@ function getTerminalId($terminalRemoteName, $shop_id = 1)
             throw new Exception('Invalid shop id');
         }
         $query = 'SELECT id_terminal, shop_id FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE `remote_name`="' . pSQL($terminalRemoteName) . '" AND `shop_id` = "' . (int) $shop_id . '"';
+        $result = Db::getInstance()->executeS($query);
+
+        return $result;
+    } catch (Exception $e) {
+        $context = Context::getContext();
+        if (isset($context->controller) && isset($context->controller->errors)) {
+            $context->controller->errors[] = $e->getMessage();
+        }
+        PrestaShopLogger::addLog($e->getMessage(), 4);
+    }
+}
+
+/**
+ * Get terminal remote name based on terminal id and shop id
+ *
+ * @param int $terminalId
+ * @param int $shop_id [optional] The shop id, defaults to 1 if not provided
+ *
+ * @return array|null An array containing the `remote_name` field, or null if no terminal is found
+ *
+ * @throws Exception If the provided `shop_id` is not a valid integer
+ */
+function getTerminalById($terminalId, $shop_id = 1)
+{
+    try {
+        if (filter_var($shop_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+            throw new Exception('Invalid shop id');
+        }
+        $query = 'SELECT `remote_name` FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE `id_terminal` = ' . (int) $terminalId . ' AND `shop_id` = ' . $shop_id;
         $result = Db::getInstance()->executeS($query);
 
         return $result;

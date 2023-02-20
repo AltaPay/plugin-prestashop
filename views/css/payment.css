@@ -38,3 +38,21 @@ p.payment_module a.altapay:after {
 .savecard-checkbox {
       margin-bottom: 14px;
 }
+
+#hidden-terminalid {
+      display: none;
+}
+
+body#checkout section.checkout-step .payment-options .payment-option {
+      display: flex;
+      align-items: center;
+}
+
+body#checkout section.checkout-step .payment-options .payment-option label {
+      margin-bottom: 0;
+}
+
+body#checkout section.checkout-step .payment-options .payment-option label img{
+      max-width: 60px;
+      margin-left: 15px;
+}
