@@ -18,22 +18,26 @@ $(function () {
         }
         Cookies.set('savecard', savecard);
     });
-    $("#payment-confirmation button").click(function (e) {
-        onApplePayButtonClicked();
-        return false;
+    $('#payment-confirmation > .ps-shown-by-js > button').click(function(e) {
+        var payment_option = $('input[type="radio"][name="payment-option"]:checked').attr('id');
+        var terminalId = $("#"+payment_option+"-additional-information > #hidden-terminalid").text();
+        if(terminalId) {
+            onApplePayButtonClicked();
+            return false;
+        }
     });
 
     function onApplePayButtonClicked() { 
-
+        var payment_option = $('input[type="radio"][name="payment-option"]:checked').attr('id');
+        var terminalId = $("#"+payment_option+"-additional-information > #hidden-terminalid").text();
         if (!ApplePaySession) {
             return;
         }
         
-        // TODO: get value dynamically in PL-698
         // Define ApplePayPaymentRequest
         const request = {
-            "countryCode": "US",
-            "currencyCode": "USD",
+            "countryCode": countryCode,
+            "currencyCode": currencyCode,
             "merchantCapabilities": [
                 "supports3DS"
             ],
@@ -46,7 +50,7 @@ $(function () {
             "total": {
                 "label": "Demo (Card is not charged)",
                 "type": "final",
-                "amount": "1.99"
+                "amount": amountPaid
             }
         };
         
@@ -55,30 +59,35 @@ $(function () {
         session.onvalidatemerchant = async event => {
             // Call your own server to request a new merchant session.
             $.ajax({
-                url: baseDir,
+                url: cardwalleturl,
                 async: true,
                 cache: false,
                 dataType : "json",
                 type: 'post',
                 data: {
                     validationUrl: event.validationURL,
-                    termminalid: Cookies.get('selectedPaymentId')
+                    termminalid: terminalId
                 },
                 success: function(response) {
-                    var responsedata = jQuery.parseJSON(response);
-                    session.completeMerchantValidation(responsedata);
-                },
-                error: function(res,textStatus,jqXHR)
-                {
-                    console.log("TECHNICAL ERROR"+JSON.stringify(res));
+                    if (response.success === true) {
+                        var responsedata = jQuery.parseJSON(response.applePaySession);
+                        session.completeMerchantValidation(responsedata);
+                      } else {
+                          console.log(jQuery.parseJSON(response.error));
+                      }
                 }
             });
         };
         
         session.onpaymentmethodselected = event => {
             // Define ApplePayPaymentMethodUpdate based on the selected payment method.
-            // No updates or errors are needed, pass an empty object.
-            const update = {};
+            let total = {
+                "label": "ApplePay Altapay",
+                "type": "final",
+                "amount": amountPaid
+            }
+    
+            const update = { "newTotal": total };
             session.completePaymentMethodSelection(update);
         };
         
@@ -97,10 +106,27 @@ $(function () {
         
         session.onpaymentauthorized = event => {
             // Define ApplePayPaymentAuthorizationResult
-            const result = {
-                "status": ApplePaySession.STATUS_SUCCESS
-            };
-            session.completePayment(result);
+            $.ajax({
+                url: cardwalletresponseurl,
+                data: {
+                    providerData: JSON.stringify(event.payment.token),
+                    method: terminalId
+                },
+                type: 'post',
+                dataType: 'JSON',
+                complete: function(response) {
+                    var status
+                    var responseData = response.responseJSON;
+                    if((responseData.status === "Success") && (response.status == 200)) {
+                        status = ApplePaySession.STATUS_SUCCESS;
+                        session.completePayment(status);
+                        window.location.replace(responseData.redirectUrl);
+                    } else {
+                        status = ApplePaySession.STATUS_FAILURE;
+                        session.completePayment(status); 
+                    }
+                }
+            });  
         };
         
         session.oncouponcodechanged = event => {

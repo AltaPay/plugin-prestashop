@@ -25,6 +25,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         $savedCreditCard = null;
         $saveCard = null;
         $payment_method = Tools::getValue('method', false);
+        $providerData = Tools::getValue('providerData');
         $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
 
         $cart = $this->context->cart;
@@ -57,7 +58,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             setcookie('savecard', null, -1, '/');
         }
 
-        $result = $this->module->createTransaction($saveCard, $savedCreditCard, $payment_method);
+        $result = $this->module->createTransaction($saveCard, $savedCreditCard, $payment_method, $providerData);
         // Load the customer
         $customer = new Customer((int) $cart->id_customer);
         $currency_paid = new Currency($cart->id_currency);
@@ -86,10 +87,19 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
 
             Db::getInstance()->Execute($sql);
 
-            if ($payment_form_url === 'reservation') {
+            if ($payment_form_url === 'reservation' || $payment_form_url === 'cardwallet') {
                 $currentOrder = new Order((int) $this->module->currentOrder);
                 createAltapayOrder($result['response'], $currentOrder, 'succeeded');
-                Tools::redirect('index.php?controller=order-detail&id_order=' . $this->module->currentOrder);
+                if ($payment_form_url === 'reservation') {
+                    Tools::redirect('index.php?controller=order-detail&id_order=' . $this->module->currentOrder);
+                } else {
+                    $this->saveReconciliationDetails($result['response'], $cart, $currentOrder);
+                    $response = [
+                        'status' => $result['response']->Result,
+                        'redirectUrl' => 'index.php?controller=order-detail&id_order=' . $this->module->currentOrder,
+                    ];
+                    echo json_encode($response);
+                }
             } else {
                 Tools::redirect($payment_form_url);
             }
@@ -125,5 +135,35 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         }
 
         return $terminal;
+    }
+
+    /**
+     * Saves the reconciliation details for a given order
+     *
+     * @param object $response
+     * @param object $cart
+     * @param object $order
+     *
+     * @return void
+     */
+    public function saveReconciliationDetails($response, $cart, $order)
+    {
+        if (isset($response) && isset($response->Transactions)) {
+            $latestTransKey = 0;
+            foreach ($response->Transactions as $key => $transaction) {
+                if ($transaction->AuthType === 'subscription_payment' && $transaction->CreatedDate > $max_date) {
+                    $max_date = $transaction->CreatedDate;
+                    $latestTransKey = $key;
+                }
+            }
+            $transaction = $response->Transactions[$latestTransKey];
+            $paymentType = $transaction->AuthType;
+            $transactionId = $transaction->TransactionId;
+            if (!empty($transaction->ReconciliationIdentifiers)) {
+                $reconciliation_identifier = $transaction->ReconciliationIdentifiers[0]->Id;
+                $reconciliation_type = $transaction->ReconciliationIdentifiers[0]->Type;
+                saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $reconciliation_type);
+            }
+        }
     }
 }
