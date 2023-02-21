@@ -201,8 +201,10 @@ class ALTAPAY extends PaymentModule
             `payment_type` varchar(32) DEFAULT NULL,
             `currency` varchar(100) DEFAULT NULL,
             `ccTokenControl_` int(255) NOT NULL DEFAULT \'0\',
+            `applepay` BOOLEAN NOT NULL DEFAULT \'0\',
             `position` int(11) NOT NULL DEFAULT \'0\',
             `active` int(11) NOT NULL DEFAULT \'0\',
+            `cvvLess` BOOLEAN NOT NULL DEFAULT \'0\',
             `shop_id` int(11) NOT NULL DEFAULT \'1\',
             PRIMARY KEY (`id_terminal`)
         ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
@@ -210,6 +212,13 @@ class ALTAPAY extends PaymentModule
 
         if (!Db::getInstance()->Execute('SELECT cvvLess from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN cvvLess BOOLEAN NOT NULL DEFAULT 0')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+        if (!Db::getInstance()->Execute('SELECT applepay from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN applepay BOOLEAN NOT NULL DEFAULT 0')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
@@ -236,7 +245,6 @@ class ALTAPAY extends PaymentModule
                 return false;
             }
         }
-
         // This table contains count of captured/refunded order lines
         if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_orderlines`')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_orderlines`  TO `' . _DB_PREFIX_ . 'altapay_orderlines`  ';
@@ -383,7 +391,6 @@ class ALTAPAY extends PaymentModule
     public function hookHeader($params)
     {
         $this->context->controller->addJquery();
-        $this->context->controller->addJS($this->_path . 'js/creditCardFront.js', 'all');
         $this->context->controller->addCSS($this->_path . 'views/css/payment.css', 'all');
     }
 
@@ -449,6 +456,7 @@ class ALTAPAY extends PaymentModule
                         $terminal->icon_filename = ' ';
                         $terminal->currency = $this->context->currency->iso_code;
                         $terminal->ccTokenControl_ = 0;
+                        $terminal->applepay = 0;
                         $terminal->payment_type = 'payment';
                         $terminal->position = $position++;
                         $terminal->cvvLess = 0;
@@ -516,6 +524,7 @@ class ALTAPAY extends PaymentModule
                 'val' => 1,
             ],
         ];
+
         $terminals = $this->getAltapayTerminals();
         foreach ($terminals as $terminal) {
             $terminalNature[] = [
@@ -594,6 +603,26 @@ class ALTAPAY extends PaymentModule
                     'desc' => $this->l('Add custom text to display under terminal name'),
                     'name' => 'custom_message',
                     'required' => false,
+                ],
+                [
+                    'type' => 'select',
+                    'label' => $this->l('Is Apple Pay?'),
+                    'name' => 'applepay',
+                    'required' => true,
+                    'options' => [
+                        'query' => [
+                            [
+                                'id_option' => '0',
+                                'name' => 'No',
+                            ],
+                            [
+                                'id_option' => '1',
+                                'name' => 'Yes',
+                            ],
+                        ],
+                        'id' => 'id_option',
+                        'name' => 'name',
+                    ],
                 ],
                 [
                     'type' => 'select',
@@ -1239,6 +1268,7 @@ class ALTAPAY extends PaymentModule
             'icon_filename',
             'currency',
             'ccTokenControl_',
+            'applepay',
             'payment_type',
             'active',
             'position',
@@ -1445,6 +1475,13 @@ class ALTAPAY extends PaymentModule
             ],
             'ccTokenControl_' => [
                 'title' => $this->l('Token control'),
+                'type' => 'bool',
+                'width' => 'auto',
+                'orderby' => false,
+                'search' => false,
+            ],
+            'applepay' => [
+                'title' => $this->l('Is Apple Pay'),
                 'type' => 'bool',
                 'width' => 'auto',
                 'orderby' => false,
@@ -1936,7 +1973,6 @@ class ALTAPAY extends PaymentModule
         }
 
         $this->context->controller->addJquery();
-        $this->context->controller->addJS($this->_path . 'js/creditCardFront.js', 'all');
         $this->context->controller->addCSS($this->_path . 'css/payment.css', 'all');
 
         // Fetch payment methods
@@ -2069,9 +2105,10 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign(
             $this->getTemplateVarInfos()
         );
-
         $paymentsOptions = [];
+        $userAgent = $_SERVER['HTTP_USER_AGENT'];
         foreach ($paymentMethods as $paymentMethod) {
+            $paymentOptions = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
             $nature = json_decode($paymentMethod['nature'], true);
             if ($show_only_cc_terminal and (count($nature) != 1 or $nature[0]['Nature'] !== 'CreditCard')) {
                 continue;
@@ -2081,11 +2118,17 @@ class ALTAPAY extends PaymentModule
             if ($customerID) {
                 $this->context->smarty->assign('customerID', $customerID);
             }
-            $actionText = $this->l('Pay with') . ' ' . $paymentMethod['display_name'];
+            if ($paymentMethod['applepay'] == '1' && !(strstr($userAgent, 'AppleWebKit/') && strstr($userAgent, 'Safari/') && !strstr($userAgent, 'Chrome/'))) {
+                continue;
+            }
+            $actionText = $this->l('Pay by') . ' ' . $paymentMethod['display_name'];
             $this->context->smarty->assign('custom_message', $paymentMethod['custom_message']);
             $paymentOptions = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-            $terminal_id = $paymentMethod['id_terminal'];
-            $terminal = ['method' => $terminal_id];
+            $terminalId = $paymentMethod['id_terminal'];
+            if ($paymentMethod['applepay'] == '1') {
+                $this->context->smarty->assign('terminalId', $terminalId);
+            }
+            $terminal = ['method' => $terminalId];
             $template = $this->fetch('module:altapay/views/templates/hook/payment17.tpl');
 
             $paymentOptions->setCallToActionText($actionText)
@@ -2112,9 +2155,22 @@ class ALTAPAY extends PaymentModule
      */
     public function hookActionFrontControllerSetMedia($params)
     {
+        $cart = $this->context->cart;
+        $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
+        $currency = new Currency($cart->id_currency);
         $this->context->controller->addJquery();
         $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+            Media::addJsDef(['cardwalleturl' => $this->context->link->getModuleLink('altapay', 'cardwalletsession')]);
+            Media::addJsDef(['cardwalletresponseurl' => $this->context->link->getModuleLink('altapay', 'payment')]);
+            Media::addJsDef(['amountPaid' => $amountPaid]);
+            Media::addJsDef(['currencyCode' => $currency->iso_code]);
+            Media::addJsDef(['countryCode' => $this->context->country->iso_code]);
+            $this->context->controller->registerJavascript(
+                'applepaysdk', // Unique ID
+                'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js', // JS path
+                ['server' => 'remote', 'position' => 'head', 'priority' => 150] // Arguments
+            );
             $this->context->controller->registerJavascript('altapay-js-cookie', 'https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js', ['server' => 'remote']);
         }
     }
@@ -2197,13 +2253,13 @@ class ALTAPAY extends PaymentModule
      * @param $savecard
      * @param $tokenId
      * @param bool $payment_method
-     * @param null $transactionId
+     * @param null $providerData
      *
      * @return array If the transaction failed, the array contains information about the failure
      *
      * @throws Exception
      */
-    public function createTransaction($savecard, $tokenId, $payment_method = false, $transactionId = null)
+    public function createTransaction($savecard, $tokenId, $payment_method = false, $providerData = null)
     {
         $cart = $this->context->cart;
         $ccToken = null;
@@ -2361,6 +2417,10 @@ class ALTAPAY extends PaymentModule
             $config->setCallbackNotification($callback['callback_notification']);
             $config->setCallbackForm($callback['callback_form']);
             $request = new API\PHP\Altapay\Api\Ecommerce\PaymentRequest(getAuth());
+            if ($terminal->applepay) {
+                $request = new API\PHP\Altapay\Api\Payments\CardWalletAuthorize(getAuth());
+                $request->setProviderData($providerData);
+            }
             if ($results) {
                 $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
                 $token = $ccToken;
@@ -2391,32 +2451,39 @@ class ALTAPAY extends PaymentModule
             if (!$isReservation) {
                 $request->setConfig($config)->setLanguage($cgConf['language']);
             }
-            $response = $request->call();
-            $responseUrl = $response->Url;
-            $orderStatus = Configuration::get('ALTAPAY_OS_PENDING');
-            if (strtolower($response->Result) === 'success' && $responseUrl == null) {
-                $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
-                $transaction = $response->Transactions[$latestTransKey];
-                $paymentType = $transaction->AuthType;
-                if (isset($transaction->CapturedAmount)) {
-                    $amount = $transaction->CapturedAmount;
+            try {
+                $response = $request->call();
+                $responseUrl = $response->Url;
+                $orderStatus = Configuration::get('ALTAPAY_OS_PENDING');
+                if (strtolower($response->Result) === 'success' && $responseUrl == null) {
+                    $responseUrl = 'reservation';
+                    $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
+                    $transaction = $response->Transactions[$latestTransKey];
+                    $paymentType = $transaction->AuthType;
+                    if (isset($transaction->CapturedAmount)) {
+                        $amount = $transaction->CapturedAmount;
+                    }
+                    if ($paymentType === 'payment' || $paymentType === 'paymentAndCapture') {
+                        $amount = $cart->getOrderTotal(true, Cart::BOTH);
+                    }
+                    if ($terminal->applepay) {
+                        $responseUrl = 'cardwallet';
+                    }
                 }
-                if ($paymentType === 'payment' || $paymentType === 'paymentAndCapture') {
-                    $amount = $cart->getOrderTotal(true, Cart::BOTH);
-                }
-                $responseUrl = 'reservation';
-            }
 
-            return [
-                'success' => true,
-                'status' => $orderStatus,
-                'uniqueid' => $cgConf['uniqueid'],
-                'terminal' => $cgConf['terminal'],
-                'amount' => $amount,
-                'result' => 'Success',
-                'payment_form_url' => $responseUrl,
-                'response' => $response,
-            ];
+                return [
+                    'success' => true,
+                    'status' => $orderStatus,
+                    'uniqueid' => $cgConf['uniqueid'],
+                    'terminal' => $cgConf['terminal'],
+                    'amount' => $amount,
+                    'result' => 'Success',
+                    'payment_form_url' => $responseUrl,
+                    'response' => $response,
+                ];
+            } catch (Exception $e) {
+                $message = $e->getMessage();
+            }
         } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
             $message = $e->getResponse()->getBody();
         } catch (API\PHP\Altapay\Exceptions\ResponseHeaderException $e) {
