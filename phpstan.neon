@@ -10,3 +10,6 @@ parameters:
   excludePaths:
     - %currentWorkingDirectory%/vendor/*
     - %currentWorkingDirectory%/scoper.inc.php
+    - %currentWorkingDirectory%/controllers/front/cron.php
+    - %currentWorkingDirectory%/controllers/front/cronlegacy.php
+
