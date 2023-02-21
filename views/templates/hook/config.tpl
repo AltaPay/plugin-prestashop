@@ -17,16 +17,16 @@
 		</ol>
 		<p>{l s="Once done you're ready to accept payments and start selling." mod="altapay"}</p>
 		<br>
-		<h4>{l s='Additional Configurations:'} <span style="font-size: initial;">{l s ='(If you are using Subscription Products module by Webkul.)'}</span></h4>
+		<h4>{l s='Additional Configurations:'} <span style="font-size: initial; font-weight: bold;">{l s ='(If you are using Subscription Products module by Webkul.)'}</span></h4>
 		<ul>
 			<li>
 				{l s='Please make sure the curl library is installed on your server to execute the cron tasks.' mod='altapay'}
 			</li>
 			<li>
-				{l s='For processing recurring payments, please insert the following line in your cron tasks manager for every night at 03:00 AM:' mod='altapay'}
+				<strong>{l s='Please remove their cron entry and instead insert the following line in your cron tasks manager for creating and scheduling automatic subscription orders and processing recurring payments.' mod='altapay'}</strong>
 			</li>
 			<li>
-				<code>0 3 * * * curl {$altapay_recurring_payments_cron_link}</code>
+				<code>23 45 * * * curl {$altapay_recurring_payments_cron_link}</code>
 			</li>
 		</ul>
 	</div>

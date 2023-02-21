@@ -89,6 +89,10 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 ## Subscriptions
 
 AltaPay plugin is compatible with the [Subscription Products | Recurring Payments Module](https://addons.prestashop.com/en/recurring-payment-subscription/49381-subscription-products-recurring-payments.html) to accept recurring payments.
+* Please make sure the curl library is installed on your server to execute the cron tasks.
+* Please remove the cron entry mentioned in [Subscription Products | Recurring Payments Module](https://addons.prestashop.com/en/recurring-payment-subscription/49381-subscription-products-recurring-payments.html) and instead insert one by AltaPay in your cron tasks manager for creating and scheduling automatic subscription orders and processing recurring payments.
+
+![prestashop_configure_subscription_cron.png](Docs/Configuration/prestashop_configure_subscription_cron.png)
 
 > Note:
 >

@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.4.8';
+        $this->version = '3.4.9';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
@@ -298,16 +298,6 @@ class ALTAPAY extends PaymentModule
                 return false;
             }
         }
-
-        Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . "altapay_crons` (
-		`id` int(11) NOT NULL AUTO_INCREMENT,
-		`time` timestamp DEFAULT CURRENT_TIMESTAMP ,
-		`id_order` int(10) unsigned DEFAULT NULL,
-		`payload` text DEFAULT NULL,
-		`operation` varchar(200) NOT NULL,
-		`status` varchar(200) DEFAULT 'pending' NOT NULL,		
-		PRIMARY KEY  (`id`)
-		) ENGINE=" . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8');
 
         if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_orderlines`
             MODIFY `product_id` varchar(36) NOT NULL')
@@ -659,18 +649,6 @@ class ALTAPAY extends PaymentModule
                     ],
                 ],
 
-                [
-                    'type' => 'select',
-                    'name' => 'terminal_nature',
-                    'id' => 'terminalNature',
-                    'required' => false,
-                    'options' => [
-                        'query' => $terminalNature,
-                        'id' => 'id',
-                        'name' => 'name',
-                    ],
-                ],
-
                 $tokenControl,
 
                 [
@@ -913,17 +891,28 @@ class ALTAPAY extends PaymentModule
 
                 $reconciliation_identifier = sha1($paymentID . time());
                 $payment_type = getAltapayOrderDetails($orderID)[0]['paymentType'];
-                if ($payment_type == 'subscription') {
+                if (in_array($payment_type, ['subscription', 'subscription_payment'])) {
                     $api = new API\PHP\Altapay\Api\Subscription\ChargeSubscription(getAuth());
                     $api->setAgreement(['id' => $paymentID]);
                 } else {
                     $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
                     $api->setOrderLines($finalOrderLines);
+                    $api->setAmount((float) Tools::getValue('amount'));
                 }
                 $api->setTransaction($paymentID);
-                $api->setAmount((float) Tools::getValue('amount'));
                 $api->setReconciliationIdentifier($reconciliation_identifier);
-                $api->call();
+                $response = $api->call();
+                if ($payment_type == 'subscription' and isset($response) and isset($response->Transactions)) {
+                    $latestTransKey = 0;
+                    foreach ($response->Transactions as $key => $transaction) {
+                        if ($transaction->AuthType === 'subscription_payment' && $transaction->CreatedDate > $max_date) {
+                            $max_date = $transaction->CreatedDate;
+                            $latestTransKey = $key;
+                        }
+                    }
+                    $transaction = $response->Transactions[$latestTransKey];
+                    updateTransactionIdForParentSubscription($orderID, $transaction->TransactionId);
+                }
                 markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
                 saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier);
             } catch (Exception $e) {
@@ -1331,6 +1320,15 @@ class ALTAPAY extends PaymentModule
             [],
             true
         );
+
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
+            $altapay_recurring_payments_cron_link = $this->context->link->getModuleLink(
+                $this->name,
+                'cronlegacy',
+                [],
+                true
+            );
+        }
         $this->smarty->assign('altapay_recurring_payments_cron_link', $altapay_recurring_payments_cron_link);
         $html = $this->display(__FILE__, 'config.tpl');
         $html .= $this->renderForm();
@@ -3008,19 +3006,5 @@ class ALTAPAY extends PaymentModule
         }
 
         return false;
-    }
-
-    /**
-     * @param array $params
-     *
-     * @return void
-     *
-     * @throws PrestaShopException
-     */
-    public function hookActionValidateOrder(&$params)
-    {
-        if (Module::isEnabled('wkproductsubscription') and $params['order']->payment == $this->displayName) {
-            createAltaPayCronjob($params['order']->id, ['order_total' => $params['order']->total_paid]);
-        }
     }
 }
