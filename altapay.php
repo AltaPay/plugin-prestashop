@@ -488,7 +488,7 @@ class ALTAPAY extends PaymentModule
         }
         $iconOptions = [];
         $fieldsForm = [];
-        $tokenControl = [];
+        $tokenControl = $terminal_nature = [];
         $directory = _PS_MODULE_DIR_ . '/' . $this->name . '/' . $this->paymentMethodIconDir;
         $scanned_directory = array_diff(scandir($directory), ['..', '.', '.DS_Store']);
         foreach ($scanned_directory as $filename) {
@@ -533,6 +533,19 @@ class ALTAPAY extends PaymentModule
                 'lang' => false,
                 'values' => [
                     'query' => $ccTokenControlOptions,
+                    'id' => 'id',
+                    'name' => 'name',
+                ],
+            ];
+
+            $terminal_nature = [
+                'type' => 'select',
+                'label' => '',
+                'name' => 'terminal_nature',
+                'id' => 'terminalNature',
+                'required' => false,
+                'options' => [
+                    'query' => $terminalNature,
                     'id' => 'id',
                     'name' => 'name',
                 ],
@@ -648,19 +661,8 @@ class ALTAPAY extends PaymentModule
                     ],
                 ],
 
-                [
-                    'type' => 'select',
-                    'name' => 'terminal_nature',
-                    'id' => 'terminalNature',
-                    'required' => false,
-                    'options' => [
-                        'query' => $terminalNature,
-                        'id' => 'id',
-                        'name' => 'name',
-                    ],
-                ],
-
                 $tokenControl,
+                $terminal_nature,
 
                 [
                     'type' => 'select',
