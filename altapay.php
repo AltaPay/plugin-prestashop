@@ -77,7 +77,6 @@ class ALTAPAY extends PaymentModule
             || !$this->registerHook('displayCustomerAccount')
             || !$this->registerHook('actionFrontControllerSetMedia')
             || !$this->registerHook('actionOrderStatusPostUpdate')
-            || !$this->registerHook('actionValidateOrder')
         ) {
             return false;
         }
@@ -649,6 +648,18 @@ class ALTAPAY extends PaymentModule
                     ],
                 ],
 
+                [
+                    'type' => 'select',
+                    'name' => 'terminal_nature',
+                    'id' => 'terminalNature',
+                    'required' => false,
+                    'options' => [
+                        'query' => $terminalNature,
+                        'id' => 'id',
+                        'name' => 'name',
+                    ],
+                ],
+
                 $tokenControl,
 
                 [
@@ -763,7 +774,7 @@ class ALTAPAY extends PaymentModule
                 $terminalNature = $terminal->Natures;
                 $termNature = '';
                 foreach ($terminalNature as $nature) {
-                    if ($nature->Nature === 'CreditCard') {
+                    if (count($terminalNature) == 1 and $nature->Nature === 'CreditCard') {
                         $termNature = 'CreditCard';
                     }
                 }
