@@ -557,6 +557,6 @@ function updateTransactionIdForParentSubscription($id_order, $paymentId)
 {
     $sql = 'UPDATE 
     ' . _DB_PREFIX_ . 'altapay_order SET payment_id = \'' . pSQL($paymentId) . '\' WHERE id_order='
-        . pSQL($id_order) . ' LIMIT 1';
+        . (int) $id_order . ' LIMIT 1';
     Db::getInstance()->Execute($sql);
 }
