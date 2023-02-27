@@ -49,6 +49,7 @@ try {
             $terminal->position = $i++;
             $terminal->cvvLess = 0;
             $terminal->shop_id = 1;
+            $terminal->nature = json_encode($term->Natures);
             $terminal->save();
         }
     }

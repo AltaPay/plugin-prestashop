@@ -1,9 +1,13 @@
-#AltaPay-Omni for PrestaShop
-Supported versions
+# AltaPay for PrestaShop
+## Supported versions
 
 PrestaShop 1.6.x and 1.7.x
 
 # Changelog
+
+## [3.4.9] - 2023-02-21
+### Added
+- Add support for recurring payments
 
 ## [3.4.8] - 2023-02-15
 ### Added

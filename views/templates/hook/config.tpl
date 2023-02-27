@@ -16,5 +16,18 @@
 			<li>{l s="Add your payment methods (credit card, PayPal, etc.) in the Terminals panel" mod="altapay"}</li>
 		</ol>
 		<p>{l s="Once done you're ready to accept payments and start selling." mod="altapay"}</p>
+		<br>
+		<h4>{l s='Additional Configurations:'} <span style="font-size: initial; font-weight: bold;">{l s ='(If you are using Subscription Products module by Webkul.)'}</span></h4>
+		<ul>
+			<li>
+				{l s='Please make sure the curl library is installed on your server to execute the cron tasks.' mod='altapay'}
+			</li>
+			<li>
+				<strong>{l s='Please remove their cron entry and instead insert the following line in your cron tasks manager for creating and scheduling automatic subscription orders and processing recurring payments.' mod='altapay'}</strong>
+			</li>
+			<li>
+				<code>23 45 * * * curl {$altapay_recurring_payments_cron_link}</code>
+			</li>
+		</ul>
 	</div>
 </div>

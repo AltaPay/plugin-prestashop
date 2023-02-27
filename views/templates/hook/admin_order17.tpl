@@ -334,7 +334,7 @@
         var reservedAmount = parseFloat($("#reservedAmount").text());
         var refundedAmount = parseFloat($("#refundedAmount").text());
 
-        if(value === 'paymentAndCapture')
+        if(value === 'paymentAndCapture' || value === 'subscriptionAndCharge')
         {
             if(refundedAmount < reservedAmount) {
                 $("#capture-amount").hide();

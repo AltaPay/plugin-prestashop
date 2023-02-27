@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.4.8';
+    $pluginVersion = '3.4.9';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -229,7 +229,7 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
             }
         }
         $transaction = $response->Transactions[$latestTransKey];
-        $uniqueId = $transaction->ShopOrderId;
+        $uniqueId = ($payment_status === 'subscription_payment_succeeded' ? "$transaction->ShopOrderId ($transaction->TransactionId)" : $transaction->ShopOrderId);
         $paymentId = $transaction->TransactionId;
         $cardMask = $transaction->CreditCardMaskedPan;
         $cardToken = $transaction->CreditCardToken;
@@ -241,7 +241,7 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
         $paymentNature = $transaction->PaymentNature;
         $paymentStatus = $payment_status;
         $requireCapture = 0;
-        if ($paymentType === 'payment') {
+        if ($paymentType === 'payment' or ($paymentType === 'subscription_payment' and $transaction->TransactionStatus !== 'captured')) {
             $requireCapture = 1;
         }
         $cardExpiryDate = 0;
@@ -436,4 +436,127 @@ function saveOrderReconciliationIdentifierIfNotExists($orderID, $reconciliation_
     if (!Db::getInstance()->getRow($sql)) {
         saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $type);
     }
+}
+
+/**
+ * @param $cart
+ *
+ * @return bool
+ */
+function cartHasSubscriptionProduct($cart)
+{
+    $subscription_product_exists = false;
+    if (Module::isEnabled('wkproductsubscription')) {
+        include_once _PS_MODULE_DIR_ . 'wkproductsubscription/classes/WkSubscriptionRequired.php';
+        if ($cartProducts = $cart->getProducts()) {
+            foreach ($cartProducts as $productData) {
+                $idProduct = $productData['id_product'];
+                $idAttr = $productData['id_product_attribute'];
+                $idCart = $cart->id;
+                // @phpstan-ignore-next-line
+                if (WkProductSubscriptionModel::checkIfSubscriptionProduct($idProduct) && WkSubscriptionCartProducts::getByIdProductByIdCart($idCart, $idProduct, $idAttr, true)) {
+                    $subscription_product_exists = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    return $subscription_product_exists;
+}
+
+/**
+ * @param int $order_id
+ * @param int $parent_order_id
+ *
+ * @return void
+ */
+function chargeAltaPayAgreement($order_id, $parent_order_id)
+{
+    $order = new Order((int) $order_id);
+    $agreement = getAgreementByOrderId($parent_order_id);
+    if (!empty($agreement)) {
+        $reconciliation_identifier = sha1($agreement[0]['agreement_id'] . time());
+        $amount = (float) $order->total_paid;
+        try {
+            $api = new API\PHP\Altapay\Api\Subscription\ChargeSubscription(getAuth());
+            $api->setTransaction($agreement[0]['agreement_id']);
+            $api->setAgreement(['id' => $agreement[0]['agreement_id']]);
+            $api->setReconciliationIdentifier($reconciliation_identifier);
+            if ($amount > 0) {
+                $api->setAmount($amount);
+            }
+            $response = $api->call();
+            $latestTransKey = 0;
+            if (isset($response) && isset($response->Transactions)) {
+                foreach ($response->Transactions as $key => $transaction) {
+                    if ($transaction->AuthType === 'subscription_payment' && $transaction->CreatedDate > $max_date) {
+                        $max_date = $transaction->CreatedDate;
+                        $latestTransKey = $key;
+                    }
+                }
+                $transaction = $response->Transactions[$latestTransKey];
+                $uniqueId = (($transaction->AuthType === 'subscription_payment') ? "$transaction->ShopOrderId ($transaction->TransactionId)" : $transaction->ShopOrderId);
+                createAltapayOrder($response, $order, 'subscription_payment_succeeded');
+                saveAltaPayTransaction($uniqueId, $transaction->CapturedAmount, $transaction->Terminal);
+                saveOrderReconciliationIdentifier($order_id, $reconciliation_identifier);
+                $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+            }
+        } catch (Exception $e) {
+            $file = fopen(dirname(__FILE__) . '/cron_logs.log', 'a');
+            $msg = "\r\n\n";
+            $msg .= '[' . date('d-m-Y H:i:s') . ']  ----  ===========AltaPay cron error============ ' . "\n";
+            $msg .= $e->getMessage() . "\n";
+            $msg .= json_encode([$order, $agreement]) . "\n";
+            $msg .= "===========AltaPay cron error============\n";
+            fwrite($file, $msg);
+            fclose($file);
+        }
+    }
+}
+
+/**
+ * @param int $id_order
+ *
+ * @return array
+ */
+function getAgreementByOrderId($id_order)
+{
+    $sql = 'SELECT `agreement_id`, `agreement_type`, `agreement_unscheduled_type` 
+                FROM `' . _DB_PREFIX_ . "altapay_saved_credit_card` WHERE `id_order` ='" . pSQL($id_order) . "'";
+
+    return Db::getInstance()->executeS($sql);
+}
+
+ /**
+  * @param string $unique_id
+  * @param string $amount
+  * @param string $terminal
+  *
+  * @return void
+  */
+ function saveAltaPayTransaction($unique_id, $amount, $terminal)
+ {
+     $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction` 
+				(id_cart, payment_form_url, token, unique_id, amount, terminal_name, date_add) VALUES ' .
+        "('', '', '', '" . pSQL($unique_id) . "', '" . pSQL($amount) . "', '" . pSQL($terminal) . "' ,
+             '" . pSQL(time()) . "')" . ' ON DUPLICATE KEY UPDATE `amount` = ' . pSQL($amount);
+
+     Db::getInstance()->Execute($sql);
+ }
+
+/**
+ * Method for updating payment status in database
+ *
+ * @param int $id_order
+ * @param int $paymentId
+ *
+ * @return void
+ */
+function updateTransactionIdForParentSubscription($id_order, $paymentId)
+{
+    $sql = 'UPDATE 
+    ' . _DB_PREFIX_ . 'altapay_order SET payment_id = \'' . pSQL($paymentId) . '\' WHERE id_order='
+        . (int) $id_order . ' LIMIT 1';
+    Db::getInstance()->Execute($sql);
 }
