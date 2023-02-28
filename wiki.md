@@ -44,19 +44,19 @@ be provided by AltaPay.
 1. AltaPay only supports PrestaShop version 1.6.x
 Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Add a new module” from the top-right corner.
 
-![add_new_module](https://github.com/AltaPay/plugin-prestashop/blob/main/Docs/Installation/prestashop_modules_services.png)
+![add_new_module](Docs/Installation/prestashop_modules_services.png)
 
 2. Now click on “Choose a file” from the “Add a new module” tab and find the AltaPay.zip file. When you chose the file, click on “Upload the module”.
 
-![upload_module](https://github.com/AltaPay/plugin-prestashop/blob/main/Docs/Installation/prestashop_add_altapay_module.png)
+![upload_module](Docs/Installation/prestashop_add_altapay_module.png)
 
 3. The module is now successfully imported. To finalize the installation, find the module in the list and click on “Install” to the right of the module.
 
-![install_module](https://github.com/AltaPay/plugin-prestashop/blob/main/Docs/Installation/prestashop_altapay_module_installation.png)
+![install_module](Docs/Installation/prestashop_altapay_module_installation.png)
 
 4. A window will open - click on “Proceed with the installation”. When it’s done, a green bar will be visible and state that the module has been successfully installed.
 
-![installed_successfully](https://github.com/AltaPay/plugin-prestashop/blob/main/Docs/Installation/prestashop_altapay_module_installation_confirm.png)
+![installed_successfully](Docs/Installation/prestashop_altapay_module_installation_confirm.png)
 
 # Configuration
 
@@ -71,19 +71,25 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 
 4. Now, set up the terminals. At the bottom of the module configuration page, you will find a list of “Terminals”. There is a plus sign which you would need to click, to add a new terminal.
 
-![set_up_terminals](https://github.com/AltaPay/plugin-prestashop/blob/main/Docs/Configuration/prestashop_terminal_configuration.jpg)
+![set_up_terminals](Docs/Configuration/prestashop_terminal_configuration.jpg)
 
 5. When setting up a terminal you must select the icon and name that is going to be shown in the check flow.  The currency must correspond with the currency on the terminal at AltaPay.  The payment type indicates if the money would be captured on reservation (‘Authorize and capture’) or the merchant would have to capture, when delivering the goods.
 
 6. In the optional field 'Custom message', you can add custom message for the customers. e.g. guidelines from Danish Forbrugerombudsmanden.
 
+7. To enable the Apple Pay payment method, select 'Yes' from the 'Is Apple Pay?' dropdown.
+   > Note:
+   >
+   > Currently, AltaPay plugin supports Apple Pay functionality with Prestashop 1.7 and above.
+
+
 ![terminal_config](Docs/Configuration/prestashop_configure_altapay_terminal_detail.png)
 
-7. When you have set up your terminals you are ready to process transactions through AltaPay.
+8. When you have set up your terminals you are ready to process transactions through AltaPay.
 
-![verify_terminals](https://github.com/AltaPay/plugin-prestashop/blob/main/Docs/Configuration/prestashop_payment_method_page.jpg)
+![verify_terminals](Docs/Configuration/prestashop_payment_method_page.jpg)
 
-![process_transactions](https://github.com/AltaPay/plugin-prestashop/blob/main/Docs/Configuration/prestashop_credit_card_payment_page.jpg)
+![process_transactions](Docs/Configuration/prestashop_credit_card_payment_page.jpg)
 
 
 ## Subscriptions
