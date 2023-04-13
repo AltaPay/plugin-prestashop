@@ -3025,6 +3025,7 @@ class ALTAPAY extends PaymentModule
      */
     public function renderFraudDetectionForm()
     {
+        $output = '';
         $fieldsForm = [
             'form' => [
                 'legend' => [

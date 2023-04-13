@@ -23,6 +23,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $postData = Tools::getAllValues();
             $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
             $response = $callback->call();
+            $transactionId = $response->transactionId;
             $transaction = getTransaction($response);
             $fraudStatus = $transaction->FraudRecommendation;
             $fraudMsg = $transaction->FraudExplanation;
