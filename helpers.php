@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.4.9';
+    $pluginVersion = '3.5.0';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -584,7 +584,7 @@ function fraudPayment(
     $order->setCurrentState($canceled_state->id);
     // Save the changes to the order
     $order->save();
-    
+
     try {
         if ($transactionStatus === "captured") {
             $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
