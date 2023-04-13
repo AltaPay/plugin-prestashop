@@ -409,6 +409,10 @@ class ALTAPAY extends PaymentModule
             $this->postProcessActive();
 
             return $this->displayAltapay();
+        } elseif (Tools::isSubmit('save_fraud_config')) { /* Process: enable/disable */
+            $this->postProcessFraudDetection();
+
+            return $this->displayAltapay();
         } elseif (Tools::isSubmit('btnSubmit')) { /* Process: save merchant details */
             $this->postValidation();
             if (!count($this->postErrors)) {
@@ -1345,6 +1349,7 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign('altapay_recurring_payments_cron_link', $altapay_recurring_payments_cron_link);
         $html = $this->display(__FILE__, 'config.tpl');
         $html .= $this->renderForm();
+        $html .= $this->renderFraudDetectionForm();
         $html .= $this->renderSyncTerminalForm();
         $html .= $this->renderTerminalList();
 
@@ -1456,6 +1461,8 @@ class ALTAPAY extends PaymentModule
             'ALTAPAY_URL' => Tools::getValue('ALTAPAY_URL', Configuration::get('ALTAPAY_URL')),
             'AUTOCAPTURE_STATUSES[]' => Tools::getValue('AUTOCAPTURE_STATUSES',
                 unserialize(Configuration::get('AUTOCAPTURE_STATUSES'))),
+            'enable_fraud' => Tools::getValue('enable_fraud', Configuration::get('enable_fraud')),
+            'enable_release_refund' => Tools::getValue('enable_release_refund', Configuration::get('enable_release_refund')),
         ];
     }
 
@@ -1583,6 +1590,20 @@ class ALTAPAY extends PaymentModule
             if (Tools::getValue('AUTOCAPTURE_STATUSES') !== '') {
                 Configuration::updateValue('AUTOCAPTURE_STATUSES', serialize(Tools::getValue('AUTOCAPTURE_STATUSES')));
             }
+        }
+        $this->Mhtml .= '<div class="alert alert-success"> ' . $this->l('Settings updated') . '</div>';
+    }
+
+        /**
+     * Method for saving gateway configuration details in plugin settings
+     *
+     * @return void
+     */
+    private function postProcessFraudDetection()
+    {
+        if (Tools::isSubmit('save_fraud_config')) {
+            Configuration::updateValue('enable_fraud', Tools::getValue('enable_fraud'));
+            Configuration::updateValue('enable_release_refund', Tools::getValue('enable_release_refund'));
         }
         $this->Mhtml .= '<div class="alert alert-success"> ' . $this->l('Settings updated') . '</div>';
     }
@@ -2994,6 +3015,92 @@ class ALTAPAY extends PaymentModule
         return $helper->generateForm([$fieldsForm]);
     }
 
+    /**
+     * Fraud detection service form
+     *
+     * @return string
+     *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     */
+    public function renderFraudDetectionForm()
+    {
+        $fieldsForm = [
+            'form' => [
+                'legend' => [
+                    'title' => $this->l('Fraud Detection Service'),
+                    'icon' => 'icon-cog',
+                ],
+                'input' => [
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Enable'),
+                        'name' => 'enable_fraud',
+                        'required' => false,
+                        'options' => [
+                            'query' => [
+                                [
+                                    'id_option' => '0',
+                                    'name' => 'No',
+                                ],
+                                [
+                                    'id_option' => '1',
+                                    'name' => 'Yes',
+                                ],
+                            ],
+                            'id' => 'id_option',
+                            'name' => 'name',
+                        ],
+                    ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Release/Refund - Fraud detected'),
+                        'name' => 'enable_release_refund',
+                        'required' => false,
+                        'options' => [
+                            'query' => [
+                                [
+                                    'id_option' => '0',
+                                    'name' => 'No',
+                                ],
+                                [
+                                    'id_option' => '1',
+                                    'name' => 'Yes',
+                                ],
+                            ],
+                            'id' => 'id_option',
+                            'name' => 'name',
+                        ],
+                    ],
+                ],
+                'submit' => [
+                    'title' => $this->l('Save'),
+                    'icon' => 'icon-circle',
+                ],
+            ],
+        ];
+
+        $helper = new HelperForm();
+        $helper->module = $this;
+        $helper->name_controller = $this->name;
+        $helper->token = Tools::getAdminTokenLite('AdminModules');
+        $helper->currentIndex = AdminController::$currentIndex.'&configure='.$this->name;
+        $helper->default_form_language = (int)Configuration::get('PS_LANG_DEFAULT');
+        $helper->allow_employee_form_lang = (int)Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG');
+        $helper->title = $this->displayName;
+        $helper->show_toolbar = true;
+        $helper->toolbar_scroll = true;
+        $helper->submit_action = 'save_fraud_config';
+        $helper->tpl_vars = [
+            'fields_value' => $this->getConfigFieldsValues(),
+            'languages' => $this->context->controller->getLanguages(),
+            'id_language' => $this->context->language->id,
+        ];
+        
+        $output .= $helper->generateForm([$fieldsForm]);
+        
+        return $output;
+    }
     /**
      * @return array
      */
