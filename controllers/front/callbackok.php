@@ -136,7 +136,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
 
                 // Log order
                 createAltapayOrder($response, $order);
-                if (isset($fraudStatus) && isset($fraudMsg) && strtolower($fraudStatus) === "deny") {
+                if (isset($fraudStatus) && isset($fraudMsg) && strtolower($fraudStatus) === 'deny') {
                     fraudPayment($order, $fraudStatus, $fraudMsg, $transactionId, $transactionStatus);
                 }
                 $this->unlock($fp);

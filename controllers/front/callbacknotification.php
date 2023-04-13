@@ -84,7 +84,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
                             saveOrderReconciliationIdentifierIfNotExists($currentOrder->id, $reconciliation_identifier, $reconciliation_type);
                         }
-                        if (isset($fraudStatus) && isset($fraudMsg) && strtolower($fraudStatus) === "deny") {
+                        if (isset($fraudStatus) && isset($fraudMsg) && strtolower($fraudStatus) === 'deny') {
                             fraudPayment($order, $fraudStatus, $fraudMsg, $transactionId, $transactionStatus);
                         }
                         $this->unlock($fp);
@@ -121,7 +121,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
                             saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
                         }
-                        if (isset($fraudStatus) && isset($fraudMsg) && strtolower($fraudStatus) === "deny") {
+                        if (isset($fraudStatus) && isset($fraudMsg) && strtolower($fraudStatus) === 'deny') {
                             fraudPayment($order, $fraudStatus, $fraudMsg, $transactionId, $transactionStatus);
                         }
                         $this->unlock($fp);
