@@ -329,13 +329,18 @@
 
 <script>
     $(document).ready(function(){
+        $('#altapay').insertBefore($('#altapay').prev('div'));
         var value = $(".Payment_Type").text();
+        var paymentStatus = $(".Payment_Status").text();
+        if(paymentStatus === 'Deny') {
+            $("#transactionOptions").hide();
+        }
         var capturedAmount = parseFloat($("#capturedAmount").text());
         var reservedAmount = parseFloat($("#reservedAmount").text());
         var refundedAmount = parseFloat($("#refundedAmount").text());
-
         if(value === 'paymentAndCapture' || value === 'subscriptionAndCharge')
         {
+             $("#transactionOptions").hide();
             if(refundedAmount < reservedAmount) {
                 $("#capture-amount").hide();
                 $("#btn-capture").hide();
