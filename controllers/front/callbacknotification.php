@@ -23,6 +23,9 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $postData = Tools::getAllValues();
             $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
             $response = $callback->call();
+            $transaction = getTransaction($response);
+            $fraudStatus = $transaction->FraudRecommendation;
+            $fraudMsg = $transaction->FraudExplanation;
             $shopOrderId = $response->shopOrderId;
             flock($fp, LOCK_EX);
             // Load the cart
@@ -81,19 +84,19 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
                             saveOrderReconciliationIdentifierIfNotExists($currentOrder->id, $reconciliation_identifier, $reconciliation_type);
                         }
-
+                        if (isset($fraudStatus) && isset($fraudMsg) && strtolower($fraudStatus) === "deny") {
+                            fraudPayment($order, $fraudStatus, $fraudMsg, $transactionId, $transactionStatus);
+                        }
                         $this->unlock($fp);
                         exit('Order created');
                     } else {
                         $this->unlock($fp);
                         exit('Only handling Success state');
                     }
-                } // Order found, but not pending
-                elseif ($order->getCurrentState() != Configuration::get('ALTAPAY_OS_PENDING')) { //pending
+                } elseif ($order->getCurrentState() != Configuration::get('ALTAPAY_OS_PENDING')) { //Order found, but not pending
                     $this->unlock($fp);
                     exit('Order found but is not currently pending - ignoring');
-                } // Pending order found, update
-                elseif (Validate::isLoadedObject($order)) {
+                } elseif (Validate::isLoadedObject($order)) { // Pending order found, update
                     if ($transactionStatus === 'preauth' || $transactionStatus === 'bank_payment_finalized' || $transactionStatus === 'captured') {
                         /*
                          * preauth occurs for wallet transactions where payment type is 'payment'.
@@ -118,7 +121,9 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
                             saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
                         }
-
+                        if (isset($fraudStatus) && isset($fraudMsg) && strtolower($fraudStatus) === "deny") {
+                            fraudPayment($order, $fraudStatus, $fraudMsg, $transactionId, $transactionStatus);
+                        }
                         $this->unlock($fp);
                         exit('Order status updated to Accepted');
                     } elseif ($transactionStatus === 'epayment_declined') {
