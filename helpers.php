@@ -606,6 +606,13 @@ function fraudPayment(
 
 }
 
+/**
+ * Retrieve the latest transaction from a given response object
+ *
+ * @param object $response 
+ *
+ * @return object
+ */
 function getTransaction($response)
 {
     $max_date = '';
