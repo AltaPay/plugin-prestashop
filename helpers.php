@@ -578,30 +578,33 @@ function fraudPayment(
 ) {
     $fraudConfig = Tools::getValue('enable_fraud', Configuration::get('enable_fraud'));
     $enableReleaseRefund = Tools::getValue('enable_release_refund', Configuration::get('enable_release_refund'));
-    // Create a new order state object for the "Canceled" state
-    $canceled_state = new OrderState((int) Configuration::get('PS_OS_CANCELED'));
-    // Update the order state to the "Canceled" state
-    $order->setCurrentState($canceled_state->id);
-    // Save the changes to the order
-    $order->save();
+    
+    if ($fraudConfig && $enableReleaseRefund && strtolower($fraudStatus) === "deny") {
+        // Create a new order state object for the "Canceled" state
+        $canceled_state = new OrderState((int) Configuration::get('PS_OS_CANCELED'));
+        // Update the order state to the "Canceled" state
+        $order->setCurrentState($canceled_state->id);
+        // Save the changes to the order
+        $order->save();
 
-    try {
-        if ($transactionStatus === 'captured') {
-            $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
-        } else {
-            $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
+        try {
+            if ($transactionStatus === 'captured') {
+                $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
+            } else {
+                $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
+            }
+            $api->setTransaction($transactionId);
+            $api->call();
+            saveLastErrorMessage($transactionId, $fraudMsg);
+            updatePaymentStatus($transactionId, $fraudStatus);
+        } catch (Exception $e) {
+            saveLastErrorMessage($transactionId, $e->getMessage());
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Could not release reservation. ' . $e->getMessage(),
+            ]);
+            exit();
         }
-        $api->setTransaction($transactionId);
-        $api->call();
-        saveLastErrorMessage($transactionId, $fraudMsg);
-        updatePaymentStatus($transactionId, $fraudStatus);
-    } catch (Exception $e) {
-        saveLastErrorMessage($transactionId, $e->getMessage());
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Could not release reservation. ' . $e->getMessage(),
-        ]);
-        exit();
     }
 }
 
