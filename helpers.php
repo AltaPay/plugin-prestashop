@@ -578,8 +578,8 @@ function fraudPayment(
 ) {
     $fraudConfig = Tools::getValue('enable_fraud', Configuration::get('enable_fraud'));
     $enableReleaseRefund = Tools::getValue('enable_release_refund', Configuration::get('enable_release_refund'));
-    
-    if ($fraudConfig && $enableReleaseRefund && strtolower($fraudStatus) === "deny") {
+
+    if ($fraudConfig && $enableReleaseRefund && strtolower($fraudStatus) === 'deny') {
         // Create a new order state object for the "Canceled" state
         $canceled_state = new OrderState((int) Configuration::get('PS_OS_CANCELED'));
         // Update the order state to the "Canceled" state
