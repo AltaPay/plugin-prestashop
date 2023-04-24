@@ -48,7 +48,10 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $paymentType = $response->type;
                 $captureStatus = $response->requireCapture;
                 $currencyPaid = Currency::getIdByIsoCode($response->currency);
-                $transaction = $this->getTransaction($response);
+                $transaction = getTransaction($response);
+                $transactionStatus = $transaction->TransactionStatus;
+                $fraudStatus = $transaction->FraudRecommendation;
+                $fraudMsg = $transaction->FraudExplanation;
                 $customerID = $this->context->customer->id;
                 $ccToken = $response->creditCardToken;
                 $maskedPan = $response->maskedCreditCard;
@@ -133,6 +136,9 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
 
                 // Log order
                 createAltapayOrder($response, $order);
+                if (isset($fraudStatus) && isset($fraudMsg) && strtolower($fraudStatus) === 'deny') {
+                    fraudPayment($order, $fraudStatus, $fraudMsg, $transactionId, $transactionStatus);
+                }
                 $this->unlock($fp);
                 Tools::redirect('index.php?controller=order-detail&id_order=' . $order->id);
             } else {
@@ -168,19 +174,5 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
     {
         flock($fileOpen, LOCK_UN);
         fclose($fileOpen);
-    }
-
-    public function getTransaction($response)
-    {
-        $max_date = '';
-        $latestTransKey = 0;
-        foreach ($response->Transactions as $key => $transaction) {
-            if ($transaction->CreatedDate > $max_date) {
-                $max_date = $transaction->CreatedDate;
-                $latestTransKey = $key;
-            }
-        }
-
-        return $response->Transactions[$latestTransKey];
     }
 }

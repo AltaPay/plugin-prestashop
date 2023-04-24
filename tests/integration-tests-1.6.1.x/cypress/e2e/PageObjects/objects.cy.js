@@ -1,4 +1,4 @@
-require('cypress-xpath')
+require('@cypress/xpath');
 
 class Order
 
@@ -15,33 +15,23 @@ class Order
     }
 
       addproduct(discount_type=''){
+        cy.contains('Sign in').click()
+        cy.get('#email').type('demo@example.com')
+        cy.get('#passwd').type('admin@1234')
+        cy.get('#SubmitLogin > span').click()
+        cy.get('.logo').click()
         cy.contains('Faded Short Sleeves T-shirt').click()
         cy.get('.exclusive > span').click()
         cy.get('.button-medium > span').click()
         cy.get('.cart_navigation > .button > span').click()
-        //Random Username            
-        let text = "";
-        let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-        for (let i = 0; i < 10; i++)
-        text += alphabet.charAt(Math.floor(Math.random() * alphabet.length))
-        //Guest checkout 1.6.X         
-        cy.get('#guest_email').type(text + '@example.com')
-        cy.get('#firstname').type('Testperson-dk')
-        cy.get('#lastname').type('Testperson-dk')
-        cy.get('#address1').type('Sæffleberggate 56,1 mf')
-        cy.get('#postcode').type('6800')
-        cy.get('#city').type('Varde')
-        cy.get('#id_country').select('Denmark')
-        cy.get('#phone_mobile').type('20123456')
         cy.get('.cart_navigation > .button > span').click()
         if(discount_type != ""){
             cy.get('#discount_name').type(discount_type) 
             cy.get('fieldset > .button > span').click()
-        } 
+        }
+        cy.get('#cgv').click() 
         cy.get('.cart_navigation > .button > span').click().wait(2000)
-        cy.get('.cart_navigation > .button > span').click().wait(2000)
-        cy.get('label').click()
-        cy.get('.cart_navigation > .button > span').click()
+    
 
     }
 

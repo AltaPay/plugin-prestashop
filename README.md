@@ -3,7 +3,8 @@
 Integrates your PrestaShop web shop to the AltaPay payments gateway.
 
 ## Compatibility
-Prestashop 1.6
+Prestashop 1.6.x
+Prestashop 1.7.x
 
 ## Installation
 

@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.4.9';
+    $pluginVersion = '3.5.0';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -559,4 +559,72 @@ function updateTransactionIdForParentSubscription($id_order, $paymentId)
     ' . _DB_PREFIX_ . 'altapay_order SET payment_id = \'' . pSQL($paymentId) . '\' WHERE id_order='
         . (int) $id_order . ' LIMIT 1';
     Db::getInstance()->Execute($sql);
+}
+
+/**
+ * @param array $order
+ * @param string $fraudStatus
+ * @param string $fraudMsg
+ * @param int $transactionId
+ *
+ * @return void
+ */
+function fraudPayment(
+    $order,
+    $fraudStatus,
+    $fraudMsg,
+    $transactionId,
+    $transactionStatus
+) {
+    $fraudConfig = Tools::getValue('enable_fraud', Configuration::get('enable_fraud'));
+    $enableReleaseRefund = Tools::getValue('enable_release_refund', Configuration::get('enable_release_refund'));
+
+    if ($fraudConfig && $enableReleaseRefund && strtolower($fraudStatus) === 'deny') {
+        // Create a new order state object for the "Canceled" state
+        $canceled_state = new OrderState((int) Configuration::get('PS_OS_CANCELED'));
+        // Update the order state to the "Canceled" state
+        $order->setCurrentState($canceled_state->id);
+        // Save the changes to the order
+        $order->save();
+
+        try {
+            if ($transactionStatus === 'captured') {
+                $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
+            } else {
+                $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
+            }
+            $api->setTransaction($transactionId);
+            $api->call();
+            saveLastErrorMessage($transactionId, $fraudMsg);
+            updatePaymentStatus($transactionId, $fraudStatus);
+        } catch (Exception $e) {
+            saveLastErrorMessage($transactionId, $e->getMessage());
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Could not release reservation. ' . $e->getMessage(),
+            ]);
+            exit();
+        }
+    }
+}
+
+/**
+ * Retrieve the latest transaction from a given response object
+ *
+ * @param object $response
+ *
+ * @return object
+ */
+function getTransaction($response)
+{
+    $max_date = '';
+    $latestTransKey = 0;
+    foreach ($response->Transactions as $key => $transaction) {
+        if ($transaction->CreatedDate > $max_date) {
+            $max_date = $transaction->CreatedDate;
+            $latestTransKey = $key;
+        }
+    }
+
+    return $response->Transactions[$latestTransKey];
 }

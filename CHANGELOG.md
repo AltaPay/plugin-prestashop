@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.5.0] - 2023-04-19
+### Added
+- Add support for fraud detection
+
 ## [3.4.9] - 2023-02-21
 ### Added
 - Add support for recurring payments
