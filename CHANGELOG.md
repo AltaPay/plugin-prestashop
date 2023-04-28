@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.5.1] - 2023-04-28
+### Fixed
+- Fix order creation before payment has been made
+
 ## [3.5.0] - 2023-04-19
 ### Added
 - Add support for fraud detection
