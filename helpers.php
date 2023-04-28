@@ -590,14 +590,14 @@ function getTransaction($response)
  */
 function handleFraudPayment($response, $transaction)
 {
-    $message           = " ";
-    $paymentProcessed  = false;
-    $paymentStatus     = strtolower($response->paymentStatus);
-    $transactionID     = $transaction->TransactionId;
-    $fraudStatus       = $transaction->FraudRecommendation;
-    $fraudMsg          = $transaction->FraudExplanation;
+    $message = ' ';
+    $paymentProcessed = false;
+    $paymentStatus = strtolower($response->paymentStatus);
+    $transactionID = $transaction->TransactionId;
+    $fraudStatus = $transaction->FraudRecommendation;
+    $fraudMsg = $transaction->FraudExplanation;
     if ($paymentStatus === 'released' || (isset($fraudStatus) && isset($fraudMsg) && strtolower($fraudStatus) === 'deny')) {
-        $message = "Payment released!";
+        $message = 'Payment released!';
         $fraudConfig = Tools::getValue('enable_fraud', Configuration::get('enable_fraud'));
         $enableReleaseRefund = Tools::getValue('enable_release_refund', Configuration::get('enable_release_refund'));
         if ($fraudConfig && $enableReleaseRefund && strtolower($fraudStatus) === 'deny') {
@@ -623,15 +623,15 @@ function handleFraudPayment($response, $transaction)
             }
         }
     }
-    
+
     if ($response->type === 'subscriptionAndCharge' && strtolower($response->status) === 'succeeded') {
-        $authType    = $transaction->AuthType;
+        $authType = $transaction->AuthType;
         $transStatus = $transaction->TransactionStatus;
-        
+
         if (isset($transaction) && $authType === 'subscription_payment' && $transStatus !== 'captured') {
             $paymentProcessed = true;
         }
     }
-    
+
     return ['msg' => $message, 'payment_status' => $paymentProcessed];
 }

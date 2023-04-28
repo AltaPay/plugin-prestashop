@@ -22,23 +22,23 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         // This lock prevents orders to be created twice.
         $fp = fopen(_PS_MODULE_DIR_ . '/altapay/controllers/front/lock.txt', 'r');
         flock($fp, LOCK_EX);
-    
-        $message       = '';
-        $postData    = Tools::getAllValues();
-        $orderStatus = (int)Configuration::get('PS_OS_PAYMENT');
-        $customerID  = $this->context->customer->id;
-        $callback    = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
+
+        $message = '';
+        $postData = Tools::getAllValues();
+        $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
+        $customerID = $this->context->customer->id;
+        $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
         try {
-            $response      = $callback->call();
-            $shopOrderId   = $response->shopOrderId;
-            $currencyPaid  = Currency::getIdByIsoCode($response->currency);
-            $paymentType   = $response->type;
-            $transaction   = getTransaction($response);
+            $response = $callback->call();
+            $shopOrderId = $response->shopOrderId;
+            $currencyPaid = Currency::getIdByIsoCode($response->currency);
+            $paymentType = $response->type;
+            $transaction = getTransaction($response);
             $transactionID = $transaction->TransactionId;
-            $ccToken       = $response->creditCardToken;
-            $maskedPan     = $response->maskedCreditCard;
+            $ccToken = $response->creditCardToken;
+            $maskedPan = $response->maskedCreditCard;
             $agreementType = 'unscheduled';
-            $fraudPayment  = handleFraudPayment($response, $transaction);
+            $fraudPayment = handleFraudPayment($response, $transaction);
             // Load the cart
             $cart = getCartFromUniqueId($shopOrderId);
             if (!Validate::isLoadedObject($cart)) {
@@ -54,13 +54,13 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     $orderStatus);
             }
             // Load order
-            $order = new Order((int)$this->module->currentOrder);
-            
+            $order = new Order((int) $this->module->currentOrder);
+
             if (Validate::isLoadedObject($order)) {
-                $order->setCurrentState((int)Configuration::get('PS_OS_PAYMENT'));
+                $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
                 if (!empty($transaction->ReconciliationIdentifiers)) {
                     $reconciliation_identifier = $transaction->ReconciliationIdentifiers[0]->Id;
-                    $reconciliation_type       = $transaction->ReconciliationIdentifiers[0]->Type;
+                    $reconciliation_type = $transaction->ReconciliationIdentifiers[0]->Type;
                     saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $reconciliation_type);
                 }
                 if ($paymentType === 'paymentAndCapture' && $response->requireCapture === true) {
@@ -84,7 +84,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                         . '")';
                     Db::getInstance()->executeS($sql);
                 }
-                
+
                 // Log order
                 createAltapayOrder($response, $order);
                 $this->unlock($fp);
@@ -107,7 +107,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         $this->redirectUserToCheckoutPaymentStep($fp);
         $this->unlock($fp);
     }
-    
+
     /**
      * @param string $fileOpen
      *
@@ -118,7 +118,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         flock($fileOpen, LOCK_UN);
         fclose($fileOpen);
     }
-    
+
     /**
      * @param $fp
      * @param $message
@@ -131,13 +131,13 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         * assume a failure occurred creating the URL until a payment url is received
         */
         $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
-        $as         = $this->context->link;
-        $con        = $controller;
-        $redirect   = $as->getPageLink($con, true, null, 'step=3&altapay_unavailable=1') . '#altapay_unavailable';
+        $as = $this->context->link;
+        $con = $controller;
+        $redirect = $as->getPageLink($con, true, null, 'step=3&altapay_unavailable=1') . '#altapay_unavailable';
         $this->unlock($fp);
         Tools::redirect($redirect);
     }
-    
+
     /**
      * @param $response
      * @param $currencyPaid
@@ -151,27 +151,27 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         // Determine payment method for display
         $paymentMethod = determinePaymentMethodForDisplay($response);
         // Create an order with 'payment accepted' status
-        $currencyPaidID = (int)$currencyPaid->id;
-        $amountPaid     = $cart->getOrderTotal(true, Cart::BOTH);
-        $cartID         = $cart->id;
-        
+        $currencyPaidID = (int) $currencyPaid->id;
+        $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
+        $cartID = $cart->id;
+
         // Load the customer
-        $customer          = new Customer((int)$cart->id_customer);
+        $customer = new Customer((int) $cart->id_customer);
         $customerSecureKey = $customer->secure_key;
         $this->module->validateOrder($cartID, $orderStatus, $amountPaid,
             $paymentMethod, null, null,
             $currencyPaidID, false, $customerSecureKey);
     }
-    
-    private function saveLogs($message) {
+
+    private function saveLogs($message)
+    {
         // Log message and return payment status
         $module = $this->module;
         PrestaShopLogger::addLog($message, 3, '1004', $module->name, $module->id, true);
         $responseMessage = ($message !== '') ? $message : $this->module->l('This payment method is not available 1004.', 'callbackok');
         echo $this->module->l($responseMessage, 'callbackOk');
-        
     }
-    
+
     protected function handleVerifyCard(
         $shopOrderId,
         $transaction,
@@ -181,10 +181,10 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         $cart,
         $agreementType
     ) {
-        $expires       = '';
-        $cardType      = '';
+        $expires = '';
+        $cardType = '';
         $transactionID = $transaction->TransactionId;
-        $amountPaid    = $cart->getOrderTotal(true, Cart::BOTH);
+        $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
         if (isset($transaction->CapturedAmount)) {
             $amountPaid = $transaction->CapturedAmount;
         }
