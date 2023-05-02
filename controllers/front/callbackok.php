@@ -161,7 +161,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $paymentMethod, null, null,
             $currencyPaidID, false, $customerSecureKey);
     }
-    
+
     /**
      * @param $message
      *
@@ -175,7 +175,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         $responseMessage = ($message !== '') ? $message : $this->module->l('This payment method is not available 1004.', 'callbackok');
         echo $this->module->l($responseMessage, 'callbackOk');
     }
-    
+
     /**
      * @param $shopOrderId
      * @param $transaction
