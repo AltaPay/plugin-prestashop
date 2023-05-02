@@ -43,7 +43,7 @@ class Order
     }
 
     cc_payment(CC_TERMINAL_NAME){        
-        cy.contains('Pay with ' +CC_TERMINAL_NAME).click({force: true})
+        cy.contains(CC_TERMINAL_NAME).click({force: true})
         cy.get('.condition-label > .js-terms').click()
         cy.get('.ps-shown-by-js > .btn').click()
         cy.get('[id=creditCardNumberInput]').type('4111111111111111')
@@ -172,7 +172,7 @@ class Order
     }
 
     ideal_payment(iDEAL_EUR_TERMINAL){        
-        cy.contains('Pay with ' +iDEAL_EUR_TERMINAL).click({force: true})
+        cy.contains(iDEAL_EUR_TERMINAL).click({force: true})
         cy.get('.condition-label > .js-terms').click()
         cy.get('.ps-shown-by-js > .btn').click()
         cy.get('#idealIssuer').select('AltaPay test issuer 1')
