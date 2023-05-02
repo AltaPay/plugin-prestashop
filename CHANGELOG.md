@@ -8,6 +8,7 @@ PrestaShop 1.6.x and 1.7.x
 ## [3.5.1] - 2023-04-28
 ### Fixed
 - Fix order creation before payment has been made
+- Supports API changes from 20230412
 
 ## [3.5.0] - 2023-04-19
 ### Added
