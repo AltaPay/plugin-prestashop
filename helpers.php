@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.5.0';
+    $pluginVersion = '3.5.1';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -562,53 +562,6 @@ function updateTransactionIdForParentSubscription($id_order, $paymentId)
 }
 
 /**
- * @param array $order
- * @param string $fraudStatus
- * @param string $fraudMsg
- * @param int $transactionId
- *
- * @return void
- */
-function fraudPayment(
-    $order,
-    $fraudStatus,
-    $fraudMsg,
-    $transactionId,
-    $transactionStatus
-) {
-    $fraudConfig = Tools::getValue('enable_fraud', Configuration::get('enable_fraud'));
-    $enableReleaseRefund = Tools::getValue('enable_release_refund', Configuration::get('enable_release_refund'));
-
-    if ($fraudConfig && $enableReleaseRefund && strtolower($fraudStatus) === 'deny') {
-        // Create a new order state object for the "Canceled" state
-        $canceled_state = new OrderState((int) Configuration::get('PS_OS_CANCELED'));
-        // Update the order state to the "Canceled" state
-        $order->setCurrentState($canceled_state->id);
-        // Save the changes to the order
-        $order->save();
-
-        try {
-            if ($transactionStatus === 'captured') {
-                $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
-            } else {
-                $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
-            }
-            $api->setTransaction($transactionId);
-            $api->call();
-            saveLastErrorMessage($transactionId, $fraudMsg);
-            updatePaymentStatus($transactionId, $fraudStatus);
-        } catch (Exception $e) {
-            saveLastErrorMessage($transactionId, $e->getMessage());
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Could not release reservation. ' . $e->getMessage(),
-            ]);
-            exit();
-        }
-    }
-}
-
-/**
  * Retrieve the latest transaction from a given response object
  *
  * @param object $response
@@ -627,4 +580,58 @@ function getTransaction($response)
     }
 
     return $response->Transactions[$latestTransKey];
+}
+
+/**
+ * @param $response
+ * @param $transaction
+ *
+ * @return bool|void
+ */
+function handleFraudPayment($response, $transaction)
+{
+    $message = ' ';
+    $paymentProcessed = false;
+    $paymentStatus = strtolower($response->paymentStatus);
+    $transactionID = $transaction->TransactionId;
+    $fraudStatus = $transaction->FraudRecommendation;
+    $fraudMsg = $transaction->FraudExplanation;
+    if ($paymentStatus === 'released' || (isset($fraudStatus) && isset($fraudMsg) && strtolower($fraudStatus) === 'deny')) {
+        $message = 'Payment released!';
+        $fraudConfig = Tools::getValue('enable_fraud', Configuration::get('enable_fraud'));
+        $enableReleaseRefund = Tools::getValue('enable_release_refund', Configuration::get('enable_release_refund'));
+        if ($fraudConfig && $enableReleaseRefund && strtolower($fraudStatus) === 'deny') {
+            $message = $fraudMsg;
+            $paymentProcessed = true;
+            try {
+                if ($transaction->TransactionStatus === 'captured') {
+                    $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
+                } else {
+                    $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
+                }
+                $api->setTransaction($transactionID);
+                $api->call();
+                saveLastErrorMessage($transactionID, $fraudMsg);
+                updatePaymentStatus($transactionID, $fraudStatus);
+            } catch (Exception $e) {
+                saveLastErrorMessage($transactionID, $e->getMessage());
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Could not release reservation. ' . $e->getMessage(),
+                ]);
+                exit();
+            }
+        }
+    }
+
+    if ($response->type === 'subscriptionAndCharge' && strtolower($response->status) === 'succeeded') {
+        $authType = $transaction->AuthType;
+        $transStatus = $transaction->TransactionStatus;
+
+        if (isset($transaction) && $authType === 'subscription_payment' && $transStatus !== 'captured') {
+            $paymentProcessed = true;
+        }
+    }
+
+    return ['msg' => $message, 'payment_status' => $paymentProcessed];
 }

@@ -42,8 +42,9 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $resultStatus = strtolower($response->Result);
             // Check if an order exist
             $order = getOrderFromUniqueId($shopOrderId);
+            $fraudPayment = handleFraudPayment($response, $transaction);
             $errorStatus = ['cancelled', 'declined', 'error', 'failed', 'incomplete'];
-            if (!in_array($resultStatus, $errorStatus, true)) {
+            if (!in_array($resultStatus, $errorStatus, true) && !$fraudPayment['payment_status']) {
                 // NO ORDER FOUND, CREATE?
                 if (!Validate::isLoadedObject($order)) {
                     // Payment successful - create order
@@ -85,9 +86,6 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
                             saveOrderReconciliationIdentifierIfNotExists($currentOrder->id, $reconciliation_identifier, $reconciliation_type);
                         }
-                        if (isset($fraudStatus) && isset($fraudMsg) && strtolower($fraudStatus) === 'deny') {
-                            fraudPayment($order, $fraudStatus, $fraudMsg, $transactionId, $transactionStatus);
-                        }
                         $this->unlock($fp);
                         exit('Order created');
                     } else {
@@ -121,9 +119,6 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                             $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
 
                             saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
-                        }
-                        if (isset($fraudStatus) && isset($fraudMsg) && strtolower($fraudStatus) === 'deny') {
-                            fraudPayment($order, $fraudStatus, $fraudMsg, $transactionId, $transactionStatus);
                         }
                         $this->unlock($fp);
                         exit('Order status updated to Accepted');

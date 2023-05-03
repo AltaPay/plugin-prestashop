@@ -65,19 +65,6 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
 
         if ($result['success']) {
             $payment_form_url = $result['payment_form_url'];
-            // Create Order with pending status
-            $this->module->validateOrder(
-                $cart->id,
-                $result['status'],
-                $result['amount'],
-                $result['terminal'],
-                null,
-                null,
-                (int) $currency_paid->id,
-                false,
-                $customer->secure_key
-            );
-
             // Insert into transaction log
             $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction` 
 				(id_cart, payment_form_url, unique_id, amount, terminal_name, date_add) VALUES ' .
@@ -88,6 +75,19 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             Db::getInstance()->Execute($sql);
 
             if ($payment_form_url === 'reservation' || $payment_form_url === 'cardwallet') {
+                // Create Order with pending status
+                $this->module->validateOrder(
+                    $cart->id,
+                    $result['status'],
+                    $result['amount'],
+                    $result['terminal'],
+                    null,
+                    null,
+                    (int) $currency_paid->id,
+                    false,
+                    $customer->secure_key
+                );
+
                 $currentOrder = new Order((int) $this->module->currentOrder);
                 createAltapayOrder($result['response'], $currentOrder, 'succeeded');
                 if ($payment_form_url === 'reservation') {
