@@ -231,7 +231,7 @@ class ALTAPAY extends PaymentModule
             }
         }
         if (!Db::getInstance()->Execute('SELECT nature from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
-            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN nature text NOT NULL DEFAULT "[]"')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN nature text')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
