@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.5.1';
+        $this->version = '3.5.2';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
@@ -231,7 +231,7 @@ class ALTAPAY extends PaymentModule
             }
         }
         if (!Db::getInstance()->Execute('SELECT nature from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
-            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN nature text NOT NULL DEFAULT "[]"')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN nature text')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;

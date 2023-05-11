@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.5.2] - 2023-05-09
+### Fixed
+- Updated 'nature' text field by removing default value, which previously prevented merchants from saving terminal data to the table.
+
 ## [3.5.1] - 2023-04-28
 ### Fixed
 - Fix: Order is created before payment has been made.

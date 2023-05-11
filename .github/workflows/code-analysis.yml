@@ -21,7 +21,7 @@ jobs:
          
      - name: Install prestashop                              
        run: |
-         wget https://download.prestashop.com/download/releases/prestashop_1.7.7.7.zip
+         wget https://github.com/PrestaShop/PrestaShop/releases/download/1.7.7.7/prestashop_1.7.7.7.zip
          unzip prestashop_1.7.7.7.zip
          unzip prestashop.zip -d prestashop
          rm prestashop.zip prestashop_1.7.7.7.zip
