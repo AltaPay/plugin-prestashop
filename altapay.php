@@ -503,7 +503,7 @@ class ALTAPAY extends PaymentModule
         }
 
         $allTerminal = [];
-        $totalTerminals = count(Altapay_Models_Terminal::getTerminals());
+        $totalTerminals = count(Altapay_Models_Terminal::getTerminals($this->context->shop->id));
         foreach (range(1, $totalTerminals) as $priority) {
             $allTerminal[] = [
                 'id' => $priority,
