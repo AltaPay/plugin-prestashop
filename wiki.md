@@ -65,19 +65,23 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 
    ![enter_credentials](Docs/Configuration/prestashop_setup_altapay_credentials.png)
 
-3. To synchronize the terminals with the gateway, click on the "Synchronize" button. This will fetch the latest terminals from the gateway and will automatically configure based on the store country.
+3. If you wish to enable fraud detection service and release/refund if fraud is detected then refer to the below screenshot.
+
+   ![prestahop_setup_fraud](Docs/Configuration/prestahop_setup_fraud.png)
+
+4. To synchronize the terminals with the gateway, click on the "Synchronize" button. This will fetch the latest terminals from the gateway and will automatically configure based on the store country.
 
    ![enter_credentials](Docs/Configuration/sync_terminals.png)
 
-4. Now, set up the terminals. At the bottom of the module configuration page, you will find a list of “Terminals”. There is a plus sign which you would need to click, to add a new terminal.
+5. Now, set up the terminals. At the bottom of the module configuration page, you will find a list of “Terminals”. There is a plus sign which you would need to click, to add a new terminal.
 
    ![set_up_terminals](Docs/Configuration/prestashop_terminal_configuration.jpg)
 
-5. When setting up a terminal you must select the icon and name that is going to be shown in the check flow.  The currency must correspond with the currency on the terminal at AltaPay.  The payment type indicates if the money would be captured on reservation (‘Authorize and capture’) or the merchant would have to capture, when delivering the goods.
+6. When setting up a terminal you must select the icon and name that is going to be shown in the check flow.  The currency must correspond with the currency on the terminal at AltaPay.  The payment type indicates if the money would be captured on reservation (‘Authorize and capture’) or the merchant would have to capture, when delivering the goods.
 
-6. In the optional field 'Custom message', you can add custom message for the customers. e.g. guidelines from Danish Forbrugerombudsmanden.
+7. In the optional field 'Custom message', you can add custom message for the customers. e.g. guidelines from Danish Forbrugerombudsmanden.
 
-7. If the terminal is for Apple Pay payments, select **Yes** from the **Is Apple Pay?** dropdown.
+8. If the terminal is for Apple Pay payments, select **Yes** from the **Is Apple Pay?** dropdown.
 
    ![terminal_config](Docs/Configuration/prestashop_configure_altapay_terminal_detail.png)
 
@@ -85,7 +89,7 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
    >
    > Apple Pay functionality is supported with Prestashop 1.7 and above.
 
-8. When you have set up your terminals you are ready to process transactions through AltaPay.
+9. When you have set up your terminals you are ready to process transactions through AltaPay.
 
    ![verify_terminals](Docs/Configuration/prestashop_payment_method_page.jpg)
 
