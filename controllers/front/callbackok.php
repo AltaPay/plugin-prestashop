@@ -50,12 +50,18 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $this->saveLogs($transaction->FraudExplanation);
                 $this->redirectUserToCheckoutPaymentStep($fp);
             } else {
-                $this->createOrder($response, $currencyPaid, $cart,
-                    $orderStatus);
+                // Check if an order exist
+                $order = getOrderFromUniqueId($shopOrderId);
+                if(Validate::isLoadedObject($order)) {
+                    $this->updateOrder($order, $response, $fp);
+                } else {
+                    $this->createOrder($response, $currencyPaid, $cart, $orderStatus);
+                }
             }
             // Load order
             $order = new Order((int) $this->module->currentOrder);
 
+ 
             if (Validate::isLoadedObject($order)) {
                 $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
                 if (!empty($transaction->ReconciliationIdentifiers)) {
@@ -88,8 +94,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 // Log order
                 createAltapayOrder($response, $order);
                 $this->unlock($fp);
-                Tools::redirect('index.php?controller=order-detail&id_order='
-                    . $order->id);
+                Tools::redirect('index.php?controller=order-detail&id_order=' . $order->id);
             } else {
                 $this->saveLogs('Something went wrong');
                 $this->redirectUserToCheckoutPaymentStep($fp);
@@ -250,5 +255,58 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $this->module->id,
             true
         );
+    }
+    
+    /**
+     * @param $order
+     * @param $response
+     * @param $fp
+     *
+     * @return void
+     */
+    protected function updateOrder($order, $response, $fp) {
+        $shopOrderId = $response->shopOrderId;
+        $transactionStatus = $response->paymentStatus;
+        if ($transactionStatus === 'preauth' || $transactionStatus === 'bank_payment_finalized' || $transactionStatus === 'captured') {
+            /*
+             * preauth occurs for wallet transactions where payment type is 'payment'.
+             * Funds are still waiting to be captured.
+             * For this scenario we change the order status to 'payment accepted'.
+             * bank_payment_finalized is for ePayments.
+             */
+            $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+            // Update payment status to 'succeeded'
+            $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
+        SET `paymentStatus` = \'succeeded\' WHERE `id_order` = ' . (int) $order->id;
+            Db::getInstance()->Execute($sql);
+            $payment = $order->getOrderPaymentCollection();
+            if (isset($payment[0])) {
+                $payment[0]->transaction_id = pSQL($shopOrderId);
+                $payment[0]->save();
+            }
+
+            if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
+                $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
+                $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+
+                saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
+            }
+            Tools::redirect('index.php?controller=order-detail&id_order=' . $order->id);
+        } elseif ($transactionStatus === 'epayment_declined') {
+            // Update payment status to 'declined'
+            $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
+            SET `paymentStatus` = \'declined\' WHERE `id_order` = ' . (int) $order->id;
+            Db::getInstance()->Execute($sql);
+            $this->unlock($fp);
+            exit('Order status updated to Error');
+        } else {
+            // Unexpected scenario
+            $mNa = $this->module->name;
+            PrestaShopLogger::addLog('Unexpected scenario: Callback notification was received for Transaction '
+                . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
+                $this->module->id, true);
+            $this->unlock($fp);
+            exit('Unrecognized status received ' . $transactionStatus);
+        }
     }
 }
