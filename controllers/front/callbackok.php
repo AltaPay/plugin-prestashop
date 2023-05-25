@@ -264,7 +264,8 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
      *
      * @return void
      */
-    protected function updateOrder($order, $response, $fp) {
+    protected function updateOrder($order, $response, $fp)
+    {
         $shopOrderId = $response->shopOrderId;
         $transactionStatus = $response->paymentStatus;
         if ($transactionStatus === 'preauth' || $transactionStatus === 'bank_payment_finalized' || $transactionStatus === 'captured') {
