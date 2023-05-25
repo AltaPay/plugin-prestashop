@@ -52,7 +52,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             } else {
                 // Check if an order exist
                 $order = getOrderFromUniqueId($shopOrderId);
-                if(Validate::isLoadedObject($order)) {
+                if (Validate::isLoadedObject($order)) {
                     $this->updateOrder($order, $response, $fp);
                 } else {
                     $this->createOrder($response, $currencyPaid, $cart, $orderStatus);
@@ -256,7 +256,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             true
         );
     }
-    
+
     /**
      * @param $order
      * @param $response
