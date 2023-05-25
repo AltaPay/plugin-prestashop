@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.5.3] - 2023-05-22
+### Fixed
+- Fix: the terminal display priority field values when editing in a multistore.
+
 ## [3.5.2] - 2023-05-09
 ### Fixed
 - Updated 'nature' text field by removing default value, which previously prevented merchants from saving terminal data to the table.

@@ -178,7 +178,7 @@ class Order
     change_currency_to_EUR_for_iDEAL(){
         cy.get('#maintab-AdminParentLocalization > .title').trigger('mouseover')
         cy.get('#subtab-AdminCurrencies').click()
-        cy.get('.edit').click()
+        cy.get('.odd > .text-right > .btn-group-action > .btn-group > .edit').click()
         cy.get('#name').clear().type('Euro')
         cy.get('#iso_code').clear().type('EUR')
         cy.get('#iso_code_num').clear().type('978')
@@ -239,7 +239,7 @@ class Order
     change_currency_to_DKK(){
         cy.get('#maintab-AdminParentLocalization > .title').trigger('mouseover')
         cy.get('#subtab-AdminCurrencies').click()
-        cy.get('.edit').click()
+        cy.get('.odd > .text-right > .btn-group-action > .btn-group > .edit').click()
         cy.get('#name').clear().type('Danish Krone')
         cy.get('#iso_code').clear().type('DKK')
         cy.get('#iso_code_num').clear().type('208')
