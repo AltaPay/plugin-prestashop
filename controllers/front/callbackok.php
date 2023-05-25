@@ -61,7 +61,6 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             // Load order
             $order = new Order((int) $this->module->currentOrder);
 
- 
             if (Validate::isLoadedObject($order)) {
                 $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
                 if (!empty($transaction->ReconciliationIdentifiers)) {
