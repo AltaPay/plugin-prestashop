@@ -5,7 +5,7 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
-## [3.5.4] - 2023-05-22
+## [3.5.4] - 2023-05-26
 ### Fixed
 - Fix: Callback issue triggered by premature notification callback ore callback_ok.
 
