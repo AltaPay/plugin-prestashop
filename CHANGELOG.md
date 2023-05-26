@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.5.4] - 2023-05-22
+### Fixed
+- Fix: Callback issue triggered by premature notification callback ore callback_ok.
+
 ## [3.5.3] - 2023-05-22
 ### Fixed
 - Fix: the terminal display priority field values when editing in a multistore.
