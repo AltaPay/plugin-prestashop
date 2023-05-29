@@ -96,7 +96,8 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     $this->unlock($fp);
                     exit('Order found but is not currently pending - ignoring');
                 } elseif (Validate::isLoadedObject($order)) { // Pending order found, update
-                    if ($transactionStatus === 'preauth' || $transactionStatus === 'bank_payment_finalized' || $transactionStatus === 'captured') {
+                    $statuses = ['preauth', 'bank_payment_finalized', 'captured', 'recurring_confirmed'];
+                    if (in_array($transactionStatus, $statuses, true)) {
                         /*
                          * preauth occurs for wallet transactions where payment type is 'payment'.
                          * Funds are still waiting to be captured.
