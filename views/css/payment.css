@@ -56,3 +56,46 @@ body#checkout section.checkout-step .payment-options .payment-option label img{
       max-width: 60px;
       margin-left: 15px;
 }
+div#card_info , div#order-detail-content {
+      padding: 1rem;
+      background: #fff;
+      margin-bottom: 1rem;
+}
+#cart_summary thead th {
+      vertical-align: bottom;
+      border-bottom: 2px solid #f6f6f6;
+      color: #7a7a7a;
+      background-color: #f6f6f6;
+}
+.pensio_payment_form_outer {
+      width: 50%;
+}
+
+.pensio_payment_form_outer input[type='text'], .pensio_payment_form_outer input[type='tel'] {
+      width: 70%;
+      padding: 11px;
+      border: 1px solid #ddd;
+      margin: 16px 0px;
+}
+
+.pensio_payment_form_outer select#emonth, .pensio_payment_form_outer select#eyear {
+      width: 5rem;
+      height: 2.5rem;
+      padding: 0.175rem 0.5rem;
+      color: #232323;
+      background-color: #fff;
+      border: 1px solid rgba(0,0,0,0.25);
+}
+
+input#pensioCreditCardPaymentSubmitButton {
+      color: #fff;
+      background-color: #24b9d7;
+      border-color: rgba(0,0,0,0);
+      padding: 0.5rem 1.25rem;
+      font-weight: 600;
+      text-transform: uppercase;
+}
+
+#module-altapay-callbackform .breadcrumb {
+      display: none;
+  }

@@ -9,7 +9,7 @@
 {assign var="cart_summary" value=$summarydetails}
 {assign var="cart_products" value=$products}
  {assign currency Currency::getDefaultCurrency()->sign}
-    {assign currency_code Currency::getDefaultCurrency()->iso_code}
+    {assign currency_code Currency::getDefaultCurrency()->sign}
 <div id="order-detail-content" class="table_block table-responsive">
     <table id="cart_summary" class="table table-bordered">
         <thead>
@@ -24,143 +24,6 @@
             <th class="cart_total last_item text-right">{l s='Total' mod='altapay'}</th>
         </tr>
         </thead>
-        <tfoot>
-        {if $cart_summary.total_tax}
-            {if $cart_summary.total_price}
-                <tr class="cart_total_price">
-                    <td colspan="4" class="text-right">{l s='Total products (tax excl.)' mod='altapay'}</td>
-                    <td colspan="2" class="price" id="total_product">{$currency_code}{$cart_summary.total_products}</td>
-                </tr>
-            {else}
-                <tr class="cart_total_price">
-                    <td colspan="4" class="text-right">{l s='Total products (tax incl.)' mod='altapay'}</td>
-                    <td colspan="2" class="price" id="total_product">{$currency_code}{$cart_summary.total_products_wt}</td>
-                </tr>
-            {/if}
-        {else}
-            <tr class="cart_total_price">
-                <td colspan="4" class="text-right">{l s='Total products' mod='altapay'}</td>
-                <td colspan="2" class="price" id="total_product">{$currency_code}{$cart_summary.total_products}</td>
-            </tr>
-        {/if}
-        <tr class="cart_total_voucher" {if $cart_summary.total_wrapping == 0}style="display:none"{/if}>
-            <td colspan="4" class="text-right">
-                {if $cart_summary.total_tax}
-                    {if $cart_summary.total_price}
-                        {if $cart_summary.total_wrapping == 0}{l s='Total gift wrapping (tax excluded.):' mod='altapay'}{else}{l s='Total gift wrapping (tax included.):' mod='altapay'}{/if}
-                    {/if}
-                {else}
-                    {l s='Total gift wrapping cost:' mod='altapay'}
-                {/if}
-            </td>
-            <td colspan="2" class="price-discount price" id="total_wrapping">
-                {if $cart_summary.total_tax}
-                    {if $cart_summary.total_price}
-                       {$currency_code} {$cart_summary.total_wrapping_tax_exc}
-                    {else}
-                        {$cart_summary.total_wrapping}
-                    {/if}
-                {else}
-                    {$cart_summary.total_wrapping_tax_exc}
-                {/if}
-            </td>
-        </tr>
-        {if $cart_summary.total_shipping_tax_exc <= 0 && (!isset($isVirtualCart) || !$isVirtualCart) && $cart_summary.free_ship}
-            <tr class="cart_total_delivery">
-                <td colspan="4" class="text-right">{l s='Total shipping' mod='altapay'}</td>
-                <td colspan="2" class="price" id="total_shipping">{l s='Free Shipping!' mod='altapay'}</td>
-            </tr>
-        {else}
-            {if  $cart_summary.total_tax && $cart_summary.total_shipping_tax_exc != $cart_summary.total_shipping}
-                {if $cart_summary.total_price}
-                    <tr class="cart_total_delivery" {if $cart_summary.total_shipping <= 0} style="display:none"{/if}>
-                        <td colspan="4" class="text-right">{if $display_tax_label}{l s='Total shipping (tax excl.)' mod='altapay'}{else}{l s='Total shipping' mod='altapay'}{/if}</td>
-                        <td colspan="2" class="price" id="total_shipping">{$currency_code}{$cart_summary.total_shipping_tax_exc}</td>
-                    </tr>
-                {else}
-                    <tr class="cart_total_delivery"{if $cart_summary.total_shipping <= 0} style="display:none"{/if}>
-                        <td colspan="4" class="text-right">{if $display_tax_label}{l s='Total shipping (tax incl.)' mod='altapay'}{else}{l s='Total shipping' mod='altapay'}{/if}</td>
-                        <td colspan="2" class="price" id="total_shipping" >{$currency_code}{$cart_summary.total_shipping}</td>
-                    </tr>
-                {/if}
-            {else}
-                <tr class="cart_total_delivery"{if $cart_summary.total_shipping <= 0} style="display:none"{/if}>
-                    <td colspan="4" class="text-right">{l s='Total shipping' mod='altapay'}</td>
-                    <td colspan="2" class="price" id="total_shipping" > {$currency_code}{$cart_summary.total_shipping_tax_exc}</td>
-                </tr>
-            {/if}
-        {/if}
-        <tr class="cart_total_voucher" {if $cart_summary.total_discounts == 0}style="display:none"{/if}>
-            <td colspan="4" class="text-right">
-
-            </td>
-            <td colspan="2" class="price-discount price" id="total_discount">
-                {if $cart_summary.total_tax}
-                    {if $cart_summary.total_price}
-                       {$currency_code} {$cart_summary.total_discounts_tax_exc*-1}
-                    {else}
-                       {$currency_code} {$cart_summary.total_discounts*-1}
-                    {/if}
-                {else}
-                    {$currency_code}{$cart_summary.total_discounts_tax_exc*-1}
-                {/if}
-            </td>
-        </tr>
-        {if  $cart_summary.total_tax}
-            {if $cart_summary.total_tax != 0 && isset($show_taxes)}
-                {if $cart_summary.total_price != 0}
-                    <tr class="cart_total_price">
-                        <td colspan="4" class="text-right">{if $display_tax_label}{l s='Total (tax excl.)' mod='altapay'}{else}{l s='Total' mod='altapay'}{/if}</td>
-                        <td colspan="2" class="price" id="total_price_without_tax"> {$currency_code} {$cart_summary.total_price_without_tax}</td>
-                    </tr>
-                {/if}
-                <tr class="cart_total_tax">
-                    <td colspan="4" class="text-right">{l s='Tax' mod='altapay'}</td>
-                    <td colspan="2" class="price" id="total_tax" >{$currency_code}{$cart_summary.total_tax}</td>
-                </tr>
-            {/if}
-            <tr class="cart_total_price">
-                <td colspan="4" class="total_price_container text-right"><span>{l s='Total' mod='altapay'}</span></td>
-                <td colspan="2" class="price" id="total_price_container">
-                    <span id="total_price" data-selenium-total-price="{$cart_summary.total_price}"> {$currency_code} {$cart_summary.total_price}</span>
-                </td>
-            </tr>
-        {else}
-            <tr class="cart_total_price">
-                {if isset($voucherAllowed)}
-                    <td colspan="2" id="cart_voucher" class="cart_voucher">
-                        <div id="cart_voucher" class="table_block">
-                            {if isset($voucherAllowed)}
-                                <form action="{if $opc}{$link->getPageLink('order-opc', true)}{else}{$link->getPageLink('order', true)}{/if}" method="post" id="voucher">
-                                    <fieldset>
-                                        <h4>{l s='Vouchers' mod='altapay'}</h4>
-                                        <input type="text" id="discount_name" class="form-control" name="discount_name" value="{if isset($discount_name) && $discount_name}{$discount_name}{/if}" />
-                                        <input type="hidden" name="submitDiscount" />
-                                        <button type="submit" name="submitAddDiscount" class="button btn btn-default button-small"><span>{l s='ok' mod='altapay'}</span></button>
-                                        {if $displayVouchers}
-                                            <p id="title" class="title_offers">{l s='Take advantage of our offers:' mod='altapay'}</p>
-                                            <div id="display_cart_vouchers">
-                                                {foreach from=$displayVouchers item=voucher}
-                                                    <span onclick="$('#discount_name').val('{$voucher.name}');return false;" class="voucher_name">{$voucher.name}</span> - {$voucher.description} <br />
-                                                {/foreach}
-                                            </div>
-                                        {/if}
-                                    </fieldset>
-                                </form>
-                            {/if}
-                        </div>
-                    </td>
-                {/if}
-                <td colspan="{if !isset($voucherAllowed)}4{else}2{/if}" class="text-right total_price_container">
-                    <span>{l s='Total' mod='altapay'}</span>
-                </td>
-                <td colspan="2" class="price total_price_container" id="total_price_container">
-                    <span id="total_price" data-selenium-total-price="{$total_price_without_tax}">{$currency_code}{$total_price_without_tax}</span>
-                </td>
-            </tr>
-        {/if}
-        </tfoot>
-
         <tbody>
         {foreach from=$cart_products item=product name=productLoop}
             {assign var='productId' value=$product.id_product}
@@ -175,9 +38,8 @@
                     <a href="{$link->getProductLink($product.id_product, $product.link_rewrite, $product.category, null, null, $product.id_shop, $product.id_product_attribute, false, false, true)|escape:'html':'UTF-8'}"><img src="{$link->getImageLink($product.link_rewrite, $product.id_image, 'small_default')|escape:'html':'UTF-8'}" alt="{$product.name|escape:'html':'UTF-8'}" {if isset($smallSize)}width="{$smallSize.width}" height="{$smallSize.height}" {/if} /></a>
                 </td>
                 <td class="cart_description">
-                    <p class="product-name"><a href="{$link->getProductLink($product.id_product, $product.link_rewrite, $product.category, null, null, $product.id_shop, $product.id_product_attribute, false, false, true)|escape:'html':'UTF-8'}">{$product.name|escape:'html':'UTF-8'}</a></p>
-                    {if $product.reference}<small class="cart_ref">{l s='SKU' mod='altapay'}{$smarty.capture.default}{$product.reference|escape:'html':'UTF-8'}</small>{/if}
-                    {if isset($product.attributes) && $product.attributes}<small><a href="{$link->getProductLink($product.id_product, $product.link_rewrite, $product.category, null, null, $product.id_shop, $product.id_product_attribute, false, false, true)|escape:'html':'UTF-8'}">{$product.attributes|@replace: $smarty.capture.sep:$smarty.capture.default|escape:'html':'UTF-8'}</a></small>{/if}
+                    <p class="product-name"><a href="{$link->getProductLink($product.id_product, $product.link_rewrite, $product.category, null, null, $product.id_shop, $product.id_product_attribute, false, false, true)|escape:'html':'UTF-8'}">{$product.name|escape:'html':'UTF-8'} {if isset($product.attributes) && $product.attributes}<small><a href="{$link->getProductLink($product.id_product, $product.link_rewrite, $product.category, null, null, $product.id_shop, $product.id_product_attribute, false, false, true)|escape:'html':'UTF-8'}">{$product.attributes|@replace: $smarty.capture.sep:$smarty.capture.default|escape:'html':'UTF-8'}</a></small>{/if}</a></p>
+                    {if $product.reference}<small class="cart_ref">{l s='Refrence: ' mod='altapay'}{$smarty.capture.default}{$product.reference|escape:'html':'UTF-8'}</small>{/if}
                 </td>
                {if isset($PS_STOCK_MANAGEMENT) && $PS_STOCK_MANAGEMENT}
                     <td class="cart_avail"><span class="label{if $product.quantity_available <= 0 && isset($product.allow_oosp) && !$product.allow_oosp} label-danger{elseif $product.quantity_available <= 0} label-warning{else} label-success{/if}">{if $product.quantity_available <= 0}{if isset($product.allow_oosp) && $product.allow_oosp}{if isset($product.available_later) && $product.available_later}{$product.available_later}{else}{l s='In Stock' mod='altapay'}{/if}{else}{l s='Out of stock' mod='altapay'}{/if}{else}{if isset($product.available_now) && $product.available_now}{$product.available_now}{else}{l s='In Stock' mod='altapay'}{/if}{/if}</span>{if !$product.is_virtual}{hook h="displayProductDeliveryTime" product=$product}{/if}</td>
@@ -236,17 +98,17 @@
                     </td>
                 {/if}
                 <td class="cart_total" data-title="{l s='Total' mod='altapay'}">
-		<span class="price" id="total_product_price_{$product.id_product}_{$product.id_product_attribute}{if $quantityDisplayed > 0}_nocustom{/if}_{$product.id_address_delivery|intval}{if !empty($product.gift)}_gift{/if}">
-			{if !empty($product.gift)}
-                <span class="gift-icon">{l s='Gift!' mod='altapay'}</span>
-            {else}
-                {if $quantityDisplayed == 0 AND isset($customizedDatas.$productId.$productAttributeId)}
-                    {if !isset($priceDisplay)}{$product.total_customization_wt}{else}{$product.total_customization}{/if}
-                {else}
-                    {if !isset($priceDisplay)}{$product.total_wt}{else}{$product.total}{/if}
-                {/if}
-            {/if}
-		</span>
+                    <span class="price" id="total_product_price_{$product.id_product}_{$product.id_product_attribute}{if $quantityDisplayed > 0}_nocustom{/if}_{$product.id_address_delivery|intval}{if !empty($product.gift)}_gift{/if}">
+                        {if !empty($product.gift)}
+                            <span class="gift-icon">{l s='Gift!' mod='altapay'}</span>
+                        {else}
+                            {if $quantityDisplayed == 0 AND isset($customizedDatas.$productId.$productAttributeId)}
+                                {if !isset($priceDisplay)}{$product.total_customization_wt}{else}{$product.total_customization}{/if}
+                            {else}
+                                {if !isset($priceDisplay)}{$product.total_wt}{else}{$product.total}{/if}
+                            {/if}
+                        {/if}
+                    </span>
                     {hook h='displayCartExtraProductActions' product=$product}
                 </td>
 
@@ -293,8 +155,143 @@
                 {* If it exists also some uncustomized products *}
                 {if $product.quantity-$quantityDisplayed > 0}{include file="checkout/_partials/cart-detailed-product-line.tpl"}{/if}
             {/if}
-
         {/foreach}
         </tbody>
+        <tfoot>
+            {if $cart_summary.total_tax}
+                {if $cart_summary.total_price}
+                    <tr class="cart_total_price">
+                        <td colspan="4" class="text-right">{l s='Subtotal (tax excl.)' mod='altapay'}</td>
+                        <td colspan="2" class="price" id="total_product">{$currency_code}{$cart_summary.total_products}</td>
+                    </tr>
+                {else}
+                    <tr class="cart_total_price">
+                        <td colspan="4" class="text-right">{l s='Subtotal (tax incl.)' mod='altapay'}</td>
+                        <td colspan="2" class="price" id="total_product">{$currency_code} {$cart_summary.total_products_wt}</td>
+                    </tr>
+                {/if}
+            {else}
+                <tr class="cart_total_price">
+                    <td colspan="4" class="text-right">{l s='Subtotal' mod='altapay'}</td>
+                    <td colspan="2" class="price" id="total_product">{$currency_code} {$cart_summary.total_products}</td>
+                </tr>
+            {/if}
+            <tr class="cart_total_voucher" {if $cart_summary.total_wrapping == 0}style="display:none"{/if}>
+                <td colspan="4" class="text-right">
+                    {if $cart_summary.total_tax}
+                        {if $cart_summary.total_price}
+                            {if $cart_summary.total_wrapping == 0}{l s='Total gift wrapping (tax excluded.):' mod='altapay'}{else}{l s='Total gift wrapping (tax included.):' mod='altapay'}{/if}
+                        {/if}
+                    {else}
+                        {l s='Total gift wrapping cost:' mod='altapay'}
+                    {/if}
+                </td>
+                <td colspan="2" class="price-discount price" id="total_wrapping">
+                    {if $cart_summary.total_tax}
+                        {if $cart_summary.total_price}
+                        {$currency_code} {$cart_summary.total_wrapping_tax_exc}
+                        {else}
+                            {$cart_summary.total_wrapping}
+                        {/if}
+                    {else}
+                        {$cart_summary.total_wrapping_tax_exc}
+                    {/if}
+                </td>
+            </tr>
+            {if $cart_summary.total_shipping_tax_exc <= 0 && (!isset($isVirtualCart) || !$isVirtualCart) && $cart_summary.free_ship}
+                <tr class="cart_total_delivery">
+                    <td colspan="4" class="text-right">{l s='Shipping and handling' mod='altapay'}</td>
+                    <td colspan="2" class="price" id="total_shipping">{l s='Free' mod='altapay'}</td>
+                </tr>
+            {else}
+                {if  $cart_summary.total_tax && $cart_summary.total_shipping_tax_exc != $cart_summary.total_shipping}
+                    {if $cart_summary.total_price}
+                        <tr class="cart_total_delivery" {if $cart_summary.total_shipping <= 0} style="display:none"{/if}>
+                            <td colspan="4" class="text-right">{if $display_tax_label}{l s='Shipping and handling (tax excl.)' mod='altapay'}{else}{l s='Total shipping' mod='altapay'}{/if}</td>
+                            <td colspan="2" class="price" id="total_shipping">{$currency_code} {$cart_summary.total_shipping_tax_exc}</td>
+                        </tr>
+                    {else}
+                        <tr class="cart_total_delivery"{if $cart_summary.total_shipping <= 0} style="display:none"{/if}>
+                            <td colspan="4" class="text-right">{if $display_tax_label}{l s='Shipping and handling (tax incl.)' mod='altapay'}{else}{l s='Total shipping' mod='altapay'}{/if}</td>
+                            <td colspan="2" class="price" id="total_shipping" >{$currency_code} {$cart_summary.total_shipping}</td>
+                        </tr>
+                    {/if}
+                {else}
+                    <tr class="cart_total_delivery"{if $cart_summary.total_shipping <= 0} style="display:none"{/if}>
+                        <td colspan="4" class="text-right">{l s='Shipping and handling' mod='altapay'}</td>
+                        <td colspan="2" class="price" id="total_shipping" > {$currency_code} {$cart_summary.total_shipping_tax_exc}</td>
+                    </tr>
+                {/if}
+            {/if}
+            <tr class="cart_total_voucher" {if $cart_summary.total_discounts == 0}style="display:none"{/if}>
+                <td colspan="4" class="text-right">
+
+                </td>
+                <td colspan="2" class="price-discount price" id="total_discount">
+                    {if $cart_summary.total_tax}
+                        {if $cart_summary.total_price}
+                        {$currency_code} {$cart_summary.total_discounts_tax_exc*-1}
+                        {else}
+                        {$currency_code} {$cart_summary.total_discounts*-1}
+                        {/if}
+                    {else}
+                        {$currency_code}{$cart_summary.total_discounts_tax_exc*-1}
+                    {/if}
+                </td>
+            </tr>
+            {if  $cart_summary.total_tax}
+                {if $cart_summary.total_tax != 0 && isset($show_taxes)}
+                    {if $cart_summary.total_price != 0}
+                        <tr class="cart_total_price">
+                            <td colspan="4" class="text-right">{if $display_tax_label}{l s='Total (tax excl.)' mod='altapay'}{else}{l s='Total' mod='altapay'}{/if}</td>
+                            <td colspan="2" class="price" id="total_price_without_tax"> {$currency_code} {$cart_summary.total_price_without_tax}</td>
+                        </tr>
+                    {/if}
+                    <tr class="cart_total_tax">
+                        <td colspan="4" class="text-right">{l s='Tax' mod='altapay'}</td>
+                        <td colspan="2" class="price" id="total_tax" >{$currency_code}{$cart_summary.total_tax}</td>
+                    </tr>
+                {/if}
+                <tr class="cart_total_price">
+                    <td colspan="4" class="total_price_container text-right"><span>{l s='Total' mod='altapay'}</span></td>
+                    <td colspan="2" class="price" id="total_price_container">
+                        <span id="total_price" data-selenium-total-price="{$cart_summary.total_price}"> {$currency_code} {$cart_summary.total_price}</span>
+                    </td>
+                </tr>
+            {else}
+                <tr class="cart_total_price">
+                    {if isset($voucherAllowed)}
+                        <td colspan="2" id="cart_voucher" class="cart_voucher">
+                            <div id="cart_voucher" class="table_block">
+                                {if isset($voucherAllowed)}
+                                    <form action="{if $opc}{$link->getPageLink('order-opc', true)}{else}{$link->getPageLink('order', true)}{/if}" method="post" id="voucher">
+                                        <fieldset>
+                                            <h4>{l s='Vouchers' mod='altapay'}</h4>
+                                            <input type="text" id="discount_name" class="form-control" name="discount_name" value="{if isset($discount_name) && $discount_name}{$discount_name}{/if}" />
+                                            <input type="hidden" name="submitDiscount" />
+                                            <button type="submit" name="submitAddDiscount" class="button btn btn-default button-small"><span>{l s='ok' mod='altapay'}</span></button>
+                                            {if $displayVouchers}
+                                                <p id="title" class="title_offers">{l s='Take advantage of our offers:' mod='altapay'}</p>
+                                                <div id="display_cart_vouchers">
+                                                    {foreach from=$displayVouchers item=voucher}
+                                                        <span onclick="$('#discount_name').val('{$voucher.name}');return false;" class="voucher_name">{$voucher.name}</span> - {$voucher.description} <br />
+                                                    {/foreach}
+                                                </div>
+                                            {/if}
+                                        </fieldset>
+                                    </form>
+                                {/if}
+                            </div>
+                        </td>
+                    {/if}
+                    <td colspan="{if !isset($voucherAllowed)}4{else}2{/if}" class="text-right total_price_container">
+                        <span>{l s='Total' mod='altapay'}</span>
+                    </td>
+                    <td colspan="2" class="price total_price_container" id="total_price_container">
+                        <span id="total_price" data-selenium-total-price="{$total_price_without_tax}">{$currency_code}{$total_price_without_tax}</span>
+                    </td>
+                </tr>
+            {/if}
+        </tfoot>
     </table>
 </div> <!-- end order-detail-content -->

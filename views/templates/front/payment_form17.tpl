@@ -6,65 +6,38 @@
  * file that was distributed with this source code.
 *}
 
-{assign var="cart_info_path" value="module:altapay/views/templates/front/cart_info17.tpl"}
-{include file="_partials/head.tpl"}
-<link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
-<style>
-    div#card_info {
-        width: 70%;
-        margin: 0 auto;
-        padding: 10px 20px;
-        background: #2fb5d22b;
-    }
 
-    div#order-detail-content {
-        width: 70%;
-        margin: 0 auto;
-        padding: 10px 20px 30px;
-        background: #2fb5d22b;
-        margin-bottom: 40px;
-    }
+{extends file=$layout}
+{block name='header'}
+  {include file='checkout/_partials/header.tpl'}
+   <link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
+  {assign var="cart_info_path" value="module:altapay/views/templates/front/cart_info17.tpl"}
+{/block}
 
-    .table-bordered, .table-bordered td, .table-bordered th {
-        border: 2px solid #2fb5d2;
-    }
+{block name='content'}
+  <section id="content">
+    <div class="row">
+      <div class="page-order-detail">
+          <div class="cart-grid-body col-xs-12 col-lg-12">
+            {block name='checkout_process'}
+                <div id="card_info" {if ($cssClass)} class = "cvv_less" {/if}>
+                   <h1 class="payment_msg">{l s="Please enter your details below" mod="altapay"}</h1>
+                    <form id="PensioPaymentForm" ></form>
+                    <input type="button" class="btn btn-success PensioSubmitButton customPayButton" disabled="disabled" value="{l s='Confirm' mod='altapay'}" style="display:none;">
+                </div>
+                {include file = "$cart_info_path"}
+            {/block}
+          </div>
+      </div>
+    </div>
+  </section>
+{/block}
 
-    .table thead th {
-        border-bottom: 3px solid #2fb5d2;
-    }
-    .pensio_payment_form_row {
-        display: inline-block;
-        padding-right: 70px;
-        text-align: left;
-    }
+{block name='footer'}
+  {include file='checkout/_partials/footer.tpl'}
+{/block}
 
-    .pensio_payment_form_outer {
-        text-align: center;
-    }
 
-    div#card_info {
-        text-align: center;
-        margin: 40px auto;
-    }
 
-    #card_info.cvv_less .cvc_row , #card_info.cvv_less .cvc_description_row {
-        display: none;
-    }
-    
-    #card_info.cvv_less .pensio_payment_form_table tr:nth-child(3) {
-        display: none;
-    }
-    
-    div#savecreditcard {
-        display: none;
-    }
-</style>
-</header>
-<div id="card_info" {if ($cssClass)} class = "cvv_less" {/if}>
-<p class="payment_msg">{l s="Please enter your details below" mod="altapay"}</p>
-<form id="PensioPaymentForm" ></form>
-    <input type="button" class="btn btn-success PensioSubmitButton customPayButton" disabled="disabled" value="{l s='Confirm' mod='altapay'}" style="display:none;">
 
-</div>
-{include file = "$cart_info_path"}
 
