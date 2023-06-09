@@ -255,7 +255,7 @@
                 <tr class="cart_total_price">
                     <td colspan="4" class="total_price_container text-right"><span>{l s='Total' mod='altapay'}</span></td>
                     <td colspan="2" class="price" id="total_price_container">
-                        <span id="total_price" data-selenium-total-price="{$cart_summary.total_price}"> {$currency_code} {$cart_summary.total_price}</span>
+                        <span id="total_price" data-selenium-total-price="{$cart_summary.total_price}"> {$currency_code}{$cart_summary.total_price}</span>
                     </td>
                 </tr>
             {else}
