@@ -93,7 +93,8 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 // Log order
                 createAltapayOrder($response, $order);
                 $this->unlock($fp);
-                Tools::redirect('index.php?controller=order-detail&id_order=' . $order->id);
+                $customer = new Customer($cart->id_customer);
+                Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);    
             } else {
                 $this->saveLogs('Something went wrong');
                 $this->redirectUserToCheckoutPaymentStep($fp);
@@ -292,7 +293,8 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
 
                 saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
             }
-            Tools::redirect('index.php?controller=order-detail&id_order=' . $order->id);
+            $customer = new Customer($cart->id_customer);
+            Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
         } elseif ($transactionStatus === 'epayment_declined') {
             // Update payment status to 'declined'
             $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
