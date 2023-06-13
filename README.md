@@ -6,7 +6,7 @@ Integrates your PrestaShop web shop to the AltaPay payments gateway.
 <table>
 <tr><td>
 
-| Functionalities	        | Support       |
+| Functionalities	    | Support       |
 | :------------------------ | :-----------: |
 | Reservation               | &check;       |
 | Capture                   | &check;       |
@@ -23,7 +23,7 @@ Integrates your PrestaShop web shop to the AltaPay payments gateway.
 
 </td><td valign="top">
 
-| Payment Methods	  | Support       |
+| Payment Method      | Support       |
 | ------------------- | :-----------: |
 | Card                | &check;       |
 | Invoice             | &check;       |
