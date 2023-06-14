@@ -9,7 +9,7 @@
 {assign var="cart_summary" value=$summarydetails}
 {assign var="cart_products" value=$products}
  {assign currency Currency::getDefaultCurrency()->sign}
-    {assign currency_code Currency::getDefaultCurrency()->sign}
+    {assign currency_sign Currency::getDefaultCurrency()->sign}
 <div id="order-detail-content" class="table_block table-responsive">
     <table id="cart_summary" class="table table-bordered">
         <thead>
@@ -162,18 +162,18 @@
                 {if $cart_summary.total_price}
                     <tr class="cart_total_price">
                         <td colspan="4" class="text-right">{l s='Subtotal (tax excl.)' mod='altapay'}</td>
-                        <td colspan="2" class="price" id="total_product">{$currency_code}{$cart_summary.total_products}</td>
+                        <td colspan="2" class="price" id="total_product">{$currency_sign}{$cart_summary.total_products}</td>
                     </tr>
                 {else}
                     <tr class="cart_total_price">
                         <td colspan="4" class="text-right">{l s='Subtotal (tax incl.)' mod='altapay'}</td>
-                        <td colspan="2" class="price" id="total_product">{$currency_code} {$cart_summary.total_products_wt}</td>
+                        <td colspan="2" class="price" id="total_product">{$currency_sign} {$cart_summary.total_products_wt}</td>
                     </tr>
                 {/if}
             {else}
                 <tr class="cart_total_price">
                     <td colspan="4" class="text-right">{l s='Subtotal' mod='altapay'}</td>
-                    <td colspan="2" class="price" id="total_product">{$currency_code} {$cart_summary.total_products}</td>
+                    <td colspan="2" class="price" id="total_product">{$currency_sign} {$cart_summary.total_products}</td>
                 </tr>
             {/if}
             <tr class="cart_total_voucher" {if $cart_summary.total_wrapping == 0}style="display:none"{/if}>
@@ -189,7 +189,7 @@
                 <td colspan="2" class="price-discount price" id="total_wrapping">
                     {if $cart_summary.total_tax}
                         {if $cart_summary.total_price}
-                        {$currency_code} {$cart_summary.total_wrapping_tax_exc}
+                        {$currency_sign} {$cart_summary.total_wrapping_tax_exc}
                         {else}
                             {$cart_summary.total_wrapping}
                         {/if}
@@ -208,18 +208,18 @@
                     {if $cart_summary.total_price}
                         <tr class="cart_total_delivery" {if $cart_summary.total_shipping <= 0} style="display:none"{/if}>
                             <td colspan="4" class="text-right">{if $display_tax_label}{l s='Shipping and handling (tax excl.)' mod='altapay'}{else}{l s='Total shipping' mod='altapay'}{/if}</td>
-                            <td colspan="2" class="price" id="total_shipping">{$currency_code} {$cart_summary.total_shipping_tax_exc}</td>
+                            <td colspan="2" class="price" id="total_shipping">{$currency_sign} {$cart_summary.total_shipping_tax_exc}</td>
                         </tr>
                     {else}
                         <tr class="cart_total_delivery"{if $cart_summary.total_shipping <= 0} style="display:none"{/if}>
                             <td colspan="4" class="text-right">{if $display_tax_label}{l s='Shipping and handling (tax incl.)' mod='altapay'}{else}{l s='Total shipping' mod='altapay'}{/if}</td>
-                            <td colspan="2" class="price" id="total_shipping" >{$currency_code} {$cart_summary.total_shipping}</td>
+                            <td colspan="2" class="price" id="total_shipping" >{$currency_sign} {$cart_summary.total_shipping}</td>
                         </tr>
                     {/if}
                 {else}
                     <tr class="cart_total_delivery"{if $cart_summary.total_shipping <= 0} style="display:none"{/if}>
                         <td colspan="4" class="text-right">{l s='Shipping and handling' mod='altapay'}</td>
-                        <td colspan="2" class="price" id="total_shipping" > {$currency_code} {$cart_summary.total_shipping_tax_exc}</td>
+                        <td colspan="2" class="price" id="total_shipping" > {$currency_sign} {$cart_summary.total_shipping_tax_exc}</td>
                     </tr>
                 {/if}
             {/if}
@@ -230,12 +230,12 @@
                 <td colspan="2" class="price-discount price" id="total_discount">
                     {if $cart_summary.total_tax}
                         {if $cart_summary.total_price}
-                        {$currency_code} {$cart_summary.total_discounts_tax_exc*-1}
+                        {$currency_sign} {$cart_summary.total_discounts_tax_exc*-1}
                         {else}
-                        {$currency_code} {$cart_summary.total_discounts*-1}
+                        {$currency_sign} {$cart_summary.total_discounts*-1}
                         {/if}
                     {else}
-                        {$currency_code}{$cart_summary.total_discounts_tax_exc*-1}
+                        {$currency_sign}{$cart_summary.total_discounts_tax_exc*-1}
                     {/if}
                 </td>
             </tr>
@@ -244,18 +244,18 @@
                     {if $cart_summary.total_price != 0}
                         <tr class="cart_total_price">
                             <td colspan="4" class="text-right">{if $display_tax_label}{l s='Total (tax excl.)' mod='altapay'}{else}{l s='Total' mod='altapay'}{/if}</td>
-                            <td colspan="2" class="price" id="total_price_without_tax"> {$currency_code} {$cart_summary.total_price_without_tax}</td>
+                            <td colspan="2" class="price" id="total_price_without_tax"> {$currency_sign} {$cart_summary.total_price_without_tax}</td>
                         </tr>
                     {/if}
                     <tr class="cart_total_tax">
                         <td colspan="4" class="text-right">{l s='Tax' mod='altapay'}</td>
-                        <td colspan="2" class="price" id="total_tax" >{$currency_code}{$cart_summary.total_tax}</td>
+                        <td colspan="2" class="price" id="total_tax" >{$currency_sign}{$cart_summary.total_tax}</td>
                     </tr>
                 {/if}
                 <tr class="cart_total_price">
                     <td colspan="4" class="total_price_container text-right"><span>{l s='Total' mod='altapay'}</span></td>
                     <td colspan="2" class="price" id="total_price_container">
-                        <span id="total_price" data-selenium-total-price="{$cart_summary.total_price}"> {$currency_code}{$cart_summary.total_price}</span>
+                        <span id="total_price" data-selenium-total-price="{$cart_summary.total_price}"> {$currency_sign}{$cart_summary.total_price}</span>
                     </td>
                 </tr>
             {else}
@@ -288,7 +288,7 @@
                         <span>{l s='Total' mod='altapay'}</span>
                     </td>
                     <td colspan="2" class="price total_price_container" id="total_price_container">
-                        <span id="total_price" data-selenium-total-price="{$total_price_without_tax}">{$currency_code}{$total_price_without_tax}</span>
+                        <span id="total_price" data-selenium-total-price="{$total_price_without_tax}">{$currency_sign}{$total_price_without_tax}</span>
                     </td>
                 </tr>
             {/if}
