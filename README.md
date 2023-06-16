@@ -2,6 +2,39 @@
 
 Integrates your PrestaShop web shop to the AltaPay payments gateway.
 
+## Supported Payment Methods & Functionalities
+<table>
+<tr><td>
+
+| Functionalities	    | Support       |
+| :------------------------ | :-----------: |
+| Reservation               | &check;       |
+| Capture                   | &check;       |
+| Instant Capture           | &check;       |
+| Multi Capture             | &check;       |
+| Recurring / Unscheduled   | &check;       |
+| Release                   | &check;       |
+| Refund                    | &check;       |
+| Multi Refund              | &check;       |
+| 3D Secure                 | &check;       |
+| Fraud prevention (other)  | &check;       |
+| Reconciliation            | &check;       |
+| MO/TO                     | &cross;       |
+
+</td><td valign="top">
+
+| Payment Method      | Support       |
+| ------------------- | :-----------: |
+| Card                | &check;       |
+| Invoice             | &check;       |
+| ePayments           | &check;       |
+| Bank-to-bank        | &check;       |
+| Interbank           | &check;       |
+| Cash Wallet         | &check;       |
+| Mobile Wallet       | &check;       |
+
+</td></tr> </table>
+
 ## Compatibility
 Prestashop 1.6.x
 Prestashop 1.7.x
