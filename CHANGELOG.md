@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.5.6] - 2023-06-16
+### Fixed
+- Fix: Redirection issue with order confirmation
+
 ## [3.5.5] - 2023-06-13
 ### Fixed
 - Fix: Make form page compatible with PrestaShop 1.7
