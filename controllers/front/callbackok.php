@@ -94,7 +94,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 createAltapayOrder($response, $order);
                 $this->unlock($fp);
                 $customer = new Customer($cart->id_customer);
-                Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);    
+                Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
             } else {
                 $this->saveLogs('Something went wrong');
                 $this->redirectUserToCheckoutPaymentStep($fp);
