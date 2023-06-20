@@ -92,12 +92,12 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
                 createAltapayOrder($result['response'], $currentOrder, 'succeeded');
                 $customer = new Customer($cart->id_customer);
                 if ($payment_form_url === 'reservation') {
-                    Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
+                    Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $currentOrder->id . '&key=' . $customer->secure_key);
                 } else {
                     $this->saveReconciliationDetails($result['response'], $cart, $currentOrder);
                     $response = [
                         'status' => $result['response']->Result,
-                        'redirectUrl' => 'index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key,
+                        'redirectUrl' => 'index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $currentOrder->id . '&key=' . $customer->secure_key,
                     ];
                     echo json_encode($response);
                 }
