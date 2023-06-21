@@ -53,7 +53,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 // Check if an order exist
                 $order = getOrderFromUniqueId($shopOrderId);
                 if (Validate::isLoadedObject($order)) {
-                    $this->updateOrder($order, $response, $fp);
+                    $this->updateOrder($cart, $order, $response, $fp);
                 } else {
                     $this->createOrder($response, $currencyPaid, $cart, $orderStatus);
                 }
@@ -93,7 +93,8 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 // Log order
                 createAltapayOrder($response, $order);
                 $this->unlock($fp);
-                Tools::redirect('index.php?controller=order-detail&id_order=' . $order->id);
+                $customer = new Customer($cart->id_customer);
+                Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
             } else {
                 $this->saveLogs('Something went wrong');
                 $this->redirectUserToCheckoutPaymentStep($fp);
@@ -257,13 +258,14 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
     }
 
     /**
+     * @param $cart
      * @param $order
      * @param $response
      * @param $fp
      *
      * @return void
      */
-    protected function updateOrder($order, $response, $fp)
+    protected function updateOrder($cart, $order, $response, $fp)
     {
         $shopOrderId = $response->shopOrderId;
         $transactionStatus = $response->paymentStatus;
@@ -292,7 +294,8 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
 
                 saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
             }
-            Tools::redirect('index.php?controller=order-detail&id_order=' . $order->id);
+            $customer = new Customer($cart->id_customer);
+            Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
         } elseif ($transactionStatus === 'epayment_declined') {
             // Update payment status to 'declined'
             $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
