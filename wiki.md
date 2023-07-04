@@ -20,6 +20,8 @@ Installing this plug-in will enable the web shop to handle card transactions thr
 
 [Reconcile Orders](#reconcile-orders)
 
+[Styling](#styling)
+
 [Troubleshooting](#troubleshooting)
 
 # Prerequisites
@@ -137,6 +139,44 @@ Or export the order data to CSV from PrestaShop **SQL Manager** by clicking expo
 ![funding_list_csv](Docs/OrderReconciliation/funding_list_csv.png)
 
 
+# Styling
+
+- You can change/update the **Payment Form Page** by navigating to the below path:
+
+    <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/payment_form17.tpl>
+
+- Use the below link to apply the **CSS** to the form page:
+
+    <https://github.com/AltaPay/plugin-prestashop/blob/main/views/css/payment.css>
+
+- Theme Compatibility: **at_movic**
+
+   If you are utilizing the at_movic theme, replace the header code in the file located at `root/modules/altapay/views/templates/front/payment_form17.tpl` from
+   ```
+   {extends file=$layout}
+
+   {block name='header'}
+      {include file='checkout/_partials/header.tpl'}
+      <link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
+      {assign var="cart_info_path" value="module:altapay/views/templates/front/cart_info17.tpl"}
+   {/block}
+   ```
+   to
+   ```
+   <head>
+      {block name='head'}
+         {include file='_partials/head.tpl'}
+      {/block}
+   </head>
+
+   <header id="header">
+      {block name='header'}
+         {include file='checkout/_partials/header.tpl'}
+         {assign var="cart_info_path" value="module:altapay/views/templates/front/cart_info17.tpl"}
+      {/block}
+   </header>
+   ```
+
 # Troubleshooting
 
 **PHP Warning: Input variables exceeded 1000. To increase the limit change max_input_vars in php.ini.**
@@ -166,5 +206,6 @@ From Admin Dashboard navigate to **"Advanced Parameters > Logs"**
 **For Nginx** it would be **/var/log/nginx/error.log** 
 
 **_Note: Your path may vary from the mentioned above._**
+
 
 
