@@ -4,7 +4,7 @@ AltaPay, headquartered in Denmark, is an internationally focused fintech company
 
 AltaPay’s platform automizes, simplifies, and protects the transaction flow for shop owners and global retail and e-commerce companies, supporting and integrating smoothly into the major ERP systems. AltaPay performs as a Payment Service Provider operating under The Payment Card Industry Data Security Standard (PCI DSS).
 
-# PrestaShop Payment plugin installation guide
+## PrestaShop Payment plugin installation guide
 
 Installing this plug-in will enable the web shop to handle card transactions through AltaPay's gateway.
 
@@ -24,7 +24,7 @@ Installing this plug-in will enable the web shop to handle card transactions thr
 
 [Troubleshooting](#troubleshooting)
 
-# Prerequisites
+## Prerequisites
 
 Before configuring the plugin, you need the below information. These can
 be provided by AltaPay.
@@ -41,7 +41,7 @@ be provided by AltaPay.
 
 -   Gateway
 
-# Installation
+## Installation
 
 1. AltaPay only supports PrestaShop version 1.6.x
 Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Add a new module” from the top-right corner.
@@ -60,7 +60,7 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 
    ![installed_successfully](Docs/Installation/prestashop_altapay_module_installation_confirm.png)
 
-# Configuration
+## Configuration
 
 1. Go to ‘Modules and Services’ > ‘Modules and Services’ and find the AltaPay PrestaShop module. This can be done by searching for ‘AltaPay’ or go to ‘Payment and Gateways’ and find the module. 
 2. Click on ‘Configure’ for the module. 
@@ -110,7 +110,7 @@ AltaPay plugin is compatible with the [Subscription Products | Recurring Payment
 >
 > Currently, AltaPay plugin supports recurring payments with the credit card terminal only.
 
-# Reconcile Orders
+## Reconcile Orders
 In order to reconcile payments please follow the steps below:
 
 1. Navigate to the PrestaShop **Admin** page.
@@ -139,7 +139,7 @@ Or export the order data to CSV from PrestaShop **SQL Manager** by clicking expo
 ![funding_list_csv](Docs/OrderReconciliation/funding_list_csv.png)
 
 
-# Styling
+## Styling
 
 - You can change/update the **Payment Form Page** by navigating to the below path:
 
@@ -149,19 +149,18 @@ Or export the order data to CSV from PrestaShop **SQL Manager** by clicking expo
 
     <https://github.com/AltaPay/plugin-prestashop/blob/main/views/css/payment.css>
 
-- Theme Compatibility: **at_movic**
+### Movic Theme Compatibility
 
-   If you are utilizing the at_movic theme, replace the header code in the file located at `root/modules/altapay/views/templates/front/payment_form17.tpl` from
+   If you are using the Movic theme, search the below code in the file located at `root/modules/altapay/views/templates/front/payment_form17.tpl` 
    ```
    {extends file=$layout}
-
-   {block name='header'}
-      {include file='checkout/_partials/header.tpl'}
-      <link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
-      {assign var="cart_info_path" value="module:altapay/views/templates/front/cart_info17.tpl"}
-   {/block}
+{block name='header'}
+  {include file='checkout/_partials/header.tpl'}
+   <link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
+  {assign var="cart_info_path" value="module:altapay/views/templates/front/cart_info17.tpl"}
+{/block}
    ```
-   to
+   and replace it with below one
    ```
    <head>
       {block name='head'}
@@ -177,7 +176,7 @@ Or export the order data to CSV from PrestaShop **SQL Manager** by clicking expo
    </header>
    ```
 
-# Troubleshooting
+## Troubleshooting
 
 **PHP Warning: Input variables exceeded 1000. To increase the limit change max_input_vars in php.ini.**
 
