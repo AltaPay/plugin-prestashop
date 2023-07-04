@@ -153,7 +153,6 @@ class Altapay_Models_Terminal extends ObjectModel
             $query = 'SELECT secret FROM `' . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND remote_name = '" . pSQL($remote_name) . "' AND shop_id = '" . $shop_id . "' ";
             $result = Db::getInstance()->getRow($query);
             $secret = $result['secret'];
-
         } catch (Exception $e) {
             $context = Context::getContext();
             if (isset($context->controller) && isset($context->controller->errors)) {
@@ -161,6 +160,7 @@ class Altapay_Models_Terminal extends ObjectModel
             }
             PrestaShopLogger::addLog($e->getMessage(), 4);
         }
+
         return $secret;
     }
 }

@@ -649,9 +649,7 @@ function getTransactionTerminalByUniqueId($uniqueId)
     WHERE unique_id=\'' . pSQL($uniqueId) . '\'');
 
     return $results['terminal_name'];
-
 }
-
 
 /**
  * Calculate checksum for AltaPay request
@@ -671,7 +669,7 @@ function calculateChecksum($input_data, $shared_secret)
     ];
 
     ksort($checksum_data);
-    $data = array();
+    $data = [];
     foreach ($checksum_data as $name => $value) {
         $data[] = $name . '=' . $value;
     }
