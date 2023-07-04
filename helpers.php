@@ -639,7 +639,7 @@ function handleFraudPayment($response, $transaction)
 /**
  * Get terminal for AltaPay transaction by shop_orderid (unique ID)
  *
- * @param int $uniqueId
+ * @param string $uniqueId
  *
  * @return string
  */
