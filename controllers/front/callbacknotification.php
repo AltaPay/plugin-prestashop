@@ -18,9 +18,17 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
      */
     public function postProcess()
     {
+        $postData = Tools::getAllValues();
+        $checksum = $postData['checksum'];
+        $terminal_name = getTransactionTerminalByUniqueId($postData['shop_orderid']);
+        $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
+
+        if (!empty($checksum) and !empty($secret) and calculateChecksum($postData, $secret) !== $checksum) {
+            exit();
+        }
+
         $fp = fopen(_PS_MODULE_DIR_ . '/altapay/controllers/front/lock.txt', 'r');
         try {
-            $postData = Tools::getAllValues();
             $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
             $response = $callback->call();
             $transaction = getTransaction($response);

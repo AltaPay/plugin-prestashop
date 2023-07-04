@@ -32,7 +32,15 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
         $css_dir = null;
         $postData = Tools::getAllValues();
         $cart = getCartFromUniqueId($postData['shop_orderid']);
+        $checksum = $postData['checksum'];
         $terminalRemoteName = getCvvLess($cart->id, $postData['shop_orderid']);
+        $terminal_name = getTransactionTerminalByUniqueId($postData['shop_orderid']);
+        $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
+
+        if (!empty($checksum) and !empty($secret) and calculateChecksum($postData, $secret) !== $checksum) {
+            exit();
+        }
+
         $this->context->smarty->assign('cssClass', $terminalRemoteName);
         // Different conventions of assigning details for Version 1.6 and 1.7 respectively
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {

@@ -29,6 +29,14 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
     public function postProcess()
     {
         $postData = Tools::getAllValues();
+        $checksum = $postData['checksum'];
+        $terminal_name = getTransactionTerminalByUniqueId($postData['shop_orderid']);
+        $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
+
+        if (!empty($checksum) and !empty($secret) and calculateChecksum($postData, $secret) !== $checksum) {
+            exit();
+        }
+        
         $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
         $response = $callback->call();
         $shopOrderId = $response->shopOrderId;
