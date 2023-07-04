@@ -136,11 +136,12 @@ class Altapay_Models_Terminal extends ObjectModel
     /**
      * Get terminal by Remote Name
      *
-     * @param $remote_name
+     * @param string $remote_name
      * @param int $shop_id
      *
-     * @return array|false|PDOStatement|resource|null
+     * @return string
      *
+     * @throws Exception
      */
     public static function getTerminalSecretByRemoteName($remote_name, $shop_id = 1)
     {

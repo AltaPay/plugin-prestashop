@@ -641,7 +641,7 @@ function handleFraudPayment($response, $transaction)
  *
  * @param int $uniqueId
  *
- * @return bool|Cart
+ * @return string
  */
 function getTransactionTerminalByUniqueId($uniqueId)
 {
@@ -656,8 +656,8 @@ function getTransactionTerminalByUniqueId($uniqueId)
 /**
  * Calculate checksum for AltaPay request
  *
- * @param $input_data
- * @param $shared_secret
+ * @param array $input_data
+ * @param string $shared_secret
  *
  * @return string
  */

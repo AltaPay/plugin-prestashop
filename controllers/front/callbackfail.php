@@ -36,7 +36,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
         if (!empty($checksum) and !empty($secret) and calculateChecksum($postData, $secret) !== $checksum) {
             exit();
         }
-        
+
         $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
         $response = $callback->call();
         $shopOrderId = $response->shopOrderId;
