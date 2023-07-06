@@ -23,6 +23,7 @@ class Altapay_Models_Terminal extends ObjectModel
     public $shop_id;
     public $custom_message;
     public $nature;
+    public $secret;
 
     public static $definition = [
         'table' => 'altapay_terminals',
@@ -42,6 +43,7 @@ class Altapay_Models_Terminal extends ObjectModel
             'shop_id' => ['type' => self::TYPE_INT],
             'custom_message' => ['type' => self::TYPE_STRING, 'required' => false, 'size' => 255],
             'nature' => ['type' => self::TYPE_HTML, 'required' => true, 'size' => 3999999999999],
+            'secret' => ['type' => self::TYPE_STRING, 'required' => false, 'size' => 255],
         ],
     ];
 
@@ -129,5 +131,36 @@ class Altapay_Models_Terminal extends ObjectModel
             }
             PrestaShopLogger::addLog($e->getMessage(), 4);
         }
+    }
+
+    /**
+     * Get terminal by Remote Name
+     *
+     * @param string $remote_name
+     * @param int $shop_id
+     *
+     * @return string
+     *
+     * @throws Exception
+     */
+    public static function getTerminalSecretByRemoteName($remote_name, $shop_id = 1)
+    {
+        $secret = '';
+        try {
+            if (filter_var($shop_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                throw new Exception('Invalid shop id');
+            }
+            $query = 'SELECT secret FROM `' . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND remote_name = '" . pSQL($remote_name) . "' AND shop_id = '" . $shop_id . "' ";
+            $result = Db::getInstance()->getRow($query);
+            $secret = $result['secret'];
+        } catch (Exception $e) {
+            $context = Context::getContext();
+            if (isset($context->controller) && isset($context->controller->errors)) {
+                $context->controller->errors[] = $e->getMessage();
+            }
+            PrestaShopLogger::addLog($e->getMessage(), 4);
+        }
+
+        return $secret;
     }
 }

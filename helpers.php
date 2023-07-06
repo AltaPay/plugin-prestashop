@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.5.6';
+    $pluginVersion = '3.5.7';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -586,7 +586,7 @@ function getTransaction($response)
  * @param $response
  * @param $transaction
  *
- * @return bool|void
+ * @return array|void
  */
 function handleFraudPayment($response, $transaction)
 {
@@ -634,4 +634,45 @@ function handleFraudPayment($response, $transaction)
     }
 
     return ['msg' => $message, 'payment_status' => $paymentProcessed];
+}
+
+/**
+ * Get terminal for AltaPay transaction by shop_orderid (unique ID)
+ *
+ * @param string $uniqueId
+ *
+ * @return string
+ */
+function getTransactionTerminalByUniqueId($uniqueId)
+{
+    $results = Db::getInstance()->getRow('SELECT terminal_name FROM `' . _DB_PREFIX_ . 'altapay_transaction` 
+    WHERE unique_id=\'' . pSQL($uniqueId) . '\'');
+
+    return $results['terminal_name'];
+}
+
+/**
+ * Calculate checksum for AltaPay request
+ *
+ * @param array $input_data
+ * @param string $shared_secret
+ *
+ * @return string
+ */
+function calculateChecksum($input_data, $shared_secret)
+{
+    $checksum_data = [
+        'amount' => $input_data['amount'],
+        'currency' => $input_data['currency'],
+        'shop_orderid' => $input_data['shop_orderid'],
+        'secret' => $shared_secret,
+    ];
+
+    ksort($checksum_data);
+    $data = [];
+    foreach ($checksum_data as $name => $value) {
+        $data[] = $name . '=' . $value;
+    }
+
+    return md5(join(',', $data));
 }

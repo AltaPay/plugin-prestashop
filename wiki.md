@@ -81,15 +81,17 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 
 7. In the optional field 'Custom message', you can add custom message for the customers. e.g. guidelines from Danish Forbrugerombudsmanden.
 
-8. If the terminal is for Apple Pay payments, select **Yes** from the **Is Apple Pay?** dropdown.
+8. In the optional field 'Secret', add the payment method secret as defined in the AltaPay payment gateway to enable checksum validation. To disable checksum validation leave it empty.
 
-   ![terminal_config](Docs/Configuration/prestashop_configure_altapay_terminal_detail.png)
+9. If the terminal is for Apple Pay payments, select **Yes** from the **Is Apple Pay?** dropdown.
+
+   ![terminal_config](Docs/Configuration/prestashop_configure_altapay_terminal_detail.jpg)
 
    > Note
    >
    > Apple Pay functionality is supported with Prestashop 1.7 and above.
 
-9. When you have set up your terminals you are ready to process transactions through AltaPay.
+10. When you have set up your terminals you are ready to process transactions through AltaPay.
 
    ![verify_terminals](Docs/Configuration/prestashop_payment_method_page.jpg)
 

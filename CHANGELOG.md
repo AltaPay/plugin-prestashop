@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.5.7] - 2023-07-05
+### Added
+- Support for checksum validation functionality.
+
 ## [3.5.6] - 2023-06-16
 ### Fixed
 - Fix: Redirection issue with order confirmation

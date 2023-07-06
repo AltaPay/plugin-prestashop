@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.5.6';
+        $this->version = '3.5.7';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
@@ -239,6 +239,13 @@ class ALTAPAY extends PaymentModule
         }
         if (!Db::getInstance()->Execute('SELECT custom_message from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN custom_message varchar(255) DEFAULT ""')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+        if (!Db::getInstance()->Execute('SELECT secret from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN secret varchar(255) DEFAULT ""')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
@@ -608,6 +615,13 @@ class ALTAPAY extends PaymentModule
                     'label' => $this->l('Custom message'),
                     'desc' => $this->l('Add custom text to display under terminal name'),
                     'name' => 'custom_message',
+                    'required' => false,
+                ],
+                [
+                    'type' => 'text',
+                    'label' => $this->l('Secret'),
+                    'desc' => $this->l('Add the payment method secret as defined in the AltaPay payment gateway'),
+                    'name' => 'secret',
                     'required' => false,
                 ],
                 [
@@ -1281,6 +1295,7 @@ class ALTAPAY extends PaymentModule
             'cvvLess',
             'shop_id',
             'custom_message',
+            'secret',
         ];
         foreach ($fields as $fieldName) {
             $terminal->{$fieldName} = Tools::getValue($fieldName);

@@ -19,12 +19,19 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
      */
     public function postProcess()
     {
+        $postData = Tools::getAllValues();
+        $checksum = $postData['checksum'];
+        $terminal_name = getTransactionTerminalByUniqueId($postData['shop_orderid']);
+        $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
+
+        if (!empty($checksum) and !empty($secret) and calculateChecksum($postData, $secret) !== $checksum) {
+            exit();
+        }
         // This lock prevents orders to be created twice.
         $fp = fopen(_PS_MODULE_DIR_ . '/altapay/controllers/front/lock.txt', 'r');
         flock($fp, LOCK_EX);
 
         $message = '';
-        $postData = Tools::getAllValues();
         $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
         $customerID = $this->context->customer->id;
         $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
