@@ -695,7 +695,7 @@ class ALTAPAY extends PaymentModule
                         ],
                         'id' => 'id_option',
                         'name' => 'name',
-                    ]
+                    ],
                 ],
                 [
                     'type' => 'select',
@@ -2263,10 +2263,10 @@ class ALTAPAY extends PaymentModule
         $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
         $currency = new Currency($cart->id_currency);
         // Default values for Apple Pay label and supported networks
-        $apple_pay_label = "Apple Pay";
-        $applepay_supported_networks = ["visa", "masterCard", "amex"];
+        $apple_pay_label = 'Apple Pay';
+        $applepay_supported_networks = ['visa', 'masterCard', 'amex'];
 
-        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int)$this->context->shop->id);
+        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
         foreach ($paymentMethods as $paymentMethod) {
             if ($paymentMethod['applepay']) {
                 if (!empty($paymentMethod['applepay_form_label'])) {
