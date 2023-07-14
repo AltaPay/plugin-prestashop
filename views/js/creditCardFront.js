@@ -5,8 +5,24 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+document.addEventListener('DOMContentLoaded', function (event) {
+    let session = "";
 
-$(function () {
+    $('body').on('submit', '.tc-main-title.selected form', function (e) {
+        if ($('.tc-main-title.selected #hidden-terminalid').text()) {
+            e.preventDefault();
+            const terminalId = activeTerminalId();
+            onApplePayButtonClicked(terminalId, false, true);
+        }
+    });
+
+    $('body').on('click', '#confirm_order', function (e) {
+        const terminalId = activeTerminalId();
+        if (terminalId) {
+            onApplePayButtonClicked(terminalId, true, false);
+        }
+    });
+
     $("select.selectCreditCard").change(function () {
         var selectedCreditCard = $(this).children("option:selected").val();
         Cookies.set('selectedCreditCard', selectedCreditCard);
@@ -19,17 +35,21 @@ $(function () {
         Cookies.set('savecard', savecard);
     });
     $('#payment-confirmation > .ps-shown-by-js > button').click(function(e) {
-        var payment_option = $('input[type="radio"][name="payment-option"]:checked').attr('id');
-        var terminalId = $("#"+payment_option+"-additional-information > #hidden-terminalid").text();
+        var terminalId = activeTerminalId();
         if(terminalId) {
-            onApplePayButtonClicked();
+            onApplePayButtonClicked(terminalId, true, true);
             return false;
         }
     });
 
-    function onApplePayButtonClicked() { 
-        var payment_option = $('input[type="radio"][name="payment-option"]:checked').attr('id');
-        var terminalId = $("#"+payment_option+"-additional-information > #hidden-terminalid").text();
+    function activeTerminalId(){
+        const payment_option = $('input[type="radio"][name="payment-option"]:checked').attr('id');
+        const terminalId = $("#" + payment_option + "-additional-information > #hidden-terminalid").text();
+
+        return terminalId;
+    }
+    
+    function onApplePayButtonClicked(terminalId, createSession, beginSession) {
         if (!ApplePaySession) {
             return;
         }
@@ -41,21 +61,18 @@ $(function () {
             "merchantCapabilities": [
                 "supports3DS"
             ],
-            "supportedNetworks": [
-                "visa",
-                "masterCard",
-                "amex",
-                "discover"
-            ],
+            "supportedNetworks": applepaySupportedNetworks,
             "total": {
-                "label": "Demo (Card is not charged)",
+                "label": applepayLabel,
                 "type": "final",
                 "amount": amountPaid
             }
         };
         
         // Create ApplePaySession
-        const session = new ApplePaySession(3, request);
+        if (createSession) {
+            session = new ApplePaySession(3, request);
+        }
         session.onvalidatemerchant = async event => {
             // Call your own server to request a new merchant session.
             $.ajax({
@@ -82,7 +99,7 @@ $(function () {
         session.onpaymentmethodselected = event => {
             // Define ApplePayPaymentMethodUpdate based on the selected payment method.
             let total = {
-                "label": "ApplePay Altapay",
+                "label": applepayLabel,
                 "type": "final",
                 "amount": amountPaid
             }
@@ -147,7 +164,10 @@ $(function () {
         session.oncancel = event => {
             // Payment cancelled by WebKit
         };
-        
-        session.begin();
+
+        if (beginSession) {
+            session.begin();
+        }
+
     }
 });
