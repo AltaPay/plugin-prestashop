@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.5.8] - 2023-07-14
+### Added
+Make Apple Pay compatible with **The Checkout** (One Page Checkout module)
+
 ## [3.5.7] - 2023-07-05
 ### Added
 - Support for checksum validation functionality.
