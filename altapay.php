@@ -2272,8 +2272,8 @@ class ALTAPAY extends PaymentModule
                 if (!empty($paymentMethod['applepay_form_label'])) {
                     $apple_pay_label = $paymentMethod['applepay_form_label'];
                 }
-                if (!empty($paymentMethod['applepay_supported_networks'])) {
-                    $applepay_supported_networks = json_encode(unserialize($paymentMethod['applepay_supported_networks']));
+                if (!empty($paymentMethod['applepay_supported_networks']) && $paymentMethod['applepay_supported_networks'] != 'b:0;') {
+                    $applepay_supported_networks = unserialize($paymentMethod['applepay_supported_networks']);
                 }
                 break;
             }
@@ -2288,7 +2288,7 @@ class ALTAPAY extends PaymentModule
             Media::addJsDef(['currencyCode' => $currency->iso_code]);
             Media::addJsDef(['countryCode' => $this->context->country->iso_code]);
             Media::addJsDef(['applepayLabel' => $apple_pay_label]);
-            Media::addJsDef(['applepaySupportedNetworks' => $applepay_supported_networks]);
+            Media::addJsDef(['applepaySupportedNetworks' => json_encode($applepay_supported_networks)]);
             $this->context->controller->registerJavascript(
                 'applepaysdk', // Unique ID
                 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js', // JS path

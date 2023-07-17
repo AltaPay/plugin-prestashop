@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function (event) {
             "merchantCapabilities": [
                 "supports3DS"
             ],
-            "supportedNetworks": applepaySupportedNetworks,
+            "supportedNetworks": JSON.parse(applepaySupportedNetworks),
             "total": {
                 "label": applepayLabel,
                 "type": "final",
