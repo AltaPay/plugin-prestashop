@@ -48,12 +48,11 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $fraudPayment = handleFraudPayment($response, $transaction);
             
             if (isset($shopOrderId) && !empty($shopOrderId)) {
-                $condition = "unique_id = '".pSQL($shopOrderId)."' AND paymentStatus = 'succeeded'";
-                $query = 'SELECT * FROM `'._DB_PREFIX_.'altapay_order` WHERE '.$condition;
+                $condition = "unique_id = '" . pSQL($shopOrderId) . "' AND paymentStatus = 'succeeded'";
+                $query = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE ' . $condition;
                 $result = Db::getInstance()->executeS($query);
-            
                 // Check if the order already saved with the success status
-                if (!$result) {
+                if (!empty($result)) {
                     exit('Order already Processed!!');
                 }
             }
