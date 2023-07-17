@@ -43,6 +43,18 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 $this->unlock($fp);
                 exit('Could not load cart - exiting');
             }
+
+            if (isset($shopOrderId) && !empty($shopOrderId)) {
+                $condition = "unique_id = '".pSQL($shopOrderId)."' AND paymentStatus = 'succeeded'";
+                $query = 'SELECT * FROM `'._DB_PREFIX_.'altapay_order` WHERE '.$condition;
+                $result = Db::getInstance()->executeS($query);
+            
+                // Check if the order already saved with the success status
+                if ($result) {
+                    exit('Order already Processed!!');
+                }
+            }
+
             // Load the customer
             $customer = new Customer((int) $cart->id_customer);
             $transactionStatus = $response->paymentStatus;
