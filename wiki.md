@@ -30,16 +30,12 @@ Before configuring the plugin, you need the below information. These can
 be provided by AltaPay.
 
 1.  AltaPay credentials:
-
--   Username
-
--   Password
+      -   Username
+      -   Password
 
 2.  AltaPay gateway information:
-
--   Terminal
-
--   Gateway
+      -   Terminal
+      -   Gateway
 
 ## Installation
 
@@ -81,7 +77,7 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
 
 6. When setting up a terminal you must select the icon and name that is going to be shown in the check flow.  The currency must correspond with the currency on the terminal at AltaPay.  The payment type indicates if the money would be captured on reservation (‘Authorize and capture’) or the merchant would have to capture, when delivering the goods.
 
-7. In the optional field 'Custom message', you can add custom message for the customers. e.g. guidelines from Danish Forbrugerombudsmanden.
+7. In the optional field **Custom message**, you can add custom message for the customers. e.g. guidelines from Danish Forbrugerombudsmanden.
 
 8. In the optional field 'Secret', add the payment method secret as defined in the AltaPay payment gateway to enable checksum validation. To disable checksum validation leave it empty.
 
@@ -93,11 +89,15 @@ Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Ad
    >
    > Apple Pay functionality is supported with Prestashop 1.7 and above.
 
-10. When you have set up your terminals you are ready to process transactions through AltaPay.
+10. Enter value for Apple Pay Form Label.
 
-   ![verify_terminals](Docs/Configuration/prestashop_payment_method_page.jpg)
+11. Select one or more of the payment network values for Apple Pay.
 
-   ![process_transactions](Docs/Configuration/prestashop_credit_card_payment_page.jpg)
+12. When you have set up your terminals you are ready to process transactions through AltaPay.
+
+      ![verify_terminals](Docs/Configuration/prestashop_payment_method_page.jpg)
+
+      ![process_transactions](Docs/Configuration/prestashop_credit_card_payment_page.jpg)
 
 
 ## Subscriptions
@@ -122,7 +122,7 @@ In order to reconcile payments please follow the steps below:
 
    ![prestashop_order_view](Docs/OrderReconciliation/prestashop_order_view.jpg)
 
-Or export the order data to CSV from PrestaShop **SQL Manager** by clicking export button next to the **SQL query Name** `AltaPay Order Reconciliation`.
+   Or export the order data to CSV from PrestaShop **SQL Manager** by clicking export button next to the **SQL query Name** `AltaPay Order Reconciliation`.
    
    ![prestashop_sql_manager](Docs/OrderReconciliation/prestashop_sql_manager.jpg)
    
