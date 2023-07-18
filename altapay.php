@@ -681,15 +681,15 @@ class ALTAPAY extends PaymentModule
                     'options' => [
                         'query' => [
                             [
-                                'id_option' => 'Visa',
+                                'id_option' => 'visa',
                                 'name' => 'Visa',
                             ],
                             [
-                                'id_option' => 'Mastercard',
+                                'id_option' => 'masterCard',
                                 'name' => 'Mastercard',
                             ],
                             [
-                                'id_option' => 'Amex',
+                                'id_option' => 'amex',
                                 'name' => 'Amex',
                             ],
                         ],
