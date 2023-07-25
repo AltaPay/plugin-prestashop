@@ -153,29 +153,14 @@ Or export the order data to CSV from PrestaShop **SQL Manager** by clicking expo
 
 ### Movic Theme Compatibility
 
-   If you are using the Movic theme, search the below code in the file located at `root/modules/altapay/views/templates/front/payment_form17.tpl` 
+   If you are using the Movic theme, search the below code in the file located at `root/modules/altapay/controllers/front/callbackform.php`
+
    ```
-   {extends file=$layout}
-{block name='header'}
-  {include file='checkout/_partials/header.tpl'}
-   <link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
-  {assign var="cart_info_path" value="module:altapay/views/templates/front/cart_info17.tpl"}
-{/block}
+   $this->setTemplate('module:altapay/views/templates/front/payment_form17.tpl');
    ```
    and replace it with below one
    ```
-   <head>
-      {block name='head'}
-         {include file='_partials/head.tpl'}
-      {/block}
-   </head>
-
-   <header id="header">
-      {block name='header'}
-         {include file='checkout/_partials/header.tpl'}
-         {assign var="cart_info_path" value="module:altapay/views/templates/front/cart_info17.tpl"}
-      {/block}
-   </header>
+   $this->setTemplate('module:altapay/views/templates/front/paymentform_atmovic.tpl');
    ```
 
 ## Troubleshooting
