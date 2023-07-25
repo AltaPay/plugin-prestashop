@@ -12,6 +12,8 @@
   {include file='checkout/_partials/header.tpl'}
    <link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
   {assign var="cart_info_path" value="module:altapay/views/templates/front/cart_info17.tpl"}
+  {assign var="cart_summary" value=$summarydetails}
+  {assign currency_code Currency::getDefaultCurrency()->sign}
 {/block}
 
 {block name='content'}
