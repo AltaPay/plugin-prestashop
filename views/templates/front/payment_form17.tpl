@@ -21,7 +21,7 @@
           <div class="cart-grid-body col-xs-12 col-lg-12">
             {block name='checkout_process'}
                 <div id="card_info" {if ($cssClass)} class = "cvv_less" {/if}>
-                   <h1 class="payment_msg">{l s="Please enter your details below" mod="altapay"}</h1>
+                    <h1 class="payment_msg">{l s='You are about to pay' mod='altapay'} {$cart_summary.total_price} {$currency_code}</h1>
                     <form id="PensioPaymentForm" ></form>
                     <input type="button" class="btn btn-success PensioSubmitButton customPayButton" disabled="disabled" value="{l s='Confirm' mod='altapay'}" style="display:none;">
                 </div>
