@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.5.8';
+        $this->version = '3.5.9';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
@@ -83,9 +83,8 @@ class ALTAPAY extends PaymentModule
         // Execute the query
         $result = Db::getInstance()->getValue('
             SELECT COUNT(*) as total_rows
-            FROM '._DB_PREFIX_.'altapay_terminals'
+            FROM ' . _DB_PREFIX_ . 'altapay_terminals'
         );
-
         // Check if the table contains data
         if ($result == 0 && empty(Configuration::get('ALTAPAY_USERNAME'))) {
             Configuration::updateValue('enable_cc_style', 'checkout-cc');
@@ -1702,7 +1701,6 @@ class ALTAPAY extends PaymentModule
             if (Tools::getValue('enable_cc_style') !== '') {
                 Configuration::updateValue('enable_cc_style', serialize(Tools::getValue('enable_cc_style')));
             }
-      
         }
         $this->Mhtml .= '<div class="alert alert-success"> ' . $this->l('Settings updated') . '</div>';
     }
