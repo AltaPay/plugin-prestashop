@@ -89,7 +89,6 @@ class ALTAPAY extends PaymentModule
         if ($result == 0 && empty(Configuration::get('ALTAPAY_USERNAME'))) {
             Configuration::updateValue('enable_cc_style', 'checkout-cc');
         }
-        
         // This table captures the payment information
         if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_order`')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_order`  TO `' . _DB_PREFIX_ . 'altapay_order`  ';
