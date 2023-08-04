@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.5.7';
+        $this->version = '3.5.8';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
@@ -80,7 +80,17 @@ class ALTAPAY extends PaymentModule
         ) {
             return false;
         }
+        // Execute the query
+        $result = Db::getInstance()->getValue('
+            SELECT COUNT(*) as total_rows
+            FROM '._DB_PREFIX_.'altapay_terminals'
+        );
 
+        // Check if the table contains data
+        if ($result == 0 && empty(Configuration::get('ALTAPAY_USERNAME'))) {
+            Configuration::updateValue('enable_cc_style', 'checkout-cc');
+        }
+        
         // This table captures the payment information
         if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_order`')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_order`  TO `' . _DB_PREFIX_ . 'altapay_order`  ';
@@ -1431,6 +1441,31 @@ class ALTAPAY extends PaymentModule
                             'name' => 'name',
                         ],
                     ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Credit Card form styling'),
+                        'desc' => $this->l('Styles the credit card form on checkout'),
+                        'name' => 'enable_cc_style',
+                        'required' => false,
+                        'options' => [
+                            'query' => [
+                                [
+                                    'id_option' => 'legacy-cc',
+                                    'name' => 'Legacy',
+                                ],
+                                [
+                                    'id_option' => 'checkout-cc',
+                                    'name' => 'Checkout',
+                                ],
+                                [
+                                    'id_option' => 'custom-cc',
+                                    'name' => 'Custom',
+                                ],
+                            ],
+                            'id' => 'id_option',
+                            'name' => 'name',
+                        ],
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->l('Save'),
@@ -1476,6 +1511,7 @@ class ALTAPAY extends PaymentModule
             'ALTAPAY_URL' => Tools::getValue('ALTAPAY_URL', Configuration::get('ALTAPAY_URL')),
             'AUTOCAPTURE_STATUSES[]' => Tools::getValue('AUTOCAPTURE_STATUSES',
                 unserialize(Configuration::get('AUTOCAPTURE_STATUSES'))),
+            'enable_cc_style' => Tools::getValue('enable_cc_style', Configuration::get('enable_cc_style')),
             'enable_fraud' => Tools::getValue('enable_fraud', Configuration::get('enable_fraud')),
             'enable_release_refund' => Tools::getValue('enable_release_refund', Configuration::get('enable_release_refund')),
         ];
@@ -1605,6 +1641,10 @@ class ALTAPAY extends PaymentModule
             if (Tools::getValue('AUTOCAPTURE_STATUSES') !== '') {
                 Configuration::updateValue('AUTOCAPTURE_STATUSES', serialize(Tools::getValue('AUTOCAPTURE_STATUSES')));
             }
+            if (Tools::getValue('enable_cc_style') !== '') {
+                Configuration::updateValue('enable_cc_style', serialize(Tools::getValue('enable_cc_style')));
+            }
+      
         }
         $this->Mhtml .= '<div class="alert alert-success"> ' . $this->l('Settings updated') . '</div>';
     }

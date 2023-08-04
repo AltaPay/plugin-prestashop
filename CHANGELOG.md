@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.5.8] - 2023-08-04
+### Added
+- Set the **checkout** design of the Credit Card form by default for new installations.
+
 ## [3.5.7] - 2023-07-05
 ### Added
 - Support for checksum validation functionality.
