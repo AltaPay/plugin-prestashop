@@ -211,6 +211,11 @@ class ALTAPAY extends PaymentModule
             `currency` varchar(100) DEFAULT NULL,
             `ccTokenControl_` int(255) NOT NULL DEFAULT \'0\',
             `applepay` BOOLEAN NOT NULL DEFAULT \'0\',
+            `applepay_form_label` varchar(255) DEFAULT \'\',
+            `applepay_supported_networks` text,
+            `custom_message` varchar(255) DEFAULT \'\',
+            `nature` text,
+            `secret` varchar(255) DEFAULT \'\',
             `position` int(11) NOT NULL DEFAULT \'0\',
             `active` int(11) NOT NULL DEFAULT \'0\',
             `cvvLess` BOOLEAN NOT NULL DEFAULT \'0\',
@@ -228,6 +233,20 @@ class ALTAPAY extends PaymentModule
         }
         if (!Db::getInstance()->Execute('SELECT applepay from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN applepay BOOLEAN NOT NULL DEFAULT 0')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+        if (!Db::getInstance()->Execute('SELECT applepay_form_label from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN applepay_form_label varchar(255) DEFAULT ""')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+        if (!Db::getInstance()->Execute('SELECT applepay_supported_networks from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN applepay_supported_networks text')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
@@ -655,6 +674,40 @@ class ALTAPAY extends PaymentModule
                     ],
                 ],
                 [
+                    'type' => 'text',
+                    'label' => $this->l('Apple Pay form label'),
+                    'desc' => $this->l('This controls the label shown on Apple Pay popup window'),
+                    'name' => 'applepay_form_label',
+                    'required' => false,
+                ],
+                [
+                    'type' => 'select',
+                    'multiple' => true,
+                    'class' => 'chosen',
+                    'label' => $this->l('Apple Pay Supported Networks'),
+                    'desc' => $this->l('The payment networks the merchant supports'),
+                    'name' => 'applepay_supported_networks[]',
+                    'required' => false,
+                    'options' => [
+                        'query' => [
+                            [
+                                'id_option' => 'visa',
+                                'name' => 'Visa',
+                            ],
+                            [
+                                'id_option' => 'masterCard',
+                                'name' => 'Mastercard',
+                            ],
+                            [
+                                'id_option' => 'amex',
+                                'name' => 'Amex',
+                            ],
+                        ],
+                        'id' => 'id_option',
+                        'name' => 'name',
+                    ],
+                ],
+                [
                     'type' => 'select',
                     'label' => $this->l('CVV Less'),
                     'name' => 'cvvLess',
@@ -768,8 +821,10 @@ class ALTAPAY extends PaymentModule
         $helper->default_form_language = $lang->id;
         $helper->id = (int) Tools::getValue('id_terminal');
         $helper->submit_action = 'savealtapay_terminals';
+        $form_values = (array) $this->getFormValues();
+        $form_values['applepay_supported_networks[]'] = unserialize($form_values['applepay_supported_networks']);
         $helper->tpl_vars = [
-            'fields_value' => (array) $this->getFormValues(),
+            'fields_value' => $form_values,
             'languages' => (array) $this->context->controller->getLanguages(),
             'id_language' => (array) $this->context->language->id,
         ];
@@ -1283,6 +1338,7 @@ class ALTAPAY extends PaymentModule
 
         $getVal = Tools::getValue('currency');
         $active = Tools::getValue('active');
+        $applepay_supported_networks = Tools::getValue('applepay_supported_networks');
         // Currency supported?
         if (!empty($allowedCurrencies) && !in_array($getVal, $allowedCurrencies, true) && $active) {
             $this->Mhtml .= sprintf('<div class="alert alert-danger">Selected terminal does not support currency %s</div>',
@@ -1299,6 +1355,7 @@ class ALTAPAY extends PaymentModule
             'currency',
             'ccTokenControl_',
             'applepay',
+            'applepay_form_label',
             'payment_type',
             'active',
             'position',
@@ -1313,6 +1370,7 @@ class ALTAPAY extends PaymentModule
 
         $terminal->shop_id = (int) $this->context->shop->id;
         $terminal->nature = $nature;
+        $terminal->applepay_supported_networks = serialize($applepay_supported_networks);
         // Validate
         $result = $terminal->validateFields(false, true);
 
@@ -2195,7 +2253,6 @@ class ALTAPAY extends PaymentModule
         $paymentsOptions = [];
         $userAgent = $_SERVER['HTTP_USER_AGENT'];
         foreach ($paymentMethods as $paymentMethod) {
-            $paymentOptions = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
             $nature = json_decode($paymentMethod['nature'], true);
             if ($show_only_cc_terminal and (count($nature) != 1 or $nature[0]['Nature'] !== 'CreditCard')) {
                 continue;
@@ -2245,6 +2302,23 @@ class ALTAPAY extends PaymentModule
         $cart = $this->context->cart;
         $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
         $currency = new Currency($cart->id_currency);
+        // Default values for Apple Pay label and supported networks
+        $apple_pay_label = 'Apple Pay';
+        $applepay_supported_networks = ['visa', 'masterCard', 'amex'];
+
+        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
+        foreach ($paymentMethods as $paymentMethod) {
+            if ($paymentMethod['applepay']) {
+                if (!empty($paymentMethod['applepay_form_label'])) {
+                    $apple_pay_label = $paymentMethod['applepay_form_label'];
+                }
+                if (!empty($paymentMethod['applepay_supported_networks']) && $paymentMethod['applepay_supported_networks'] != 'b:0;') {
+                    $applepay_supported_networks = unserialize($paymentMethod['applepay_supported_networks']);
+                }
+                break;
+            }
+        }
+
         $this->context->controller->addJquery();
         $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
@@ -2253,6 +2327,8 @@ class ALTAPAY extends PaymentModule
             Media::addJsDef(['amountPaid' => $amountPaid]);
             Media::addJsDef(['currencyCode' => $currency->iso_code]);
             Media::addJsDef(['countryCode' => $this->context->country->iso_code]);
+            Media::addJsDef(['applepayLabel' => $apple_pay_label]);
+            Media::addJsDef(['applepaySupportedNetworks' => json_encode($applepay_supported_networks)]);
             $this->context->controller->registerJavascript(
                 'applepaysdk', // Unique ID
                 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js', // JS path

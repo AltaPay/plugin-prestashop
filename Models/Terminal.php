@@ -15,6 +15,8 @@ class Altapay_Models_Terminal extends ObjectModel
     public $currency;
     public $ccTokenControl_;
     public $applepay;
+    public $applepay_form_label;
+    public $applepay_supported_networks;
     public $icon_filename;
     /** @var bool Enabled or disabled */
     public $active;
@@ -36,6 +38,8 @@ class Altapay_Models_Terminal extends ObjectModel
             'currency' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 100],
             'ccTokenControl_' => ['type' => self::TYPE_INT, 'required' => true, 'size' => 255],
             'applepay' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
+            'applepay_form_label' => ['type' => self::TYPE_STRING, 'required' => false, 'size' => 255],
+            'applepay_supported_networks' => ['type' => self::TYPE_HTML, 'required' => false, 'size' => 3999999999999],
             'icon_filename' => ['type' => self::TYPE_STRING, 'required' => true, 'size' => 100],
             'active' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
             'position' => ['type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId'],
