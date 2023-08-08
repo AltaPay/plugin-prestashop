@@ -115,8 +115,12 @@ div#order-detail-content {
     width: 100%;
 }
 
+#checkout-cc p.payment-headline {
+    margin-bottom: 25px;
+}
+
 #checkout-cc #card_info {
-    width: 500px;
+    max-width: 500px;
     text-align: left;
     margin-left: auto;
     margin-right: auto;
@@ -139,7 +143,7 @@ div#order-detail-content {
 }
 
 #checkout-cc .pensio_payment_form_card-number input, #checkout-cc .pensio_payment_form_cardholder input {
-    padding: 16px 14px;
+    padding: 12px 14px;
     width: 100%;
     border-radius: 3px;
     border: 1px solid rgba(0, 0, 0, 0.16);
@@ -155,7 +159,7 @@ div#order-detail-content {
 
 #checkout-cc .pensio_payment_form_month select, .pensio_payment_form_year select, #idealIssuer {
     margin-top: 4px;
-    padding: 16px 14px;
+    padding: 12px 14px;
     width: 100%;
     border-radius: 3px;
     border: 1px solid rgba(0, 0, 0, 0.16);
@@ -163,10 +167,19 @@ div#order-detail-content {
     font-size: 16px;
     -webkit-appearance: none;
     -moz-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, black 50%),
+    linear-gradient(135deg, black 50%, transparent 50%);
+    background-position: calc(100% - 20px) calc(20px + 2px),
+    calc(100% - 15px) calc(20px + 2px),
+    100% 0;
+    background-size: 5px 5px,
+    5px 5px,
+    40px 40px;
+    background-repeat: no-repeat;
 }
 
 #checkout-cc .pensio_payment_form-cvc-input input {
-    padding: 16px 14px;
+    padding: 12px 14px;
     width: 100%;
     border-radius: 3px;
     border: 1px solid rgba(0, 0, 0, 0.16);
@@ -200,7 +213,7 @@ div#order-detail-content {
 }
 
 #checkout-cc .cvc-icon {
-    width: 30px;
+    width: 35px;
     position: absolute;
     top: 0;
     right: 0;
@@ -272,14 +285,16 @@ div#order-detail-content {
 
 #checkout-cc .pensio_payment_form_cvc-info-text {
     font-size: 10px;
+    line-height: normal;
 }
 
 #checkout-cc .pensio_payment_form_label_cell {
-    font-size: 16px
+    font-size: 16px;
+    margin-bottom: 0;
 }
 
-#checkout-cc .cardholdername_row, #checkout-cc .expiry_row, #checkout-cc .cardnumber_row {
-    margin-top: 10px;
+#checkout-cc .cardnumber_row {
+    margin-bottom: 20px;
 }
 
 #checkout-cc .expiry_row {
@@ -328,12 +343,9 @@ div#order-detail-content {
 
 #checkout-cc .pensio_required_field_indicator, #checkout-cc #invalid_amex_cvc, #checkout-cc #invalid_cvc, #checkout-cc #invalid_cardholdername {
     color: red;
-    font-size: 16px;
+    font-size: 12px;
+    line-height: normal;
     margin-top: 4px;
-}
-
-#checkout-cc .pensio_payment_form_invalid-cvc-input, #checkout-cc .pensio_payment_form_invalid-cardholder-input {
-    color: red;
 }
 
 #checkout-cc .PensioCloseButton, #checkout-cc .CustomAltaPayCloseButton {
@@ -374,6 +386,10 @@ div#order-detail-content {
 
 #checkout-cc #idealIssuer select {
     color: #666;
+}
+
+#checkout-cc .pensio_payment_form_cvc-info-text {
+    margin-top: 2px;
 }
 
 @media only screen and (max-width: 768px) {
