@@ -20,7 +20,7 @@ Installing this plug-in will enable the web shop to handle card transactions thr
 
 [Reconcile Orders](#reconcile-orders)
 
-[Credit Card form styling](#credit-card-form-styling)
+[Styling](#styling)
 
 [Troubleshooting](#troubleshooting)
 
@@ -141,7 +141,7 @@ In order to reconcile payments please follow the steps below:
 ![funding_list_csv](Docs/OrderReconciliation/funding_list_csv.png)
 
 
-## Credit Card form styling
+## Styling
 
 Choose one of the below options from Credit Card form style dropdown to change the styling of Credit Card form on the checkout page.
 

@@ -26,6 +26,8 @@
                 <div id="card_info" {if ($cssClass)} class = "cvv_less" {/if}>
                     {if ($stylingclass) == "checkout-cc"}
                       <p class="payment-headline">{l s='You are about to pay' mod='altapay'} <strong><span id="PensioTotal">{$cart_summary.total_price} </span> {$currency_code}</strong>  {l s='for the order.' mod='altapay'}</p>
+                    {else}
+                      <h1 class="payment_msg">{l s="Please enter your details below" mod="altapay"}</h1>
                     {/if}
                     <form id="PensioPaymentForm" ></form>
                     <input type="button" class="btn btn-success PensioSubmitButton customPayButton" disabled="disabled" value="{l s='Confirm' mod='altapay'}" style="display:none;">
