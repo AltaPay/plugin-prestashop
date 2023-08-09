@@ -20,7 +20,7 @@ Installing this plug-in will enable the web shop to handle card transactions thr
 
 [Reconcile Orders](#reconcile-orders)
 
-[Styling](#styling)
+[Credit Card form styling](#credit-card-form-styling)
 
 [Troubleshooting](#troubleshooting)
 
@@ -141,7 +141,21 @@ In order to reconcile payments please follow the steps below:
 ![funding_list_csv](Docs/OrderReconciliation/funding_list_csv.png)
 
 
-## Styling
+## Credit Card form styling
+
+Choose one of the below options from Credit Card form style dropdown to change the styling of Credit Card form on the checkout page.
+
+![prestashop_configure_styling](Docs/Configuration/prestashop_configure_styling.png)
+
+- `Legacy` Choose this option if legacy form is enabled from the gateway side.
+
+    ![altapay_cc_legacy_form.png](Docs/Configuration/prestashop_legacy_styling_form.png)
+
+- `Checkout` Select the option to show the Credit Card form in a modern look. Make sure the checkout form is enabled from the gateway side.
+
+    ![altapay_cc_checkout_form.png](Docs/Configuration/prestashop_checkout_styling_form.png)
+
+- `Custom` This option can be selected to implement custom styling on the payment page. Selecting this option will remove all the styling from the payment page.
 
 - You can change/update the **Payment Form Page** by navigating to the below path:
 

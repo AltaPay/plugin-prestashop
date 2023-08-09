@@ -82,7 +82,7 @@ class ALTAPAY extends PaymentModule
         }
         // Execute the query
         $result = Db::getInstance()->getValue('
-            SELECT COUNT(*) as total_rows
+            SELECT COUNT(*)
             FROM ' . _DB_PREFIX_ . 'altapay_terminals'
         );
         // Check if the table contains data

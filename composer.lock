@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "altapay/api-php",
-            "version": "3.3.5",
+            "version": "3.3.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/AltaPay/api-php.git",
-                "reference": "a79f23dc7eb2bfc92355b32047e21583b6b5ef02"
+                "reference": "e8e5da657ca530384e4c7648565db053dffe4c40"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/AltaPay/api-php/zipball/a79f23dc7eb2bfc92355b32047e21583b6b5ef02",
-                "reference": "a79f23dc7eb2bfc92355b32047e21583b6b5ef02",
+                "url": "https://api.github.com/repos/AltaPay/api-php/zipball/e8e5da657ca530384e4c7648565db053dffe4c40",
+                "reference": "e8e5da657ca530384e4c7648565db053dffe4c40",
                 "shasum": ""
             },
             "require": {
@@ -56,7 +56,7 @@
                 "altapay",
                 "payment"
             ],
-            "time": "2023-05-24T05:22:15+00:00"
+            "time": "2023-04-24T05:03:07+00:00"
         },
         {
             "name": "composer/package-versions-deprecated",
@@ -129,21 +129,21 @@
         },
         {
             "name": "guzzlehttp/guzzle",
-            "version": "7.7.0",
+            "version": "7.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "fb7566caccf22d74d1ab270de3551f72a58399f5"
+                "reference": "b964ca597e86b752cd994f27293e9fa6b6a95ed9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/fb7566caccf22d74d1ab270de3551f72a58399f5",
-                "reference": "fb7566caccf22d74d1ab270de3551f72a58399f5",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/b964ca597e86b752cd994f27293e9fa6b6a95ed9",
+                "reference": "b964ca597e86b752cd994f27293e9fa6b6a95ed9",
                 "shasum": ""
             },
             "require": {
                 "ext-json": "*",
-                "guzzlehttp/promises": "^1.5.3 || ^2.0",
+                "guzzlehttp/promises": "^1.5",
                 "guzzlehttp/psr7": "^1.9.1 || ^2.4.5",
                 "php": "^7.2.5 || ^8.0",
                 "psr/http-client": "^1.0",
@@ -155,8 +155,7 @@
             "require-dev": {
                 "bamarni/composer-bin-plugin": "^1.8.1",
                 "ext-curl": "*",
-                "php-http/client-integration-tests": "dev-master#2c025848417c1135031fdf9c728ee53d0a7ceaee as 3.0.999",
-                "php-http/message-factory": "^1.1",
+                "php-http/client-integration-tests": "^3.0",
                 "phpunit/phpunit": "^8.5.29 || ^9.5.23",
                 "psr/log": "^1.1 || ^2.0 || ^3.0"
             },
@@ -170,6 +169,9 @@
                 "bamarni-bin": {
                     "bin-links": true,
                     "forward-command": false
+                },
+                "branch-alias": {
+                    "dev-master": "7.5-dev"
                 }
             },
             "autoload": {
@@ -247,37 +249,38 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-05-21T14:04:53+00:00"
+            "time": "2023-04-17T16:30:08+00:00"
         },
         {
             "name": "guzzlehttp/promises",
-            "version": "2.0.0",
+            "version": "1.5.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/promises.git",
-                "reference": "3a494dc7dc1d7d12e511890177ae2d0e6c107da6"
+                "reference": "b94b2807d85443f9719887892882d0329d1e2598"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/promises/zipball/3a494dc7dc1d7d12e511890177ae2d0e6c107da6",
-                "reference": "3a494dc7dc1d7d12e511890177ae2d0e6c107da6",
+                "url": "https://api.github.com/repos/guzzle/promises/zipball/b94b2807d85443f9719887892882d0329d1e2598",
+                "reference": "b94b2807d85443f9719887892882d0329d1e2598",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.2.5 || ^8.0"
+                "php": ">=5.5"
             },
             "require-dev": {
-                "bamarni/composer-bin-plugin": "^1.8.1",
-                "phpunit/phpunit": "^8.5.29 || ^9.5.23"
+                "symfony/phpunit-bridge": "^4.4 || ^5.1"
             },
             "type": "library",
             "extra": {
-                "bamarni-bin": {
-                    "bin-links": true,
-                    "forward-command": false
+                "branch-alias": {
+                    "dev-master": "1.5-dev"
                 }
             },
             "autoload": {
+                "files": [
+                    "src/functions_include.php"
+                ],
                 "psr-4": {
                     "GuzzleHttp\\Promise\\": "src/"
                 }
@@ -326,7 +329,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-05-21T13:50:22+00:00"
+            "time": "2022-08-28T14:55:35+00:00"
         },
         {
             "name": "guzzlehttp/psr7",
@@ -525,12 +528,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/JetBrains/phpstorm-stubs.git",
-                "reference": "0b9854c8ba932966f3cb1469a2d18ab9249272b9"
+                "reference": "077d371b23d38d7f6f039994bfb03732d7965fbc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/JetBrains/phpstorm-stubs/zipball/0b9854c8ba932966f3cb1469a2d18ab9249272b9",
-                "reference": "0b9854c8ba932966f3cb1469a2d18ab9249272b9",
+                "url": "https://api.github.com/repos/JetBrains/phpstorm-stubs/zipball/077d371b23d38d7f6f039994bfb03732d7965fbc",
+                "reference": "077d371b23d38d7f6f039994bfb03732d7965fbc",
                 "shasum": ""
             },
             "require-dev": {
@@ -562,7 +565,7 @@
                 "stubs",
                 "type"
             ],
-            "time": "2023-07-20T19:40:08+00:00"
+            "time": "2023-04-18T09:13:06+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -570,12 +573,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/nikic/PHP-Parser.git",
-                "reference": "cfc54e30a4f5e5af5f9d9ce86697cfcc5f7e7c24"
+                "reference": "0ffddce52d816f72d0efc4d9b02e276d3309ef01"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/cfc54e30a4f5e5af5f9d9ce86697cfcc5f7e7c24",
-                "reference": "cfc54e30a4f5e5af5f9d9ce86697cfcc5f7e7c24",
+                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/0ffddce52d816f72d0efc4d9b02e276d3309ef01",
+                "reference": "0ffddce52d816f72d0efc4d9b02e276d3309ef01",
                 "shasum": ""
             },
             "require": {
@@ -614,7 +617,7 @@
                 "parser",
                 "php"
             ],
-            "time": "2023-07-30T21:38:32+00:00"
+            "time": "2023-03-06T22:12:36+00:00"
         },
         {
             "name": "psr/container",
@@ -2015,29 +2018,25 @@
         },
         {
             "name": "doctrine/deprecations",
-            "version": "v1.1.1",
+            "version": "v1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/deprecations.git",
-                "reference": "612a3ee5ab0d5dd97b7cf3874a6efe24325efac3"
+                "reference": "0e2a4f1f8cdfc7a92ec3b01c9334898c806b30de"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/deprecations/zipball/612a3ee5ab0d5dd97b7cf3874a6efe24325efac3",
-                "reference": "612a3ee5ab0d5dd97b7cf3874a6efe24325efac3",
+                "url": "https://api.github.com/repos/doctrine/deprecations/zipball/0e2a4f1f8cdfc7a92ec3b01c9334898c806b30de",
+                "reference": "0e2a4f1f8cdfc7a92ec3b01c9334898c806b30de",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.1 || ^8.0"
+                "php": "^7.1|^8.0"
             },
             "require-dev": {
                 "doctrine/coding-standard": "^9",
-                "phpstan/phpstan": "1.4.10 || 1.10.15",
-                "phpstan/phpstan-phpunit": "^1.0",
-                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.5",
-                "psalm/plugin-phpunit": "0.18.4",
-                "psr/log": "^1 || ^2 || ^3",
-                "vimeo/psalm": "4.30.0 || 5.12.0"
+                "phpunit/phpunit": "^7.5|^8.5|^9.5",
+                "psr/log": "^1|^2|^3"
             },
             "suggest": {
                 "psr/log": "Allows logging deprecations via PSR-3 logger implementation"
@@ -2054,7 +2053,7 @@
             ],
             "description": "A small layer on top of trigger_error(E_USER_DEPRECATED) or PSR-3 logging with options to disable all deprecations or selectively for packages.",
             "homepage": "https://www.doctrine-project.org/",
-            "time": "2023-06-03T09:27:29+00:00"
+            "time": "2022-05-02T15:47:09+00:00"
         },
         {
             "name": "doctrine/lexer",
@@ -2764,16 +2763,16 @@
         },
         {
             "name": "symfony/process",
-            "version": "v5.4.26",
+            "version": "v5.4.23",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/process.git",
-                "reference": "1a44dc377ec86a50fab40d066cd061e28a6b482f"
+                "reference": "4b842fc4b61609e0a155a114082bd94e31e98287"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/process/zipball/1a44dc377ec86a50fab40d066cd061e28a6b482f",
-                "reference": "1a44dc377ec86a50fab40d066cd061e28a6b482f",
+                "url": "https://api.github.com/repos/symfony/process/zipball/4b842fc4b61609e0a155a114082bd94e31e98287",
+                "reference": "4b842fc4b61609e0a155a114082bd94e31e98287",
                 "shasum": ""
             },
             "require": {
@@ -2819,7 +2818,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-07-12T15:44:31+00:00"
+            "time": "2023-04-18T13:50:24+00:00"
         },
         {
             "name": "symfony/stopwatch",

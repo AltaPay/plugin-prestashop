@@ -86,7 +86,15 @@ div#order-detail-content {
     width: 70%;
     padding: 11px;
     border: 1px solid #ddd;
-    margin: 16px 0px;
+    margin: 0px 0px;
+}
+
+#legacy-cc label#selectCardLabel {
+    display: none;
+}
+
+#legacy-cc label.pensio_payment_form_label_cell {
+    margin-top: 16px;
 }
 
 #legacy-cc .pensio_payment_form_outer select#emonth,
