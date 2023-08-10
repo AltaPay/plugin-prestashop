@@ -143,6 +143,20 @@ In order to reconcile payments please follow the steps below:
 
 ## Styling
 
+Choose one of the below options from Credit Card form style dropdown to change the styling of Credit Card form on the checkout page.
+
+![prestashop_configure_styling](Docs/Configuration/prestashop_configure_styling.png)
+
+- `Legacy` Choose this option if legacy form is enabled from the gateway side.
+
+    ![altapay_cc_legacy_form.png](Docs/Configuration/prestashop_legacy_styling_form.png)
+
+- `Checkout` Select the option to show the Credit Card form in a modern look. Make sure the checkout form is enabled from the gateway side.
+
+    ![altapay_cc_checkout_form.png](Docs/Configuration/prestashop_checkout_styling_form.png)
+
+- `Custom` This option can be selected to implement custom styling on the payment page. Selecting this option will remove all the styling from the payment page.
+
 - You can change/update the **Payment Form Page** by navigating to the below path:
 
     <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/payment_form17.tpl>
@@ -153,29 +167,14 @@ In order to reconcile payments please follow the steps below:
 
 ### Movic Theme Compatibility
 
-   If you are using the Movic theme, search the below code in the file located at `root/modules/altapay/views/templates/front/payment_form17.tpl` 
+   If you are using the Movic theme, search the below code in the file located at `root/modules/altapay/controllers/front/callbackform.php`
+
    ```
-   {extends file=$layout}
-{block name='header'}
-  {include file='checkout/_partials/header.tpl'}
-   <link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
-  {assign var="cart_info_path" value="module:altapay/views/templates/front/cart_info17.tpl"}
-{/block}
+   $this->setTemplate('module:altapay/views/templates/front/payment_form17.tpl');
    ```
    and replace it with below one
    ```
-   <head>
-      {block name='head'}
-         {include file='_partials/head.tpl'}
-      {/block}
-   </head>
-
-   <header id="header">
-      {block name='header'}
-         {include file='checkout/_partials/header.tpl'}
-         {assign var="cart_info_path" value="module:altapay/views/templates/front/cart_info17.tpl"}
-      {/block}
-   </header>
+   $this->setTemplate('module:altapay/views/templates/front/paymentform_atmovic.tpl');
    ```
 
 ## Troubleshooting

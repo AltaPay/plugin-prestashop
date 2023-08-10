@@ -12,6 +12,8 @@
   {include file='checkout/_partials/header.tpl'}
    <link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
   {assign var="cart_info_path" value="module:altapay/views/templates/front/cart_info17.tpl"}
+  {assign var="cart_summary" value=$summarydetails}
+  {assign currency_code Currency::getDefaultCurrency()->sign}
 {/block}
 
 {block name='content'}
@@ -20,12 +22,18 @@
       <div class="page-order-detail">
           <div class="cart-grid-body col-xs-12 col-lg-12">
             {block name='checkout_process'}
+              <div id="{$stylingclass}">
                 <div id="card_info" {if ($cssClass)} class = "cvv_less" {/if}>
-                   <h1 class="payment_msg">{l s="Please enter your details below" mod="altapay"}</h1>
+                    {if ($stylingclass) == "checkout-cc"}
+                      <p class="payment-headline">{l s='You are about to pay' mod='altapay'} <strong><span id="PensioTotal">{$cart_summary.total_price} </span> {$currency_code}</strong>  {l s='for the order.' mod='altapay'}</p>
+                    {else}
+                      <h1 class="payment_msg">{l s="Please enter your details below" mod="altapay"}</h1>
+                    {/if}
                     <form id="PensioPaymentForm" ></form>
                     <input type="button" class="btn btn-success PensioSubmitButton customPayButton" disabled="disabled" value="{l s='Confirm' mod='altapay'}" style="display:none;">
                 </div>
-                {include file = "$cart_info_path"}
+              </div>
+              {include file = "$cart_info_path"}
             {/block}
           </div>
       </div>

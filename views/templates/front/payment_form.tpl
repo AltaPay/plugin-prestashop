@@ -7,63 +7,21 @@
 *}
 
 {assign var="cart_info_path" value="`$smarty.current_dir`/cart_info.tpl"}
+{assign var="cart_summary" value=$summarydetails}
+{assign currency_code Currency::getDefaultCurrency()->sign}
 <link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
-<style>
-    div#card_info {
-        width: 70%;
-        margin: 0 auto;
-        padding: 10px 20px;
-        background: #2fb5d22b;
-    }
-
-    div#order-detail-content {
-        width: 70%;
-        padding: 10px 20px 30px;
-        background: #2fb5d22b;
-        margin: 0 auto 40px;
-    }
-
-    .table-bordered, .table-bordered td, .table-bordered th {
-        border: 2px solid #2fb5d2;
-    }
-
-    .table thead th {
-        border-bottom: 3px solid #2fb5d2;
-    }
-    .pensio_payment_form_row {
-        display: inline-block;
-        padding-right: 70px;
-        text-align: left;
-    }
-
-    .pensio_payment_form_outer {
-        text-align: center;
-    }
-
-    div#card_info {
-        text-align: center;
-        margin: 40px auto;
-    }
-
-    #card_info.cvv_less .cvc_row , #card_info.cvv_less .cvc_description_row {
-        display: none;
-    }
-    
-    #card_info.cvv_less .pensio_payment_form_table tr:nth-child(3) {
-        display: none;
-    }
-
-    div#savecreditcard {
-        display: none;
-    }
-</style>
 </header>
 
+<div id="{$stylingclass}">
 <div id="card_info" {if ($cssClass)} class = "cvv_less" {/if}>
-<p class="payment_msg">{l s="Please enter your details below" mod="altapay"}</p>
-<form id="PensioPaymentForm"></form>
+    {if $stylingclass == "checkout-cc"}
+        <p class="payment-headline">{l s='You are about to pay' mod='altapay'} <strong><span id="PensioTotal">{$cart_summary.total_price} </span> {$currency_code}</strong>  {l s='for the order.' mod='altapay'}</p>
+    {else}
+        <p class="payment_msg">{l s="Please enter your details below" mod="altapay"}</p>
+    {/if}
+    <form id="PensioPaymentForm" ></form>
     <input type="button" class="btn btn-success PensioSubmitButton customPayButton" disabled="disabled" value="{l s='Confirm' mod='altapay'}" style="display:none;">
-
+</div>
 </div>
 {include file = "$cart_info_path"}
 
