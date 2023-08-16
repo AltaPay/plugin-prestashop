@@ -172,16 +172,23 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     } else {
                         // Unexpected scenario
                         $mNa = $this->module->name;
-                        PrestaShopLogger::addLog('Unexpected scenario: Callback notification was received for Transaction '
-                            . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
-                            $this->module->id, true);
+                        PrestaShopLogger::addLog(
+                            'Unexpected scenario: Callback notification was received for Transaction '
+                            . $shopOrderId . ' with payment status ' . $transactionStatus,
+                            3,
+                            '1005',
+                            $mNa,
+                            $this->module->id,
+                            true
+                        );
                         $this->unlock($fp);
                         exit('Unrecognized status received ' . $transactionStatus);
                     }
                 }
             } else {
                 // Unexpected scenario
-                PrestaShopLogger::addLog('Callback notification was received for Transaction ' . $shopOrderId . ' with payment status ' . $transactionStatus,
+                PrestaShopLogger::addLog(
+                    'Callback notification was received for Transaction ' . $shopOrderId . ' with payment status ' . $transactionStatus,
                     3,
                     '1005',
                     $this->module->name,
@@ -192,7 +199,8 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 exit('Unrecognized status received ' . $transactionStatus);
             }
         } catch (PrestaShopException $e) {
-            PrestaShopLogger::addLog('Callback notification issue, Message ' . $e->displayMessage(),
+            PrestaShopLogger::addLog(
+                'Callback notification issue, Message ' . $e->displayMessage(),
                 3,
                 '1005',
                 $this->module->name,

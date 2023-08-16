@@ -202,9 +202,17 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         // Load the customer
         $customer = new Customer((int) $cart->id_customer);
         $customerSecureKey = $customer->secure_key;
-        $this->module->validateOrder($cartID, $orderStatus, $amountPaid,
-            $paymentMethod, null, null,
-            $currencyPaidID, false, $customerSecureKey);
+        $this->module->validateOrder(
+            $cartID,
+            $orderStatus,
+            $amountPaid,
+            $paymentMethod,
+            null,
+            null,
+            $currencyPaidID,
+            false,
+            $customerSecureKey
+        );
     }
 
     /**
@@ -288,7 +296,8 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         } catch (Exception $e) {
             $message = $e->getMessage();
         }
-        PrestaShopLogger::addLog('Callback OK issue, Message ' . $message,
+        PrestaShopLogger::addLog(
+            'Callback OK issue, Message ' . $message,
             3,
             '1005',
             $this->module->name,
@@ -346,9 +355,15 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         } else {
             // Unexpected scenario
             $mNa = $this->module->name;
-            PrestaShopLogger::addLog('Unexpected scenario: Callback notification was received for Transaction '
-                . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
-                $this->module->id, true);
+            PrestaShopLogger::addLog(
+                'Unexpected scenario: Callback notification was received for Transaction '
+                . $shopOrderId . ' with payment status ' . $transactionStatus,
+                3,
+                '1005',
+                $mNa,
+                $this->module->id,
+                true
+            );
             $this->unlock($fp);
             exit('Unrecognized status received ' . $transactionStatus);
         }
