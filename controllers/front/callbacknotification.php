@@ -19,7 +19,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
     public function postProcess()
     {
         $postData = Tools::getAllValues();
-        $checksum = $postData['checksum'];
+        $checksum = !empty($postData['checksum']) ? $postData['checksum'] : '';
         $terminal_name = getTransactionTerminalByUniqueId($postData['shop_orderid']);
         $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
 
@@ -50,6 +50,27 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 // Check if the order already saved with the success status
                 if (!empty($result)) {
                     exit('Order already Processed!!');
+                }
+            }
+
+            // Check if this is a duplicate payment
+            $order_id = Order::getOrderByCartId((int)($cart->id));
+            if (!empty($order_id)) {
+                $altapay_order_details = getAltapayOrderDetails($order_id);
+                if (!empty($altapay_order_details)
+                    and $altapay_order_details[0]['paymentStatus'] === 'succeeded'
+                    and $altapay_order_details[0]['payment_id'] != $transactionId
+                    and $postData['status'] === 'succeeded') {
+
+                    //refund or release incoming payment request
+                    if (in_array($transaction->TransactionStatus, ['captured', 'bank_payment_finalized'], true)) {
+                        $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
+                    } else {
+                        $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
+                    }
+                    $api->setTransaction($transactionId);
+                    $api->call();
+                    exit('Order already Processed!');
                 }
             }
 
