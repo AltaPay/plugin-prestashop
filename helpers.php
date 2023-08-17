@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.5.9';
+    $pluginVersion = '3.6.0';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -604,7 +604,7 @@ function handleFraudPayment($response, $transaction)
             $message = $fraudMsg;
             $paymentProcessed = true;
             try {
-                if ($transaction->TransactionStatus === 'captured') {
+                if (in_array($transaction->TransactionStatus, ['captured', 'bank_payment_finalized'], true)) {
                     $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
                 } else {
                     $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());

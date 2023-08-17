@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.6.0] - 2023-08-16
+### Fixed
+- Fix: Multiple payments issue against the same order.
+
 ## [3.5.9] - 2023-08-09
 ### Added
 - Add new design option with modern look for Credit Card form.

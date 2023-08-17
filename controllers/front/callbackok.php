@@ -20,7 +20,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
     public function postProcess()
     {
         $postData = Tools::getAllValues();
-        $checksum = $postData['checksum'];
+        $checksum = !empty($postData['checksum']) ? $postData['checksum'] : '';
         $terminal_name = getTransactionTerminalByUniqueId($postData['shop_orderid']);
         $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
 
@@ -46,13 +46,14 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $maskedPan = $response->maskedCreditCard;
             $agreementType = 'unscheduled';
             $fraudPayment = handleFraudPayment($response, $transaction);
-            if (isset($shopOrderId) && !empty($shopOrderId)) {
+            //Check if this is a duplicate callback
+            if (!empty($shopOrderId)) {
                 $condition = "unique_id = '" . pSQL($shopOrderId) . "' AND paymentStatus = 'succeeded'";
                 $query = 'SELECT id_order FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE ' . $condition;
                 $result = Db::getInstance()->executeS($query);
                 // Check if the order already saved with the success status
                 if (!empty($result)) {
-                    exit('Order already Processed!!');
+                    exit('Order already Processed!');
                 }
             }
 
@@ -62,6 +63,27 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $this->unlock($fp);
                 exit('Could not load cart - exiting');
             }
+
+            // Check if this is a duplicate payment
+            $order_id = Order::getOrderByCartId((int) ($cart->id));
+            if (!empty($order_id)) {
+                $altapay_order_details = getAltapayOrderDetails($order_id);
+                if (!empty($altapay_order_details)
+                    and $altapay_order_details[0]['paymentStatus'] === 'succeeded'
+                    and $altapay_order_details[0]['payment_id'] != $transactionID
+                    and $postData['status'] === 'succeeded') {
+                    //refund or release incoming payment request
+                    if (in_array($transaction->TransactionStatus, ['captured', 'bank_payment_finalized'], true)) {
+                        $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
+                    } else {
+                        $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
+                    }
+                    $api->setTransaction($transactionID);
+                    $api->call();
+                    exit('Order already Processed!');
+                }
+            }
+
             // Redirect to payment selection page
             if ($fraudPayment['payment_status']) {
                 $this->saveLogs($transaction->FraudExplanation);

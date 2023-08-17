@@ -32,7 +32,7 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
         $css_dir = null;
         $postData = Tools::getAllValues();
         $cart = getCartFromUniqueId($postData['shop_orderid']);
-        $checksum = $postData['checksum'];
+        $checksum = !empty($postData['checksum']) ? $postData['checksum'] : '';
         $terminalRemoteName = getCvvLess($cart->id, $postData['shop_orderid']);
         $terminal_name = getTransactionTerminalByUniqueId($postData['shop_orderid']);
         $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
