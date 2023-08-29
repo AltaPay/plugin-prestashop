@@ -1314,7 +1314,7 @@ class ALTAPAY extends PaymentModule
         $currentTerminalId = Tools::getValue('id_terminal');
         // Update existing terminal
         if (!empty($currentTerminalId)) {
-            $terminal = new Altapay_Models_Terminal((int)$currentTerminalId);
+            $terminal = new Altapay_Models_Terminal((int) $currentTerminalId);
         } else { // Create a new terminal
             $terminal = new Altapay_Models_Terminal();
         }
@@ -1652,6 +1652,7 @@ class ALTAPAY extends PaymentModule
         $helper->orderWay = 'ASC';
         $content = Altapay_Models_Terminal::getTerminals($this->context->shop->id);
         $helper->listTotal = count($content);
+
         return $helper->generateList($content, $fields_list);
     }
 
