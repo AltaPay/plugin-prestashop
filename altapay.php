@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.6.0';
+        $this->version = '3.6.1';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
@@ -1311,11 +1311,9 @@ class ALTAPAY extends PaymentModule
     private function postProcessTerminal()
     {
         $terminalRemoteName = $_POST['remote_name'];
-        $currentShopId = (int) $this->context->shop->id;
-        $terminalId = getTerminalId($terminalRemoteName, $currentShopId)[0]['id_terminal'];
         $currentTerminalId = Tools::getValue('id_terminal');
         // Update existing terminal
-        if (!empty($terminalId) && ($terminalId == $currentTerminalId)) {
+        if (!empty($currentTerminalId)) {
             $terminal = new Altapay_Models_Terminal((int) $currentTerminalId);
         } else { // Create a new terminal
             $terminal = new Altapay_Models_Terminal();
@@ -1653,6 +1651,7 @@ class ALTAPAY extends PaymentModule
         $helper->orderBy = 'id_terminal';
         $helper->orderWay = 'ASC';
         $content = Altapay_Models_Terminal::getTerminals($this->context->shop->id);
+        $helper->listTotal = count($content);
 
         return $helper->generateList($content, $fields_list);
     }
