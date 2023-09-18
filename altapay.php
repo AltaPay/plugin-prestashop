@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.6.1';
+        $this->version = '3.6.2';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
@@ -77,7 +77,13 @@ class ALTAPAY extends PaymentModule
             || !$this->registerHook('displayCustomerAccount')
             || !$this->registerHook('actionFrontControllerSetMedia')
             || !$this->registerHook('actionOrderStatusPostUpdate')
+            || !$this->registerHook('actionAdminOrdersListingFieldsModifier')
         ) {
+            return false;
+        }
+
+        if (version_compare(_PS_VERSION_, '1.7.5.0', '>=') and (!$this->registerHook('actionOrderGridDefinitionModifier')
+            or !$this->registerHook('actionOrderGridQueryBuilderModifier'))) {
             return false;
         }
         // Execute the query
@@ -2075,6 +2081,63 @@ class ALTAPAY extends PaymentModule
             return $this->display(__FILE__, '/views/templates/hook/admin_order17.tpl');
         } else {
             return $this->display(__FILE__, '/views/templates/hook/admin_order.tpl');
+        }
+    }
+
+    public function hookActionAdminOrdersListingFieldsModifier($params)
+    {
+        if (isset($params['select'])) {
+            $params['select'] .= ', apo.`unique_id` as `altapay_order_id`';
+            $params['join'] .= ' LEFT JOIN `' . _DB_PREFIX_ . 'altapay_order` apo ON (a.id_order = apo.`id_order`)';
+        }
+
+        $params['fields']['altapay_order_id'] = [
+            'title' => $this->l('AltaPay Order ID'),
+            'type' => 'text',
+            'align' => 'text-center',
+            'search' => true,
+            'havingFilter' => true,
+        ];
+    }
+
+    public function hookActionOrderGridDefinitionModifier(array $params)
+    {
+        $field_name = 'altapay_order_id';
+        $definition = $params['definition'];
+        $filters = $definition->getFilters();
+        $columns = $definition->getColumns();
+
+        $columns->addAfter('reference', (new PrestaShop\PrestaShop\Core\Grid\Column\Type\DataColumn($field_name))
+            ->setName($this->l('AltaPay Order ID'))
+            ->setOptions(['field' => $field_name])
+        );
+
+        $filters->add(
+            (
+                new PrestaShop\PrestaShop\Core\Grid\Filter\Filter($field_name,
+                Symfony\Component\Form\Extension\Core\Type\TextType::class)
+            )->setTypeOptions(['required' => false])->setAssociatedColumn($field_name)
+        );
+    }
+
+    public function hookActionOrderGridQueryBuilderModifier(array $params)
+    {
+        $field_name = 'altapay_order_id';
+        $search_query_builder = $params['search_query_builder'];
+        $search_criteria = $params['search_criteria'];
+
+        $search_query_builder->addSelect('apo.`unique_id` as `altapay_order_id`')
+            ->leftJoin('o', _DB_PREFIX_ . 'altapay_order', 'apo', 'o.id_order = apo.id_order');
+
+        if ('altapay_order_id' === $search_criteria->getOrderBy()) {
+            $search_query_builder->orderBy($field_name, $search_criteria->getOrderWay());
+        }
+
+        foreach ($search_criteria->getFilters() as $filter_name => $filterValue) {
+            if ($field_name === $filter_name) {
+                $search_query_builder->having($field_name . ' LIKE :' . $field_name);
+                $search_query_builder->setParameter($field_name, '%' . $filterValue . '%');
+            }
         }
     }
 
