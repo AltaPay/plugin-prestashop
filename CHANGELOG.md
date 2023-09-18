@@ -5,7 +5,7 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
-## [3.6.2] - 2023-08-30
+## [3.6.2] - 2023-09-18
 ### Added
 - AltaPay Order ID column in orders table in back office.
 
