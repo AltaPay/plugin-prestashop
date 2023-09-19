@@ -1497,8 +1497,8 @@ class ALTAPAY extends PaymentModule
                     ],
                     [
                         'type' => 'select',
-                        'label' => $this->l('Credit Card form styling'),
-                        'desc' => $this->l('Styles the credit card form on checkout'),
+                        'label' => $this->l('Checkout form styling'),
+                        'desc' => $this->l('Styles the payment form on checkout'),
                         'name' => 'enable_cc_style',
                         'required' => false,
                         'options' => [
