@@ -143,7 +143,7 @@ In order to reconcile payments please follow the steps below:
 
 ## Styling
 
-Choose one of the below options from Credit Card form style dropdown to change the styling of Credit Card form on the checkout page.
+Choose one of the below options from Checkout form style dropdown to change the styling of payment form on the checkout page.
 
 ![prestashop_configure_styling](Docs/Configuration/prestashop_configure_styling.png)
 
