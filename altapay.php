@@ -2084,6 +2084,11 @@ class ALTAPAY extends PaymentModule
         }
     }
 
+    /**
+     * Hook for displaying custom column in orders grid in admin panel for PrestaShop 1.6.x
+     * @param $params
+     * @return void
+     */
     public function hookActionAdminOrdersListingFieldsModifier($params)
     {
         if (isset($params['select'])) {
@@ -2099,6 +2104,12 @@ class ALTAPAY extends PaymentModule
             'havingFilter' => true,
         ];
     }
+
+    /**
+     * Hook for displaying custom column in orders grid in admin panel for PrestaShop 1.7.x
+     * @param array $params
+     * @return void
+     */
 
     public function hookActionOrderGridDefinitionModifier(array $params)
     {
@@ -2119,6 +2130,13 @@ class ALTAPAY extends PaymentModule
             )->setTypeOptions(['required' => false])->setAssociatedColumn($field_name)
         );
     }
+
+    /**
+     * Hook for fetching & filtering custom column data for orders grid in admin panel for PrestaShop 1.7.x
+     * @param array $params
+     * @return void
+     * 
+     */
 
     public function hookActionOrderGridQueryBuilderModifier(array $params)
     {
