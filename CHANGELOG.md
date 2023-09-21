@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.6.2] - 2023-09-20
+### Added
+- Show AltaPay Order ID in orders grid in admin panel.
+
 ## [3.6.1] - 2023-08-30
 ### Fixed
 - Fix: Duplicate terminal creation upon editing a terminal.
