@@ -66,14 +66,20 @@
     <div class="row">
       <div class="page-order-detail">
           <div class="cart-grid-body col-xs-12 col-lg-12">
-            {block name='checkout_process'}
-                <div id="card_info" {if ($cssClass)} class = "cvv_less" {/if}>
-                <h1 class="payment_msg">{l s='Du er ved at betale' mod='altapay'} {$cart_summary.total_price} {$currency_code}</h1>
-                    <form id="PensioPaymentForm" ></form>
-                    <input type="button" class="PensioSubmitButton customPayButton" disabled="disabled" value="{l s='Betale' mod='altapay'} {$cart_summary.total_price} {$currency_code}">
-                </div>
-                {include file = "$cart_info_path"}
-            {/block}
+              {block name='checkout_process'}
+                  <div id="{$stylingclass}">
+                      <div id="card_info" {if ($cssClass)} class = "cvv_less" {/if}>
+                          {if ($stylingclass) == "checkout-cc"}
+                              <p class="payment-headline">{l s='You are about to pay' mod='altapay'} <strong><span id="PensioTotal">{$cart_summary.total_price} </span> {$currency_code}</strong>  {l s='for the order.' mod='altapay'}</p>
+                          {else}
+                              <h1 class="payment_msg">{l s="Please enter your details below" mod="altapay"}</h1>
+                          {/if}
+                          <form id="PensioPaymentForm" ></form>
+                          <input type="button" class="btn btn-success PensioSubmitButton customPayButton" disabled="disabled" value="{l s='Confirm' mod='altapay'}" style="display:none;">
+                      </div>
+                  </div>
+                  {include file = "$cart_info_path"}
+              {/block}
           </div>
       </div>
     </div>

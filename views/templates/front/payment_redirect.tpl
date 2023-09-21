@@ -6,4 +6,27 @@
  * file that was distributed with this source code.
 *}
 
-<div id="PensioRedirectForm"></div>
+
+{extends file=$layout}
+{block name='header'}
+    {include file='checkout/_partials/header.tpl'}
+    <link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
+{/block}
+
+{block name='content'}
+    <section id="content">
+        <div class="row">
+            <div class="page-order-detail">
+                <div class="cart-grid-body col-xs-12 col-lg-12">
+                    {block name='checkout_process'}
+                        <div id="PensioRedirectForm"></div>
+                    {/block}
+                </div>
+            </div>
+        </div>
+    </section>
+{/block}
+
+{block name='footer'}
+    {include file='checkout/_partials/footer.tpl'}
+{/block}

@@ -177,6 +177,16 @@ Choose one of the below options from Checkout form style dropdown to change the 
    $this->setTemplate('module:altapay/views/templates/front/paymentform_atmovic.tpl');
    ```
 
+   Also, in the `root/modules/altapay/controllers/front/callbackredirect.php`
+
+   ```
+   $this->setTemplate('module:altapay/views/templates/front/payment_redirect.tpl');
+   ```
+   and replace it with below one
+   ```
+   $this->setTemplate('module:altapay/views/templates/front/paymentredirect_atmovic.tpl');
+   ```
+
 ## Troubleshooting
 
 **PHP Warning: Input variables exceeded 1000. To increase the limit change max_input_vars in php.ini.**

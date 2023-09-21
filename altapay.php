@@ -2658,6 +2658,7 @@ class ALTAPAY extends PaymentModule
             $config->setCallbackFail($callback['callback_fail']);
             $config->setCallbackOpen($callback['callback_open']);
             $config->setCallbackNotification($callback['callback_notification']);
+            $config->setCallbackRedirect($callback['callback_redirect']);
             $config->setCallbackForm($callback['callback_form']);
             $request = new API\PHP\Altapay\Api\Ecommerce\PaymentRequest(getAuth());
             if ($terminal->applepay and !empty($providerData)) {
