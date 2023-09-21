@@ -74,7 +74,7 @@
                     {/if}
                     <form id="PensioPaymentForm" ></form>
                     <input type="button" class="PensioSubmitButton customPayButton" disabled="disabled" value="{l s='Betale' mod='altapay'} {$cart_summary.total_price} {$currency_code}">                </div>
-              </div>
+                </div>
               {include file = "$cart_info_path"}
             {/block}
           </div>
