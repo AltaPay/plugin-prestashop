@@ -17,6 +17,6 @@ class AltapayCallbackredirectModuleFrontController extends ModuleFrontController
      */
     public function postProcess()
     {
-       $this->setTemplate('module:altapay/views/templates/front/payment_redirect.tpl');
+        $this->setTemplate('module:altapay/views/templates/front/payment_redirect.tpl');
     }
 }
