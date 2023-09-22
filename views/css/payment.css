@@ -489,6 +489,27 @@ div#order-detail-content {
       width: 100%;
 }
 
+.page-order-redirection {
+    position: relative;
+    float: left;
+    background-color: #fff;
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 20px;
+}
+
+#module-altapay-callbackredirect nav.breadcrumb.hidden-sm-down {
+    display: none;
+}
+
+#module-altapay-callbackredirect .page-order-redirection form {
+    margin-bottom: 10px;
+}
+
+#module-altapay-callbackredirect #blockEmailSubscription_displayFooterBefore {
+    display: none;
+}
+
 @media only screen and (max-width: 768px) {
       .pensio_payment_form_outer {
             width: 100%;
