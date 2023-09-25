@@ -18,15 +18,9 @@
         <div class="row">
             <div class="page-order-detail">
                 <div class="cart-grid-body col-xs-12 col-lg-12">
-                    {block name='checkout_process'}
-                        <div id="PensioRedirectForm"></div>
-                    {/block}
+                    <div id="PensioRedirectForm"></div>
                 </div>
             </div>
         </div>
     </section>
-{/block}
-
-{block name='footer'}
-    {include file='checkout/_partials/footer.tpl'}
 {/block}

@@ -45,9 +45,7 @@
         <div class="row">
             <div class="page-order-redirection">
                 <div class="cart-grid-body col-xs-12 col-lg-12">
-                    {block name='checkout_process'}
-                        <div id="PensioRedirectForm"></div>
-                    {/block}
+                    <div id="PensioRedirectForm"></div>
                 </div>
             </div>
         </div>
