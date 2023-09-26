@@ -17,6 +17,12 @@ class AltapayCallbackredirectModuleFrontController extends ModuleFrontController
      */
     public function postProcess()
     {
-        $this->setTemplate('module:altapay/views/templates/front/payment_redirect.tpl');
+        $themeName = Context::getContext()->shop->theme_name;
+        
+        if ($themeName === 'at_movic') {
+            $this->setTemplate('module:altapay/views/templates/front/paymentredirect_atmovic.tpl');
+        } else {
+            $this->setTemplate('module:altapay/views/templates/front/payment_redirect.tpl');
+        }
     }
 }

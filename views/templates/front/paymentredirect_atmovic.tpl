@@ -43,7 +43,7 @@
 {block name='content'}
     <section id="content">
         <div class="row">
-            <div class="page-order-redirection">
+            <div class="page-order-detail">
                 <div class="cart-grid-body col-xs-12 col-lg-12">
                     <div id="PensioRedirectForm"></div>
                 </div>

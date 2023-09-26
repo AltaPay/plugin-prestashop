@@ -21,6 +21,11 @@ Installing this plug-in will enable the web shop to handle card transactions thr
 [Reconcile Orders](#reconcile-orders)
 
 [Styling](#styling)
+*  [Customize Payment Form Page](#customize-payment-form-page)
+
+*  [Customize Redirect Form Page](#customize-redirect-form-page)
+
+*  [CSS Customization](#css-customization)
 
 [Troubleshooting](#troubleshooting)
 
@@ -143,49 +148,47 @@ In order to reconcile payments please follow the steps below:
 
 ## Styling
 
-Choose one of the below options from Checkout form style dropdown to change the styling of payment form on the checkout page.
+### Payment Form Style Configuration
 
-![prestashop_configure_styling](Docs/Configuration/prestashop_configure_styling.png)
+   Choose one of the below options from Checkout form style dropdown to change the styling of payment form on the checkout page.
 
-- `Legacy` Choose this option if legacy form is enabled from the gateway side.
+   ![prestashop_configure_styling](Docs/Configuration/prestashop_configure_styling.png)
 
-    ![altapay_cc_legacy_form.png](Docs/Configuration/prestashop_legacy_styling_form.png)
+   - `Legacy` Choose this option if legacy form is enabled from the gateway side.
 
-- `Checkout` Select the option to show the Credit Card form in a modern look. Make sure the checkout form is enabled from the gateway side.
+      ![altapay_cc_legacy_form.png](Docs/Configuration/prestashop_legacy_styling_form.png)
 
-    ![altapay_cc_checkout_form.png](Docs/Configuration/prestashop_checkout_styling_form.png)
+   - `Checkout` Select the option to show the Credit Card form in a modern look. Make sure the checkout form is enabled from the gateway side.
 
-- `Custom` This option can be selected to implement custom styling on the payment page. Selecting this option will remove all the styling from the payment page.
+      ![altapay_cc_checkout_form.png](Docs/Configuration/prestashop_checkout_styling_form.png)
 
-- You can change/update the **Payment Form Page** by navigating to the below path:
+   - `Custom` This option can be selected to implement custom styling on the payment page. Selecting this option will remove all the styling from the payment page.
 
-    <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/payment_form17.tpl>
+### Customize Payment Form Page:
 
-- Use the below link to apply the **CSS** to the form page:
+   You can change/update the **Payment Form Page** by navigating to the below path:
 
-    <https://github.com/AltaPay/plugin-prestashop/blob/main/views/css/payment.css>
+   <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/payment_form17.tpl>
 
-### Movic Theme Compatibility
+   **Note:** If you have the at_movic theme installed, the path for the payment form is as follows:
 
-   If you are using the Movic theme, search the below code in the file located at `root/modules/altapay/controllers/front/callbackform.php`
+   <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/paymentform_atmovic.tpl>
 
-   ```
-   $this->setTemplate('module:altapay/views/templates/front/payment_form17.tpl');
-   ```
-   and replace it with below one
-   ```
-   $this->setTemplate('module:altapay/views/templates/front/paymentform_atmovic.tpl');
-   ```
+### Customize Redirect Form Page:
 
-   Also, in the `root/modules/altapay/controllers/front/callbackredirect.php`
+   You can change/update the **Redirect Form Page** by navigating to the below path:
 
-   ```
-   $this->setTemplate('module:altapay/views/templates/front/payment_redirect.tpl');
-   ```
-   and replace it with below one
-   ```
-   $this->setTemplate('module:altapay/views/templates/front/paymentredirect_atmovic.tpl');
-   ```
+   <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/payment_redirect.tpl>
+
+   **Note:** If you have the at_movic theme installed, the path for the payment form is as follows:
+
+   <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/paymentredirect_atmovic.tpl>
+
+### CSS Customization:
+
+   Use the below link to apply the **CSS** to the form page:
+
+   <https://github.com/AltaPay/plugin-prestashop/blob/main/views/css/payment.css>
 
 ## Troubleshooting
 

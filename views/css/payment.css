@@ -498,15 +498,12 @@ div#order-detail-content {
     padding: 20px;
 }
 
-#module-altapay-callbackredirect nav.breadcrumb.hidden-sm-down {
-    display: none;
-}
-
 #module-altapay-callbackredirect .page-order-redirection form {
     margin-bottom: 10px;
 }
 
-#module-altapay-callbackredirect #blockEmailSubscription_displayFooterBefore {
+#module-altapay-callbackredirect #blockEmailSubscription_displayFooterBefore,
+#module-altapay-callbackredirect nav.breadcrumb.hidden-sm-down {
     display: none;
 }
 
