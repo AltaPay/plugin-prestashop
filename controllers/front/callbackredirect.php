@@ -1,4 +1,5 @@
 <?php
+
 /**
  * AltaPay module for PrestaShop
  *
@@ -18,7 +19,6 @@ class AltapayCallbackredirectModuleFrontController extends ModuleFrontController
     public function postProcess()
     {
         $themeName = Context::getContext()->shop->theme_name;
-        
         if ($themeName === 'at_movic') {
             $this->setTemplate('module:altapay/views/templates/front/paymentredirect_atmovic.tpl');
         } else {
