@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.6.2';
+        $this->version = '3.6.3';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
@@ -2658,6 +2658,7 @@ class ALTAPAY extends PaymentModule
             $config->setCallbackFail($callback['callback_fail']);
             $config->setCallbackOpen($callback['callback_open']);
             $config->setCallbackNotification($callback['callback_notification']);
+            $config->setCallbackRedirect($callback['callback_redirect']);
             $config->setCallbackForm($callback['callback_form']);
             $request = new API\PHP\Altapay\Api\Ecommerce\PaymentRequest(getAuth());
             if ($terminal->applepay and !empty($providerData)) {

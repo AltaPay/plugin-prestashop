@@ -67,12 +67,16 @@
       <div class="page-order-detail">
           <div class="cart-grid-body col-xs-12 col-lg-12">
             {block name='checkout_process'}
+              <div id="{$stylingclass}">
                 <div id="card_info" {if ($cssClass)} class = "cvv_less" {/if}>
-                <h1 class="payment_msg">{l s='Du er ved at betale' mod='altapay'} {$cart_summary.total_price} {$currency_code}</h1>
+                    {if ($stylingclass) != "checkout-cc"}
+                        <h1 class="payment_msg">{l s='Du er ved at betale' mod='altapay'} {$cart_summary.total_price} {$currency_code}</h1>
+                    {/if}
                     <form id="PensioPaymentForm" ></form>
                     <input type="button" class="PensioSubmitButton customPayButton" disabled="disabled" value="{l s='Betale' mod='altapay'} {$cart_summary.total_price} {$currency_code}">
                 </div>
-                {include file = "$cart_info_path"}
+              </div>
+              {include file = "$cart_info_path"}
             {/block}
           </div>
       </div>

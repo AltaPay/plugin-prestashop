@@ -41,6 +41,7 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
             exit();
         }
 
+        $themeName = Context::getContext()->shop->theme_name;
         $this->context->smarty->assign('cssClass', $terminalRemoteName);
         $payment_style = unserialize(Configuration::get('enable_cc_style'));
         if (empty($payment_style)) {
@@ -52,8 +53,11 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             $this->context->smarty->assign('pathUri', $this->module->getPathUri());
             $this->context->smarty->assign('products', $cart->getProducts());
-            $this->context->smarty->assign('css_dir', $css_dir);
-            $this->setTemplate('module:altapay/views/templates/front/payment_form17.tpl');
+            if ($themeName === 'at_movic') {
+                $this->setTemplate('module:altapay/views/templates/front/paymentform_atmovic.tpl');
+            } else {
+                $this->setTemplate('module:altapay/views/templates/front/payment_form17.tpl');
+            }
         } else {
             $this->context->smarty->assign('pathUri', $this->module->getPathUri());
             $this->setTemplate('payment_form.tpl');
