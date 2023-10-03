@@ -130,8 +130,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         $this->unlock($fp);
                         exit('Only handling Success state');
                     }
-                }
-                elseif ($order->getCurrentState() != Configuration::get('ALTAPAY_OS_PENDING')) { //Order found, but not pending
+                } elseif ($order->getCurrentState() != Configuration::get('ALTAPAY_OS_PENDING')) { //Order found, but not pending
                     $this->unlock($fp);
                     exit('Order found but is not currently pending - ignoring');
                 } elseif (Validate::isLoadedObject($order)) { // Pending order found, update
