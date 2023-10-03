@@ -81,7 +81,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             // Check if an order exist
             $order = getOrderFromUniqueId($shopOrderId);
             $fraudPayment = handleFraudPayment($response, $transaction);
-            $errorStatus = ['cancelled', 'declined', 'error', 'failed', 'incomplete'];
+            $errorStatus = ['cancelled', 'declined', 'error', 'failed', 'incomplete', 'open'];
             if (!in_array($resultStatus, $errorStatus, true) && !$fraudPayment['payment_status']) {
                 // NO ORDER FOUND, CREATE?
                 if (!Validate::isLoadedObject($order)) {
@@ -130,7 +130,8 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         $this->unlock($fp);
                         exit('Only handling Success state');
                     }
-                } elseif ($order->getCurrentState() != Configuration::get('ALTAPAY_OS_PENDING')) { //Order found, but not pending
+                }
+                elseif ($order->getCurrentState() != Configuration::get('ALTAPAY_OS_PENDING')) { //Order found, but not pending
                     $this->unlock($fp);
                     exit('Order found but is not currently pending - ignoring');
                 } elseif (Validate::isLoadedObject($order)) { // Pending order found, update
