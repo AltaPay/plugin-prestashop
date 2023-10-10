@@ -5,6 +5,13 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [unreleased]
+### Added
+- Add terminal logo for Bancontact, Przelewy24 & Bank payments.
+- Add new Klarna's main logo (pink).
+- Add horizontal variation for MobilePay & Swish terminal logos.
+- Resized the checkout terminal logos.
+
 ## [3.6.4] - 2023-10-03
 ### Fixed
 - Exclude order saving for open status in Notification Callback.

@@ -55,6 +55,7 @@ body#checkout section.checkout-step .payment-options .payment-option label {
 body#checkout section.checkout-step .payment-options .payment-option label img {
       max-width: 60px;
       margin-left: 15px;
+      max-height: 30px;
 }
 
 div#card_info,
