@@ -1014,7 +1014,7 @@ class ALTAPAY extends PaymentModule
                     $transaction = $response->Transactions[$latestTransKey];
                     updateTransactionIdForParentSubscription($orderID, $transaction->TransactionId);
                 }
-                if(markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines))){
+                if (markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines))) {
                     $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
                 }
                 saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier);
@@ -1061,7 +1061,7 @@ class ALTAPAY extends PaymentModule
                 $api->setTransaction($paymentID);
                 $api->setReconciliationIdentifier($reconciliation_identifier);
                 $api->call();
-                if(markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines))){
+                if (markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines))) {
                     $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
                 }
                 saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, 'refunded');
@@ -2469,7 +2469,7 @@ class ALTAPAY extends PaymentModule
         $states = [
             Configuration::get('PS_CHECKOUT_STATE_AUTHORIZED'),
             Configuration::get('PS_OS_PAYMENT'),
-            Configuration::get('PS_OS_OUTOFSTOCK')
+            Configuration::get('PS_OS_OUTOFSTOCK'),
         ];
         $state = $params['objOrder']->getCurrentState();
         $results = Db::getInstance()->getRow('SELECT * 
@@ -2717,7 +2717,7 @@ class ALTAPAY extends PaymentModule
                     }
                     if ($paymentType === 'payment' || $paymentType === 'paymentAndCapture') {
                         $amount = $cart->getOrderTotal(true, Cart::BOTH);
-                        if ($paymentType === 'paymentAndCapture'){
+                        if ($paymentType === 'paymentAndCapture') {
                             $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
                         }
                     }

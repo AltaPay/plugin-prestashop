@@ -41,7 +41,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $currencyPaid = Currency::getIdByIsoCode($response->currency);
             $paymentType = $response->type;
             $transaction = getTransaction($response);
-            if (in_array($transaction->TransactionStatus, ['bank_payment_finalized', 'captured'], true)){
+            if (in_array($transaction->TransactionStatus, ['bank_payment_finalized', 'captured'], true)) {
                 $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
             }
 
@@ -163,9 +163,11 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
      * @param $order_id
      * @param $transaction_id
      * @param $amount
+     *
      * @return \API\PHP\Altapay\Response\AbstractResponse|\API\PHP\Altapay\Response\Embeds\Transaction[]|string
      */
-    public function capturePayment($order_id, $transaction_id, $amount){
+    public function capturePayment($order_id, $transaction_id, $amount)
+    {
         $reconciliation_identifier = sha1($transaction_id . time());
         $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
         $api->setTransaction($transaction_id);
@@ -173,6 +175,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         $api->setReconciliationIdentifier($reconciliation_identifier);
         $response = $api->call();
         saveOrderReconciliationIdentifier($order_id, $reconciliation_identifier);
+
         return $response;
     }
 
@@ -326,6 +329,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
      * @param $response
      * @param $fp
      * @param $shopOrderId
+     *
      * @return void
      */
     protected function updateOrder($cart, $order, $response, $fp, $shopOrderId)
@@ -343,7 +347,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
              * bank_payment_finalized is for ePayments.
              */
             $order_state = (int) Configuration::get('PS_CHECKOUT_STATE_AUTHORIZED');
-            if (in_array($transactionStatus, $captured_statuses, true)){
+            if (in_array($transactionStatus, $captured_statuses, true)) {
                 $order_state = (int) Configuration::get('PS_OS_PAYMENT');
             }
             $order->setCurrentState($order_state);

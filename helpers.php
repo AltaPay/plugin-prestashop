@@ -70,9 +70,10 @@ function getCartFromUniqueId($uniqueId)
     $results = Db::getInstance()->getRow('SELECT id_cart 
     FROM `' . _DB_PREFIX_ . 'altapay_transaction` 
     WHERE unique_id=\'' . pSQL($uniqueId) . '\'');
-    if(!$results){
+    if (!$results) {
         return false;
     }
+
     return new Cart((int) $results['id_cart']);
 }
 
@@ -88,9 +89,10 @@ function getOrderFromUniqueId($uniqueId)
     $results = Db::getInstance()->getRow('SELECT id_order 
     FROM `' . _DB_PREFIX_ . 'altapay_order` 
     WHERE unique_id = \'' . $uniqueId . '\'');
-    if(!$results){
+    if (!$results) {
         return false;
     }
+
     return new Order((int) $results['id_order']);
 }
 
