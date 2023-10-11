@@ -65,9 +65,67 @@ var altapay = {
                 payment_id: $(element).data('payment-id')
             },
             success: function (result) {
+                if (result.status === 'success') {
+                    altapay.cancelOrder();
+                }
                 namespace.handleResponse(result);
+
             }
         });
+    },
+
+    cancelOrder: function () {
+        // Find the order status dropdown element by its ID
+        var dropdown = document.getElementById('id_order_state');
+        var version = '1.6';
+        // Check if the dropdown element exists for PrestaShop 1.6.x
+        if (!dropdown) {
+            dropdown = document.getElementById('update_order_status_new_order_status_id');
+            if (dropdown) {
+                version = '1.7';
+            } else {
+                return;
+            }
+        }
+        // Find the option with the text "Canceled"
+        var optionToSelect = Array.from(dropdown.options).find(function (option) {
+            return option.text === "Canceled";
+        });
+
+        // Check if the option with "Canceled" text was found
+        if (optionToSelect) {
+            // Set the selected option to the one with "Canceled" text
+            optionToSelect.selected = true;
+
+            if (version === '1.6') {
+                // Trigger a change event on the dropdown
+                var changeEvent = new Event('change', {
+                    bubbles: true,
+                    cancelable: true,
+                });
+                dropdown.dispatchEvent(changeEvent);
+                // Find the "Update status" button by its name attribute and simulate a click
+                var buttons = document.getElementsByName('submitState');
+                if (buttons.length > 0) {
+                    buttons[0].click(); // Assuming there's only one button with this name
+                } else {
+                    console.error('Update status button not found.');
+                }
+            } else {
+                // Find the form element that contains the dropdown
+                var form = dropdown.closest('form');
+
+                // Submit the form to update the order status
+                if (form) {
+                    form.submit();
+                } else {
+                    console.error('Order details form not found.');
+                }
+            }
+        } else {
+            console.error('Option with text "Canceled" not found in the dropdown.');
+        }
+
     },
 
     // Recalculation of the amount for capture/refund depending on selected order lines

@@ -70,9 +70,11 @@ function getCartFromUniqueId($uniqueId)
     $results = Db::getInstance()->getRow('SELECT id_cart 
     FROM `' . _DB_PREFIX_ . 'altapay_transaction` 
     WHERE unique_id=\'' . pSQL($uniqueId) . '\'');
-    $cart = new Cart((int) $results['id_cart']);
+    if (!$results) {
+        return false;
+    }
 
-    return $cart;
+    return new Cart((int) $results['id_cart']);
 }
 
 /**
@@ -80,16 +82,18 @@ function getCartFromUniqueId($uniqueId)
  *
  * @param int $uniqueId
  *
- * @return Order
+ * @return bool|Order
  */
 function getOrderFromUniqueId($uniqueId)
 {
     $results = Db::getInstance()->getRow('SELECT id_order 
     FROM `' . _DB_PREFIX_ . 'altapay_order` 
     WHERE unique_id = \'' . $uniqueId . '\'');
-    $order = new Order((int) $results['id_order']);
+    if (!$results) {
+        return false;
+    }
 
-    return $order;
+    return new Order((int) $results['id_order']);
 }
 
 /**
@@ -233,8 +237,8 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
         $paymentId = $transaction->TransactionId;
         $cardMask = $transaction->CreditCardMaskedPan;
         $cardToken = $transaction->CreditCardToken;
-        $cardExpiryMonth = $transaction->CreditCardExpiry->Month;
-        $cardExpiryYear = $transaction->CreditCardExpiry->Year;
+        $cardExpiryMonth = isset($transaction->CreditCardExpiry->Month) ? $transaction->CreditCardExpiry->Month : null;
+        $cardExpiryYear = isset($transaction->CreditCardExpiry->Year) ? $transaction->CreditCardExpiry->Year : null;
         $cardBrand = $transaction->PaymentSchemeName;
         $paymentType = $transaction->AuthType;
         $paymentTerminal = $transaction->Terminal;

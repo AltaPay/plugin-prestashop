@@ -118,8 +118,7 @@ class Order
         cy.get('#subtab-AdminOrders > .link').click()
         cy.get(':nth-child(1) > .action-type > .btn-group-action > .btn-group > .grid-view-row-link > .material-icons').click()
         cy.get('#btn-release').click()
-        cy.get('#popup_ok').click()
-        cy.get('#popup_ok').click()
+        cy.get('#popup_ok').click().wait(2000)
         cy.get('#altapay > div > div > div.card-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'released')
     }
 

@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.6.4';
+        $this->version = '3.6.5';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
@@ -41,8 +41,8 @@ class ALTAPAY extends PaymentModule
             'AUTOCAPTURE_STATUSES',
             'ALTAPAY_TERMINAL',
         ]);
-        if (isset($config['AUTOCAPTURE_STATUSES'])) {
-            $this->captureStatus = $config['AUTOCAPTURE_STATUSES'];
+        if (!empty($config['AUTOCAPTURE_STATUSES']) and $config['AUTOCAPTURE_STATUSES'] != 'b:0;') {
+            $this->captureStatus = unserialize($config['AUTOCAPTURE_STATUSES']);
         }
 
         parent::__construct();
@@ -968,6 +968,7 @@ class ALTAPAY extends PaymentModule
         $orderID = Tools::getValue('ap_order_id');
         $orderLines = Tools::getValue('ap_order_qty');
         $orderLineGiftWrap = Tools::getValue('ap_order_wrap');
+        $order = new Order((int) $orderID);
 
         header('Content-Type: application/json');
         if (!(Tools::getValue('action') && Tools::getValue('payment_id'))) {
@@ -1013,7 +1014,9 @@ class ALTAPAY extends PaymentModule
                     $transaction = $response->Transactions[$latestTransKey];
                     updateTransactionIdForParentSubscription($orderID, $transaction->TransactionId);
                 }
-                markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
+                if (markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines))) {
+                    $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+                }
                 saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier);
             } catch (Exception $e) {
                 // Save the latest error message in db
@@ -1058,7 +1061,9 @@ class ALTAPAY extends PaymentModule
                 $api->setTransaction($paymentID);
                 $api->setReconciliationIdentifier($reconciliation_identifier);
                 $api->call();
-                markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
+                if (markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines))) {
+                    $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
+                }
                 saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, 'refunded');
             } catch (Exception $e) {
                 $message = $e->getMessage();
@@ -1703,7 +1708,7 @@ class ALTAPAY extends PaymentModule
                 Configuration::updateValue('AUTOCAPTURE_STATUSES', serialize(Tools::getValue('AUTOCAPTURE_STATUSES')));
             }
             if (Tools::getValue('enable_cc_style') !== '') {
-                Configuration::updateValue('enable_cc_style', serialize(Tools::getValue('enable_cc_style')));
+                Configuration::updateValue('enable_cc_style', Tools::getValue('enable_cc_style'));
             }
         }
         $this->Mhtml .= '<div class="alert alert-success"> ' . $this->l('Settings updated') . '</div>';
@@ -1878,6 +1883,7 @@ class ALTAPAY extends PaymentModule
                 $api->call();
             }
             saveOrderReconciliationIdentifier($params['id_order'], $reconciliation_identifier);
+            $orderDetail->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
         } catch (Exception $e) {
             $this->returnError($paymentID, $e);
         }
@@ -2460,10 +2466,15 @@ class ALTAPAY extends PaymentModule
             $params['objOrder'] = $params['order'];
         }
 
+        $states = [
+            Configuration::get('PS_CHECKOUT_STATE_AUTHORIZED'),
+            Configuration::get('PS_OS_PAYMENT'),
+            Configuration::get('PS_OS_OUTOFSTOCK'),
+        ];
         $state = $params['objOrder']->getCurrentState();
         $results = Db::getInstance()->getRow('SELECT * 
         FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE id_order=' . (int) $params['objOrder']->id);
-        if ($state == Configuration::get('PS_OS_PAYMENT') || $state == Configuration::get('PS_OS_OUTOFSTOCK')) {
+        if (in_array($state, $states)) {
             $this->smarty->assign([
                 'total_to_pay' => Tools::displayPrice($params['total_to_pay'], $params['currencyObj'], false),
                 'status' => 'ok',
@@ -2471,9 +2482,6 @@ class ALTAPAY extends PaymentModule
                 'payment_id' => $results['payment_id'],
                 'id_order' => $params['objOrder']->id,
             ]);
-            if (isset($params['objOrder']->reference) && !empty($params['objOrder']->reference)) {
-                $this->smarty->assign('reference', $params['objOrder']->reference);
-            }
         } else {
             $this->smarty->assign([
                 'total_to_pay' => Tools::displayPrice($params['total_to_pay'], $params['currencyObj'], false),
@@ -2482,9 +2490,9 @@ class ALTAPAY extends PaymentModule
                 'payment_id' => $results['payment_id'],
                 'id_order' => $params['objOrder']->id,
             ]);
-            if (isset($params['objOrder']->reference) && !empty($params['objOrder']->reference)) {
-                $this->smarty->assign('reference', $params['objOrder']->reference);
-            }
+        }
+        if (isset($params['objOrder']->reference) && !empty($params['objOrder']->reference)) {
+            $this->smarty->assign('reference', $params['objOrder']->reference);
         }
 
         return $this->display(__FILE__, 'payment_return.tpl');
@@ -2698,10 +2706,10 @@ class ALTAPAY extends PaymentModule
             try {
                 $response = $request->call();
                 $responseUrl = $response->Url;
-                $orderStatus = Configuration::get('ALTAPAY_OS_PENDING');
+                $orderStatus = (int) Configuration::get('ALTAPAY_OS_PENDING');
                 if (strtolower($response->Result) === 'success' && $responseUrl == null) {
                     $responseUrl = 'reservation';
-                    $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
+                    $orderStatus = (int) Configuration::get('PS_CHECKOUT_STATE_AUTHORIZED');
                     $transaction = $response->Transactions[$latestTransKey];
                     $paymentType = $transaction->AuthType;
                     if (isset($transaction->CapturedAmount)) {
@@ -2709,6 +2717,9 @@ class ALTAPAY extends PaymentModule
                     }
                     if ($paymentType === 'payment' || $paymentType === 'paymentAndCapture') {
                         $amount = $cart->getOrderTotal(true, Cart::BOTH);
+                        if ($paymentType === 'paymentAndCapture') {
+                            $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
+                        }
                     }
                     if ($terminal->applepay) {
                         $responseUrl = 'cardwallet';
