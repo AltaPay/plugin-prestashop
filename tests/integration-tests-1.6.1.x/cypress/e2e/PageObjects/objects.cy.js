@@ -170,8 +170,7 @@ class Order
         cy.get('[id=transactionOptions]').then(function($iFrame){
             const capture = $iFrame.contents().find('[id=btn-release]')
             cy.wrap(capture).click({force: true})
-            cy.get('#popup_ok').click()
-            cy.get('#popup_ok').click() 
+            cy.get('#popup_ok').click().wait(2000)
         })
         cy.get('#altapay > div > div > div.row.panel-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'released')
     }

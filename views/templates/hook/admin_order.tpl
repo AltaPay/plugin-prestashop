@@ -334,7 +334,7 @@
         $('#altapay').insertBefore($('#altapay').prev('div'));
         var value = $(".Payment_Type").text();
         var paymentStatus = $(".Payment_Status").text();
-        if(paymentStatus === 'Deny') {
+        if (paymentStatus === 'Deny' || paymentStatus === 'Payment Released') {
             $("#transactionOptions").hide();
         }
         var capturedAmount = parseFloat($("#capturedAmount").text());

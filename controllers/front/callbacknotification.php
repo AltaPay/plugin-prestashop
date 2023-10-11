@@ -43,7 +43,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 $this->unlock($fp);
                 exit('Could not load cart - exiting');
             }
-            if (isset($shopOrderId) && !empty($shopOrderId)) {
+            if (!empty($shopOrderId)) {
                 $condition = "unique_id = '" . pSQL($shopOrderId) . "' AND paymentStatus = 'succeeded'";
                 $query = 'SELECT id_order FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE ' . $condition;
                 $result = Db::getInstance()->executeS($query);
@@ -77,6 +77,17 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $customer = new Customer((int) $cart->id_customer);
             $transactionStatus = $response->paymentStatus;
 
+            if ($response && is_array($response->Transactions)) {
+                $transactionStatus = $response->Transactions[0]->TransactionStatus;
+            }
+
+            $auth_statuses = ['preauth', 'invoice_initialized', 'recurring_confirmed'];
+            $captured_statuses = ['bank_payment_finalized', 'captured'];
+            $order_state = (int) Configuration::get('PS_CHECKOUT_STATE_AUTHORIZED');
+            if (in_array($transactionStatus, $captured_statuses, true)) {
+                $order_state = (int) Configuration::get('PS_OS_PAYMENT');
+            }
+
             $resultStatus = strtolower($response->Result);
             // Check if an order exist
             $order = getOrderFromUniqueId($shopOrderId);
@@ -87,12 +98,12 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 if (!Validate::isLoadedObject($order)) {
                     // Payment successful - create order
                     if ($response && is_array($response->Transactions)) {
-                        $currency = Currency::getIdByIsoCode($response->Currency);
+                        $currency = Currency::getIdByIsoCode($response->currency);
                         $amount = $response->amount;
                         $paymentType = $response->Transactions[0]->AuthType;
                         /*
                         If payment type is 'payment' funds have not yet been captured,
-                        * so AltaPay returns 0 as the captured amount.Therefore we assume full payment has been authorized.
+                        * so AltaPay returns 0 as the captured amount.Therefore, we assume full payment has been authorized.
                         */
                         if ($paymentType === 'payment') {
                             $amount = $cart->getOrderTotal(true, Cart::BOTH);
@@ -104,7 +115,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         // Create an order with 'payment accepted' status
                         $this->module->validateOrder(
                             $cart->id,
-                            (int) Configuration::get('PS_OS_PAYMENT'),
+                            $order_state,
                             $amount,
                             $paymentMethod,
                             null,
@@ -116,7 +127,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         // Log order
                         $currentOrder = new Order((int) $this->module->currentOrder);
 
-                        createAltapayOrder($response, $currentOrder, $transactionStatus);
+                        createAltapayOrder($response, $currentOrder);
 
                         if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
                             $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
@@ -134,15 +145,14 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     $this->unlock($fp);
                     exit('Order found but is not currently pending - ignoring');
                 } elseif (Validate::isLoadedObject($order)) { // Pending order found, update
-                    $statuses = ['preauth', 'bank_payment_finalized', 'captured', 'recurring_confirmed'];
-                    if (in_array($transactionStatus, $statuses, true)) {
+                    if (in_array($transactionStatus, $auth_statuses, true) or in_array($transactionStatus, $captured_statuses, true)) {
                         /*
                          * preauth occurs for wallet transactions where payment type is 'payment'.
                          * Funds are still waiting to be captured.
                          * For this scenario we change the order status to 'payment accepted'.
                          * bank_payment_finalized is for ePayments.
                          */
-                        $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+                        $order->setCurrentState($order_state);
                         // Update payment status to 'succeeded'
                         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
                     SET `paymentStatus` = \'succeeded\' WHERE `id_order` = ' . (int) $order->id;

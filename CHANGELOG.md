@@ -12,6 +12,10 @@ PrestaShop 1.6.x and 1.7.x
 - Add horizontal variation for MobilePay & Swish terminal logos.
 - Resized the checkout terminal logos.
 
+## [3.6.5] - 2023-10-10
+### Fixed
+- Sync gateway order status in admin panel orders grid. 
+
 ## [3.6.4] - 2023-10-03
 ### Fixed
 - Exclude order saving for open status in Notification Callback.
