@@ -5,7 +5,7 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
-## [unreleased]
+## [3.6.6]
 ### Added
 - Add terminal logo for Bancontact, Przelewy24 & Bank payments.
 - Add new Klarna's main logo (pink).
