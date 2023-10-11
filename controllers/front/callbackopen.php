@@ -28,54 +28,12 @@ class AltapayCallbackopenModuleFrontController extends ModuleFrontController
     public function postProcess()
     {
         $postData = Tools::getAllValues();
-        $checksum = !empty($postData['checksum']) ? $postData['checksum'] : '';
-        $terminal_name = getTransactionTerminalByUniqueId($postData['shop_orderid']);
-        $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
+        $transactionId = $postData['transaction_id'];
 
-        if (!empty($checksum) and !empty($secret) and calculateChecksum($postData, $secret) !== $checksum) {
-            exit();
-        }
+        $redirectUrl = $this->context->link->getModuleLink('altapay', 'callbackopenvalidate',
+            array('transaction_id' => $transactionId));
 
-        $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
-        $response = $callback->call();
-        $shopOrderId = $response->shopOrderId;
-        // Load the cart
-        $cart = getCartFromUniqueId($shopOrderId);
-        if (!Validate::isLoadedObject($cart)) {
-            exit('Could not load cart - exiting');
-        }
+        Tools::redirect($redirectUrl);
 
-        // Load the customer
-        $customer = new Customer((int) $cart->id_customer);
-
-        // Amount paid is returned as 0, so we use cart amount instead
-        $amount_paid = $cart->getOrderTotal(true, Cart::BOTH);
-        $currency_paid = new Currency($cart->id_currency);
-
-        // Determine payment method for display
-        $paymentMethod = determinePaymentMethodForDisplay($response);
-
-        // Create order
-        $confOs = Configuration::get('ALTAPAY_OS_PENDING');
-        $curPaid = (int) $currency_paid->id;
-        $curSk = $customer->secure_key;
-        $cId = $cart->id;
-        $this->module->validateOrder($cId, $confOs, $amount_paid, $paymentMethod, null, null, $curPaid, false, $curSk);
-
-        // Log order
-        $current_order = new Order((int) $this->module->currentOrder);
-        createAltapayOrder($response, $current_order, 'open');
-
-        if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
-            $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
-            $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
-
-            saveOrderReconciliationIdentifierIfNotExists($current_order->id, $reconciliation_identifier, $reconciliation_type);
-        }
-
-        $curOr = $this->module->currentOrder;
-        $mId = $this->module->id;
-        $confOr = 'index.php?controller=order-confirmation&id_cart=';
-        Tools::redirect($confOr . $cId . '&id_module=' . $mId . '&id_order=' . $curOr . '&key=' . $curSk);
     }
 }
