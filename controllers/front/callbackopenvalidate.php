@@ -13,10 +13,10 @@ class AltapayCallbackopenvalidateModuleFrontController extends ModuleFrontContro
         parent::initContent();
 
         // We have transaction ID coming from another controller
-        $transactionId = Tools::getValue('transaction_id');
+        $orderId = Tools::getValue('order_id');
         // If response is 1 that means we have the record we need to show message and remove the loader
         $this->context->smarty->assign([
-            'transaction_id' => $transactionId
+            'order_id' => $orderId
         ]);
         $this->setTemplate('module:altapay/views/templates/front/paymentopen_status.tpl');
 

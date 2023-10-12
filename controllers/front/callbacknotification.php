@@ -33,8 +33,6 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $response = $callback->call();
             $transaction = getTransaction($response);
             $transactionId = $transaction->TransactionId;
-            $fraudStatus = $transaction->FraudRecommendation;
-            $fraudMsg = $transaction->FraudExplanation;
             $shopOrderId = $response->shopOrderId;
             flock($fp, LOCK_EX);
             // Load the cart
@@ -89,6 +87,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             }
 
             $resultStatus = strtolower($response->Result);
+            updateTransactionStatus($shopOrderId, $resultStatus);
             // Check if an order exist
             $order = getOrderFromUniqueId($shopOrderId);
             $fraudPayment = handleFraudPayment($response, $transaction);
@@ -189,6 +188,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     }
                 }
             } else {
+                updateTransactionStatus($shopOrderId, $resultStatus);
                 // Unexpected scenario
                 PrestaShopLogger::addLog('Callback notification was received for Transaction ' . $shopOrderId . ' with payment status ' . $transactionStatus,
                     3,

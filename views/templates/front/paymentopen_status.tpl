@@ -45,7 +45,7 @@
                 transform: rotate(360deg);
             }
         }
-</style>
+    </style>
 {/block}
 
 {block name='content'}
@@ -53,11 +53,8 @@
         <div class="row">
             <div class="page-order-detail">
                 <div class="cart-grid-body col-xs-12 col-lg-12" id="ajaxContent">
-                    <script type="text/javascript">
-                        var transaction_id = '{$transaction_id}';
-                    </script>
                     <p style="margin: 30px 0;text-align: center;">
-                        {l s='Payment is in Processing' mod='altapay'}
+                        {l s='Payment is in processing' mod='altapay'}
                     </p>
                     <div class="loader"></div>
                 </div>
@@ -65,27 +62,33 @@
         </div>
     </section>
     <script type="text/javascript">
+        var order_id = '{$order_id}';
         $(document).ready(function() {
-            function checkResponse() {
+            var startTime = new Date().getTime();
+
+            function checkResponse(timeout = false) {
+                var requestTime = Math.floor((new Date().getTime() - startTime) / 60000);
                 $.ajax({
                     url: '{$link->getModuleLink('altapay', 'checkorderstatus')}',
                     method: 'POST',
                     dataType: 'json',
-                    data: { transaction_id: transaction_id },
+                    data: { order_id: order_id, timeout: timeout },
                     success: function(response) {
-                        if(response.success == true){
+                        if (response.url) {
                             location.href = response.url;
-                        }else{
-                            console.log('not ok');
                         }
-                        setTimeout(checkResponse, 2000);
+
+                        console.log('requestTime'+ requestTime);
+                        var timeout = requestTime > 1 ? true : false;
+                        setTimeout(function() {
+                            checkResponse(timeout);
+                        }, 2000);
                     },
                     error: function() {
-                        setTimeout(checkResponse, 2000);
+                        // setTimeout(checkResponse, 2000);
                     }
                 });
             }
-
             checkResponse();
         });
     </script>

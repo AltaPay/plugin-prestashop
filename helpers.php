@@ -475,7 +475,7 @@ function chargeAltaPayAgreement($order_id, $parent_order_id)
                 $transaction = $response->Transactions[$latestTransKey];
                 $uniqueId = (($transaction->AuthType === 'subscription_payment') ? "$transaction->ShopOrderId ($transaction->TransactionId)" : $transaction->ShopOrderId);
                 createAltapayOrder($response, $order, 'subscription_payment_succeeded');
-                saveAltaPayTransaction($uniqueId, $transaction->CapturedAmount, $transaction->Terminal);
+                saveAltaPayTransaction($uniqueId, $transaction->CapturedAmount, $transaction->Terminal, $response->Result);
                 saveOrderReconciliationIdentifier($order_id, $reconciliation_identifier);
                 $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
             }
@@ -512,16 +512,27 @@ function getAgreementByOrderId($id_order)
   *
   * @return void
   */
- function saveAltaPayTransaction($unique_id, $amount, $terminal)
+ function saveAltaPayTransaction($unique_id, $amount, $terminal, $transactionStatus = null)
  {
      $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction` 
-				(id_cart, payment_form_url, token, unique_id, amount, terminal_name, date_add) VALUES ' .
-        "('', '', '', '" . pSQL($unique_id) . "', '" . pSQL($amount) . "', '" . pSQL($terminal) . "' ,
+				(id_cart, payment_form_url, token, transaction_status, unique_id, amount, terminal_name, date_add) VALUES ' .
+        "('', '', '', '" . pSQL($transactionStatus) . "', '" . pSQL($unique_id) . "', '" . pSQL($amount) . "', '" . pSQL($terminal) . "' ,
              '" . pSQL(time()) . "')" . ' ON DUPLICATE KEY UPDATE `amount` = ' . pSQL($amount);
 
      Db::getInstance()->Execute($sql);
  }
 
+/**
+ * @param $shopOrderId
+ * @param $transactionStatus
+ * @return void
+ */
+ function updateTransactionStatus($shopOrderId, $transactionStatus)
+ {
+     $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_transaction` SET `transaction_status` = "' . $transactionStatus . '" WHERE `unique_id` = \'' . $shopOrderId . '\'';
+
+     Db::getInstance()->Execute($sql);
+ }
 /**
  * Method for updating payment status in database
  *

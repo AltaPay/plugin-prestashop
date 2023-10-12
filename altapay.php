@@ -180,6 +180,7 @@ class ALTAPAY extends PaymentModule
             `unique_id` varchar(255) NOT NULL,
             `amount` varchar(255) NOT NULL,
             `token` varchar(255) NOT NULL,
+            `transaction_status` varchar(255) NULL,
             `payment_form_url` TEXT NOT NULL,
             `is_cancelled` tinyint(1) NULL DEFAULT \'0\',
             `date_add` varchar(50) NOT NULL,
@@ -190,14 +191,24 @@ class ALTAPAY extends PaymentModule
         ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
         }
 
-        if (!Db::getInstance()->Execute('SELECT terminal_name from `' . _DB_PREFIX_ . 'altapay_transaction`')) {
+        if (!Db::getInstance()->Execute('SELECT transaction_status from `' . _DB_PREFIX_ . 'altapay_transaction`')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ .
-                                            'altapay_transaction` ADD COLUMN terminal_name varchar(255) NULL AFTER amount')) {
+                                            'altapay_transaction` ADD COLUMN transaction_status varchar(255) NULL AFTER token')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
             }
         }
+
+        if (!Db::getInstance()->Execute('SELECT terminal_name from `' . _DB_PREFIX_ . 'altapay_transaction`')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ .
+                'altapay_transaction` ADD COLUMN terminal_name varchar(255) NULL AFTER amount')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+
         // This table contains the payment methods / terminals
         if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_terminals`')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_terminals`  TO `' . _DB_PREFIX_ . 'altapay_terminals`  ';

@@ -68,7 +68,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             $unique_id = Tools::getValue('shop_orderid');
             // Updated transaction record to cancel
             $pI = pSQL($unique_id);
-            $q = 'UPDATE `' . _DB_PREFIX_ . 'altapay_transaction` set `is_cancelled`=1 WHERE `unique_id`=\'' . $pI . '\'';
+            $q = 'UPDATE `' . _DB_PREFIX_ . 'altapay_transaction` set `is_cancelled`=1, `transaction_status` = "' . $status . '" WHERE `unique_id`=\'' . $pI . '\'';
             Db::getInstance()->Execute($q);
 
             // Redirect back to either standard or quick checkout process
