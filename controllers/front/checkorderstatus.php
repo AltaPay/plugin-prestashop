@@ -18,11 +18,9 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
         }
 
         if (!empty($shopOrderId)) {
-
             $data = Db::getInstance()->getRow('SELECT transaction_status FROM `' . _DB_PREFIX_ . 'altapay_transaction` WHERE unique_id = "' . pSQL($shopOrderId) . '"');
 
             if (!empty($data)) {
-
                 $transactionStatus = isset($data['transaction_status']) ? $data['transaction_status'] : '';
                 $errorStatus = ['cancelled', 'declined', 'error', 'failed', 'incomplete', 'open'];
 
@@ -51,7 +49,6 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
 
                         $this->ajaxDie(Tools::jsonEncode(['success' => true, 'url' => $thank_you_url]));
                     }
-
                 } else {
                     $this->redirectBackToCheckout('altapay_cancel=1&isPaymentStep=true&step=3#altapay_cancel');
                 }

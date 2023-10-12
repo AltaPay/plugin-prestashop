@@ -193,7 +193,7 @@ class ALTAPAY extends PaymentModule
 
         if (!Db::getInstance()->Execute('SELECT transaction_status from `' . _DB_PREFIX_ . 'altapay_transaction`')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ .
-                                            'altapay_transaction` ADD COLUMN transaction_status varchar(255) NULL AFTER token')) {
+             'altapay_transaction` ADD COLUMN transaction_status varchar(255) NULL AFTER token')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;

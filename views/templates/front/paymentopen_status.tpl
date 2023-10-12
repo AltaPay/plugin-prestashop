@@ -78,11 +78,10 @@
                             location.href = response.url;
                         }
 
-                        console.log('requestTime'+ requestTime);
-                        var timeout = requestTime > 1 ? true : false;
+                        var timeout = requestTime > 5 ? true : false;
                         setTimeout(function() {
                             checkResponse(timeout);
-                        }, 2000);
+                        }, 5000);
                     },
                     error: function() {
                         // setTimeout(checkResponse, 2000);

@@ -509,6 +509,7 @@ function getAgreementByOrderId($id_order)
   * @param string $unique_id
   * @param string $amount
   * @param string $terminal
+  * @param string|null $terminal
   *
   * @return void
   */
@@ -522,11 +523,12 @@ function getAgreementByOrderId($id_order)
      Db::getInstance()->Execute($sql);
  }
 
-/**
- * @param $shopOrderId
- * @param $transactionStatus
- * @return void
- */
+ /**
+  * @param $shopOrderId
+  * @param $transactionStatus
+  *
+  * @return void
+  */
  function updateTransactionStatus($shopOrderId, $transactionStatus)
  {
      $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_transaction` SET `transaction_status` = "' . $transactionStatus . '" WHERE `unique_id` = \'' . $shopOrderId . '\'';

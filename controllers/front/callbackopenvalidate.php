@@ -16,10 +16,9 @@ class AltapayCallbackopenvalidateModuleFrontController extends ModuleFrontContro
         $orderId = Tools::getValue('order_id');
         // If response is 1 that means we have the record we need to show message and remove the loader
         $this->context->smarty->assign([
-            'order_id' => $orderId
+            'order_id' => $orderId,
         ]);
         $this->setTemplate('module:altapay/views/templates/front/paymentopen_status.tpl');
-
     }
 
     public function setMedia()
