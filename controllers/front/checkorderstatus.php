@@ -49,6 +49,7 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
 
                         $this->ajaxDie(Tools::jsonEncode(['success' => true, 'url' => $thank_you_url]));
                     }
+                    
                 } else {
                     $this->redirectBackToCheckout('altapay_cancel=1&isPaymentStep=true&step=3#altapay_cancel');
                 }

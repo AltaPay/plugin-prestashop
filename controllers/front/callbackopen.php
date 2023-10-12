@@ -44,7 +44,7 @@ class AltapayCallbackopenModuleFrontController extends ModuleFrontController
         $orderId = isset($postData['shop_orderid']) ? $postData['shop_orderid'] : '';
 
         $redirectUrl = $this->context->link->getModuleLink('altapay', 'callbackopenvalidate', ['order_id' => $orderId]);
-        
+
         Tools::redirect($redirectUrl);
     }
 }
