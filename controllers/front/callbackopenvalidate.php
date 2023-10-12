@@ -19,7 +19,6 @@ class AltapayCallbackopenvalidateModuleFrontController extends ModuleFrontContro
             'order_id' => $orderId,
         ]);
         $this->setTemplate('module:altapay/views/templates/front/paymentopen_status.tpl');
-        
     }
 
     public function setMedia()
