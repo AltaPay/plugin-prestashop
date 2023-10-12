@@ -5,6 +5,13 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.6.6]
+### Added
+- Add terminal logo for Bancontact, Przelewy24 & Bank payments.
+- Add new Klarna's main logo (pink).
+- Add horizontal variation for MobilePay & Swish terminal logos.
+- Resized the checkout terminal logos.
+
 ## [3.6.5] - 2023-10-10
 ### Fixed
 - Sync gateway order status in admin panel orders grid. 
