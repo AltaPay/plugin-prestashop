@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.6.7]
+### Fixed
+- Do not create order for callback_open
+
 ## [3.6.6]
 ### Added
 - Add terminal logo for Bancontact, Przelewy24 & Bank payments.

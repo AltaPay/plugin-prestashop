@@ -82,9 +82,6 @@
                         setTimeout(function() {
                             checkResponse(timeout);
                         }, 5000);
-                    },
-                    error: function() {
-                        // setTimeout(checkResponse, 2000);
                     }
                 });
             }
@@ -95,5 +92,5 @@
 {/block}
 
 {block name='footer'}
-    {include file='checkout/_partials/footer.tpl'}
+    {include file='_partials/footer.tpl'}
 {/block}
