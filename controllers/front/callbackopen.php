@@ -9,13 +9,9 @@
 class AltapayCallbackopenModuleFrontController extends ModuleFrontController
 {
     /**
-     * If the payment state is "open", the module will convert the shopping cart to an
-     * order using a the defined "Awaiting Payment Processing" order status. The module
-     * will display a message to the customer stating that an order has been created but
-     * is awaiting payment processing.
-     * ALTAPAY will send a notification to the "open" callback URL when the payment moves
-     * to "success" or "failure". The module will then update the order status to either
-     * "Payment Accepted" or "Payment Error".
+     * If the payment state is "open", the order will not be created and plugin will
+     * wait for the order created through notification callback.
+     * Plugin will shows the loader and redirects to success/failure page.
      */
 
     /**
@@ -45,37 +41,10 @@ class AltapayCallbackopenModuleFrontController extends ModuleFrontController
             exit('Could not load cart - exiting');
         }
 
-        // Load the customer
-        $customer = new Customer((int) $cart->id_customer);
+        $orderId = isset($postData['shop_orderid']) ? $postData['shop_orderid'] : '';
 
-        // Amount paid is returned as 0, so we use cart amount instead
-        $amount_paid = $cart->getOrderTotal(true, Cart::BOTH);
-        $currency_paid = new Currency($cart->id_currency);
+        $redirectUrl = $this->context->link->getModuleLink('altapay', 'callbackopenvalidate', ['order_id' => $orderId]);
 
-        // Determine payment method for display
-        $paymentMethod = determinePaymentMethodForDisplay($response);
-
-        // Create order
-        $confOs = Configuration::get('ALTAPAY_OS_PENDING');
-        $curPaid = (int) $currency_paid->id;
-        $curSk = $customer->secure_key;
-        $cId = $cart->id;
-        $this->module->validateOrder($cId, $confOs, $amount_paid, $paymentMethod, null, null, $curPaid, false, $curSk);
-
-        // Log order
-        $current_order = new Order((int) $this->module->currentOrder);
-        createAltapayOrder($response, $current_order, 'open');
-
-        if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
-            $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
-            $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
-
-            saveOrderReconciliationIdentifierIfNotExists($current_order->id, $reconciliation_identifier, $reconciliation_type);
-        }
-
-        $curOr = $this->module->currentOrder;
-        $mId = $this->module->id;
-        $confOr = 'index.php?controller=order-confirmation&id_cart=';
-        Tools::redirect($confOr . $cId . '&id_module=' . $mId . '&id_order=' . $curOr . '&key=' . $curSk);
+        Tools::redirect($redirectUrl);
     }
 }
