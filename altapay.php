@@ -1110,10 +1110,27 @@ class ALTAPAY extends PaymentModule
                 $api->setOrderLines($finalOrderLines);
                 $api->setTransaction($paymentID);
                 $api->setReconciliationIdentifier($reconciliation_identifier);
-                $api->call();
-                if (markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines))) {
-                    $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
+                $response = $api->call();
+
+                markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
+
+                if (strtolower($response->Result) === 'open') {
+                    $order_message = new Message();
+                    $order_message->id_order = $orderID;
+                    $order_message->message = 'Payment refund is in progress.';
+                    $order_message->private = true;
+                    $order_message->save();
+
+                    echo json_encode(
+                        [
+                            'status' => 'success',
+                            'message' => 'Payment refund is in progress.',
+                        ]
+                    );
+                    exit();
                 }
+
+                $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
                 saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, 'refunded');
             } catch (Exception $e) {
                 $message = $e->getMessage();
