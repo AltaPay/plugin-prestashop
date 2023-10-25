@@ -117,7 +117,7 @@ function markAsCaptured($paymentId, $orderlines = [])
 
         $result = Db::getInstance()->getRow('SELECT captured 
             FROM ' . _DB_PREFIX_ . 'altapay_orderlines WHERE altapay_payment_id = "'
-                                            . pSQL($paymentId) . '" AND product_id = ' . pSQL($productId));
+                                            . pSQL($paymentId) . '" AND product_id = \'' . pSQL($productId) . "'");
 
         if (isset($result['captured'])) {
             $quantity += $result['captured'];
@@ -159,7 +159,7 @@ function markAsRefund($paymentId, $orderlines = [])
         }
         $sqlGetRefundedFieldValue = 'SELECT captured, refunded 
                 FROM ' . _DB_PREFIX_ . 'altapay_orderlines WHERE altapay_payment_id = "'
-                                    . pSQL($paymentId) . '" AND product_id = ' . pSQL($productId);
+                                    . pSQL($paymentId) . '" AND product_id = \'' . pSQL($productId) . "'";
         $result = Db::getInstance()->getRow($sqlGetRefundedFieldValue);
         if (isset($result['refunded'])) {
             $quantity += $result['refunded'];
@@ -170,7 +170,7 @@ function markAsRefund($paymentId, $orderlines = [])
 
             // Update only of there is a capture for this product
             $sql = 'UPDATE ' . _DB_PREFIX_ . 'altapay_orderlines SET refunded = '
-                   . $quantity . " WHERE altapay_payment_id = '" . pSQL($paymentId) . "' AND product_id = " . pSQL($productId);
+                   . $quantity . " WHERE altapay_payment_id = '" . pSQL($paymentId) . "' AND product_id = '" . pSQL($productId) . "'";
             Db::getInstance()->Execute($sql);
         } else {
             // Product which have not been captured cannot be refunded
@@ -665,4 +665,33 @@ function calculateChecksum($input_data, $shared_secret)
     }
 
     return md5(join(',', $data));
+}
+
+/**
+ * Saves the reconciliation details for a given order
+ *
+ * @param object $response
+ * @param object $order
+ *
+ * @return void
+ */
+function saveReconciliationDetails($response, $order)
+{
+    if (!empty($response) && !empty($response->Transactions)) {
+        $latestTransKey = $max_date = 0;
+        foreach ($response->Transactions as $key => $transaction) {
+            if ($transaction->AuthType === 'subscription_payment' && $transaction->CreatedDate > $max_date) {
+                $max_date = $transaction->CreatedDate;
+                $latestTransKey = $key;
+            }
+        }
+        $transaction = $response->Transactions[$latestTransKey];
+        if (!empty($transaction->ReconciliationIdentifiers)) {
+            foreach ($transaction->ReconciliationIdentifiers as $reconciliationIdentifier) {
+                $reconciliation_identifier = $reconciliationIdentifier->Id;
+                $reconciliation_type = $reconciliationIdentifier->Type;
+                saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
+            }
+        }
+    }
 }

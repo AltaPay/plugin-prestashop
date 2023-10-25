@@ -29,10 +29,10 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.6.7';
+        $this->version = '3.6.8';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '1.7.8.8'];
+        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '8.1.2'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -86,17 +86,8 @@ class ALTAPAY extends PaymentModule
             or !$this->registerHook('actionOrderGridQueryBuilderModifier'))) {
             return false;
         }
-        // Execute the query
-        $result = Db::getInstance()->getValue('
-            SELECT COUNT(*)
-            FROM ' . _DB_PREFIX_ . 'altapay_terminals'
-        );
-        // Check if the table contains data
-        if ($result == 0 && empty(Configuration::get('ALTAPAY_USERNAME'))) {
-            Configuration::updateValue('enable_cc_style', 'checkout-cc');
-        }
         // This table captures the payment information
-        if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_order`')) {
+        if (Db::getInstance()->executeS('SHOW TABLES LIKE \'' . _DB_PREFIX_ . 'valitor_order\'')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_order`  TO `' . _DB_PREFIX_ . 'altapay_order`  ';
             Db::getInstance()->Execute($sql);
 
@@ -158,10 +149,10 @@ class ALTAPAY extends PaymentModule
 
         /* Will add a new column if it doesn't exist.
         That way we keep the backwards compatibility while adding a new column.*/
-        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
-             WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_order\' AND COLUMN_NAME = \'latestError\'')) {
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_order\' AND COLUMN_NAME = \'latestError\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE ' . _DB_PREFIX_ .
-                                            'altapay_order ADD COLUMN latestError varchar(256) NULL')) {
+                'altapay_order ADD COLUMN latestError varchar(256) NULL')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
@@ -169,8 +160,8 @@ class ALTAPAY extends PaymentModule
         }
 
         /* This table captures each of the transaction details.  An order may or may not exist, and a transaction
-       can exist multiple times for each cart */
-        if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_transaction`')) {
+        can exist multiple times for each cart */
+        if (Db::getInstance()->executeS('SHOW TABLES LIKE \'' . _DB_PREFIX_ . 'valitor_transaction\'')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_transaction`  TO `' . _DB_PREFIX_ . 'altapay_transaction`  ';
             Db::getInstance()->Execute($sql);
         } else {
@@ -191,7 +182,8 @@ class ALTAPAY extends PaymentModule
         ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
         }
 
-        if (!Db::getInstance()->Execute('SELECT transaction_status from `' . _DB_PREFIX_ . 'altapay_transaction`')) {
+        if (!Db::getInstance()->Execute('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_transaction\' AND COLUMN_NAME =\'transaction_status\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ .
              'altapay_transaction` ADD COLUMN transaction_status varchar(255) NULL AFTER token')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
@@ -200,7 +192,8 @@ class ALTAPAY extends PaymentModule
             }
         }
 
-        if (!Db::getInstance()->Execute('SELECT terminal_name from `' . _DB_PREFIX_ . 'altapay_transaction`')) {
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_transaction\' AND COLUMN_NAME =\'terminal_name\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ .
                 'altapay_transaction` ADD COLUMN terminal_name varchar(255) NULL AFTER amount')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
@@ -210,12 +203,9 @@ class ALTAPAY extends PaymentModule
         }
 
         // This table contains the payment methods / terminals
-        if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_terminals`')) {
+        if (Db::getInstance()->executeS('SHOW TABLES LIKE \'' . _DB_PREFIX_ . 'valitor_terminals\'')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_terminals`  TO `' . _DB_PREFIX_ . 'altapay_terminals`  ';
             Db::getInstance()->Execute($sql);
-
-            $sql1 = 'ALTER TABLE  `' . _DB_PREFIX_ . 'altapay_terminals`  add column ccTokenControl_ int(255) NOT NULL AFTER currency';
-            Db::getInstance()->Execute($sql1);
         } else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'altapay_terminals` (
             `id_terminal` int(11) NOT NULL AUTO_INCREMENT,
@@ -239,56 +229,69 @@ class ALTAPAY extends PaymentModule
         ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
         }
 
-        if (!Db::getInstance()->Execute('SELECT cvvLess from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'ccTokenControl_\'')) {
+            Db::getInstance()->execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD `ccTokenControl_` int(255) NOT NULL AFTER currency');
+        }
+
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'cvvLess\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN cvvLess BOOLEAN NOT NULL DEFAULT 0')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
             }
         }
-        if (!Db::getInstance()->Execute('SELECT applepay from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'applepay\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN applepay BOOLEAN NOT NULL DEFAULT 0')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
             }
         }
-        if (!Db::getInstance()->Execute('SELECT applepay_form_label from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'applepay_form_label\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN applepay_form_label varchar(255) DEFAULT ""')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
             }
         }
-        if (!Db::getInstance()->Execute('SELECT applepay_supported_networks from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'applepay_supported_networks\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN applepay_supported_networks text')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
             }
         }
-        if (!Db::getInstance()->Execute('SELECT shop_id from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'shop_id\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN shop_id int(11) NOT NULL DEFAULT 1')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
             }
         }
-        if (!Db::getInstance()->Execute('SELECT nature from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'nature\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN nature text')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
             }
         }
-        if (!Db::getInstance()->Execute('SELECT custom_message from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'custom_message\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN custom_message varchar(255) DEFAULT ""')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
             }
         }
-        if (!Db::getInstance()->Execute('SELECT secret from `' . _DB_PREFIX_ . 'altapay_terminals`')) {
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'secret\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN secret varchar(255) DEFAULT ""')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
@@ -296,7 +299,7 @@ class ALTAPAY extends PaymentModule
             }
         }
         // This table contains count of captured/refunded order lines
-        if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_orderlines`')) {
+        if (Db::getInstance()->executeS('SHOW TABLES LIKE \'' . _DB_PREFIX_ . 'valitor_orderlines\'')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_orderlines`  TO `' . _DB_PREFIX_ . 'altapay_orderlines`  ';
             Db::getInstance()->Execute($sql);
         } else {
@@ -309,13 +312,9 @@ class ALTAPAY extends PaymentModule
 		) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8');
         }
 
-        if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_saved_credit_card`')) {
+        if (Db::getInstance()->executeS('SHOW TABLES LIKE \'' . _DB_PREFIX_ . 'valitor_saved_credit_card\'')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_saved_credit_card`  TO `' . _DB_PREFIX_ . 'altapay_saved_credit_card`  ';
             Db::getInstance()->Execute($sql);
-        } elseif (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card`')) {
-            Db::getInstance()->execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_saved_credit_card` ADD `agreement_id` int(255) NOT NULL AFTER userID');
-            Db::getInstance()->execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_saved_credit_card` ADD `agreement_type` varchar(255) NOT NULL AFTER agreement_id');
-            Db::getInstance()->execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD `ccTokenControl_` int(255) NOT NULL AFTER currency');
         } else {
             Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . "altapay_saved_credit_card` (
 		`id` mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -332,8 +331,17 @@ class ALTAPAY extends PaymentModule
 		PRIMARY KEY  (`id`)
 		) ENGINE=" . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
         }
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_saved_credit_card\' AND COLUMN_NAME = \'agreement_id\'')) {
+            Db::getInstance()->execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_saved_credit_card` ADD `agreement_id` int(255) NOT NULL AFTER userID');
+        }
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_saved_credit_card\' AND COLUMN_NAME = \'agreement_type\'')) {
+            Db::getInstance()->execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_saved_credit_card` ADD `agreement_type` varchar(255) NOT NULL AFTER agreement_id');
+        }
 
-        if (!Db::getInstance()->Execute('SELECT agreement_unscheduled_type from `' . _DB_PREFIX_ . 'altapay_saved_credit_card`')) {
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_saved_credit_card\' AND COLUMN_NAME = \'agreement_unscheduled_type\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . "altapay_saved_credit_card` ADD `agreement_unscheduled_type` varchar(255) DEFAULT '' AFTER agreement_type")) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
@@ -341,7 +349,8 @@ class ALTAPAY extends PaymentModule
             }
         }
 
-        if (!Db::getInstance()->Execute('SELECT id_order from `' . _DB_PREFIX_ . 'altapay_saved_credit_card`')) {
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_saved_credit_card\' AND COLUMN_NAME = \'id_order\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_saved_credit_card` ADD `id_order` int(10) unsigned DEFAULT NULL AFTER userID')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
@@ -358,7 +367,7 @@ class ALTAPAY extends PaymentModule
         }
 
         // This table captures the payment information
-        if (Db::getInstance()->Execute('SELECT 1 FROM `' . _DB_PREFIX_ . 'valitor_cartInfo`')) {
+        if (Db::getInstance()->executeS('SHOW TABLES LIKE \'' . _DB_PREFIX_ . 'valitor_cartInfo\'')) {
             $sql = 'RENAME TABLE  `' . _DB_PREFIX_ . 'valitor_cartInfo`  TO `' . _DB_PREFIX_ . 'altapay_cartInfo`  ';
             Db::getInstance()->Execute($sql);
         } else {
@@ -369,6 +378,14 @@ class ALTAPAY extends PaymentModule
 			PRIMARY KEY (`id_cart`)
 		) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8');
         }
+
+        // Execute the query
+        $result = Db::getInstance()->getValue('SELECT COUNT(*) FROM ' . _DB_PREFIX_ . 'altapay_terminals');
+        // Check if the table contains data
+        if ($result == 0 && empty(Configuration::get('ALTAPAY_USERNAME'))) {
+            Configuration::updateValue('enable_cc_style', 'checkout-cc');
+        }
+
         $this->createOrderState();
 
         return true;
@@ -404,6 +421,28 @@ class ALTAPAY extends PaymentModule
                 copy($source, $destination);
             }
             Configuration::updateValue('ALTAPAY_OS_PENDING', (int) $orderState->id);
+        }
+
+        if (!Configuration::get('PS_CHECKOUT_STATE_AUTHORIZED')) {
+            $orderState = new OrderState();
+            $orderState->name = [];
+            foreach (Language::getLanguages() as $language) {
+                $orderState->name[$language['id_lang']] = 'Authorized. To be captured by merchant';
+            }
+            $orderState->color = '#3498D8';
+            $orderState->logable = false;
+            $orderState->invoice = false;
+            $orderState->hidden = false;
+            $orderState->send_email = false;
+            $orderState->shipped = false;
+            $orderState->paid = false;
+            $orderState->delivery = false;
+            if ($orderState->add()) {
+                $source = __DIR__ . '/views/img/os_pending.gif';
+                $destination = __DIR__ . '/../../img/os/' . (int) $orderState->id . '.gif';
+                copy($source, $destination);
+            }
+            Configuration::updateValue('PS_CHECKOUT_STATE_AUTHORIZED', (int) $orderState->id);
         }
     }
 
@@ -454,7 +493,7 @@ class ALTAPAY extends PaymentModule
                 return $this->Mhtml . $this->renderAddForm();
             } else {
                 Tools::redirectAdmin($this->context->link->getAdminLink('AdminModules', false) . '&configure='
-                                     . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'));
+                    . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'));
             }
         } elseif (Tools::isSubmit('activealtapay_terminals')) { /* Process: enable/disable */
             $this->postProcessActive();
@@ -632,7 +671,7 @@ class ALTAPAY extends PaymentModule
                     'type' => 'select',
                     'label' => $this->l('Icon'),
                     'desc' => $this->l('Upload icons in size 20x20 pixels to ')
-                              . $this->_path . $this->paymentMethodIconDir,
+                        . $this->_path . $this->paymentMethodIconDir,
                     'name' => 'icon_filename',
                     'required' => true,
                     'options' => [
@@ -818,7 +857,7 @@ class ALTAPAY extends PaymentModule
             'buttons' => [
                 [
                     'href' => AdminController::$currentIndex .
-                              '&configure=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'),
+                        '&configure=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'),
                     'title' => $this->l('Back to list'),
                     'icon' => 'process-icon-back',
                 ],
@@ -865,7 +904,7 @@ class ALTAPAY extends PaymentModule
         } catch (Exception $e) {
             PrestaShopLogger::addLog($e->getMessage(), 3, $e->getCode(), $this->name, $this->id, true);
             Tools::redirectAdmin($this->context->link->getAdminLink('AdminModules', false) . '&configure='
-                                 . $this->name . '&errorMessage&token=' . Tools::getAdminTokenLite('AdminModules'));
+                . $this->name . '&errorMessage&token=' . Tools::getAdminTokenLite('AdminModules'));
             exit();
         }
 
@@ -1071,10 +1110,27 @@ class ALTAPAY extends PaymentModule
                 $api->setOrderLines($finalOrderLines);
                 $api->setTransaction($paymentID);
                 $api->setReconciliationIdentifier($reconciliation_identifier);
-                $api->call();
-                if (markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines))) {
-                    $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
+                $response = $api->call();
+
+                markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
+
+                if (strtolower($response->Result) === 'open') {
+                    $order_message = new Message();
+                    $order_message->id_order = $orderID;
+                    $order_message->message = 'Payment refund is in progress.';
+                    $order_message->private = true;
+                    $order_message->save();
+
+                    echo json_encode(
+                        [
+                            'status' => 'success',
+                            'message' => 'Payment refund is in progress.',
+                        ]
+                    );
+                    exit();
                 }
+
+                $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
                 saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, 'refunded');
             } catch (Exception $e) {
                 $message = $e->getMessage();
@@ -1497,10 +1553,10 @@ class ALTAPAY extends PaymentModule
                     [
                         'type' => 'text',
                         'label' => $this->l('API URL'),
-                        'desc' => 'Typically your installation for testing will be 
-                        "https://testgateway.altapaysecure.com/" and for production it will be 
-                        "https://yourdomain.altapaysecure.com/". 
-                        Your Username and Password may be different for testing and live.',
+                        'desc' => 'Typically your installation for testing will be
+    "https://testgateway.altapaysecure.com/" and for production it will be
+    "https://yourdomain.altapaysecure.com/".
+        Your Username and Password may be different for testing and live.',
                         'name' => 'ALTAPAY_URL',
                         'required' => true,
                     ],
@@ -1563,7 +1619,7 @@ class ALTAPAY extends PaymentModule
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'btnSubmit';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&configure='
-                                . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
+            . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->tpl_vars = [
             'fields_value' => $this->getConfigFieldsValues(),
@@ -1662,7 +1718,7 @@ class ALTAPAY extends PaymentModule
         $helper->toolbar_btn = [
             'new' => [
                 'href' => AdminController::$currentIndex . '&configure=' . $this->name . '&add' . $this->name
-                          . '&token=' . Tools::getAdminTokenLite('AdminModules'),
+                    . '&token=' . Tools::getAdminTokenLite('AdminModules'),
                 'desc' => $this->l('Add new'),
             ],
         ];
@@ -1804,12 +1860,12 @@ class ALTAPAY extends PaymentModule
     private function selectOrder($params)
     {
         return Db::getInstance()->getRow('SELECT ' . _DB_PREFIX_ . 'altapay_order.*, '
-                                         . _DB_PREFIX_ . 'altapay_transaction.amount FROM `'
-                                         . _DB_PREFIX_ . 'altapay_order` INNER JOIN ' . _DB_PREFIX_
-                                         . 'altapay_transaction ON '
-                                         . _DB_PREFIX_ . 'altapay_transaction.unique_id = '
-                                         . _DB_PREFIX_ . 'altapay_order.unique_id WHERE id_order='
-                                         . (int) $params['id_order']);
+            . _DB_PREFIX_ . 'altapay_transaction.amount FROM `'
+            . _DB_PREFIX_ . 'altapay_order` INNER JOIN ' . _DB_PREFIX_
+            . 'altapay_transaction ON '
+            . _DB_PREFIX_ . 'altapay_transaction.unique_id = '
+            . _DB_PREFIX_ . 'altapay_order.unique_id WHERE id_order='
+            . (int) $params['id_order']);
     }
 
     /**
@@ -2145,7 +2201,7 @@ class ALTAPAY extends PaymentModule
 
         $filters->add(
             (
-                new PrestaShop\PrestaShop\Core\Grid\Filter\Filter($field_name,
+            new PrestaShop\PrestaShop\Core\Grid\Filter\Filter($field_name,
                 Symfony\Component\Form\Extension\Core\Type\TextType::class)
             )->setTypeOptions(['required' => false])->setAssociatedColumn($field_name)
         );
@@ -2373,11 +2429,11 @@ class ALTAPAY extends PaymentModule
             $template = $this->fetch('module:altapay/views/templates/hook/payment17.tpl');
 
             $paymentOptions->setCallToActionText($actionText)
-                           ->setAction($this->context->link->getModuleLink('altapay', 'payment', $terminal))
-                           ->setModuleName($this->name)
-                           ->setAdditionalInformation($template)
-                           ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/payment_icons/'
-                                                         . $paymentMethod['icon_filename']));
+                ->setAction($this->context->link->getModuleLink('altapay', 'payment', $terminal))
+                ->setModuleName($this->name)
+                ->setAdditionalInformation($template)
+                ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/payment_icons/'
+                    . $paymentMethod['icon_filename']));
             $paymentsOptions[] = $paymentOptions;
         }
         if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
@@ -2452,7 +2508,7 @@ class ALTAPAY extends PaymentModule
             'this_path' => $this->_path,
             'this_path_altapay' => $this->_path,
             'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $this->name
-                               . '/',
+                . '/',
             'methods' => $paymentMethods,
             'PS_STOCK_MANAGEMENT' => Configuration::get('PS_STOCK_MANAGEMENT'),
         ];
@@ -2483,8 +2539,8 @@ class ALTAPAY extends PaymentModule
             Configuration::get('PS_OS_OUTOFSTOCK'),
         ];
         $state = $params['objOrder']->getCurrentState();
-        $results = Db::getInstance()->getRow('SELECT * 
-        FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE id_order=' . (int) $params['objOrder']->id);
+        $results = Db::getInstance()->getRow('SELECT *
+    FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE id_order=' . (int) $params['objOrder']->id);
         if (in_array($state, $states)) {
             $this->smarty->assign([
                 'total_to_pay' => Tools::displayPrice($params['total_to_pay'], $params['currencyObj'], false),
@@ -2646,8 +2702,8 @@ class ALTAPAY extends PaymentModule
         $customerId = $this->context->customer->id;
         if (!is_null($tokenId)) {
             $sql = 'SELECT agreement_id, agreement_type, ccToken FROM `'
-            . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="'
-            . pSQL($tokenId) . '" AND userID = ' . pSQL($customerId);
+                . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE id ="'
+                . pSQL($tokenId) . '" AND userID = ' . pSQL($customerId);
             $results = Db::getInstance()->executeS($sql);
         }
         if (!$this->altapayApiLogin()) {
@@ -2702,15 +2758,15 @@ class ALTAPAY extends PaymentModule
                 $request->setAgreement(['type' => 'recurring']);
             }
             $request->setType($type)->setTerminal($cgConf['terminal'])
-                    ->setShopOrderId($cgConf['uniqueid'])
-                    ->setAmount($amount)
-                    ->setCurrency($cgConf['currency'])
-                    ->setCustomerInfo($customer)
-                    ->setTransactionInfo($transactionInfo)
-                    ->setCookie($cgConf['cookie'])
-                    ->setFraudService(null)
-                    ->setOrderLines($this->getOrderLines($cart))
-                    ->setSaleReconciliationIdentifier(sha1(uniqid(time(), true)));
+                ->setShopOrderId($cgConf['uniqueid'])
+                ->setAmount($amount)
+                ->setCurrency($cgConf['currency'])
+                ->setCustomerInfo($customer)
+                ->setTransactionInfo($transactionInfo)
+                ->setCookie($cgConf['cookie'])
+                ->setFraudService(null)
+                ->setOrderLines($this->getOrderLines($cart))
+                ->setSaleReconciliationIdentifier(sha1(uniqid(time(), true)));
             if (!$isReservation) {
                 $request->setConfig($config)->setLanguage($cgConf['language']);
             }
@@ -2947,8 +3003,8 @@ class ALTAPAY extends PaymentModule
         if ($orderDetails) {
             $orderDetails = json_encode($orderDetails);
             $sql = 'INSERT INTO ' . _DB_PREFIX_ . 'altapay_cartInfo (id_cart, productDetails, date_add) VALUES ' . "('" . (int) $cartID . "', '"
-                   . pSQL($orderDetails) . "', '" . pSQL(time()) . "')" .
-                   ' ON DUPLICATE KEY UPDATE `productDetails` = ' . "'" . pSQL($orderDetails) . "'";
+                . pSQL($orderDetails) . "', '" . pSQL(time()) . "')" .
+                ' ON DUPLICATE KEY UPDATE `productDetails` = ' . "'" . pSQL($orderDetails) . "'";
             Db::getInstance()->Execute($sql);
         }
 
@@ -3243,7 +3299,7 @@ class ALTAPAY extends PaymentModule
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'synchterminalsync';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&configure='
-                                . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
+            . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
 
         return $helper->generateForm([$fieldsForm]);

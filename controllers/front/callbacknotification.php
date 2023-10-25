@@ -43,11 +43,23 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             }
             if (!empty($shopOrderId)) {
                 $condition = "unique_id = '" . pSQL($shopOrderId) . "' AND paymentStatus = 'succeeded'";
-                $query = 'SELECT id_order FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE ' . $condition;
+                $query = 'SELECT id_order, payment_id FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE ' . $condition;
                 $result = Db::getInstance()->executeS($query);
                 // Check if the order already saved with the success status
                 if (!empty($result)) {
-                    exit('Order already Processed!!');
+                    if ($postData['status'] === 'succeeded' and $postData['payment_status'] === 'bank_payment_refunded'
+                        and $transactionId == $result[0]['payment_id']) {
+                        $order = getOrderFromUniqueId($shopOrderId);
+                        if (Validate::isLoadedObject($order)) {
+                            $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
+                            saveReconciliationDetails($response, $order);
+                            $this->unlock($fp);
+                            exit('Order refund status updated.');
+                        }
+                    } else {
+                        $this->unlock($fp);
+                        exit('Order already Processed!!');
+                    }
                 }
             }
 
@@ -67,6 +79,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     }
                     $api->setTransaction($transactionId);
                     $api->call();
+                    $this->unlock($fp);
                     exit('Order already Processed!');
                 }
             }
