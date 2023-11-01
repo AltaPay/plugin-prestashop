@@ -508,6 +508,18 @@ div#order-detail-content {
     display: none;
 }
 
+.niara #radio_pay_over_time, .niara #radio_pay_later {
+      opacity: 1;
+      position: relative;
+      vertical-align: top;
+      margin-right: 5px;
+}
+
+.niara #iDealPayment td {
+      padding: 10px;
+      text-align: left;
+}
+
 @media only screen and (max-width: 768px) {
       .pensio_payment_form_outer {
             width: 100%;
