@@ -42,6 +42,7 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
         }
 
         $themeName = Context::getContext()->shop->theme_name;
+        $this->context->smarty->assign('theme_name', $themeName);
         $this->context->smarty->assign('cssClass', $terminalRemoteName);
         $payment_style = Configuration::get('enable_cc_style');
         if (empty($payment_style)) {

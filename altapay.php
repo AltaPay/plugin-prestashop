@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.6.8';
+        $this->version = '3.6.9';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '8.1.2'];
@@ -2531,6 +2531,8 @@ class ALTAPAY extends PaymentModule
         // PrestaShop 1.7 doesn't have the $params['objOrder']
         if (!isset($params['objOrder']) || !is_object($params['objOrder'])) {
             $params['objOrder'] = $params['order'];
+            $params['total_to_pay'] = $params['order']->getOrdersTotalPaid();
+            $params['currencyObj'] = new Currency($params['order']->id_currency);
         }
 
         $states = [

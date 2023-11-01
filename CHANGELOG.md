@@ -5,10 +5,16 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.6.9]
+### Added
+- Support for thirty bees.
+### Fixed
+- Order payment pending page for PrestaShop 1.6.x
+
 ## [3.6.8]
 ### Added
 - Support for PrestaShop 8.x.
-- Support for Finshark payment method.
+- Support for Open Banking (Using Finshark).
 
 ## [3.6.7]
 ### Fixed

@@ -5,6 +5,10 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
 *}
+
+{extends file=$layout}
+{block name='header'}
+    {include file='checkout/_partials/header.tpl'}
     <link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <style>
@@ -41,8 +45,9 @@
             }
         }
     </style>
-<header id="header">
-</header>
+{/block}
+
+{block name='content'}
     <section id="content">
         <div class="row">
             <div class="page-order-detail">
@@ -82,3 +87,9 @@
             checkResponse();
         });
     </script>
+
+{/block}
+
+{block name='footer'}
+    {include file='_partials/footer.tpl'}
+{/block}

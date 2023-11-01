@@ -11,7 +11,16 @@
 {assign currency_code Currency::getDefaultCurrency()->sign}
 <link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
 </header>
-
+{if ($theme_name) == "Niara"}
+<style>
+    #radio_pay_over_time, #radio_pay_later {
+        opacity: 1;
+        position: relative;
+        vertical-align: top;
+        margin-right: 5px;
+    }
+</style>
+{/if}
 <div id="{$stylingclass}">
 <div id="card_info" {if ($cssClass)} class = "cvv_less" {/if}>
     {if ($stylingclass) != "checkout-cc"}
