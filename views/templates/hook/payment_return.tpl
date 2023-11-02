@@ -25,6 +25,7 @@
 		</tr>
 		<tr>
 			<td style="font-weight: bold">{l s='Order number' mod='altapay'}:</td>
+            <td>{$reference}</td>
 		</tr>
 	</table>
 {/if}

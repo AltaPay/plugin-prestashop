@@ -18,7 +18,12 @@ class AltapayCallbackopenvalidateModuleFrontController extends ModuleFrontContro
         $this->context->smarty->assign([
             'order_id' => $orderId,
         ]);
-        $this->setTemplate('module:altapay/views/templates/front/paymentopen_status.tpl');
+
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+            $this->setTemplate('module:altapay/views/templates/front/paymentopen_status17.tpl');
+        } else {
+            $this->setTemplate('paymentopen_status.tpl');
+        }
     }
 
     public function setMedia()
