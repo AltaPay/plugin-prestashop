@@ -14,7 +14,7 @@ on:
 jobs:
   terraform:
     name: 'Terraform'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     outputs:
       ip: ${{ steps.expose_ip.outputs.ip}}
 
@@ -22,46 +22,47 @@ jobs:
     
     # Configure AWS credentials
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v3
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: eu-west-1
+        mask-aws-account-id: true
           
     # Checkout the repository to the GitHub Actions runner      
-    - uses: actions/checkout@v1  
+    - uses: actions/checkout@v4
       with:
         repository: AltaPay/plugin-infrastructure
         token: ${{ secrets.ACCESS_TOKEN }}
-        ref: 'origin/main'
+        ref: 'main'
 
     # Install version 1.0.8 of Terraform CLI
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
+      uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: 1.0.8
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
       run: terraform init 
-      working-directory: ../plugin-infrastructure/provision/plugins
+      working-directory: provision/plugins
 
 
     # Select a Terraform workspace
     - name: Terraform workspace
       run: terraform workspace select prestashop
-      working-directory: ../plugin-infrastructure/provision/plugins
+      working-directory: provision/plugins
       
       
     # Generates an execution plan for Terraform
     - name: Terraform Plan
       run: terraform plan
-      working-directory: ../plugin-infrastructure/provision/plugins
+      working-directory: provision/plugins
 
     # Run Terraform Apply      
     - name: Terraform Apply
       run: terraform apply -var ec2_type=t3.micro -auto-approve
-      working-directory: ../plugin-infrastructure/provision/plugins
+      working-directory: .provision/plugins
    
     # Add a sleep of 20 seconds, in case instance needs to warm up  
     - name: Sleep for 20 seconds
@@ -81,15 +82,14 @@ jobs:
       
      # Setting prestashop version name for installation
     - name: Set env PRESTASHOP_VERSION
-      run: |
-           echo "PRESTASHOP_VERSION=1.6.1.24" >> "$GITHUB_ENV"
+      run: echo "PRESTASHOP_VERSION=1.6.1.24" >> "$GITHUB_ENV"
            
     # Run Ansible playbook
     - name: Run playbook
       uses: dawidd6/action-ansible-playbook@v2
       with:
         playbook: prestashop.yml
-        directory: ../plugin-infrastructure/deploy/plugins
+        directory: deploy/plugins
         key: ${{secrets.SSHKEY}}
         options: |
           -u ubuntu
@@ -103,12 +103,11 @@ jobs:
         testvar=$(sed '4!d' inventory)
         echo $testvar
         echo "IP=$testvar">> $GITHUB_ENV
-      working-directory: ../plugin-infrastructure/deploy/plugins
+      working-directory: deploy/plugins
 
     - name: Expose IP
       id: expose_ip
-      run: |
-        echo "::set-output name=ip::${{ env.IP }}"    
+      run: echo "ip=${{ env.IP }}" >> $GITHUB_OUTPUT
 
   cypress:
     name: 'Cypress'
@@ -118,19 +117,16 @@ jobs:
     steps:
      # Setting directory for running cypress tests
     - name: Set env TEST_DIRECTORY
-      run: |
-              echo "TEST_DIRECTORY=tests/integration-tests-1.6.1.x" >> "$GITHUB_ENV"
+      run: echo "TEST_DIRECTORY=tests/integration-tests-1.6.1.x" >> "$GITHUB_ENV"
               
     # Run Cypress tests   
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
-        repository: AltaPay/plugin-prestashop
         ref: '${{env.TEST_BRANCH_NAME}}'
-        path: plugin-prestashop
 
     - name: Create Cypress fixture config json
       id: create-json-2  # Second ID
-      uses: jsdaniell/create-json@1.1.2
+      uses: jsdaniell/create-json@v1.2.2
       with:
         name: "config.json"
         json: '{"shopURL": "http://${{ needs.terraform.outputs.ip }}","adminURL": "http://${{ needs.terraform.outputs.ip }}/admin123","adminUsername": "${{secrets.CMS_ADMIN_EMAIL}}","adminPass": "${{secrets.CMS_ADMIN_PASS}}", "CC_TERMINAL_NAME": "${{secrets.CC_TERMINAL_NAME}}", "KLARNA_DKK_TERMINAL_NAME": "${{secrets.KLARNA_DKK_TERMINAL_NAME}}", "iDEAL_EUR_TERMINAL": "${{secrets.IDEAL_EUR_TERMINAL_NAME}}"}'
@@ -147,7 +143,7 @@ jobs:
       # after the test run completes
       # store screenshots
       # NOTE: screenshots will be generated only if E2E test failed
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       if: failure() || true
       with:
         name: cypress-screenshots
