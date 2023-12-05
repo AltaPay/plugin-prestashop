@@ -5,6 +5,10 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.6.10]
+### Fixed
+- Klarna payments failing when cart promo discounts are applied.
+
 ## [3.6.9]
 ### Added
 - Support for thirty bees.
