@@ -8,7 +8,7 @@ PrestaShop 1.6.x and 1.7.x
 ## [3.6.10]
 ### Fixed
 - Klarna payments failing when cart promo discounts are applied.
-- Remove file locking which prevents current actions resulting in order callback failures.
+- Remove file locking which prevents concurrent actions resulting in order callback failures.
 
 ## [3.6.9]
 ### Added
