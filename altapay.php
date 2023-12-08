@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.6.9';
+        $this->version = '3.6.11';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '8.1.2'];
@@ -424,25 +424,30 @@ class ALTAPAY extends PaymentModule
         }
 
         if (!Configuration::get('PS_CHECKOUT_STATE_AUTHORIZED')) {
-            $orderState = new OrderState();
-            $orderState->name = [];
+            $orderStateAuth = new OrderState();
+            $orderStateAuth->name = [];
             foreach (Language::getLanguages() as $language) {
-                $orderState->name[$language['id_lang']] = 'Authorized. To be captured by merchant';
+                $orderStateAuth->name[$language['id_lang']] = 'Authorized. To be captured by merchant';
             }
-            $orderState->color = '#3498D8';
-            $orderState->logable = false;
-            $orderState->invoice = false;
-            $orderState->hidden = false;
-            $orderState->send_email = false;
-            $orderState->shipped = false;
-            $orderState->paid = false;
-            $orderState->delivery = false;
-            if ($orderState->add()) {
+            $orderStateAuth->color = '#3498D8';
+            $orderStateAuth->logable = false;
+            $orderStateAuth->invoice = false;
+            $orderStateAuth->hidden = false;
+            $orderStateAuth->send_email = false;
+            $orderStateAuth->shipped = false;
+            $orderStateAuth->paid = false;
+            $orderStateAuth->delivery = false;
+            if ($orderStateAuth->add()) {
                 $source = __DIR__ . '/views/img/os_pending.gif';
-                $destination = __DIR__ . '/../../img/os/' . (int) $orderState->id . '.gif';
+                $destination = __DIR__ . '/../../img/os/' . (int) $orderStateAuth->id . '.gif';
                 copy($source, $destination);
             }
-            Configuration::updateValue('PS_CHECKOUT_STATE_AUTHORIZED', (int) $orderState->id);
+            Configuration::updateValue('PS_CHECKOUT_STATE_AUTHORIZED', (int) $orderStateAuth->id);
+        }
+
+        $authorized_payments_status = (int) Configuration::get('authorized_payments_status');
+        if (empty($authorized_payments_status)) {
+            Configuration::updateValue('authorized_payments_status', (int) Configuration::get('PS_OS_PAYMENT'));
         }
     }
 
@@ -1526,9 +1531,10 @@ class ALTAPAY extends PaymentModule
     public function renderForm()
     {
         $statuses = OrderState::getOrderStates($this->context->language->id);
-        $selectCaptureStatus = [];
+        $selectCaptureStatus = $selectAuthStatus = [];
         foreach ($statuses as $status) {
             $selectCaptureStatus[] = ['key' => $status['id_order_state'], 'name' => $status['name']];
+            $selectAuthStatus[] = ['id_option' => $status['id_order_state'], 'name' => $status['name']];
         }
 
         $fieldsForm = [
@@ -1598,6 +1604,18 @@ class ALTAPAY extends PaymentModule
                             'name' => 'name',
                         ],
                     ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Authorized payments status'),
+                        'desc' => $this->l('Choose the status for authorized payments'),
+                        'name' => 'authorized_payments_status',
+                        'required' => false,
+                        'options' => [
+                            'query' => $selectAuthStatus,
+                            'id' => 'id_option',
+                            'name' => 'name',
+                        ],
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->l('Save'),
@@ -1633,7 +1651,7 @@ class ALTAPAY extends PaymentModule
     /**
      * Field values for the merchant details form
      *
-     * @return array Array of curent configuration values
+     * @return array Array of current configuration values
      */
     public function getConfigFieldsValues()
     {
@@ -1646,6 +1664,7 @@ class ALTAPAY extends PaymentModule
             'enable_cc_style' => Tools::getValue('enable_cc_style', Configuration::get('enable_cc_style')),
             'enable_fraud' => Tools::getValue('enable_fraud', Configuration::get('enable_fraud')),
             'enable_release_refund' => Tools::getValue('enable_release_refund', Configuration::get('enable_release_refund')),
+            'authorized_payments_status' => Tools::getValue('authorized_payments_status', Configuration::get('authorized_payments_status')),
         ];
     }
 
@@ -1776,6 +1795,9 @@ class ALTAPAY extends PaymentModule
             }
             if (Tools::getValue('enable_cc_style') !== '') {
                 Configuration::updateValue('enable_cc_style', Tools::getValue('enable_cc_style'));
+            }
+            if (Tools::getValue('authorized_payments_status') !== '') {
+                Configuration::updateValue('authorized_payments_status', Tools::getValue('authorized_payments_status'));
             }
         }
         $this->Mhtml .= '<div class="alert alert-success"> ' . $this->l('Settings updated') . '</div>';
@@ -2537,6 +2559,7 @@ class ALTAPAY extends PaymentModule
 
         $states = [
             Configuration::get('PS_CHECKOUT_STATE_AUTHORIZED'),
+            Configuration::get('authorized_payments_status'),
             Configuration::get('PS_OS_PAYMENT'),
             Configuration::get('PS_OS_OUTOFSTOCK'),
         ];
@@ -2778,7 +2801,10 @@ class ALTAPAY extends PaymentModule
                 $orderStatus = (int) Configuration::get('ALTAPAY_OS_PENDING');
                 if (strtolower($response->Result) === 'success' && $responseUrl == null) {
                     $responseUrl = 'reservation';
-                    $orderStatus = (int) Configuration::get('PS_CHECKOUT_STATE_AUTHORIZED');
+                    $orderStatus = (int) Configuration::get('authorized_payments_status');
+                    if (empty($orderStatus)) {
+                        $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
+                    }
                     $transaction = $response->Transactions[$latestTransKey];
                     $paymentType = $transaction->AuthType;
                     if (isset($transaction->CapturedAmount)) {
