@@ -18,27 +18,26 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
      */
     public function postProcess()
     {
+        $message = '';
         $postData = Tools::getAllValues();
         $checksum = !empty($postData['checksum']) ? $postData['checksum'] : '';
         $terminal_name = getTransactionTerminalByUniqueId($postData['shop_orderid']);
         $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
 
         if (!empty($checksum) and !empty($secret) and calculateChecksum($postData, $secret) !== $checksum) {
-            exit();
+            exit('Invalid request');
         }
 
-        $fp = fopen(_PS_MODULE_DIR_ . '/altapay/controllers/front/lock.txt', 'r');
         try {
             $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
             $response = $callback->call();
             $transaction = getTransaction($response);
             $transactionId = $transaction->TransactionId;
             $shopOrderId = $response->shopOrderId;
-            flock($fp, LOCK_EX);
+
             // Load the cart
             $cart = getCartFromUniqueId($shopOrderId);
             if (!Validate::isLoadedObject($cart)) {
-                $this->unlock($fp);
                 exit('Could not load cart - exiting');
             }
             if (!empty($shopOrderId)) {
@@ -53,11 +52,9 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         if (Validate::isLoadedObject($order)) {
                             $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
                             saveReconciliationDetails($response, $order);
-                            $this->unlock($fp);
                             exit('Order refund status updated.');
                         }
                     } else {
-                        $this->unlock($fp);
                         exit('Order already Processed!!');
                     }
                 }
@@ -79,7 +76,6 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     }
                     $api->setTransaction($transactionId);
                     $api->call();
-                    $this->unlock($fp);
                     exit('Order already Processed!');
                 }
             }
@@ -150,14 +146,11 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
                             saveOrderReconciliationIdentifierIfNotExists($currentOrder->id, $reconciliation_identifier, $reconciliation_type);
                         }
-                        $this->unlock($fp);
                         exit('Order created');
                     } else {
-                        $this->unlock($fp);
                         exit('Only handling Success state');
                     }
                 } elseif ($order->getCurrentState() != Configuration::get('ALTAPAY_OS_PENDING')) { //Order found, but not pending
-                    $this->unlock($fp);
                     exit('Order found but is not currently pending - ignoring');
                 } elseif (Validate::isLoadedObject($order)) { // Pending order found, update
                     if (in_array($transactionStatus, $auth_statuses, true) or in_array($transactionStatus, $captured_statuses, true)) {
@@ -184,14 +177,12 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
                             saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
                         }
-                        $this->unlock($fp);
                         exit('Order status updated to Accepted');
                     } elseif ($transactionStatus === 'epayment_declined') {
                         // Update payment status to 'declined'
                         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
                         SET `paymentStatus` = \'declined\' WHERE `id_order` = ' . (int) $order->id;
                         Db::getInstance()->Execute($sql);
-                        $this->unlock($fp);
                         exit('Order status updated to Error');
                     } else {
                         // Unexpected scenario
@@ -199,7 +190,6 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         PrestaShopLogger::addLog('Unexpected scenario: Callback notification was received for Transaction '
                             . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
                             $this->module->id, true);
-                        $this->unlock($fp);
                         exit('Unrecognized status received ' . $transactionStatus);
                     }
                 }
@@ -213,32 +203,25 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     $this->module->id,
                     true
                 );
-                $this->unlock($fp);
                 exit('Unrecognized status received ' . $transactionStatus);
             }
-        } catch (PrestaShopException $e) {
-            PrestaShopLogger::addLog('Callback notification issue, Message ' . $e->displayMessage(),
-                3,
-                '1005',
-                $this->module->name,
-                $this->module->id,
-                true
-            );
-
-            $this->unlock($fp);
-        } finally {
-            $this->unlock($fp);
+        } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
+            $message = $e->getResponse()->getBody();
+        } catch (API\PHP\Altapay\Exceptions\ResponseHeaderException $e) {
+            $message = $e->getHeader()->ErrorMessage;
+        } catch (API\PHP\Altapay\Exceptions\ResponseMessageException $e) {
+            $message = $e->getMessage();
+        } catch (Exception $e) {
+            $message = $e->getMessage();
         }
-    }
-
-    /**
-     * @param string $fileOpen
-     *
-     * @return void
-     */
-    public function unlock($fileOpen)
-    {
-        flock($fileOpen, LOCK_UN);
-        fclose($fileOpen);
+        $message = 'Callback notification issue: ' . $message;
+        PrestaShopLogger::addLog($message,
+            3,
+            '1005',
+            $this->module->name,
+            $this->module->id,
+            true
+        );
+        exit($message);
     }
 }

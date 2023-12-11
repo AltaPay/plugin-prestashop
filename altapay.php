@@ -3108,7 +3108,7 @@ class ALTAPAY extends PaymentModule
         $discountedAmount = 0;
         $productPriceAfterDiscount = 0;
         foreach ($vouchers as $key => $voucher) {
-            if (in_array($productID, $voucher['products']) || $voucher['products'] === 'all') {
+            if ((is_array($voucher['products']) and in_array($productID, $voucher['products'])) || $voucher['products'] === 'all' or empty($voucher['products'])) {
                 if (!$discountPercent && isset($voucher['reductionPercent']) && ($voucher['reductionPercent'] !== '0.00')) {
                     $discountPercent += $voucher['reductionPercent'];
                     $discountedAmount = $basePrice * ($discountPercent / 100);
