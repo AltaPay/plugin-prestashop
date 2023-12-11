@@ -34,7 +34,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
         $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
 
         if (!empty($checksum) and !empty($secret) and calculateChecksum($postData, $secret) !== $checksum) {
-            exit();
+            exit('Invalid request');
         }
 
         $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);

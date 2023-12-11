@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.6.9';
+        $this->version = '3.6.10';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '8.1.2'];
@@ -3082,7 +3082,7 @@ class ALTAPAY extends PaymentModule
         $discountedAmount = 0;
         $productPriceAfterDiscount = 0;
         foreach ($vouchers as $key => $voucher) {
-            if (in_array($productID, $voucher['products']) || $voucher['products'] === 'all') {
+            if ((is_array($voucher['products']) and in_array($productID, $voucher['products'])) || $voucher['products'] === 'all' or empty($voucher['products'])) {
                 if (!$discountPercent && isset($voucher['reductionPercent']) && ($voucher['reductionPercent'] !== '0.00')) {
                     $discountPercent += $voucher['reductionPercent'];
                     $discountedAmount = $basePrice * ($discountPercent / 100);
