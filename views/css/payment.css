@@ -72,8 +72,13 @@ div#order-detail-content {
       background-color: #f6f6f6;
 }
 
-#module-altapay-callbackform .breadcrumb {
+#module-altapay-callbackform .breadcrumb,
+#module-altapay-callbackfail .breadcrumb {
       display: none;
+}
+
+div#payment_error {
+      padding: 30px 0;
 }
 
 /** Legacy **/

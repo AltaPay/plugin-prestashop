@@ -29,7 +29,10 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         }
 
         $message = '';
-        $orderStatus = (int) Configuration::get('PS_CHECKOUT_STATE_AUTHORIZED');
+        $orderStatus = (int) Configuration::get('authorized_payments_status');
+        if (empty($orderStatus)) {
+            $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
+        }
         $customerID = $this->context->customer->id;
         $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
         try {
@@ -324,7 +327,10 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
              * For this scenario we change the order status to 'payment accepted'.
              * bank_payment_finalized is for ePayments.
              */
-            $order_state = (int) Configuration::get('PS_CHECKOUT_STATE_AUTHORIZED');
+            $order_state = (int) Configuration::get('authorized_payments_status');
+            if (empty($order_state)) {
+                $order_state = (int) Configuration::get('PS_OS_PAYMENT');
+            }
             if (in_array($transactionStatus, $captured_statuses, true)) {
                 $order_state = (int) Configuration::get('PS_OS_PAYMENT');
             }

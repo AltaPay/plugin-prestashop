@@ -90,7 +90,10 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
             $auth_statuses = ['preauth', 'invoice_initialized', 'recurring_confirmed'];
             $captured_statuses = ['bank_payment_finalized', 'captured'];
-            $order_state = (int) Configuration::get('PS_CHECKOUT_STATE_AUTHORIZED');
+            $order_state = (int) Configuration::get('authorized_payments_status');
+            if (empty($order_state)) {
+                $order_state = (int) Configuration::get('PS_OS_PAYMENT');
+            }
             if (in_array($transactionStatus, $captured_statuses, true)) {
                 $order_state = (int) Configuration::get('PS_OS_PAYMENT');
             }

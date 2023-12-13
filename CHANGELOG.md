@@ -5,6 +5,12 @@ PrestaShop 1.6.x and 1.7.x
 
 # Changelog
 
+## [3.6.11]
+### Added
+- Option to configure order status for authorized payments from back office.
+### Fixed
+- Error message not displaying when payment failed in PrestaShop 1.7
+
 ## [3.6.10]
 ### Fixed
 - Klarna payments failing when cart promo discounts are applied.
