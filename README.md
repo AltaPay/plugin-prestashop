@@ -36,14 +36,10 @@ Integrates your PrestaShop web shop to the AltaPay payments gateway.
 </td></tr> </table>
 
 ## Compatibility
-- PrestaShop 1.6.x
-- PrestaShop 1.7.x
-- PrestaShop 8.x
-
-## Installation
-
-- Download the latest release zip file from the [Releases](https://github.com/AltaPay/plugin-prestashop/releases) tab
-- Go to "Admin -> Modules -> Upload new module" and drag the zip file into the upload box
+- PrestaShop 1.6.x (requires PHP 7.0 or later)
+- Thirty Bees 1.5.x (requires PHP 7.2 or later)
+- PrestaShop 1.7.x (requires PHP 7.2 or later)
+- PrestaShop 8.x (requires PHP 7.2 or later)
 
 ## Code Analysis
 
@@ -76,7 +72,7 @@ Next, Php-CS-Fixer is being used for fixing php coding standard relared issues. 
 
 ### Prerequisites: 
 
-* PrestaShop 1.6 should be installed with the default theme on publically accessible URL
+* PrestaShop should be installed with the default theme on publically accessible URL
 * Cypress should be installed
 
 ### Steps 
