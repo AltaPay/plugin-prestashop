@@ -27,6 +27,8 @@ Installing this plug-in will enable the web shop to handle card transactions thr
 
 *  [CSS Customization](#css-customization)
 
+[Supported versions](#supported-versions)
+
 [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
@@ -44,65 +46,63 @@ be provided by AltaPay.
 
 ## Installation
 
-1. AltaPay only supports PrestaShop version 1.6.x
-Go to ‘Modules and Services’ > ‘Modules And Services’ and click on “Add a new module” from the top-right corner.
+1. Download the latest release (altapay.zip, for PrestaShop version 1.6.x download altapay-for-prestashop-1.6.x.zip) file from the [Releases](https://github.com/AltaPay/plugin-prestashop/releases) tab
+
+2. Go to **Admin** > **Modules** > **Module manager** and click on **Upload a module** from the top-right corner.
 
    ![add_new_module](Docs/Installation/prestashop_modules_services.png)
 
-2. Now click on “Choose a file” from the “Add a new module” tab and find the AltaPay.zip file. When you chose the file, click on “Upload the module”.
+3. Now click on **select file** link from the **Upload a module** popup and upload module zip file.
 
    ![upload_module](Docs/Installation/prestashop_add_altapay_module.png)
 
-3. The module is now successfully imported. To finalize the installation, find the module in the list and click on “Install” to the right of the module.
+4. After the module is installed successfully, click on the **Configure** button for  configurations.
 
    ![install_module](Docs/Installation/prestashop_altapay_module_installation.png)
 
-4. A window will open - click on “Proceed with the installation”. When it’s done, a green bar will be visible and state that the module has been successfully installed.
-
-   ![installed_successfully](Docs/Installation/prestashop_altapay_module_installation_confirm.png)
-
 ## Configuration
 
-1. Go to ‘Modules and Services’ > ‘Modules and Services’ and find the AltaPay PrestaShop module. This can be done by searching for ‘AltaPay’ or go to ‘Payment and Gateways’ and find the module. 
-2. Click on ‘Configure’ for the module. 
+1. Go to **Modules** > **Module manager** and find the **AltaPay for PrestaShop** module. This can be done by searching for **AltaPay** or go to **Payment** and find the module. Click on **Configure** for the module. 
+
+   ![enter_credentials](Docs/Configuration/altapay_module_list.png)
 
    ![enter_credentials](Docs/Configuration/prestashop_setup_altapay_credentials.png)
 
-3. If you wish to enable fraud detection service and release/refund if fraud is detected then refer to the below screenshot.
+2. If you wish to enable fraud detection service and release/refund if fraud is detected then refer to the below screenshot.
 
    ![prestahop_setup_fraud](Docs/Configuration/prestahop_setup_fraud.png)
 
-4. To synchronize the terminals with the gateway, click on the "Synchronize" button. This will fetch the latest terminals from the gateway and will automatically configure based on the store country.
+3. To synchronize the terminals with the gateway, click on the **Synchronize** button. This will fetch the latest terminals from the gateway and will automatically configure based on the store country.
 
    ![enter_credentials](Docs/Configuration/sync_terminals.png)
 
-5. Now, set up the terminals. At the bottom of the module configuration page, you will find a list of “Terminals”. There is a plus sign which you would need to click, to add a new terminal.
+4. Now, set up the terminals. At the bottom of the module configuration page, you will find a list of terminals. There is a plus sign which you would need to click, to add a new terminal.
 
-   ![set_up_terminals](Docs/Configuration/prestashop_terminal_configuration.jpg)
+   ![set_up_terminals](Docs/Configuration/prestashop_terminal_configuration.png)
 
-6. When setting up a terminal you must select the icon and name that is going to be shown in the check flow.  The currency must correspond with the currency on the terminal at AltaPay.  The payment type indicates if the money would be captured on reservation (‘Authorize and capture’) or the merchant would have to capture, when delivering the goods.
+5. When setting up a terminal you must select the icon and name that is going to be shown in the checkout flow.  The currency must correspond with the currency on the terminal at AltaPay.  The payment type indicates if the money would be captured on reservation (‘Authorize and capture’) or the merchant would have to capture, when delivering the goods.
 
-7. In the optional field **Custom message**, you can add custom message for the customers. e.g. guidelines from Danish Forbrugerombudsmanden.
+6. In the optional field **Custom message**, you can add custom message for the customers. e.g. guidelines from Danish Forbrugerombudsmanden.
 
-8. In the optional field 'Secret', add the payment method secret as defined in the AltaPay payment gateway to enable checksum validation. To disable checksum validation leave it empty.
+7. In the optional field **Secret**, add the payment method secret as defined in the AltaPay payment gateway to enable checksum validation. To disable checksum validation leave it empty.
 
-9. If the terminal is for Apple Pay payments, select **Yes** from the **Is Apple Pay?** dropdown.
+8. If the terminal is for Apple Pay payments, select **Yes** from the **Is Apple Pay?** dropdown.
 
    ![terminal_config](Docs/Configuration/prestashop_configure_altapay_terminal_detail.jpg)
 
    > Note
    >
-   > Apple Pay functionality is supported with Prestashop 1.7 and above.
+   > Apple Pay functionality is supported with Prestashop 1.7 and above only.
 
-10. Enter value for Apple Pay Form Label.
+9. Enter value for Apple Pay Form Label.
 
-11. Select one or more of the payment network values for Apple Pay.
+10. Select one or more of the payment network values for Apple Pay.
 
-12. When you have set up your terminals you are ready to process transactions through AltaPay.
+11. When you have set up your terminals you are ready to process transactions through AltaPay.
 
-      ![verify_terminals](Docs/Configuration/prestashop_payment_method_page.jpg)
+      ![verify_terminals](Docs/Configuration/prestashop_payment_method_page.png)
 
-      ![process_transactions](Docs/Configuration/prestashop_credit_card_payment_page.jpg)
+      ![altapay_cc_checkout_form.png](Docs/Configuration/prestashop_checkout_styling_form.png)
 
 
 ## Subscriptions
@@ -113,9 +113,9 @@ AltaPay plugin is compatible with the [Subscription Products | Recurring Payment
 
    ![prestashop_configure_subscription_cron.png](Docs/Configuration/prestashop_configure_subscription_cron.png)
 
-> Note:
->
-> Currently, AltaPay plugin supports recurring payments with the credit card terminal only.
+   > Note:
+   >
+   > Currently, AltaPay plugin supports recurring payments with the credit card terminal only.
 
 ## Reconcile Orders
 In order to reconcile payments please follow the steps below:
@@ -132,7 +132,6 @@ In order to reconcile payments please follow the steps below:
    ![prestashop_sql_manager](Docs/OrderReconciliation/prestashop_sql_manager.jpg)
    
    ![prestashop_sql_manager_order_export](Docs/OrderReconciliation/prestashop_sql_manager_order_export.png)
-
 
 
 5. Navigate to AltaPay Gateway dashboard
@@ -190,6 +189,12 @@ In order to reconcile payments please follow the steps below:
 
    <https://github.com/AltaPay/plugin-prestashop/blob/main/views/css/payment.css>
 
+## Supported versions
+- PrestaShop 1.6.x (requires PHP 7.0 or later)
+- Thirty Bees 1.5.x (requires PHP 7.2 or later)
+- PrestaShop 1.7.x (requires PHP 7.2 or later)
+- PrestaShop 8.x (requires PHP 7.2 or later)
+
 ## Troubleshooting
 
 **PHP Warning: Input variables exceeded 1000. To increase the limit change max_input_vars in php.ini.**
@@ -210,7 +215,7 @@ In order to reconcile payments please follow the steps below:
 
 **You can find the CMS logs by following the below steps:**
 
-From Admin Dashboard navigate to **"Advanced Parameters > Logs"** 
+From Admin Dashboard navigate to **Advanced Parameters > Logs** 
 
 **Web server error logs**
 
