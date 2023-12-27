@@ -12,6 +12,11 @@
             <div class="card-header panel-heading">
                 <img src="{$this_path}/logo.png" height="14" width="14">
                 Payment information
+                {if !empty($altapay_module_update) }
+                    <p style="float: right; font-weight: normal;">
+                        A new version <b><a href="{$altapay_module_update['link']}">{$altapay_module_update['version']}</a></b> of <b>AltaPay for PrestaShop</b> is available.
+                    </p>
+                {/if}
             </div>
 
             <div class="card-body" style="background-color: #fff;">

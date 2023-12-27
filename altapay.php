@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.6.11';
+        $this->version = '3.6.12';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '8.1.2'];
@@ -1509,6 +1509,7 @@ class ALTAPAY extends PaymentModule
             );
         }
         $this->smarty->assign('altapay_recurring_payments_cron_link', $altapay_recurring_payments_cron_link);
+        $this->smarty->assign('altapay_module_update', $this->isAltaPayModuleUpdateAvailable());
         $html = $this->display(__FILE__, 'config.tpl');
         $html .= $this->renderForm();
         $html .= $this->renderFraudDetectionForm();
@@ -2167,6 +2168,7 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign('ajax_url', $fet->getAdminLink('AdminModules') . '&configure=' . $tname . '&payment_actions');
         $this->smarty->assign('token', Tools::getAdminTokenLite('AdminModules'));
         $this->smarty->assign('reconciliation_identifiers', $reconciliation_identifiers);
+        $this->smarty->assign('altapay_module_update', $this->isAltaPayModuleUpdateAvailable());
 
         $this->context->controller->addCSS($this->_path . 'views/css/admin_order.css', 'all');
         $this->context->controller->addJS($this->_path . 'views/js/admin_order.js');
@@ -3443,6 +3445,73 @@ class ALTAPAY extends PaymentModule
             if ($term->Country == $countryConfigured) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string $url
+     * @param array $headers
+     * @param array $post_fields
+     * @param string $method
+     *
+     * @return string
+     */
+    private function sendCurlRequest($url, $headers = [], $post_fields = [], $method = 'POST')
+    {
+        $curl = curl_init();
+
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_USERAGENT => $this->displayName,
+        ]);
+
+        if ($method == 'POST') {
+            curl_setopt($curl, CURLOPT_POST, 1);
+        } else {
+            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
+        }
+
+        if (!empty($post_fields)) {
+            curl_setopt($curl, CURLOPT_POSTFIELDS, is_array($post_fields) ? http_build_query($post_fields) : $post_fields);
+        }
+
+        if (!empty($headers)) {
+            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+        }
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+
+        if ($err) {
+            return 'cURL Error #:' . $err;
+        }
+
+        return trim($response);
+    }
+
+    /**
+     * @return array|false
+     */
+    public function isAltaPayModuleUpdateAvailable()
+    {
+        $url = 'https://api.github.com/repos/AltaPay/plugin-prestashop/releases/latest';
+        $response = $this->sendCurlRequest($url, [], [], 'GET');
+        $resp = @json_decode($response, true);
+        $current_version = $this->version;
+        $latest_version = $current_version;
+        if (!empty($resp['tag_name'])) {
+            $latest_version = $resp['tag_name'];
+        }
+        if (version_compare($latest_version, $current_version, '>')) {
+            return ['version' => $resp['tag_name'], 'link' => $resp['html_url']];
         }
 
         return false;
