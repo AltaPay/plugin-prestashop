@@ -8,6 +8,11 @@
 
 <div class="panel">
 	<h1>{l s="AltaPay: Payments less complicated" mod="altapay"}</h1>
+    {if !empty($altapay_module_update) }
+		<div class="alert alert-message" style="margin-top: 15px;margin-bottom: 0px;">
+			A new version <b><a target="_blank" href="{$altapay_module_update['link']}">{$altapay_module_update['version']}</a></b> of <b>AltaPay for PrestaShop</b> is available. We recommend updating your module to the latest version.
+		</div>
+    {/if}
 	<br>
 	<div class="alert alert-info">
 		<h4>{l s="How to use this module" mod="altapay"}</h4>
