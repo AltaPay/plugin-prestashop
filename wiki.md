@@ -29,6 +29,8 @@ Installing this plug-in will enable the web shop to handle card transactions thr
 
 [Supported versions](#supported-versions)
 
+[Plugin updates](#plugin-updates)
+
 [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
@@ -194,6 +196,14 @@ In order to reconcile payments please follow the steps below:
 - Thirty Bees 1.5.x (requires PHP 7.2 or later)
 - PrestaShop 1.7.x (requires PHP 7.2 or later)
 - PrestaShop 8.x (requires PHP 7.2 or later)
+
+## Plugin updates
+
+From version 3.6.12 onwards, you will receive notification on both back office order details page and AltaPay's module configuration page when a new version of the plugin is available for installation. We recommend to update the plugin regularly upon receiving such notifications to ensure optimal performance and access to the latest features.
+
+![configuration_page](docs/PluginUpdates/configuration_page.png)
+
+![order_page](docs/PluginUpdates/order_page.png)
 
 ## Troubleshooting
 
