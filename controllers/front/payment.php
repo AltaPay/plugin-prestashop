@@ -67,9 +67,9 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             $payment_form_url = $result['payment_form_url'];
             // Insert into transaction log
             $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction` 
-				(id_cart, payment_form_url, unique_id, amount, terminal_name, date_add) VALUES ' .
+				(id_cart, payment_form_url, unique_id, amount, terminal_name, date_add, token) VALUES ' .
                    "('" . (int) $cart->id . "', '" . pSQL($payment_form_url) . "', '" . pSQL($result['uniqueid']) . "', '"
-                   . pSQL($result['amount']) . "', '" . pSQL($terminal->remote_name) . "' , '" . pSQL(time()) . "')" .
+                   . pSQL($result['amount']) . "', '" . pSQL($terminal->remote_name) . "' , '" . pSQL(time()) . "', '')" .
                    ' ON DUPLICATE KEY UPDATE `amount` = ' . pSQL($result['amount']);
 
             Db::getInstance()->Execute($sql);
