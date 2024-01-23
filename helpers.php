@@ -701,9 +701,9 @@ function saveReconciliationDetails($response, $order)
  *
  * @return array
  */
-function getAltaPayCallbackData(){
-
-    if(version_compare(_PS_VERSION_, '1.6.1.24', '>=')){
+function getAltaPayCallbackData()
+{
+    if (version_compare(_PS_VERSION_, '1.6.1.24', '>=')) {
         return Tools::getAllValues();
     }
 

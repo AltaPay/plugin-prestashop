@@ -2954,7 +2954,7 @@ class ALTAPAY extends PaymentModule
                     $orderSubtotal,
                     $freeGiftVoucher
                 );
-            } else if (!empty($p['price_without_reduction'])) {
+            } elseif (!empty($p['price_without_reduction'])) {
                 $discountAmount = $p['price_without_reduction'] - $p['price_with_reduction'];
                 $discountPercent = ($discountAmount / $p['price_without_reduction']) * 100;
             }
