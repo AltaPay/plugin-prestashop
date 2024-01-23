@@ -5,6 +5,10 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.7.0]
+### Added
+- Add support for PrestaShop version 1.6.0.1
+
 ## [3.6.12]
 ### Added
 - Module version update notifications in AltaPay module configuration & order detail pages.
