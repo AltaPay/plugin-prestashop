@@ -6,7 +6,7 @@
  * file that was distributed with this source code.
  */
 
- p.payment_module a.altapay {
+p.payment_module a.altapay {
       background-color: #fbfbfb;
 }
 
@@ -496,24 +496,25 @@ div#payment_error {
 }
 
 .page-order-detail {
-    position: relative;
-    float: left;
-    background-color: #fff;
-    width: 100%;
-    margin-bottom: 20px;
-    padding: 20px;
+      position: relative;
+      float: left;
+      background-color: #fff;
+      width: 100%;
+      margin-bottom: 20px;
+      padding: 20px;
 }
 
 #module-altapay-callbackredirect .page-order-redirection form {
-    margin-bottom: 10px;
+      margin-bottom: 10px;
 }
 
 #module-altapay-callbackredirect #blockEmailSubscription_displayFooterBefore,
 #module-altapay-callbackredirect nav.breadcrumb.hidden-sm-down {
-    display: none;
+      display: none;
 }
 
-.niara #radio_pay_over_time, .niara #radio_pay_later {
+.niara #radio_pay_over_time,
+.niara #radio_pay_later {
       opacity: 1;
       position: relative;
       vertical-align: top;
