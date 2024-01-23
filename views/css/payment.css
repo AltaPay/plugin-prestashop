@@ -6,7 +6,7 @@
  * file that was distributed with this source code.
  */
 
-p.payment_module a.altapay {
+ p.payment_module a.altapay {
       background-color: #fbfbfb;
 }
 
@@ -523,6 +523,21 @@ div#payment_error {
 .niara #iDealPayment td {
       padding: 10px;
       text-align: left;
+}
+
+.altapay-ps-1-6 p.payment_module a.altapay {
+      padding-left: 15px;
+}
+
+.altapay-ps-1-6 p.payment_module a.altapay img {
+      max-width: 65px !important;
+      margin-right: 15px;
+}
+
+.altapay-ps-1-6 p.payment_module a.altapay span {
+      display: block;
+      font-weight: normal;
+      padding-left: 84px;
 }
 
 @media only screen and (max-width: 768px) {

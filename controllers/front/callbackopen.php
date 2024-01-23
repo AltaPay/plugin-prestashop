@@ -23,7 +23,7 @@ class AltapayCallbackopenModuleFrontController extends ModuleFrontController
      */
     public function postProcess()
     {
-        $postData = Tools::getAllValues();
+        $postData = getAltaPayCallbackData();
         $checksum = !empty($postData['checksum']) ? $postData['checksum'] : '';
         $terminal_name = getTransactionTerminalByUniqueId($postData['shop_orderid']);
         $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
