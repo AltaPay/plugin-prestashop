@@ -38,7 +38,6 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         try {
             $response = $callback->call();
             $shopOrderId = $response->shopOrderId;
-            $currencyPaid = Currency::getIdByIsoCode($response->currency);
             $paymentType = $response->type;
             $transaction = getTransaction($response);
             if (in_array($transaction->TransactionStatus, ['bank_payment_finalized', 'captured'], true)) {
@@ -50,6 +49,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             if (!Validate::isLoadedObject($cart)) {
                 exit('Could not load cart - exiting');
             }
+            $currencyPaid = Currency::getIdByIsoCode($transaction->MerchantCurrencyAlpha);
             $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
             $customer = new Customer($cart->id_customer);
             $transactionID = $transaction->TransactionId;
@@ -202,7 +202,6 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         // Determine payment method for display
         $paymentMethod = determinePaymentMethodForDisplay($response);
         // Create an order with 'payment accepted' status
-        $currencyPaidID = (int) $currencyPaid->id;
         $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
         $cartID = $cart->id;
 
@@ -211,7 +210,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         $customerSecureKey = $customer->secure_key;
         $this->module->validateOrder($cartID, $orderStatus, $amountPaid,
             $paymentMethod, null, null,
-            $currencyPaidID, false, $customerSecureKey);
+            (int) $currencyPaid, false, $customerSecureKey);
     }
 
     /**
