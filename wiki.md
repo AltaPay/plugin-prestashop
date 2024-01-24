@@ -171,19 +171,27 @@ In order to reconcile payments please follow the steps below:
 
    <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/payment_form17.tpl>
 
-   **Note:** If you have the at_movic theme installed, the path for the payment form is as follows:
+>   For PrestaShop 1.6.x, you can find tempate file here:
+>
+>   <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/payment_form.tpl>
 
-   <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/paymentform_atmovic.tpl>
+>   If you have the at_movic theme installed, the path for the payment form is as follows:
+>
+>  <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/paymentform_atmovic.tpl>
 
 ### Customize Redirect Form Page:
 
    You can change/update the **Redirect Form Page** by navigating to the below path:
 
-   <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/payment_redirect.tpl>
+   <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/payment_redirect17.tpl>
 
-   **Note:** If you have the at_movic theme installed, the path for the payment form is as follows:
+>   For PrestaShop 1.6.x, you can find tempate file here:
+>
+>   <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/payment_redirect.tpl>
 
-   <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/paymentredirect_atmovic.tpl>
+>   **Note:** If you have the at_movic theme installed, the path for the payment form is as follows:
+>
+>   <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/paymentredirect_atmovic.tpl>
 
 ### CSS Customization:
 
