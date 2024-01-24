@@ -17,11 +17,16 @@ class AltapayCallbackredirectModuleFrontController extends ModuleFrontController
      */
     public function postProcess()
     {
-        $themeName = Context::getContext()->shop->theme_name;
-        if ($themeName === 'at_movic') {
-            $this->setTemplate('module:altapay/views/templates/front/paymentredirect_atmovic.tpl');
+        // PrestaShop 1.6 and PrestaShop 1.7 have different declarations of $this->setTemplate()
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+            $themeName = Context::getContext()->shop->theme_name;
+            if ($themeName === 'at_movic') {
+                $this->setTemplate('module:altapay/views/templates/front/paymentredirect_atmovic.tpl');
+            } else {
+                $this->setTemplate('module:altapay/views/templates/front/payment_redirect17.tpl');
+            }
         } else {
-            $this->setTemplate('module:altapay/views/templates/front/payment_redirect.tpl');
+            $this->setTemplate('payment_redirect.tpl');
         }
     }
 }
