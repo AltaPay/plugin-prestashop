@@ -48,7 +48,7 @@ be provided by AltaPay.
 
 ## Installation
 
-1. Download the latest release (altapay.zip, for PrestaShop version 1.6.x download altapay-for-prestashop-1.6.x.zip) file from the [Releases](https://github.com/AltaPay/plugin-prestashop/releases) tab
+1. Download the latest release (**altapay.zip**, for PrestaShop version 1.6.x download **altapay-for-prestashop-1.6.x.zip**) file from the [Releases](https://github.com/AltaPay/plugin-prestashop/releases) tab
 
 2. Go to **Admin** > **Modules** > **Module manager** and click on **Upload a module** from the top-right corner.
 
@@ -189,7 +189,7 @@ In order to reconcile payments please follow the steps below:
 >
 >   <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/payment_redirect.tpl>
 
->   **Note:** If you have the at_movic theme installed, the path for the payment form is as follows:
+>   If you have the at_movic theme installed, the path for the payment form is as follows:
 >
 >   <https://github.com/AltaPay/plugin-prestashop/blob/main/views/templates/front/paymentredirect_atmovic.tpl>
 
