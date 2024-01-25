@@ -496,24 +496,25 @@ div#payment_error {
 }
 
 .page-order-detail {
-    position: relative;
-    float: left;
-    background-color: #fff;
-    width: 100%;
-    margin-bottom: 20px;
-    padding: 20px;
+      position: relative;
+      float: left;
+      background-color: #fff;
+      width: 100%;
+      margin-bottom: 20px;
+      padding: 20px;
 }
 
 #module-altapay-callbackredirect .page-order-redirection form {
-    margin-bottom: 10px;
+      margin-bottom: 10px;
 }
 
 #module-altapay-callbackredirect #blockEmailSubscription_displayFooterBefore,
 #module-altapay-callbackredirect nav.breadcrumb.hidden-sm-down {
-    display: none;
+      display: none;
 }
 
-.niara #radio_pay_over_time, .niara #radio_pay_later {
+.niara #radio_pay_over_time,
+.niara #radio_pay_later {
       opacity: 1;
       position: relative;
       vertical-align: top;
@@ -523,6 +524,21 @@ div#payment_error {
 .niara #iDealPayment td {
       padding: 10px;
       text-align: left;
+}
+
+.altapay-ps-1-6 p.payment_module a.altapay {
+      padding-left: 15px;
+}
+
+.altapay-ps-1-6 p.payment_module a.altapay img {
+      max-width: 65px !important;
+      margin-right: 15px;
+}
+
+.altapay-ps-1-6 p.payment_module a.altapay span {
+      display: block;
+      font-weight: normal;
+      padding-left: 84px;
 }
 
 @media only screen and (max-width: 768px) {

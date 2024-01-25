@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.6.12';
+    $pluginVersion = '3.7.0';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -694,4 +694,41 @@ function saveReconciliationDetails($response, $order)
             }
         }
     }
+}
+
+/**
+ * Get AltaPay callback data
+ *
+ * @return array
+ */
+function getAltaPayCallbackData()
+{
+    if (version_compare(_PS_VERSION_, '1.6.1.24', '>=')) {
+        return Tools::getAllValues();
+    }
+
+    $postData = [];
+
+    $postData['shop_orderid'] = Tools::getValue('shop_orderid');
+    $postData['currency'] = Tools::getValue('currency');
+    $postData['type'] = Tools::getValue('type');
+    $postData['embedded_window'] = Tools::getValue('embedded_window');
+    $postData['amount'] = Tools::getValue('amount');
+    $postData['transaction_id'] = Tools::getValue('transaction_id');
+    $postData['payment_id'] = Tools::getValue('payment_id');
+    $postData['nature'] = Tools::getValue('nature');
+    $postData['require_capture'] = Tools::getValue('require_capture');
+    $postData['payment_status'] = Tools::getValue('payment_status');
+    $postData['masked_credit_card'] = Tools::getValue('masked_credit_card');
+    $postData['credit_card_masked_pan'] = Tools::getValue('credit_card_masked_pan');
+    $postData['blacklist_token'] = Tools::getValue('blacklist_token');
+    $postData['credit_card_token'] = Tools::getValue('credit_card_token');
+    $postData['status'] = Tools::getValue('status');
+    $postData['checksum'] = Tools::getValue('checksum');
+    $postData['cardholder_message_must_be_shown'] = Tools::getValue('cardholder_message_must_be_shown');
+    $postData['merchant_error_message'] = Tools::getValue('merchant_error_message');
+    $postData['error_message'] = Tools::getValue('error_message');
+    $postData['xml'] = Tools::getValue('xml');
+
+    return $postData;
 }

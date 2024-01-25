@@ -8,14 +8,20 @@
 
 {if isset($smarty.get.altapay_unavailable)}<a id="altapay_unavailable" name="altapay_unavailable"></a><div class="altapay_unavailable">{l s='Payment service temporary unavailable' mod='altapay'}</div>{/if}
 {foreach $methods as $m}
-<div class="row" id="altapay">
-	<div class="col-xs-12">
-		<p class="payment_module">
-			<a class="altapay" href="{$link->getModuleLink('altapay', 'payment', ['method'=> $m.id_terminal])|escape:'html'}" title="{$m.display_name}" style="background: url({$base_dir_ssl}modules/altapay/views/img/payment_icons/{$m.icon_filename}) 15px center/64px auto no-repeat #fbfbfb">
-				{$m.display_name}
-				<span style="display: block; font-weight: normal;">{$m.custom_message}</span>
-			</a>
-		</p>
+	<div class="row altapay-ps-1-6" id="altapay">
+		<div class="col-xs-12">
+			<p class="payment_module">
+				<a class="altapay" href="{$link->getModuleLink('altapay', 'payment', ['method'=> $m.id_terminal])|escape:'html'}" title="{$m.display_name}">
+					{if $m.icon_filename}
+						<img style="max-width: 150px;" src="{$base_dir_ssl}modules/altapay/views/img/payment_icons/{$m.icon_filename}">
+					{/if}
+					{$m.display_name}
+					{if $m.custom_message}
+						<span>({$m.custom_message})</span>
+					{/if}
+				</a>
+			</p>
+		</div>
 	</div>
-</div>
 {/foreach}
+	

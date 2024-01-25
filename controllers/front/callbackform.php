@@ -30,7 +30,7 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
     public function postProcess()
     {
         $css_dir = null;
-        $postData = Tools::getAllValues();
+        $postData = getAltaPayCallbackData();
         $cart = getCartFromUniqueId($postData['shop_orderid']);
         $checksum = !empty($postData['checksum']) ? $postData['checksum'] : '';
         $terminalRemoteName = getCvvLess($cart->id, $postData['shop_orderid']);

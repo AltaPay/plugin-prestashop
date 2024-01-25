@@ -29,10 +29,10 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.6.12';
+        $this->version = '3.7.0';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.1.24', 'max' => '8.1.2'];
+        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.2'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -170,7 +170,7 @@ class ALTAPAY extends PaymentModule
             `id_cart` int(255) unsigned NOT NULL,
             `unique_id` varchar(255) NOT NULL,
             `amount` varchar(255) NOT NULL,
-            `token` varchar(255) NOT NULL,
+            `token` varchar(255) DEFAULT \'\' NOT NULL,
             `transaction_status` varchar(255) NULL,
             `payment_form_url` TEXT NOT NULL,
             `is_cancelled` tinyint(1) NULL DEFAULT \'0\',
@@ -2954,7 +2954,7 @@ class ALTAPAY extends PaymentModule
                     $orderSubtotal,
                     $freeGiftVoucher
                 );
-            } else {
+            } elseif (!empty($p['price_without_reduction'])) {
                 $discountAmount = $p['price_without_reduction'] - $p['price_with_reduction'];
                 $discountPercent = ($discountAmount / $p['price_without_reduction']) * 100;
             }
