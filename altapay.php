@@ -583,7 +583,7 @@ class ALTAPAY extends PaymentModule
             if (in_array($currency->iso_code, array_column($currencyOptions, 'id'))) {
                 continue;
             }
-            
+
             $currencyOptions[] = [
                 'id' => $currency->iso_code,
                 'name' => $currency->name . ' (' . $currency->iso_code . ')',
