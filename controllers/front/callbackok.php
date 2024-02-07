@@ -118,9 +118,11 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 }
                 if ($paymentType === 'paymentAndCapture' && $response->requireCapture === true) {
                     $response = $this->capturePayment($order->id, $transactionID, $amountPaid);
-                    $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
+                    $orderStatusCaptured = (int) Configuration::get('PS_OS_PAYMENT');
+                    if($orderStatusCaptured != $orderStatus){
+                        $order->setCurrentState($orderStatusCaptured);
+                    }
                 }
-                $order->setCurrentState($orderStatus);
 
                 if ($paymentType === 'verifyCard') {
                     $this->handleVerifyCard($shopOrderId, $transaction, $ccToken, $maskedPan, $customerID, $cart, $agreementType);

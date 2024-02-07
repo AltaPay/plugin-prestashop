@@ -10,6 +10,7 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 - Add terminal logo for Twint
 ### Fixed
 - The currency dropdown on the terminal configuration page shows duplicate values
+- Same order status being set multiple times.
 
 ## [3.7.0]
 ### Added
