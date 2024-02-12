@@ -29,10 +29,10 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.7.0';
+        $this->version = '3.7.1';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.2'];
+        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.3'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -580,6 +580,10 @@ class ALTAPAY extends PaymentModule
         $currencyOptions = [];
         $terminalNature = [];
         foreach (Currency::getCurrencies((int) Context::getContext()->language->id) as $currency) {
+            if (in_array($currency->iso_code, array_column($currencyOptions, 'id'))) {
+                continue;
+            }
+
             $currencyOptions[] = [
                 'id' => $currency->iso_code,
                 'name' => $currency->name . ' (' . $currency->iso_code . ')',

@@ -28,6 +28,11 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             exit('Invalid request');
         }
 
+        // Create lock file name based on transaction_id so that it locks creation of current order only.
+        // Locking prevents attempt to create order in PrestaShop if notification & ok callbacks get processed simultaneously.
+
+        $lockFileName = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'callback_lock_' . md5($postData['transaction_id']) . '.lock';
+        $lockFileHandle = lockCallback($lockFileName);
         try {
             $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
             $response = $callback->call();
@@ -38,6 +43,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             // Load the cart
             $cart = getCartFromUniqueId($shopOrderId);
             if (!Validate::isLoadedObject($cart)) {
+                unlockCallback($lockFileName, $lockFileHandle);
                 exit('Could not load cart - exiting');
             }
             if (!empty($shopOrderId)) {
@@ -52,9 +58,11 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         if (Validate::isLoadedObject($order)) {
                             $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
                             saveReconciliationDetails($response, $order);
+                            unlockCallback($lockFileName, $lockFileHandle);
                             exit('Order refund status updated.');
                         }
                     } else {
+                        unlockCallback($lockFileName, $lockFileHandle);
                         exit('Order already Processed!!');
                     }
                 }
@@ -76,6 +84,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     }
                     $api->setTransaction($transactionId);
                     $api->call();
+                    unlockCallback($lockFileName, $lockFileHandle);
                     exit('Order already Processed!');
                 }
             }
@@ -146,11 +155,14 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
                             saveOrderReconciliationIdentifierIfNotExists($currentOrder->id, $reconciliation_identifier, $reconciliation_type);
                         }
+                        unlockCallback($lockFileName, $lockFileHandle);
                         exit('Order created');
                     } else {
+                        unlockCallback($lockFileName, $lockFileHandle);
                         exit('Only handling Success state');
                     }
                 } elseif ($order->getCurrentState() != Configuration::get('ALTAPAY_OS_PENDING')) { //Order found, but not pending
+                    unlockCallback($lockFileName, $lockFileHandle);
                     exit('Order found but is not currently pending - ignoring');
                 } elseif (Validate::isLoadedObject($order)) { // Pending order found, update
                     if (in_array($transactionStatus, $auth_statuses, true) or in_array($transactionStatus, $captured_statuses, true)) {
@@ -177,12 +189,14 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
                             saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
                         }
+                        unlockCallback($lockFileName, $lockFileHandle);
                         exit('Order status updated to Accepted');
                     } elseif ($transactionStatus === 'epayment_declined') {
                         // Update payment status to 'declined'
                         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
                         SET `paymentStatus` = \'declined\' WHERE `id_order` = ' . (int) $order->id;
                         Db::getInstance()->Execute($sql);
+                        unlockCallback($lockFileName, $lockFileHandle);
                         exit('Order status updated to Error');
                     } else {
                         // Unexpected scenario
@@ -190,6 +204,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         PrestaShopLogger::addLog('Unexpected scenario: Callback notification was received for Transaction '
                             . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
                             $this->module->id, true);
+                        unlockCallback($lockFileName, $lockFileHandle);
                         exit('Unrecognized status received ' . $transactionStatus);
                     }
                 }
@@ -203,6 +218,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     $this->module->id,
                     true
                 );
+                unlockCallback($lockFileName, $lockFileHandle);
                 exit('Unrecognized status received ' . $transactionStatus);
             }
         } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
@@ -222,6 +238,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $this->module->id,
             true
         );
+        unlockCallback($lockFileName, $lockFileHandle);
         exit($message);
     }
 }

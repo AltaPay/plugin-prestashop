@@ -5,6 +5,14 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.7.1]
+### Added
+- Add terminal logo for Twint
+### Fixed
+- The currency dropdown on the terminal configuration page shows duplicate values
+- Same order status being set multiple times.
+- Rare error on success page if ok & notification callbacks are received simultaneously. 
+
 ## [3.7.0]
 ### Added
 - Add support for PrestaShop version 1.6.0.1
