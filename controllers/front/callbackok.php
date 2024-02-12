@@ -151,7 +151,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
             } else {
                 $this->saveLogs('Something went wrong');
-                $this->redirectUserToCheckoutPaymentStep($lockFileHandle);
+                $this->redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
             }
         } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
             $message = $e->getResponse()->getBody();
@@ -163,7 +163,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $message = $e->getMessage();
         }
         $this->saveLogs($message);
-        $this->redirectUserToCheckoutPaymentStep($lockFileHandle);
+        $this->redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
     }
 
     /**
