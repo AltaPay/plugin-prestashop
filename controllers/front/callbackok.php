@@ -28,6 +28,12 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             exit('Invalid request');
         }
 
+        // Create lock file name based on transaction_id so that it locks creation of current order only.
+        // Locking prevents attempt to create order in PrestaShop if notification & ok callbacks get processed simultaneously.
+
+        $lockFileName = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'callback_lock_' . md5($postData['transaction_id']) . '.lock';
+        $lockFileHandle = lockCallback($lockFileName);
+
         $message = '';
         $orderStatus = (int) Configuration::get('authorized_payments_status');
         if (empty($orderStatus)) {
@@ -47,6 +53,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             // Load the cart
             $cart = getCartFromUniqueId($shopOrderId);
             if (!Validate::isLoadedObject($cart)) {
+                unlockCallback($lockFileName, $lockFileHandle);
                 exit('Could not load cart - exiting');
             }
             $currencyPaid = Currency::getIdByIsoCode($transaction->MerchantCurrencyAlpha);
@@ -68,8 +75,9 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     $order = new Order((int) $result[0]['id_order']);
                     if (Validate::isLoadedObject($order) and $paymentType === 'paymentAndCapture' and $response->requireCapture === true) {
                         $response = $this->capturePayment($order->id, $transactionID, $amountPaid);
-                        $this->updateOrder($cart, $order, $response, $shopOrderId);
+                        $this->updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
                     }
+                    unlockCallback($lockFileName, $lockFileHandle);
                     Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . (int) $order->id . '&key=' . $customer->secure_key);
                 }
             }
@@ -90,6 +98,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     }
                     $api->setTransaction($transactionID);
                     $api->call();
+                    unlockCallback($lockFileName, $lockFileHandle);
                     Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . (int) $order_id . '&key=' . $customer->secure_key);
                 }
             }
@@ -97,12 +106,12 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             // Redirect to payment selection page
             if ($fraudPayment['payment_status']) {
                 $this->saveLogs($transaction->FraudExplanation);
-                $this->redirectUserToCheckoutPaymentStep();
+                $this->redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
             } else {
                 // Check if an order exist
                 $order = getOrderFromUniqueId($shopOrderId);
                 if (Validate::isLoadedObject($order)) {
-                    $this->updateOrder($cart, $order, $response, $shopOrderId);
+                    $this->updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
                 } else {
                     $this->createOrder($response, $currencyPaid, $cart, $orderStatus);
                 }
@@ -138,10 +147,11 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
 
                 // Log order
                 createAltapayOrder($response, $order);
+                unlockCallback($lockFileName, $lockFileHandle);
                 Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
             } else {
                 $this->saveLogs('Something went wrong');
-                $this->redirectUserToCheckoutPaymentStep();
+                $this->redirectUserToCheckoutPaymentStep($lockFileHandle);
             }
         } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
             $message = $e->getResponse()->getBody();
@@ -153,7 +163,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $message = $e->getMessage();
         }
         $this->saveLogs($message);
-        $this->redirectUserToCheckoutPaymentStep();
+        $this->redirectUserToCheckoutPaymentStep($lockFileHandle);
     }
 
     /**
@@ -179,7 +189,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
     /**
      * @return void
      */
-    public function redirectUserToCheckoutPaymentStep()
+    public function redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle)
     {
         /* Redirect user back to the checkout payment step,
         * assume a failure occurred creating the URL until a payment url is received
@@ -188,6 +198,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         $as = $this->context->link;
         $con = $controller;
         $redirect = $as->getPageLink($con, true, null, 'step=3&altapay_unavailable=1') . '#altapay_unavailable';
+        unlockCallback($lockFileName, $lockFileHandle);
         Tools::redirect($redirect);
     }
 
@@ -314,7 +325,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
      *
      * @return void
      */
-    protected function updateOrder($cart, $order, $response, $shopOrderId)
+    protected function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle)
     {
         if ($response && is_array($response->Transactions)) {
             $transactionStatus = $response->Transactions[0]->TransactionStatus;
@@ -353,12 +364,14 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
             }
             $customer = new Customer($cart->id_customer);
+            unlockCallback($lockFileName, $lockFileHandle);
             Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
         } elseif ($transactionStatus === 'epayment_declined') {
             // Update payment status to 'declined'
             $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
             SET `paymentStatus` = \'declined\' WHERE `id_order` = ' . (int) $order->id;
             Db::getInstance()->Execute($sql);
+            unlockCallback($lockFileName, $lockFileHandle);
             exit('Order status updated to Error');
         } else {
             // Unexpected scenario
@@ -366,6 +379,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             PrestaShopLogger::addLog('Unexpected scenario: Callback notification was received for Transaction '
                 . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
                 $this->module->id, true);
+            unlockCallback($lockFileName, $lockFileHandle);
             exit('Unrecognized status received ' . $transactionStatus);
         }
     }

@@ -732,3 +732,60 @@ function getAltaPayCallbackData()
 
     return $postData;
 }
+
+/**
+* @param $lockFileName
+* @return false|mixed|resource|void
+ */
+function lockCallback($lockFileName) {
+    $maxRetries = 10; // Maximum number of retry attempts
+    $retryDelay = 1000000; // 1-second delay between retries (in microseconds)
+
+    // Attempt to acquire the lock with retry mechanism
+    $lockAcquired = false;
+    $retryCount = 0;
+
+    while (!$lockAcquired && $retryCount < $maxRetries) {
+        // Attempt to acquire an exclusive lock on the lock file
+        $fileHandle = @fopen($lockFileName, 'w');
+
+        if ($fileHandle !== false) {
+            // Attempt to acquire an exclusive lock on the file
+            $lockAcquired = flock($fileHandle, LOCK_EX | LOCK_NB);
+
+            if (!$lockAcquired) {
+                // Failed to acquire lock, release the file handle and retry
+                fclose($fileHandle);
+                usleep($retryDelay);
+                $retryCount++;
+            }
+        } else {
+            // Lock file creation failed, wait and retry
+            usleep($retryDelay);
+            $retryCount++;
+        }
+    }
+
+    if (!$lockAcquired) {
+        // Lock acquisition failed after maximum retries, handle appropriately
+        exit('Unable to acquire lock after maximum retries');
+    }
+
+    // Return the lock filename along with the file handle
+    return $fileHandle;
+}
+
+/**
+* @param $lockFileName
+* @param $fileHandle
+* @return void
+ */
+function unlockCallback($lockFileName, $fileHandle) {
+    flock($fileHandle, LOCK_UN);
+    fclose($fileHandle);
+
+    // Delete the lock file
+    if (file_exists($lockFileName)) {
+        unlink($lockFileName);
+    }
+}
