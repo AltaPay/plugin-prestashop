@@ -734,10 +734,12 @@ function getAltaPayCallbackData()
 }
 
 /**
-* @param $lockFileName
-* @return false|mixed|resource|void
+ * @param $lockFileName
+ *
+ * @return false|mixed|resource|void
  */
-function lockCallback($lockFileName) {
+function lockCallback($lockFileName)
+{
     $maxRetries = 10; // Maximum number of retry attempts
     $retryDelay = 1000000; // 1-second delay between retries (in microseconds)
 
@@ -757,12 +759,12 @@ function lockCallback($lockFileName) {
                 // Failed to acquire lock, release the file handle and retry
                 fclose($fileHandle);
                 usleep($retryDelay);
-                $retryCount++;
+                ++$retryCount;
             }
         } else {
             // Lock file creation failed, wait and retry
             usleep($retryDelay);
-            $retryCount++;
+            ++$retryCount;
         }
     }
 
@@ -776,11 +778,13 @@ function lockCallback($lockFileName) {
 }
 
 /**
-* @param $lockFileName
-* @param $fileHandle
-* @return void
+ * @param $lockFileName
+ * @param $fileHandle
+ *
+ * @return void
  */
-function unlockCallback($lockFileName, $fileHandle) {
+function unlockCallback($lockFileName, $fileHandle)
+{
     flock($fileHandle, LOCK_UN);
     fclose($fileHandle);
 
