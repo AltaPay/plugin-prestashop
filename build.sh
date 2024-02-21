@@ -27,7 +27,7 @@ then
   rsync -a build/vendor/* vendor/ && rm -rf build/
   find . -type d -exec cp index.php {} \;
   php7.2 $(command -v composer) dump-autoload --working-dir ./ --classmap-authoritative
-  mkdir -p dist/altapay && rsync -av --exclude={'build','dist','docker','Docs','build.sh','guide.md','.gitignore','phpstan.neon','composer.json','composer.lock'} * dist/altapay
+  mkdir -p dist/altapay && rsync -av --exclude={'terminal-config','tests','build','dist','docker','Docs','build.sh','guide.md','.gitignore','phpstan.neon','composer.json','composer.lock'} * dist/altapay
   cd dist/altapay/ && cd ../ && zip altapay.zip -r *
 else
   echo "Zip package is not currently installed"
