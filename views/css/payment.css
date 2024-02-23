@@ -159,7 +159,8 @@ div#payment_error {
 
 #checkout-cc .pensio_payment_form_card-number input,
 #checkout-cc .pensio_payment_form_cardholder input,
-#checkout-cc input#organisationNumber {
+#checkout-cc input#organisationNumber,
+#checkout-cc .pensio_payment_form_input_cell input {
       padding: 12px 14px;
       width: 100%;
       border-radius: 3px;
@@ -338,7 +339,8 @@ div#payment_error {
 
 #checkout-cc .AltaPaySubmitButton,
 #checkout-cc #submitbutton,
-#checkout-cc #cancelPayment {
+#checkout-cc #cancelPayment,
+#checkout-cc #EPayment button[type="submit"] {
       outline: none;
       padding: 15px 16px;
       color: white;
@@ -351,11 +353,13 @@ div#payment_error {
       font-size: 17px;
 }
 
-#checkout-cc .AltaPaySubmitButton {
+#checkout-cc .AltaPaySubmitButton,
+#checkout-cc #EPayment button[type="submit"] {
       background: #31C37E;
 }
 
-#checkout-cc .AltaPaySubmitButton:hover {
+#checkout-cc .AltaPaySubmitButton:hover,
+#checkout-cc #EPayment button[type="submit"]:hover {
       background: #16b36e;
 
 }
@@ -363,7 +367,8 @@ div#payment_error {
 #checkout-cc .AltaPaySubmitButton:disabled,
 #checkout-cc #submitbutton,
 #checkout-cc #cancelPayment,
-#checkout-cc #submitbutton:disabled {
+#checkout-cc #submitbutton:disabled,
+#checkout-cc #EPayment button[type="submit"]:disabled {
       background: black;
       outline: none;
       padding: 15px 16px;
@@ -539,6 +544,28 @@ div#payment_error {
       display: block;
       font-weight: normal;
       padding-left: 84px;
+}
+
+#checkout-cc #EPayment .pensio_payment_form_label_cell,
+#checkout-cc #iDealPayment .pensio_payment_form_label_cell,
+#checkout-cc #Mobile .pensio_payment_form_label_cell{
+      display: block;
+      padding: 0.25em 0;
+}
+
+#checkout-cc #EPayment .pensio_payment_form_input_cell,
+#checkout-cc #iDealPayment .pensio_payment_form_input_cell,
+#checkout-cc #Mobile .pensio_payment_form_input_cell {
+      padding: 0;
+      display: block;
+}
+
+#checkout-cc #Mobile .pensio_payment_form_input_cell input[type="text"] {
+      margin-bottom: 1.25em;
+}
+
+#checkout-cc #Mobile div#paymentFormWaiting {
+      text-align: center;
 }
 
 @media only screen and (max-width: 768px) {
