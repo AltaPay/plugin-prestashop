@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.7.2';
+    $pluginVersion = '3.7.3';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -792,4 +792,25 @@ function unlockCallback($lockFileName, $fileHandle)
     if (file_exists($lockFileName)) {
         unlink($lockFileName);
     }
+}
+
+
+/**
+ * @param $order_id
+ * @param $transaction_id
+ * @param $amount
+ *
+ * @return \API\PHP\Altapay\Response\AbstractResponse|\API\PHP\Altapay\Response\Embeds\Transaction[]|string
+ */
+function capturePayment($order_id, $transaction_id, $amount)
+{
+    $reconciliation_identifier = sha1($transaction_id . time());
+    $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
+    $api->setTransaction($transaction_id);
+    $api->setAmount($amount);
+    $api->setReconciliationIdentifier($reconciliation_identifier);
+    $response = $api->call();
+    saveOrderReconciliationIdentifier($order_id, $reconciliation_identifier);
+
+    return $response;
 }

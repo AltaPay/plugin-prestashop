@@ -74,7 +74,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     // Check if an order exist
                     $order = new Order((int) $result[0]['id_order']);
                     if (Validate::isLoadedObject($order) and $paymentType === 'paymentAndCapture' and $response->requireCapture === true) {
-                        $response = $this->capturePayment($order->id, $transactionID, $amountPaid);
+                        $response = capturePayment($order->id, $transactionID, $amountPaid);
                         $this->updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
                     }
                     unlockCallback($lockFileName, $lockFileHandle);
@@ -126,7 +126,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $reconciliation_type);
                 }
                 if ($paymentType === 'paymentAndCapture' && $response->requireCapture === true) {
-                    $response = $this->capturePayment($order->id, $transactionID, $amountPaid);
+                    $response = capturePayment($order->id, $transactionID, $amountPaid);
                     $orderStatusCaptured = (int) Configuration::get('PS_OS_PAYMENT');
                     if ($orderStatusCaptured != $orderStatus) {
                         $order->setCurrentState($orderStatusCaptured);
@@ -164,26 +164,6 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         }
         $this->saveLogs($message);
         $this->redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
-    }
-
-    /**
-     * @param $order_id
-     * @param $transaction_id
-     * @param $amount
-     *
-     * @return \API\PHP\Altapay\Response\AbstractResponse|\API\PHP\Altapay\Response\Embeds\Transaction[]|string
-     */
-    public function capturePayment($order_id, $transaction_id, $amount)
-    {
-        $reconciliation_identifier = sha1($transaction_id . time());
-        $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
-        $api->setTransaction($transaction_id);
-        $api->setAmount($amount);
-        $api->setReconciliationIdentifier($reconciliation_identifier);
-        $response = $api->call();
-        saveOrderReconciliationIdentifier($order_id, $reconciliation_identifier);
-
-        return $response;
     }
 
     /**
@@ -322,7 +302,8 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
      * @param $order
      * @param $response
      * @param $shopOrderId
-     *
+     * @param $lockFileName
+     * @param $lockFileHandle
      * @return void
      */
     protected function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle)
