@@ -47,7 +47,7 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
                             ]
                         );
 
-                        $this->ajaxDie(Tools::jsonEncode(['success' => true, 'url' => $thank_you_url]));
+                        $this->ajaxDie(json_encode(['success' => true, 'url' => $thank_you_url]));
                     }
                 } else {
                     $this->redirectBackToCheckout('altapay_cancel=1&isPaymentStep=true&step=3#altapay_cancel');
@@ -55,7 +55,7 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
             }
         }
 
-        $this->ajaxDie(Tools::jsonEncode(['success' => false]));
+        $this->ajaxDie(json_encode(['success' => false]));
     }
 
     public function redirectBackToCheckout($query)
@@ -64,6 +64,6 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
         $pLink = $this->context->link->getPageLink($controller);
         $location = $pLink . (strpos($controller, '?') !== false ? '&' : '?') . $query;
 
-        $this->ajaxDie(Tools::jsonEncode(['success' => false, 'url' => $location]));
+        $this->ajaxDie(json_encode(['success' => false, 'url' => $location]));
     }
 }
