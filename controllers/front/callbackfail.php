@@ -45,9 +45,9 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
 
         $message = '';
         $customerID = $this->context->customer->id;
-        $orderStatus = (int)Configuration::get('authorized_payments_status');
+        $orderStatus = (int) Configuration::get('authorized_payments_status');
         if (empty($orderStatus)) {
-            $orderStatus = (int)Configuration::get('PS_OS_PAYMENT');
+            $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
         }
 
         $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
@@ -80,9 +80,9 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             $paymentType = $response->type;
             $transaction = getTransaction($response);
             if (in_array($transaction->TransactionStatus, ['bank_payment_finalized', 'captured'], true)) {
-                $orderStatus = (int)Configuration::get('PS_OS_PAYMENT');
+                $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
             }
-            if($transaction->ReservedAmount > 0) {
+            if ($transaction->ReservedAmount > 0) {
                 $currencyPaid = Currency::getIdByIsoCode($transaction->MerchantCurrencyAlpha);
                 $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
                 $customer = new Customer($cart->id_customer);
@@ -100,18 +100,18 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                     // Check if the order already saved with the success status
                     if (!empty($result)) {
                         // Check if an order exist
-                        $order = new Order((int)$result[0]['id_order']);
+                        $order = new Order((int) $result[0]['id_order']);
                         if (Validate::isLoadedObject($order) and $paymentType === 'paymentAndCapture' and $response->requireCapture === true) {
                             $response = capturePayment($order->id, $transactionID, $amountPaid);
                             $this->updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
                         }
                         unlockCallback($lockFileName, $lockFileHandle);
-                        Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int)$cart->id . '&id_module=' . (int)$this->module->id . '&id_order=' . (int)$order->id . '&key=' . $customer->secure_key);
+                        Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . (int) $order->id . '&key=' . $customer->secure_key);
                     }
                 }
 
                 // Check if this is a duplicate payment
-                $order_id = Order::getOrderByCartId((int)($cart->id));
+                $order_id = Order::getOrderByCartId((int) ($cart->id));
                 if (!empty($order_id)) {
                     $altapay_order_details = getAltapayOrderDetails($order_id);
                     if (!empty($altapay_order_details)
@@ -127,7 +127,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                         $api->setTransaction($transactionID);
                         $api->call();
                         unlockCallback($lockFileName, $lockFileHandle);
-                        Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int)$cart->id . '&id_module=' . (int)$this->module->id . '&id_order=' . (int)$order_id . '&key=' . $customer->secure_key);
+                        Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . (int) $order_id . '&key=' . $customer->secure_key);
                     }
                 }
 
@@ -145,7 +145,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                     }
                 }
                 // Load order
-                $order = new Order((int)$this->module->currentOrder);
+                $order = new Order((int) $this->module->currentOrder);
 
                 if (Validate::isLoadedObject($order)) {
                     if (!empty($transaction->ReconciliationIdentifiers)) {
@@ -155,7 +155,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                     }
                     if ($paymentType === 'paymentAndCapture' && $response->requireCapture === true) {
                         $response = capturePayment($order->id, $transactionID, $amountPaid);
-                        $orderStatusCaptured = (int)Configuration::get('PS_OS_PAYMENT');
+                        $orderStatusCaptured = (int) Configuration::get('PS_OS_PAYMENT');
                         if ($orderStatusCaptured != $orderStatus) {
                             $order->setCurrentState($orderStatusCaptured);
                         }
@@ -176,7 +176,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                     // Log order
                     createAltapayOrder($response, $order);
                     unlockCallback($lockFileName, $lockFileHandle);
-                    Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int)$cart->id . '&id_module=' . (int)$this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
+                    Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
                 } else {
                     $this->saveLogs('Something went wrong');
                     $this->redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
@@ -191,7 +191,6 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
         } catch (Exception $e) {
             $errorMessage = $e->getMessage();
         }
-
 
         $status = strtolower($response->Result);
         if ($status === 'cancelled') {
@@ -295,6 +294,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
      * @param $shopOrderId
      * @param $lockFileName
      * @param $lockFileHandle
+     *
      * @return void
      */
     protected function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle)
@@ -432,5 +432,4 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             true
         );
     }
-
 }

@@ -304,6 +304,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
      * @param $shopOrderId
      * @param $lockFileName
      * @param $lockFileHandle
+     *
      * @return void
      */
     protected function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle)

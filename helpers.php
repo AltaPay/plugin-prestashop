@@ -794,7 +794,6 @@ function unlockCallback($lockFileName, $fileHandle)
     }
 }
 
-
 /**
  * @param $order_id
  * @param $transaction_id
