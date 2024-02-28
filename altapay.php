@@ -2708,6 +2708,7 @@ class ALTAPAY extends PaymentModule
         $customer = new API\PHP\Altapay\Request\Customer($address);
         $customer->setEmail($this->context->customer->email);
         $customer->setPhone($invoice_address->phone ?: $invoice_address->phone_mobile);
+        $customer->setUsername($this->context->customer->email);
 
         // Shipping address
         $sp_address = new Address($this->context->cart->id_address_delivery);
