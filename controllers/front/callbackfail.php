@@ -356,4 +356,81 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
         }
     }
 
+    /**
+     * @param $shopOrderId
+     * @param $transaction
+     * @param $ccToken
+     * @param $maskedPan
+     * @param $customerID
+     * @param $cart
+     * @param $agreementType
+     *
+     * @return void
+     */
+    protected function handleVerifyCard(
+        $shopOrderId,
+        $transaction,
+        $ccToken,
+        $maskedPan,
+        $customerID,
+        $cart,
+        $agreementType
+    ) {
+        $message = '';
+        $expires = '';
+        $cardType = '';
+        $transactionID = $transaction->TransactionId;
+        $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
+        if (isset($transaction->CapturedAmount)) {
+            $amountPaid = $transaction->CapturedAmount;
+        }
+        if (isset($transaction->CreditCardExpiry->Month)
+            && isset($transaction->CreditCardExpiry->Year)
+        ) {
+            $expires = $transaction->CreditCardExpiry->Month . '/'
+                . $transaction->CreditCardExpiry->Year;
+        }
+        if (isset($transaction->PaymentSchemeName)) {
+            $cardType = $transaction->PaymentSchemeName;
+        }
+        $currencyPaid = new Currency($cart->id_currency);
+        $sql = 'INSERT INTO `' . _DB_PREFIX_
+            . 'altapay_saved_credit_card` (time,userID,agreement_id,agreement_type,cardBrand,creditCardNumber,cardExpiryDate,ccToken) VALUES (Now(),'
+            . pSQL($customerID) . ',"' . pSQL($transactionID) . '","'
+            . pSQL($agreementType) . '","' . pSQL($cardType) . '","'
+            . pSQL($maskedPan) . '","' . pSQL($expires) . '","' . pSQL($ccToken)
+            . '")';
+        Db::getInstance()->executeS($sql);
+
+        $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
+        $request->setCreditCardToken($transaction->CreditCardToken)
+            ->setTerminal($transaction->Terminal)
+            ->setShopOrderId($shopOrderId)
+            ->setAmount($amountPaid)
+            ->setCurrency($currencyPaid->iso_code)
+            ->setAgreement([
+                'id' => $transactionID,
+                'type' => 'unscheduled',
+                'unscheduled_type' => 'incremental',
+            ]);
+        try {
+            $response = $request->call();
+        } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
+            $message = $e->getResponse()->getBody();
+        } catch (API\PHP\Altapay\Exceptions\ResponseHeaderException $e) {
+            $message = $e->getHeader()->ErrorMessage;
+        } catch (API\PHP\Altapay\Exceptions\ResponseMessageException $e) {
+            $message = $e->getMessage();
+        } catch (Exception $e) {
+            $message = $e->getMessage();
+        }
+        PrestaShopLogger::addLog('Callback OK issue, Message ' . $message,
+            3,
+            '1005',
+            $this->module->name,
+            $this->module->id,
+            true
+        );
+    }
+
 }
