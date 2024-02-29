@@ -54,6 +54,17 @@ document.addEventListener('DOMContentLoaded', function (event) {
             return;
         }
         
+        // Update value for amountPaid and currencyCode from prestashop object
+        if(typeof prestashop != "undefined"){
+            if(prestashop.hasOwnProperty('cart') && prestashop.cart.hasOwnProperty('totals')){
+                amountPaid = prestashop.cart.totals.total.amount;
+            }
+
+            if(prestashop.hasOwnProperty('currency') && prestashop.cart.hasOwnProperty('iso_code')){
+                currencyCode = prestashop.currency.iso_code;
+            }
+        }
+        
         // Define ApplePayPaymentRequest
         const request = {
             "countryCode": countryCode,
