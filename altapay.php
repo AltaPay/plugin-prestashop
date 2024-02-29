@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.7.2';
+        $this->version = '3.7.3';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.3'];
@@ -2949,7 +2949,7 @@ class ALTAPAY extends PaymentModule
             $productID = $p['id_product'];
             $discountPercent = 0;
 
-            if ($vouchers) {
+            if (!empty($vouchers) and empty($p['reduction'])) {
                 $discountPercent = $this->getVoucherDiscounts(
                     $vouchers,
                     $productID,
@@ -2958,9 +2958,24 @@ class ALTAPAY extends PaymentModule
                     $orderSubtotal,
                     $freeGiftVoucher
                 );
-            } elseif (!empty($p['price_without_reduction'])) {
+            } elseif (empty($vouchers) and !empty($p['reduction']) and !empty($p['price_without_reduction'])) {
                 $discountAmount = $p['price_without_reduction'] - $p['price_with_reduction'];
                 $discountPercent = ($discountAmount / $p['price_without_reduction']) * 100;
+            } elseif (!empty($vouchers) and !empty($p['reduction']) and !empty($p['price_without_reduction'])) {
+                $voucherPercentDiscount = $this->getVoucherDiscounts(
+                    $vouchers,
+                    $productID,
+                    $discountPercent,
+                    $basePrice,
+                    $orderSubtotal,
+                    $freeGiftVoucher
+                );
+                $voucherDiscountAmount = ($p['total_wt'] * ($voucherPercentDiscount / 100));
+                $rowTotal = $p['total_wt'] - $voucherDiscountAmount;
+                $originalPrice = $p['price_without_reduction'] * $p['cart_quantity'];
+                $discountAmount = $originalPrice - $rowTotal;
+                $discountPercent = ($discountAmount / $originalPrice) * 100;
+                $discountPercent = number_format($discountPercent, 2, '.', '');
             }
             $unitCode = 'unit';
             if ($p['cart_quantity'] > 1) {
