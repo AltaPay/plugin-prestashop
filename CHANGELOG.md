@@ -9,6 +9,7 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 ### Fixed
 - Fix: Payment fail issue when multiple discounts are applied.
 - Fix: Apple Pay payment mismatch issue with `thecheckout` module.
+- Fix: Apple Pay terminal sorting issue.
  
 ## [3.7.2]
 ### Added

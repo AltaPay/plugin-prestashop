@@ -2451,7 +2451,9 @@ class ALTAPAY extends PaymentModule
             $paymentOptions = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
             $terminalId = $paymentMethod['id_terminal'];
             if ($paymentMethod['applepay'] == '1') {
-                $this->context->smarty->assign('terminalId', $terminalId);
+                $this->context->smarty->assign('applepayTerminalId', $terminalId);
+            } else {
+                $this->context->smarty->assign('applepayTerminalId', null);
             }
             $terminal = ['method' => $terminalId];
             $template = $this->fetch('module:altapay/views/templates/hook/payment17.tpl');

@@ -39,7 +39,7 @@ p.payment_module a.altapay:after {
       margin-bottom: 14px;
 }
 
-#hidden-terminalid {
+#applepay-terminalid {
       display: none;
 }
 
