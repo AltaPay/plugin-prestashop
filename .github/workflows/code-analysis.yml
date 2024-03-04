@@ -45,14 +45,14 @@ jobs:
          _PS_ROOT_DIR_=../../ php vendor/phpstan/phpstan/phpstan.phar --configuration=phpstan.neon analyse ./
        working-directory: prestashop/modules/altapay
        
-     - name: Install PHP 5.6
+     - name: Install PHP 7.0
        uses: shivammathur/setup-php@v2
        with:
-         php-version: '5.6'
+         php-version: '7.0'
          extensions: intl #optional
          ini-values: "post_max_size=256M" #optional
 
-     - name: Run php5.6 linter
+     - name: Run php7.0 linter
        run: |
-         find . -path ./vendor -prune -false -o -type f -name '*.php' -print0 | xargs -0 -n1 -P$(nproc) php5.6 -l -n | (! grep -v "No syntax errors detected" )
+         find . -path ./vendor -prune -false -o -type f -name '*.php' -print0 | xargs -0 -n1 -P$(nproc) php7.0 -l -n | (! grep -v "No syntax errors detected" )
        working-directory: prestashop/modules/altapay
