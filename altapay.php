@@ -2937,11 +2937,7 @@ class ALTAPAY extends PaymentModule
         $cartID = $cart->id;
         $orderDetails = [];
 
-        if (in_array('1', $freeGiftVoucher['freeShippingStatus'], true)) {
-            $cartRuleFreeShipping = true;
-        } else {
-            $cartRuleFreeShipping = false;
-        }
+        $cartRuleFreeShipping = array_count_values(array_column($freeGiftVoucher, 'free_shipping'))['1'] ?? 0;
         foreach ($products as $p) {
             $rateBasePrice = 1 + ($p['rate'] / 100);
             //Calculation of base price
@@ -3035,6 +3031,10 @@ class ALTAPAY extends PaymentModule
         $carrierTax = $carrierCostWithTax - $carrierCostWithoutTax;
         if ($cartRuleFreeShipping) {
             $shippingDiscountPercent = 100;
+            if($cartRuleFreeShipping > 1) {
+                $carrierCostWithoutTax = 0;
+                $carrierTax = 0;
+            }
         }
         if (!empty($carrier->name)) {
             $orderLines[$i] = $this->createOrderlines(
