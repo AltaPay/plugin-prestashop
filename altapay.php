@@ -3031,7 +3031,7 @@ class ALTAPAY extends PaymentModule
         $carrierTax = $carrierCostWithTax - $carrierCostWithoutTax;
         if ($cartRuleFreeShipping) {
             $shippingDiscountPercent = 100;
-            if($cartRuleFreeShipping > 1) {
+            if ($cartRuleFreeShipping > 1) {
                 $carrierCostWithoutTax = 0;
                 $carrierTax = 0;
             }
