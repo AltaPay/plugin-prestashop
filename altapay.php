@@ -3067,7 +3067,7 @@ class ALTAPAY extends PaymentModule
         }
 
         $totalCompensationAmount = $total - $orderLinesTotal;
-        if ($totalCompensationAmount != 0) {
+        if (($compensationAmount > 0 || $compensationAmount < 0)) {
             $orderLines[++$i] = $this->compensationOrderlines('total', $totalCompensationAmount);
         }
 
