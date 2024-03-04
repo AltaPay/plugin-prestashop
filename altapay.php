@@ -2937,7 +2937,11 @@ class ALTAPAY extends PaymentModule
         $cartID = $cart->id;
         $orderDetails = [];
 
-        $cartRuleFreeShipping = array_count_values(array_column($freeGiftVoucher, 'free_shipping'))['1'] ?? 0;
+        if (in_array('1', $freeGiftVoucher['freeShippingStatus'], true)) {
+            $cartRuleFreeShipping = true;
+        } else {
+            $cartRuleFreeShipping = false;
+        }
         foreach ($products as $p) {
             $rateBasePrice = 1 + ($p['rate'] / 100);
             //Calculation of base price
@@ -3031,10 +3035,6 @@ class ALTAPAY extends PaymentModule
         $carrierTax = $carrierCostWithTax - $carrierCostWithoutTax;
         if ($cartRuleFreeShipping) {
             $shippingDiscountPercent = 100;
-            if ($cartRuleFreeShipping > 1) {
-                $carrierCostWithoutTax = 0;
-                $carrierTax = 0;
-            }
         }
         if (!empty($carrier->name)) {
             $orderLines[$i] = $this->createOrderlines(
@@ -3057,6 +3057,18 @@ class ALTAPAY extends PaymentModule
                 . pSQL($orderDetails) . "', '" . pSQL(time()) . "')" .
                 ' ON DUPLICATE KEY UPDATE `productDetails` = ' . "'" . pSQL($orderDetails) . "'";
             Db::getInstance()->Execute($sql);
+        }
+
+        $total = $cart->getOrderTotal(true, Cart::BOTH);
+        $orderLinesTotal = 0;
+        foreach ($orderLines as $orderLine) {
+            $orderLinePriceWithTax = ($orderLine->unitPrice * $orderLine->quantity) + $orderLine->taxAmount;
+            $orderLinesTotal += $orderLinePriceWithTax - ($orderLinePriceWithTax * ($orderLine->discount / 100));
+        }
+
+        $totalCompensationAmount = $total - $orderLinesTotal;
+        if ($totalCompensationAmount != 0) {
+            $orderLines[++$i] = $this->compensationOrderlines('total', $totalCompensationAmount);
         }
 
         return $orderLines;
