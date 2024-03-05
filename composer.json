@@ -20,7 +20,7 @@
     }
   },
   "require": {
-    "php": "^5.6 || ^7.0",
+    "php": "^7.0",
     "altapay/api-php": "^3.2",
     "humbug/php-scoper": "0.13.9",
     "nikic/php-parser": "4.x-dev",

@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function (event) {
     let session = "";
 
     $('body').on('submit', '.tc-main-title.selected form', function (e) {
-        if ($('.tc-main-title.selected #hidden-terminalid').text()) {
+        if ($('.tc-main-title.selected #applepay-terminalid').text()) {
             e.preventDefault();
             const terminalId = activeTerminalId();
             onApplePayButtonClicked(terminalId, false, true);
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function (event) {
 
     function activeTerminalId(){
         const payment_option = $('input[type="radio"][name="payment-option"]:checked').attr('id');
-        const terminalId = $("#" + payment_option + "-additional-information > #hidden-terminalid").text();
+        const terminalId = $("#" + payment_option + "-additional-information > #applepay-terminalid").text();
 
         return terminalId;
     }
@@ -52,6 +52,17 @@ document.addEventListener('DOMContentLoaded', function (event) {
     function onApplePayButtonClicked(terminalId, createSession, beginSession) {
         if (!ApplePaySession) {
             return;
+        }
+        
+        // Update value for amountPaid and currencyCode from prestashop object
+        if(typeof prestashop != "undefined"){
+            if(prestashop.hasOwnProperty('cart') && prestashop.cart.hasOwnProperty('totals')){
+                amountPaid = prestashop.cart.totals.total.amount;
+            }
+
+            if(prestashop.hasOwnProperty('currency') && prestashop.cart.hasOwnProperty('iso_code')){
+                currencyCode = prestashop.currency.iso_code;
+            }
         }
         
         // Define ApplePayPaymentRequest
