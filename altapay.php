@@ -2451,7 +2451,9 @@ class ALTAPAY extends PaymentModule
             $paymentOptions = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
             $terminalId = $paymentMethod['id_terminal'];
             if ($paymentMethod['applepay'] == '1') {
-                $this->context->smarty->assign('terminalId', $terminalId);
+                $this->context->smarty->assign('applepayTerminalId', $terminalId);
+            } else {
+                $this->context->smarty->assign('applepayTerminalId', null);
             }
             $terminal = ['method' => $terminalId];
             $template = $this->fetch('module:altapay/views/templates/hook/payment17.tpl');
@@ -2950,7 +2952,7 @@ class ALTAPAY extends PaymentModule
             $productID = $p['id_product'];
             $discountPercent = 0;
 
-            if ($vouchers) {
+            if (!empty($vouchers) and empty($p['reduction'])) {
                 $discountPercent = $this->getVoucherDiscounts(
                     $vouchers,
                     $productID,
@@ -2959,9 +2961,24 @@ class ALTAPAY extends PaymentModule
                     $orderSubtotal,
                     $freeGiftVoucher
                 );
-            } elseif (!empty($p['price_without_reduction'])) {
+            } elseif (empty($vouchers) and !empty($p['reduction']) and !empty($p['price_without_reduction'])) {
                 $discountAmount = $p['price_without_reduction'] - $p['price_with_reduction'];
                 $discountPercent = ($discountAmount / $p['price_without_reduction']) * 100;
+            } elseif (!empty($vouchers) and !empty($p['reduction']) and !empty($p['price_without_reduction'])) {
+                $voucherPercentDiscount = $this->getVoucherDiscounts(
+                    $vouchers,
+                    $productID,
+                    $discountPercent,
+                    $basePrice,
+                    $orderSubtotal,
+                    $freeGiftVoucher
+                );
+                $voucherDiscountAmount = ($p['total_wt'] * ($voucherPercentDiscount / 100));
+                $rowTotal = $p['total_wt'] - $voucherDiscountAmount;
+                $originalPrice = $p['price_without_reduction'] * $p['cart_quantity'];
+                $discountAmount = $originalPrice - $rowTotal;
+                $discountPercent = ($discountAmount / $originalPrice) * 100;
+                $discountPercent = number_format($discountPercent, 2, '.', '');
             }
             $unitCode = 'unit';
             if ($p['cart_quantity'] > 1) {
@@ -3041,6 +3058,18 @@ class ALTAPAY extends PaymentModule
                 . pSQL($orderDetails) . "', '" . pSQL(time()) . "')" .
                 ' ON DUPLICATE KEY UPDATE `productDetails` = ' . "'" . pSQL($orderDetails) . "'";
             Db::getInstance()->Execute($sql);
+        }
+
+        $total = $cart->getOrderTotal(true, Cart::BOTH);
+        $orderLinesTotal = 0;
+        foreach ($orderLines as $orderLine) {
+            $orderLinePriceWithTax = ($orderLine->unitPrice * $orderLine->quantity) + $orderLine->taxAmount;
+            $orderLinesTotal += $orderLinePriceWithTax - ($orderLinePriceWithTax * ($orderLine->discount / 100));
+        }
+
+        $totalCompensationAmount = $total - $orderLinesTotal;
+        if (($totalCompensationAmount > 0 || $totalCompensationAmount < 0)) {
+            $orderLines[++$i] = $this->compensationOrderlines('total', $totalCompensationAmount);
         }
 
         return $orderLines;

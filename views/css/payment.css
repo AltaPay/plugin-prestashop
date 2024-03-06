@@ -39,7 +39,7 @@ p.payment_module a.altapay:after {
       margin-bottom: 14px;
 }
 
-#hidden-terminalid {
+#applepay-terminalid {
       display: none;
 }
 
@@ -176,7 +176,7 @@ div#payment_error {
 }
 
 #checkout-cc .pensio_payment_form_month select,
-#checkout-cc #checkout-cc .pensio_payment_form_year select,
+#checkout-cc .pensio_payment_form_year select,
 #checkout-cc #idealIssuer,
 #checkout-cc select#birthdateDay,
 #checkout-cc select#birthdateMonth,

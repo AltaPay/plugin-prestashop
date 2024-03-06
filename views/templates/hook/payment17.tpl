@@ -5,7 +5,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
 *}
-<span id="hidden-terminalid">{{$terminalId}}</span>
+<span id="applepay-terminalid">{{$applepayTerminalId}}</span>
 {if !empty($ccTokenControl) && $customerID}
 <div class="savecard-checkbox">
     <label for="savecard">
