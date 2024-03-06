@@ -318,7 +318,7 @@ function getTerminalById($terminalId, $shop_id = 1)
         return $result;
     } catch (Exception $e) {
         $context = Context::getContext();
-        if (isset($context->controller) && isset($context->controller->errors)) {
+        if (isset($context->controller->errors)) {
             $context->controller->errors[] = $e->getMessage();
         }
         PrestaShopLogger::addLog($e->getMessage(), 4);
@@ -812,4 +812,208 @@ function capturePayment($order_id, $transaction_id, $amount)
     saveOrderReconciliationIdentifier($order_id, $reconciliation_identifier);
 
     return $response;
+}
+
+/**
+ * @return void
+ */
+function redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle)
+{
+    /* Redirect user back to the checkout payment step,
+    * assume a failure occurred creating the URL until a payment url is received
+    */
+    $context = Context::getContext();
+    $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
+    $as = $context->link;
+    $con = $controller;
+    $redirect = $as->getPageLink($con, true, null, 'step=3&altapay_unavailable=1') . '#altapay_unavailable';
+    unlockCallback($lockFileName, $lockFileHandle);
+    Tools::redirect($redirect);
+}
+
+/**
+ * @param $response
+ * @param $currencyPaid
+ * @param $cart
+ * @param $orderStatus
+ *
+ * @return void
+ */
+function createOrder($response, $currencyPaid, $cart, $orderStatus)
+{
+    $module = Module::getInstanceByName('altapay');
+    // Determine payment method for display
+    $paymentMethod = determinePaymentMethodForDisplay($response);
+    // Create an order with 'payment accepted' status
+    $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
+    $cartID = $cart->id;
+
+    // Load the customer
+    $customer = new Customer((int) $cart->id_customer);
+    $customerSecureKey = $customer->secure_key;
+    $module->validateOrder($cartID, $orderStatus, $amountPaid,
+        $paymentMethod, null, null,
+        (int) $currencyPaid, false, $customerSecureKey);
+}
+
+/**
+ * @param $message
+ *
+ * @return void
+ */
+function saveLogs($message)
+{
+    // Log message and return payment status
+    $module = Module::getInstanceByName('altapay');
+    PrestaShopLogger::addLog($message, 3, '1004', $module->name, $module->id, true);
+    $responseMessage = ($message !== '') ? $message : $module->l('This payment method is not available 1004.', 'callbackok');
+    echo $module->l($responseMessage, 'callbackOk');
+}
+
+/**
+ * @param $cart
+ * @param $order
+ * @param $response
+ * @param $shopOrderId
+ * @param $lockFileName
+ * @param $lockFileHandle
+ *
+ * @return void
+ */
+function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle)
+{
+    $module = Module::getInstanceByName('altapay');
+    if ($response && is_array($response->Transactions)) {
+        $transactionStatus = $response->Transactions[0]->TransactionStatus;
+    }
+    $auth_statuses = ['preauth', 'invoice_initialized', 'recurring_confirmed'];
+    $captured_statuses = ['bank_payment_finalized', 'captured'];
+    if (in_array($transactionStatus, $auth_statuses, true) or in_array($transactionStatus, $captured_statuses, true)) {
+        /*
+         * preauth occurs for wallet transactions where payment type is 'payment'.
+         * Funds are still waiting to be captured.
+         * For this scenario we change the order status to 'payment accepted'.
+         * bank_payment_finalized is for ePayments.
+         */
+        $order_state = (int) Configuration::get('authorized_payments_status');
+        if (empty($order_state)) {
+            $order_state = (int) Configuration::get('PS_OS_PAYMENT');
+        }
+        if (in_array($transactionStatus, $captured_statuses, true)) {
+            $order_state = (int) Configuration::get('PS_OS_PAYMENT');
+        }
+        $order->setCurrentState($order_state);
+        // Update payment status to 'succeeded'
+        $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
+        SET `paymentStatus` = \'succeeded\' WHERE `id_order` = ' . (int) $order->id;
+        Db::getInstance()->Execute($sql);
+        $payment = $order->getOrderPaymentCollection();
+        if (isset($payment[0])) {
+            $payment[0]->transaction_id = pSQL($shopOrderId);
+            $payment[0]->save();
+        }
+
+        if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
+            $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
+            $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+
+            saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
+        }
+        $customer = new Customer($cart->id_customer);
+        unlockCallback($lockFileName, $lockFileHandle);
+        Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
+    } elseif ($transactionStatus === 'epayment_declined') {
+        // Update payment status to 'declined'
+        $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
+            SET `paymentStatus` = \'declined\' WHERE `id_order` = ' . (int) $order->id;
+        Db::getInstance()->Execute($sql);
+        unlockCallback($lockFileName, $lockFileHandle);
+        exit('Order status updated to Error');
+    } else {
+        // Unexpected scenario
+        $mNa = $module->name;
+        PrestaShopLogger::addLog('Unexpected scenario: Callback notification was received for Transaction '
+            . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
+            $module->id, true);
+        unlockCallback($lockFileName, $lockFileHandle);
+        exit('Unrecognized status received ' . $transactionStatus);
+    }
+}
+
+/**
+ * @param $shopOrderId
+ * @param $transaction
+ * @param $ccToken
+ * @param $maskedPan
+ * @param $customerID
+ * @param $cart
+ * @param $agreementType
+ *
+ * @return void
+ */
+function handleVerifyCard(
+    $shopOrderId,
+    $transaction,
+    $ccToken,
+    $maskedPan,
+    $customerID,
+    $cart,
+    $agreementType
+) {
+    $module = Module::getInstanceByName('altapay');
+    $message = '';
+    $expires = '';
+    $cardType = '';
+    $transactionID = $transaction->TransactionId;
+    $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
+    if (isset($transaction->CapturedAmount)) {
+        $amountPaid = $transaction->CapturedAmount;
+    }
+    if (isset($transaction->CreditCardExpiry->Month)
+        && isset($transaction->CreditCardExpiry->Year)
+    ) {
+        $expires = $transaction->CreditCardExpiry->Month . '/'
+            . $transaction->CreditCardExpiry->Year;
+    }
+    if (isset($transaction->PaymentSchemeName)) {
+        $cardType = $transaction->PaymentSchemeName;
+    }
+    $currencyPaid = new Currency($cart->id_currency);
+    $sql = 'INSERT INTO `' . _DB_PREFIX_
+        . 'altapay_saved_credit_card` (time,userID,agreement_id,agreement_type,cardBrand,creditCardNumber,cardExpiryDate,ccToken) VALUES (Now(),'
+        . pSQL($customerID) . ',"' . pSQL($transactionID) . '","'
+        . pSQL($agreementType) . '","' . pSQL($cardType) . '","'
+        . pSQL($maskedPan) . '","' . pSQL($expires) . '","' . pSQL($ccToken)
+        . '")';
+    Db::getInstance()->executeS($sql);
+
+    $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
+    $request->setCreditCardToken($transaction->CreditCardToken)
+        ->setTerminal($transaction->Terminal)
+        ->setShopOrderId($shopOrderId)
+        ->setAmount($amountPaid)
+        ->setCurrency($currencyPaid->iso_code)
+        ->setAgreement([
+            'id' => $transactionID,
+            'type' => 'unscheduled',
+            'unscheduled_type' => 'incremental',
+        ]);
+    try {
+        $response = $request->call();
+    } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
+        $message = $e->getResponse()->getBody();
+    } catch (API\PHP\Altapay\Exceptions\ResponseHeaderException $e) {
+        $message = $e->getHeader()->ErrorMessage;
+    } catch (API\PHP\Altapay\Exceptions\ResponseMessageException $e) {
+        $message = $e->getMessage();
+    } catch (Exception $e) {
+        $message = $e->getMessage();
+    }
+    PrestaShopLogger::addLog('Callback OK issue, Message ' . $message,
+        3,
+        '1005',
+        $module->name,
+        $module->id,
+        true
+    );
 }

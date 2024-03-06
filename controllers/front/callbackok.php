@@ -75,7 +75,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     $order = new Order((int) $result[0]['id_order']);
                     if (Validate::isLoadedObject($order) and $paymentType === 'paymentAndCapture' and $response->requireCapture === true) {
                         $response = capturePayment($order->id, $transactionID, $amountPaid);
-                        $this->updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
+                        updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
                     }
                     unlockCallback($lockFileName, $lockFileHandle);
                     Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . (int) $order->id . '&key=' . $customer->secure_key);
@@ -105,15 +105,15 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
 
             // Redirect to payment selection page
             if ($fraudPayment['payment_status']) {
-                $this->saveLogs($transaction->FraudExplanation);
-                $this->redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
+                saveLogs($transaction->FraudExplanation);
+                redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
             } else {
                 // Check if an order exist
                 $order = getOrderFromUniqueId($shopOrderId);
                 if (Validate::isLoadedObject($order)) {
-                    $this->updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
+                    updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
                 } else {
-                    $this->createOrder($response, $currencyPaid, $cart, $orderStatus);
+                    createOrder($response, $currencyPaid, $cart, $orderStatus);
                 }
             }
             // Load order
@@ -150,8 +150,8 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 unlockCallback($lockFileName, $lockFileHandle);
                 Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
             } else {
-                $this->saveLogs('Something went wrong');
-                $this->redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
+                saveLogs('Something went wrong');
+                redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
             }
         } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
             $message = $e->getResponse()->getBody();
@@ -162,207 +162,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         } catch (Exception $e) {
             $message = $e->getMessage();
         }
-        $this->saveLogs($message);
-        $this->redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
-    }
-
-    /**
-     * @return void
-     */
-    public function redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle)
-    {
-        /* Redirect user back to the checkout payment step,
-        * assume a failure occurred creating the URL until a payment url is received
-        */
-        $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
-        $as = $this->context->link;
-        $con = $controller;
-        $redirect = $as->getPageLink($con, true, null, 'step=3&altapay_unavailable=1') . '#altapay_unavailable';
-        unlockCallback($lockFileName, $lockFileHandle);
-        Tools::redirect($redirect);
-    }
-
-    /**
-     * @param $response
-     * @param $currencyPaid
-     * @param $cart
-     * @param $orderStatus
-     *
-     * @return void
-     */
-    private function createOrder($response, $currencyPaid, $cart, $orderStatus)
-    {
-        // Determine payment method for display
-        $paymentMethod = determinePaymentMethodForDisplay($response);
-        // Create an order with 'payment accepted' status
-        $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
-        $cartID = $cart->id;
-
-        // Load the customer
-        $customer = new Customer((int) $cart->id_customer);
-        $customerSecureKey = $customer->secure_key;
-        $this->module->validateOrder($cartID, $orderStatus, $amountPaid,
-            $paymentMethod, null, null,
-            (int) $currencyPaid, false, $customerSecureKey);
-    }
-
-    /**
-     * @param $message
-     *
-     * @return void
-     */
-    protected function saveLogs($message)
-    {
-        // Log message and return payment status
-        $module = $this->module;
-        PrestaShopLogger::addLog($message, 3, '1004', $module->name, $module->id, true);
-        $responseMessage = ($message !== '') ? $message : $this->module->l('This payment method is not available 1004.', 'callbackok');
-        echo $this->module->l($responseMessage, 'callbackOk');
-    }
-
-    /**
-     * @param $shopOrderId
-     * @param $transaction
-     * @param $ccToken
-     * @param $maskedPan
-     * @param $customerID
-     * @param $cart
-     * @param $agreementType
-     *
-     * @return void
-     */
-    protected function handleVerifyCard(
-        $shopOrderId,
-        $transaction,
-        $ccToken,
-        $maskedPan,
-        $customerID,
-        $cart,
-        $agreementType
-    ) {
-        $message = '';
-        $expires = '';
-        $cardType = '';
-        $transactionID = $transaction->TransactionId;
-        $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
-        if (isset($transaction->CapturedAmount)) {
-            $amountPaid = $transaction->CapturedAmount;
-        }
-        if (isset($transaction->CreditCardExpiry->Month)
-            && isset($transaction->CreditCardExpiry->Year)
-        ) {
-            $expires = $transaction->CreditCardExpiry->Month . '/'
-                . $transaction->CreditCardExpiry->Year;
-        }
-        if (isset($transaction->PaymentSchemeName)) {
-            $cardType = $transaction->PaymentSchemeName;
-        }
-        $currencyPaid = new Currency($cart->id_currency);
-        $sql = 'INSERT INTO `' . _DB_PREFIX_
-            . 'altapay_saved_credit_card` (time,userID,agreement_id,agreement_type,cardBrand,creditCardNumber,cardExpiryDate,ccToken) VALUES (Now(),'
-            . pSQL($customerID) . ',"' . pSQL($transactionID) . '","'
-            . pSQL($agreementType) . '","' . pSQL($cardType) . '","'
-            . pSQL($maskedPan) . '","' . pSQL($expires) . '","' . pSQL($ccToken)
-            . '")';
-        Db::getInstance()->executeS($sql);
-
-        $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
-        $request->setCreditCardToken($transaction->CreditCardToken)
-            ->setTerminal($transaction->Terminal)
-            ->setShopOrderId($shopOrderId)
-            ->setAmount($amountPaid)
-            ->setCurrency($currencyPaid->iso_code)
-            ->setAgreement([
-                'id' => $transactionID,
-                'type' => 'unscheduled',
-                'unscheduled_type' => 'incremental',
-            ]);
-        try {
-            $response = $request->call();
-        } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
-            $message = $e->getResponse()->getBody();
-        } catch (API\PHP\Altapay\Exceptions\ResponseHeaderException $e) {
-            $message = $e->getHeader()->ErrorMessage;
-        } catch (API\PHP\Altapay\Exceptions\ResponseMessageException $e) {
-            $message = $e->getMessage();
-        } catch (Exception $e) {
-            $message = $e->getMessage();
-        }
-        PrestaShopLogger::addLog('Callback OK issue, Message ' . $message,
-            3,
-            '1005',
-            $this->module->name,
-            $this->module->id,
-            true
-        );
-    }
-
-    /**
-     * @param $cart
-     * @param $order
-     * @param $response
-     * @param $shopOrderId
-     * @param $lockFileName
-     * @param $lockFileHandle
-     *
-     * @return void
-     */
-    protected function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle)
-    {
-        if ($response && is_array($response->Transactions)) {
-            $transactionStatus = $response->Transactions[0]->TransactionStatus;
-        }
-        $auth_statuses = ['preauth', 'invoice_initialized', 'recurring_confirmed'];
-        $captured_statuses = ['bank_payment_finalized', 'captured'];
-        if (in_array($transactionStatus, $auth_statuses, true) or in_array($transactionStatus, $captured_statuses, true)) {
-            /*
-             * preauth occurs for wallet transactions where payment type is 'payment'.
-             * Funds are still waiting to be captured.
-             * For this scenario we change the order status to 'payment accepted'.
-             * bank_payment_finalized is for ePayments.
-             */
-            $order_state = (int) Configuration::get('authorized_payments_status');
-            if (empty($order_state)) {
-                $order_state = (int) Configuration::get('PS_OS_PAYMENT');
-            }
-            if (in_array($transactionStatus, $captured_statuses, true)) {
-                $order_state = (int) Configuration::get('PS_OS_PAYMENT');
-            }
-            $order->setCurrentState($order_state);
-            // Update payment status to 'succeeded'
-            $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
-        SET `paymentStatus` = \'succeeded\' WHERE `id_order` = ' . (int) $order->id;
-            Db::getInstance()->Execute($sql);
-            $payment = $order->getOrderPaymentCollection();
-            if (isset($payment[0])) {
-                $payment[0]->transaction_id = pSQL($shopOrderId);
-                $payment[0]->save();
-            }
-
-            if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
-                $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
-                $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
-
-                saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
-            }
-            $customer = new Customer($cart->id_customer);
-            unlockCallback($lockFileName, $lockFileHandle);
-            Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
-        } elseif ($transactionStatus === 'epayment_declined') {
-            // Update payment status to 'declined'
-            $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
-            SET `paymentStatus` = \'declined\' WHERE `id_order` = ' . (int) $order->id;
-            Db::getInstance()->Execute($sql);
-            unlockCallback($lockFileName, $lockFileHandle);
-            exit('Order status updated to Error');
-        } else {
-            // Unexpected scenario
-            $mNa = $this->module->name;
-            PrestaShopLogger::addLog('Unexpected scenario: Callback notification was received for Transaction '
-                . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
-                $this->module->id, true);
-            unlockCallback($lockFileName, $lockFileHandle);
-            exit('Unrecognized status received ' . $transactionStatus);
-        }
+        saveLogs($message);
+        redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
     }
 }
