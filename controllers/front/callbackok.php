@@ -134,7 +134,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 }
 
                 if ($paymentType === 'verifyCard') {
-                    $this->handleVerifyCard($shopOrderId, $transaction, $ccToken, $maskedPan, $customerID, $cart, $agreementType);
+                    handleVerifyCard($shopOrderId, $transaction, $ccToken, $maskedPan, $customerID, $cart, $agreementType);
                 }
                 if (in_array($paymentType, ['subscription', 'subscriptionAndCharge'])) {
                     $sql = 'INSERT INTO `' . _DB_PREFIX_
