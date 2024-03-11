@@ -5,6 +5,10 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.7.4]
+### Fixed
+- Fix: Improve exception handling and error logging.
+
 ## [3.7.3]
 ### Fixed
 - Fix: Payment fail issue when multiple discounts are applied.

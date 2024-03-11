@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.7.3';
+        $this->version = '3.7.4';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.3'];
@@ -2604,34 +2604,29 @@ class ALTAPAY extends PaymentModule
      * @param $savecard
      * @param $tokenId
      * @param bool $payment_method
-     * @param null $providerData
+     * @param string $providerData
+     * @param bool $is_apple_pay
      *
      * @return array If the transaction failed, the array contains information about the failure
      *
      * @throws Exception
      */
-    public function createTransaction($savecard, $tokenId, $payment_method = false, $providerData = null)
+    public function createTransaction($savecard, $tokenId, $payment_method = false, $providerData = null, $is_apple_pay = false)
     {
         $cart = $this->context->cart;
         $ccToken = null;
         $isReservation = false;
         $agreementData = [];
         $results = null;
-        $max_date = '';
         $latestTransKey = 0;
+        $response = ['success' => false, 'payment_form_url' => '', 'apple_pay_terminal' => $is_apple_pay];
         // Terminal
         $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
         if (!is_object($terminal)) {
             $message = 'Could not determine remote terminal - possibly currency mismatch';
-            PrestaShopLogger::addLog($message, 3, 0, $this->name, $this->id, true);
+            PrestaShopLogger::addLog($message, 3, null, $this->name, $this->id, true);
 
-            return [
-                'success' => false,
-                'result' => 'failure',
-                'message' => $message,
-                'additionalInfo' => $message,
-                'payment_form_url' => false,
-            ];
+            return $response;
         }
         $cgConf = [];
         // Config
@@ -2640,7 +2635,7 @@ class ALTAPAY extends PaymentModule
         $cgConf['language'] = $this->context->language->iso_code;
         $cgConf['uniqueid'] = uniqid('PS');
         $cgConf['terminal'] = $terminal->remote_name;
-        $cgConf['cookie'] = isset($_SERVER['HTTP_COOKIE']) ? $_SERVER['HTTP_COOKIE'] : null;
+        $cgConf['cookie'] = $_SERVER['HTTP_COOKIE'] ?? null;
 
         $callback = [];
         // Callbacks
@@ -2742,13 +2737,7 @@ class ALTAPAY extends PaymentModule
         if (!$this->altapayApiLogin()) {
             PrestaShopLogger::addLog($this->api_error, 3, null, $this->name, $this->id, true);
 
-            return [
-                'success' => false,
-                'result' => 'failure',
-                'message' => 'unable to connect to gateway',
-                'additionalInfo' => $this->api_error,
-                'payment_form_url' => false,
-            ];
+            return $response;
         }
 
         $type = $cgConf['payment_type'];
@@ -2769,7 +2758,13 @@ class ALTAPAY extends PaymentModule
             $config->setCallbackRedirect($callback['callback_redirect']);
             $config->setCallbackForm($callback['callback_form']);
             $request = new API\PHP\Altapay\Api\Ecommerce\PaymentRequest(getAuth());
-            if ($terminal->applepay and !empty($providerData)) {
+            if ($terminal->applepay) {
+                $response['apple_pay_terminal'] = true;
+                if (empty($providerData)) {
+                    PrestaShopLogger::addLog('Apple Pay provider data is empty.', 3, null, $this->name, $this->id, true);
+
+                    return $response;
+                }
                 $request = new API\PHP\Altapay\Api\Payments\CardWalletAuthorize(getAuth());
                 $request->setProviderData($providerData);
             }
@@ -2805,27 +2800,28 @@ class ALTAPAY extends PaymentModule
             }
             try {
                 $response = $request->call();
-                $responseUrl = $response->Url;
+                $responseUrl = $response->Url ?? ($terminal->applepay ? 'cardwallet' : 'reservation');
                 $orderStatus = (int) Configuration::get('ALTAPAY_OS_PENDING');
-                if (strtolower($response->Result) === 'success' && $responseUrl == null) {
-                    $responseUrl = 'reservation';
-                    $orderStatus = (int) Configuration::get('authorized_payments_status');
-                    if (empty($orderStatus)) {
-                        $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
-                    }
-                    $transaction = $response->Transactions[$latestTransKey];
-                    $paymentType = $transaction->AuthType;
-                    if (isset($transaction->CapturedAmount)) {
-                        $amount = $transaction->CapturedAmount;
-                    }
-                    if ($paymentType === 'payment' || $paymentType === 'paymentAndCapture') {
-                        $amount = $cart->getOrderTotal(true, Cart::BOTH);
-                        if ($paymentType === 'paymentAndCapture') {
+                // Handling for Apple Pay and reservation
+                if ($responseUrl === 'cardwallet' || $responseUrl === 'reservation') {
+                    if (strtolower($response->Result) === 'success') {
+                        $orderStatus = (int) Configuration::get('authorized_payments_status');
+                        if (empty($orderStatus)) {
                             $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
                         }
-                    }
-                    if ($terminal->applepay) {
-                        $responseUrl = 'cardwallet';
+                        $transaction = $response->Transactions[$latestTransKey];
+                        $paymentType = $transaction->AuthType;
+                        if (isset($transaction->CapturedAmount)) {
+                            $amount = $transaction->CapturedAmount;
+                        }
+                        if ($paymentType === 'payment' || $paymentType === 'paymentAndCapture') {
+                            $amount = $cart->getOrderTotal(true, Cart::BOTH);
+                            if ($paymentType === 'paymentAndCapture') {
+                                $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
+                            }
+                        }
+                    } else {
+                        PrestaShopLogger::addLog($responseUrl . ' request failed for order id ' . $cgConf['uniqueid'], 3, null, $this->name, $this->id, true);
                     }
                 }
 
@@ -2854,13 +2850,7 @@ class ALTAPAY extends PaymentModule
 
         PrestaShopLogger::addLog($message, 3, null, $this->name, $this->id, true);
 
-        return [
-            'success' => false,
-            'result' => 'failure',
-            'message' => 'unable to obtain payment form url',
-            'additionalInfo' => $message,
-            'payment_form_url' => false,
-        ];
+        return $response;
     }
 
     /**

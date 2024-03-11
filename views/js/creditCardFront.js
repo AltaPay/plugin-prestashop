@@ -138,14 +138,15 @@ document.addEventListener('DOMContentLoaded', function (event) {
                 url: cardwalletresponseurl,
                 data: {
                     providerData: JSON.stringify(event.payment.token),
-                    method: terminalId
+                    method: terminalId,
+                    is_apple_pay: true
                 },
                 type: 'post',
                 dataType: 'JSON',
                 complete: function(response) {
                     var status
                     var responseData = response.responseJSON;
-                    if((responseData.status === "Success") && (response.status == 200)) {
+                    if(response.status == 200 && responseData.status === "Success") {
                         status = ApplePaySession.STATUS_SUCCESS;
                         session.completePayment(status);
                         window.location.replace(responseData.redirectUrl);
