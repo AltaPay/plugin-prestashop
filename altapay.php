@@ -1873,7 +1873,7 @@ class ALTAPAY extends PaymentModule
             return null;
         }
         if ($newStatus->id == $shippedStatus) { // A capture will be made if necessary
-            if(empty($params['cart'])){
+            if (empty($params['cart'])) {
                 $params['cart'] = new Cart((int) $results['id_cart']);
             }
             $this->performCapture($paymentID, $params, true, true);
@@ -2057,7 +2057,7 @@ class ALTAPAY extends PaymentModule
             foreach ($orderstatusName as $captureOrderStatus) {
                 if ($currentOrderStatus == $captureOrderStatus && $currentOrderStatus !== 'Shipped') {
                     $paymentID = $results['payment_id'];
-                    if(empty($params['cart'])){
+                    if (empty($params['cart'])) {
                         $params['cart'] = new Cart((int) $results['id_cart']);
                     }
                     $this->performCapture($paymentID, $params, false, true);
@@ -3010,7 +3010,7 @@ class ALTAPAY extends PaymentModule
             $gatewayTotal = round($gatewayTotal, 2);
             $cmsSubTotal = ($basePrice * $p['cart_quantity']) + ($singleProductTaxAmount * $p['cart_quantity']);
             $cmsTotal = $cmsSubTotal - ($cmsSubTotal * ($discountPercent / 100));
-            $compensationAmount = round(round($cmsTotal - $gatewayTotal), 3);
+            $compensationAmount = round(($cmsTotal - $gatewayTotal), 3);
             // Send compensation amount if Gateway total is not equal to cms total
             if (($compensationAmount > 0 || $compensationAmount < 0)) {
                 ++$i;
