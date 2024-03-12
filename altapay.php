@@ -3004,7 +3004,7 @@ class ALTAPAY extends PaymentModule
             $gatewayTotal = round($gatewayTotal, 2);
             $cmsSubTotal = ($basePrice * $p['cart_quantity']) + ($singleProductTaxAmount * $p['cart_quantity']);
             $cmsTotal = $cmsSubTotal - ($cmsSubTotal * ($discountPercent / 100));
-            $compensationAmount = round (round($cmsTotal - $gatewayTotal), 3);
+            $compensationAmount = round(round($cmsTotal - $gatewayTotal), 3);
             // Send compensation amount if Gateway total is not equal to cms total
             if (($compensationAmount > 0 || $compensationAmount < 0)) {
                 ++$i;
