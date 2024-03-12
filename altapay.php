@@ -3311,7 +3311,7 @@ class ALTAPAY extends PaymentModule
         $orderLine->taxAmount = 0;
         $orderLine->discount = 0;
         $orderLine->unitCode = 'unit';
-        $orderLine->setGoodsType('item');
+        $orderLine->setGoodsType('handling');
 
         return $orderLine;
     }
