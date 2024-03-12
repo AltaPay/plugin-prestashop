@@ -8,6 +8,8 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 ## [3.7.4]
 ### Fixed
 - Fix: Improve exception handling and error logging.
+- Fix: Round off unit price in order line to 3 decimal digits.
+- Do not change order status on capture when triggered by the order hook for status shipped or delivered.
 
 ## [3.7.3]
 ### Fixed
