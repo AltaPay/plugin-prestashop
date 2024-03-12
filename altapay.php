@@ -1977,7 +1977,6 @@ class ALTAPAY extends PaymentModule
                 $api->call();
             }
             saveOrderReconciliationIdentifier($params['id_order'], $reconciliation_identifier);
-            $orderDetail->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
         } catch (Exception $e) {
             $this->returnError($paymentID, $e);
         }
