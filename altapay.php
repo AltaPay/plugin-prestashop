@@ -1873,6 +1873,9 @@ class ALTAPAY extends PaymentModule
             return null;
         }
         if ($newStatus->id == $shippedStatus) { // A capture will be made if necessary
+            if(empty($params['cart'])){
+                $params['cart'] = new Cart((int) $results['id_cart']);
+            }
             $this->performCapture($paymentID, $params, true, true);
         }
 
@@ -1887,6 +1890,7 @@ class ALTAPAY extends PaymentModule
     private function selectOrder($params)
     {
         return Db::getInstance()->getRow('SELECT ' . _DB_PREFIX_ . 'altapay_order.*, '
+            . _DB_PREFIX_ . 'altapay_transaction.id_cart, '
             . _DB_PREFIX_ . 'altapay_transaction.amount FROM `'
             . _DB_PREFIX_ . 'altapay_order` INNER JOIN ' . _DB_PREFIX_
             . 'altapay_transaction ON '
@@ -1911,7 +1915,7 @@ class ALTAPAY extends PaymentModule
     {
         try {
             $productDetails = new OrderDetail();
-            $cart = $this->context->cart;
+            $cart = $params['cart'];
             $orderSummary = $cart->getSummaryDetails();
             $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
             $api->setTransaction($paymentID);
@@ -2008,17 +2012,16 @@ class ALTAPAY extends PaymentModule
      */
     public function createOrderStatusOrderLines($amountToCapture)
     {
-        $orderLines = [];
-        $orderLines[] = [
-            'description' => 'Complete amount Capture',
-            'itemId' => 'Capture-1',
-            'quantity' => 1,
-            'unitPrice' => round($amountToCapture, 2),
-            'taxAmount' => 0,
-            'goodsType' => 'handling',
-        ];
+        $orderLine = new API\PHP\Altapay\Request\OrderLine(
+            'Complete amount Capture',
+            'Capture-1',
+            1,
+            round($amountToCapture, 2)
+        );
+        $orderLine->taxAmount = 0;
+        $orderLine->setGoodsType('handling');
 
-        return $orderLines;
+        return [$orderLine];
     }
 
     /**
@@ -2054,6 +2057,9 @@ class ALTAPAY extends PaymentModule
             foreach ($orderstatusName as $captureOrderStatus) {
                 if ($currentOrderStatus == $captureOrderStatus && $currentOrderStatus !== 'Shipped') {
                     $paymentID = $results['payment_id'];
+                    if(empty($params['cart'])){
+                        $params['cart'] = new Cart((int) $results['id_cart']);
+                    }
                     $this->performCapture($paymentID, $params, false, true);
                 }
             }
