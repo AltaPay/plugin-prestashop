@@ -1261,7 +1261,7 @@ class ALTAPAY extends PaymentModule
                     $gatewayTotal = round($gatewayTotal, 2);
                     $cmsSubTotal = ($basePrice * $productQuantity) + ($productTax * $productQuantity);
                     $cmsTotal = $cmsSubTotal - ($cmsSubTotal * ($discountPercentage / 100));
-                    $compensationAmount = $cmsTotal - $gatewayTotal;
+                    $compensationAmount = round(($cmsTotal - $gatewayTotal), 3);
                     $orderLine = new API\PHP\Altapay\Request\OrderLine(
                         $productName,
                         $itemID,
@@ -3005,7 +3005,7 @@ class ALTAPAY extends PaymentModule
             $gatewayTotal = round($gatewayTotal, 2);
             $cmsSubTotal = ($basePrice * $p['cart_quantity']) + ($singleProductTaxAmount * $p['cart_quantity']);
             $cmsTotal = $cmsSubTotal - ($cmsSubTotal * ($discountPercent / 100));
-            $compensationAmount = $cmsTotal - $gatewayTotal;
+            $compensationAmount = round (round($cmsTotal - $gatewayTotal), 3);
             // Send compensation amount if Gateway total is not equal to cms total
             if (($compensationAmount > 0 || $compensationAmount < 0)) {
                 ++$i;
@@ -3056,7 +3056,7 @@ class ALTAPAY extends PaymentModule
             $orderLinesTotal += $orderLinePriceWithTax - ($orderLinePriceWithTax * ($orderLine->discount / 100));
         }
 
-        $totalCompensationAmount = $total - $orderLinesTotal;
+        $totalCompensationAmount = round(($total - $orderLinesTotal), 3);
         if (($totalCompensationAmount > 0 || $totalCompensationAmount < 0)) {
             $orderLines[++$i] = $this->compensationOrderlines('total', $totalCompensationAmount);
         }
