@@ -1873,8 +1873,12 @@ class ALTAPAY extends PaymentModule
             return null;
         }
         if ($newStatus->id == $shippedStatus) { // A capture will be made if necessary
-            if (empty($params['cart'])) {
-                $params['cart'] = new Cart((int) $results['id_cart']);
+            $params['the_cart'] = new Cart((int) $results['id_cart']);
+            if (!Validate::isLoadedObject($params['the_cart'])) {
+                $error = "Could not load cart for Order ID {$params['id_order']}, thus, not capturing on status $newStatus->name";
+                PrestaShopLogger::addLog($error, 3, '0', $this->name, $this->id, true);
+
+                return $results;
             }
             $this->performCapture($paymentID, $params, true, true);
         }
@@ -1915,7 +1919,7 @@ class ALTAPAY extends PaymentModule
     {
         try {
             $productDetails = new OrderDetail();
-            $cart = $params['cart'];
+            $cart = $params['the_cart'];
             $orderSummary = $cart->getSummaryDetails();
             $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
             $api->setTransaction($paymentID);
@@ -2057,8 +2061,12 @@ class ALTAPAY extends PaymentModule
             foreach ($orderstatusName as $captureOrderStatus) {
                 if ($currentOrderStatus == $captureOrderStatus && $currentOrderStatus !== 'Shipped') {
                     $paymentID = $results['payment_id'];
-                    if (empty($params['cart'])) {
-                        $params['cart'] = new Cart((int) $results['id_cart']);
+                    $params['the_cart'] = new Cart((int) $results['id_cart']);
+                    if (!Validate::isLoadedObject($params['the_cart'])) {
+                        $error = "Could not load cart for Order ID {$params['id_order']}, thus, not capturing on status $currentOrderStatus";
+                        PrestaShopLogger::addLog($error, 3, '0', $this->name, $this->id, true);
+
+                        return $results;
                     }
                     $this->performCapture($paymentID, $params, false, true);
                 }
