@@ -2051,19 +2051,17 @@ class ALTAPAY extends PaymentModule
         foreach ($allowedOrderStatuses as $orderStatusID) {
             $objectID = array_search($orderStatusID, array_column($configuredStatus, 'id_order_state'));
             if ($objectID) {
-                $orderstatusName[] = $configuredStatus[$objectID]['name'];
+                $captureOrderStatusIds[] = $configuredStatus[$objectID]['id'];
             }
         }
 
-        $currentOrderStatus = $params['newOrderStatus'];
-        if ($currentOrderStatus) {
-            $currentOrderStatus = $params['newOrderStatus']->name;
-            foreach ($orderstatusName as $captureOrderStatus) {
-                if ($currentOrderStatus == $captureOrderStatus && $currentOrderStatus !== 'Shipped') {
+        if ($params['newOrderStatus']) {
+            foreach ($captureOrderStatusIds as $captureOrderStatus) {
+                if ($params['newOrderStatus']->id == $captureOrderStatus && $params['newOrderStatus']->id != Configuration::get('PS_OS_SHIPPING')) {
                     $paymentID = $results['payment_id'];
                     $params['the_cart'] = new Cart((int) $results['id_cart']);
                     if (!Validate::isLoadedObject($params['the_cart'])) {
-                        $error = "Could not load cart for Order ID {$params['id_order']}, thus, not capturing on status $currentOrderStatus";
+                        $error = "Could not load cart for Order ID {$params['id_order']}, thus, not capturing on status {$params['newOrderStatus']->name}";
                         PrestaShopLogger::addLog($error, 3, '0', $this->name, $this->id, true);
 
                         return $results;
