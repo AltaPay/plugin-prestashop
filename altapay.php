@@ -2045,8 +2045,8 @@ class ALTAPAY extends PaymentModule
 
         $currentOrderStatus = $params['newOrderStatus'];
         if ($currentOrderStatus and in_array($currentOrderStatus->id, $allowedOrderStatuses) and $currentOrderStatus->id != Configuration::get('PS_OS_SHIPPING')) {
-                    $paymentID = $results['payment_id'];
-                    $this->performCapture($paymentID, $params, false, true);
+            $paymentID = $results['payment_id'];
+            $this->performCapture($paymentID, $params, false, true);
         } else {
             return null;
         }
