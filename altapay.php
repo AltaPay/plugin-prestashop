@@ -1255,6 +1255,10 @@ class ALTAPAY extends PaymentModule
                         $goodsType = 'refund';
                     }
 
+                    if (empty($productName)) {
+                        $productName = $itemID;
+                    }
+
                     // Compensation calculation
                     $gatewaySubTotal = ($unitPrice * $productQuantity) + $totalProductsTaxAmount;
                     $gatewayTotal = $gatewaySubTotal - ($gatewaySubTotal * ($discountPercentage / 100));
@@ -1873,13 +1877,6 @@ class ALTAPAY extends PaymentModule
             return null;
         }
         if ($newStatus->id == $shippedStatus) { // A capture will be made if necessary
-            $params['the_cart'] = new Cart((int) $results['id_cart']);
-            if (!Validate::isLoadedObject($params['the_cart'])) {
-                $error = "Could not load cart for Order ID {$params['id_order']}, thus, not capturing on status $newStatus->name";
-                PrestaShopLogger::addLog($error, 3, '0', $this->name, $this->id, true);
-
-                return $results;
-            }
             $this->performCapture($paymentID, $params, true, true);
         }
 
@@ -1894,7 +1891,6 @@ class ALTAPAY extends PaymentModule
     private function selectOrder($params)
     {
         return Db::getInstance()->getRow('SELECT ' . _DB_PREFIX_ . 'altapay_order.*, '
-            . _DB_PREFIX_ . 'altapay_transaction.id_cart, '
             . _DB_PREFIX_ . 'altapay_transaction.amount FROM `'
             . _DB_PREFIX_ . 'altapay_order` INNER JOIN ' . _DB_PREFIX_
             . 'altapay_transaction ON '
@@ -1918,8 +1914,9 @@ class ALTAPAY extends PaymentModule
     public function performCapture($paymentID, $params, $captureRemainedAmount = true, $statusCapture = false)
     {
         try {
+            $orderDetail = new Order((int) $params['id_order']);
             $productDetails = new OrderDetail();
-            $cart = $params['the_cart'];
+            $cart = new Cart($orderDetail->id_cart);
             $orderSummary = $cart->getSummaryDetails();
             $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
             $api->setTransaction($paymentID);
@@ -1935,7 +1932,6 @@ class ALTAPAY extends PaymentModule
                 $refunded += (float) $pay->RefundedAmount;
             }
 
-            $orderDetail = new Order((int) $params['id_order']);
             $discountData = $this->getorderCartRule($params['id_order']);
             $backendDiscount = 0;
             foreach ($discountData as $key => $discount) {
@@ -2045,30 +2041,12 @@ class ALTAPAY extends PaymentModule
             return null;
         }
         $orderStatus = new OrderState($this->context->language->id);
-        $configuredStatus = $orderStatus->getOrderStates($this->context->language->id);
         $allowedOrderStatuses = unserialize(Configuration::get('AUTOCAPTURE_STATUSES'));
 
-        foreach ($allowedOrderStatuses as $orderStatusID) {
-            $objectID = array_search($orderStatusID, array_column($configuredStatus, 'id_order_state'));
-            if ($objectID) {
-                $captureOrderStatusIds[] = $configuredStatus[$objectID]['id'];
-            }
-        }
-
-        if ($params['newOrderStatus']) {
-            foreach ($captureOrderStatusIds as $captureOrderStatus) {
-                if ($params['newOrderStatus']->id == $captureOrderStatus && $params['newOrderStatus']->id != Configuration::get('PS_OS_SHIPPING')) {
+        $currentOrderStatus = $params['newOrderStatus'];
+        if ($currentOrderStatus and in_array($currentOrderStatus->id, $allowedOrderStatuses) and $currentOrderStatus->id != Configuration::get('PS_OS_SHIPPING')) {
                     $paymentID = $results['payment_id'];
-                    $params['the_cart'] = new Cart((int) $results['id_cart']);
-                    if (!Validate::isLoadedObject($params['the_cart'])) {
-                        $error = "Could not load cart for Order ID {$params['id_order']}, thus, not capturing on status {$params['newOrderStatus']->name}";
-                        PrestaShopLogger::addLog($error, 3, '0', $this->name, $this->id, true);
-
-                        return $results;
-                    }
                     $this->performCapture($paymentID, $params, false, true);
-                }
-            }
         } else {
             return null;
         }
