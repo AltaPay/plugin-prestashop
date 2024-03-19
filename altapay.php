@@ -2040,7 +2040,6 @@ class ALTAPAY extends PaymentModule
         if (!$results) {
             return null;
         }
-        $orderStatus = new OrderState($this->context->language->id);
         $allowedOrderStatuses = unserialize(Configuration::get('AUTOCAPTURE_STATUSES'));
 
         $currentOrderStatus = $params['newOrderStatus'];
