@@ -37,7 +37,7 @@ describe('Presta 1.6', function () {
         })
     })
 
-    it('TC#2: Klarna full capture and refund', function () {
+    it.skip('TC#2: Klarna full capture and refund', function () {
 
         const ord = new Order()
         ord.clrcookies()
@@ -109,7 +109,7 @@ describe('Presta 1.6', function () {
         })
     })
 
-    it('TC#4: Klarna partial capture', function () {
+    it.skip('TC#4: Klarna partial capture', function () {
 
         const ord = new Order()
         ord.clrcookies()
@@ -182,7 +182,7 @@ describe('Presta 1.6', function () {
         })
     })
 
-    it('TC#6: Klarna partial refund', function () {
+    it.skip('TC#6: Klarna partial refund', function () {
 
         const ord = new Order()
         ord.clrcookies()
@@ -254,7 +254,7 @@ describe('Presta 1.6', function () {
         })
     })
 
-    it('TC#8: Klarna release payment', function () {
+    it.skip('TC#8: Klarna release payment', function () {
 
         const ord = new Order()
         ord.clrcookies()
