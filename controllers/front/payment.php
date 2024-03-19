@@ -101,7 +101,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             } else {
                 Tools::redirect($payment_form_url);
             }
-        } elseif ($result['apple_pay_terminal'] === true) {
+        } elseif ($result['apple_pay_terminal'] === true || $is_apple_pay === true) {
             echo json_encode(['status' => 'error']);
             exit();
         } else {

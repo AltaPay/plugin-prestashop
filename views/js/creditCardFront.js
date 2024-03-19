@@ -143,17 +143,16 @@ document.addEventListener('DOMContentLoaded', function (event) {
                 },
                 type: 'post',
                 dataType: 'JSON',
-                complete: function(response) {
-                    var status
-                    var responseData = response.responseJSON;
-                    if(response.status == 200 && responseData.status === "Success") {
-                        status = ApplePaySession.STATUS_SUCCESS;
-                        session.completePayment(status);
-                        window.location.replace(responseData.redirectUrl);
+                success: function(response) {
+                    if(response && response.status === "Success") {
+                        session.completePayment(ApplePaySession.STATUS_SUCCESS);
+                        window.location.replace(response.redirectUrl);
                     } else {
-                        status = ApplePaySession.STATUS_FAILURE;
-                        session.completePayment(status); 
+                        session.completePayment(ApplePaySession.STATUS_FAILURE); 
                     }
+                },
+                error: function (response) {
+                    session.completePayment(ApplePaySession.STATUS_FAILURE);
                 }
             });  
         };
