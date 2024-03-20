@@ -22,14 +22,20 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
     {
         $this->display_column_left = false;
         parent::initContent();
-        $savedCreditCard = null;
-        $saveCard = null;
+        $savedCreditCard = $_COOKIE['selectedCreditCard'] ?? null;
+        $saveCard = $_COOKIE['savecard'] ?? null;
         $payment_method = Tools::getValue('method', false);
         $providerData = Tools::getValue('providerData');
+        $is_apple_pay = (bool) Tools::getValue('is_apple_pay', false);
         $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
 
         $cart = $this->context->cart;
         if (!$this->module->checkCurrency($cart)) {
+            if ($is_apple_pay === true) {
+                echo json_encode(['status' => 'error']);
+                exit();
+            }
+
             Tools::redirect('index.php?controller=order');
         }
 
@@ -40,30 +46,17 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         $payment_form_url = $this->context->link->getPageLink($controller, true, null,
                 'step=3&altapay_unavailable=1') . '#altapay_unavailable';
 
-        if (isset($_COOKIE['selectedCreditCard'])) {
-            $savedCreditCard = $_COOKIE['selectedCreditCard'];
-            unset($_COOKIE['selectedCreditCard']);
-            setcookie('selectedCreditCard', null, -1, '/');
-        } else {
-            unset($_COOKIE['selectedCreditCard']);
-            setcookie('selectedCreditCard', null, -1, '/');
-        }
+        unset($_COOKIE['savecard']);
+        unset($_COOKIE['selectedCreditCard']);
+        setcookie('savecard', null, -1, '/');
+        setcookie('selectedCreditCard', null, -1, '/');
 
-        if (isset($_COOKIE['savecard'])) {
-            $saveCard = $_COOKIE['savecard'];
-            unset($_COOKIE['savecard']);
-            setcookie('savecard', null, -1, '/');
-        } else {
-            unset($_COOKIE['savecard']);
-            setcookie('savecard', null, -1, '/');
-        }
-
-        $result = $this->module->createTransaction($saveCard, $savedCreditCard, $payment_method, $providerData);
+        $result = $this->module->createTransaction($saveCard, $savedCreditCard, $payment_method, $providerData, $is_apple_pay);
         // Load the customer
         $customer = new Customer((int) $cart->id_customer);
         $currency_paid = new Currency($cart->id_currency);
 
-        if ($result['success']) {
+        if ($result['success'] && !empty($result['payment_form_url'])) {
             $payment_form_url = $result['payment_form_url'];
             // Insert into transaction log
             $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction` 
@@ -100,10 +93,17 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
                         'redirectUrl' => 'index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $currentOrder->id . '&key=' . $customer->secure_key,
                     ];
                     echo json_encode($response);
+                    exit();
                 }
+            } elseif ($result['apple_pay_terminal'] === true) {
+                echo json_encode(['status' => 'error']);
+                exit();
             } else {
                 Tools::redirect($payment_form_url);
             }
+        } elseif ($result['apple_pay_terminal'] === true || $is_apple_pay === true) {
+            echo json_encode(['status' => 'error']);
+            exit();
         } else {
             // Redirect user back to checkout with a generic error
             Tools::redirect($payment_form_url);
