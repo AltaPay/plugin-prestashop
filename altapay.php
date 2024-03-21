@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.7.4';
+        $this->version = '3.7.5';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.3'];
@@ -2693,6 +2693,7 @@ class ALTAPAY extends PaymentModule
         $customer = new API\PHP\Altapay\Request\Customer($address);
         $customer->setEmail($this->context->customer->email);
         $customer->setPhone($invoice_address->phone ?: $invoice_address->phone_mobile);
+        $customer->setUsername($this->context->customer->email);
 
         // Shipping address
         $sp_address = new Address($this->context->cart->id_address_delivery);
