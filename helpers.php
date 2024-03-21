@@ -770,7 +770,10 @@ function lockCallback($lockFileName)
 
     if (!$lockAcquired) {
         // Lock acquisition failed after maximum retries, handle appropriately
-        exit('Unable to acquire lock after maximum retries');
+        $message = 'Unable to acquire lock after maximum retries';
+        $module = Module::getInstanceByName('altapay');
+        PrestaShopLogger::addLog($message, 3, '1004', $module->name, $module->id, true);
+        exit($message);
     }
 
     // Return the lock filename along with the file handle
