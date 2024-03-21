@@ -1255,13 +1255,17 @@ class ALTAPAY extends PaymentModule
                         $goodsType = 'refund';
                     }
 
+                    if (empty($productName)) {
+                        $productName = $itemID;
+                    }
+
                     // Compensation calculation
                     $gatewaySubTotal = ($unitPrice * $productQuantity) + $totalProductsTaxAmount;
                     $gatewayTotal = $gatewaySubTotal - ($gatewaySubTotal * ($discountPercentage / 100));
                     $gatewayTotal = round($gatewayTotal, 2);
                     $cmsSubTotal = ($basePrice * $productQuantity) + ($productTax * $productQuantity);
                     $cmsTotal = $cmsSubTotal - ($cmsSubTotal * ($discountPercentage / 100));
-                    $compensationAmount = $cmsTotal - $gatewayTotal;
+                    $compensationAmount = round(($cmsTotal - $gatewayTotal), 3);
                     $orderLine = new API\PHP\Altapay\Request\OrderLine(
                         $productName,
                         $itemID,
@@ -1910,8 +1914,9 @@ class ALTAPAY extends PaymentModule
     public function performCapture($paymentID, $params, $captureRemainedAmount = true, $statusCapture = false)
     {
         try {
+            $orderDetail = new Order((int) $params['id_order']);
             $productDetails = new OrderDetail();
-            $cart = $this->context->cart;
+            $cart = new Cart($orderDetail->id_cart);
             $orderSummary = $cart->getSummaryDetails();
             $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
             $api->setTransaction($paymentID);
@@ -1927,7 +1932,6 @@ class ALTAPAY extends PaymentModule
                 $refunded += (float) $pay->RefundedAmount;
             }
 
-            $orderDetail = new Order((int) $params['id_order']);
             $discountData = $this->getorderCartRule($params['id_order']);
             $backendDiscount = 0;
             foreach ($discountData as $key => $discount) {
@@ -1977,7 +1981,6 @@ class ALTAPAY extends PaymentModule
                 $api->call();
             }
             saveOrderReconciliationIdentifier($params['id_order'], $reconciliation_identifier);
-            $orderDetail->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
         } catch (Exception $e) {
             $this->returnError($paymentID, $e);
         }
@@ -2009,17 +2012,16 @@ class ALTAPAY extends PaymentModule
      */
     public function createOrderStatusOrderLines($amountToCapture)
     {
-        $orderLines = [];
-        $orderLines[] = [
-            'description' => 'Complete amount Capture',
-            'itemId' => 'Capture-1',
-            'quantity' => 1,
-            'unitPrice' => round($amountToCapture, 2),
-            'taxAmount' => 0,
-            'goodsType' => 'handling',
-        ];
+        $orderLine = new API\PHP\Altapay\Request\OrderLine(
+            'Complete amount Capture',
+            'Capture-1',
+            1,
+            round($amountToCapture, 2)
+        );
+        $orderLine->taxAmount = 0;
+        $orderLine->setGoodsType('handling');
 
-        return $orderLines;
+        return [$orderLine];
     }
 
     /**
@@ -2038,26 +2040,12 @@ class ALTAPAY extends PaymentModule
         if (!$results) {
             return null;
         }
-        $orderStatus = new OrderState($this->context->language->id);
-        $configuredStatus = $orderStatus->getOrderStates($this->context->language->id);
         $allowedOrderStatuses = unserialize(Configuration::get('AUTOCAPTURE_STATUSES'));
 
-        foreach ($allowedOrderStatuses as $orderStatusID) {
-            $objectID = array_search($orderStatusID, array_column($configuredStatus, 'id_order_state'));
-            if ($objectID) {
-                $orderstatusName[] = $configuredStatus[$objectID]['name'];
-            }
-        }
-
         $currentOrderStatus = $params['newOrderStatus'];
-        if ($currentOrderStatus) {
-            $currentOrderStatus = $params['newOrderStatus']->name;
-            foreach ($orderstatusName as $captureOrderStatus) {
-                if ($currentOrderStatus == $captureOrderStatus && $currentOrderStatus !== 'Shipped') {
-                    $paymentID = $results['payment_id'];
-                    $this->performCapture($paymentID, $params, false, true);
-                }
-            }
+        if ($currentOrderStatus and in_array($currentOrderStatus->id, $allowedOrderStatuses) and $currentOrderStatus->id != Configuration::get('PS_OS_SHIPPING')) {
+            $paymentID = $results['payment_id'];
+            $this->performCapture($paymentID, $params, false, true);
         } else {
             return null;
         }
@@ -2604,34 +2592,29 @@ class ALTAPAY extends PaymentModule
      * @param $savecard
      * @param $tokenId
      * @param bool $payment_method
-     * @param null $providerData
+     * @param string $providerData
+     * @param bool $is_apple_pay
      *
      * @return array If the transaction failed, the array contains information about the failure
      *
      * @throws Exception
      */
-    public function createTransaction($savecard, $tokenId, $payment_method = false, $providerData = null)
+    public function createTransaction($savecard, $tokenId, $payment_method = false, $providerData = null, $is_apple_pay = false)
     {
         $cart = $this->context->cart;
         $ccToken = null;
         $isReservation = false;
         $agreementData = [];
         $results = null;
-        $max_date = '';
         $latestTransKey = 0;
+        $response = ['success' => false, 'payment_form_url' => '', 'apple_pay_terminal' => $is_apple_pay];
         // Terminal
         $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
         if (!is_object($terminal)) {
             $message = 'Could not determine remote terminal - possibly currency mismatch';
-            PrestaShopLogger::addLog($message, 3, 0, $this->name, $this->id, true);
+            PrestaShopLogger::addLog($message, 3, null, $this->name, $this->id, true);
 
-            return [
-                'success' => false,
-                'result' => 'failure',
-                'message' => $message,
-                'additionalInfo' => $message,
-                'payment_form_url' => false,
-            ];
+            return $response;
         }
         $cgConf = [];
         // Config
@@ -2640,7 +2623,7 @@ class ALTAPAY extends PaymentModule
         $cgConf['language'] = $this->context->language->iso_code;
         $cgConf['uniqueid'] = uniqid('PS');
         $cgConf['terminal'] = $terminal->remote_name;
-        $cgConf['cookie'] = isset($_SERVER['HTTP_COOKIE']) ? $_SERVER['HTTP_COOKIE'] : null;
+        $cgConf['cookie'] = $_SERVER['HTTP_COOKIE'] ?? null;
 
         $callback = [];
         // Callbacks
@@ -2743,13 +2726,7 @@ class ALTAPAY extends PaymentModule
         if (!$this->altapayApiLogin()) {
             PrestaShopLogger::addLog($this->api_error, 3, null, $this->name, $this->id, true);
 
-            return [
-                'success' => false,
-                'result' => 'failure',
-                'message' => 'unable to connect to gateway',
-                'additionalInfo' => $this->api_error,
-                'payment_form_url' => false,
-            ];
+            return $response;
         }
 
         $type = $cgConf['payment_type'];
@@ -2770,7 +2747,13 @@ class ALTAPAY extends PaymentModule
             $config->setCallbackRedirect($callback['callback_redirect']);
             $config->setCallbackForm($callback['callback_form']);
             $request = new API\PHP\Altapay\Api\Ecommerce\PaymentRequest(getAuth());
-            if ($terminal->applepay and !empty($providerData)) {
+            if ($terminal->applepay) {
+                $response['apple_pay_terminal'] = true;
+                if (empty($providerData)) {
+                    PrestaShopLogger::addLog('Apple Pay provider data is empty.', 3, null, $this->name, $this->id, true);
+
+                    return $response;
+                }
                 $request = new API\PHP\Altapay\Api\Payments\CardWalletAuthorize(getAuth());
                 $request->setProviderData($providerData);
             }
@@ -2806,27 +2789,28 @@ class ALTAPAY extends PaymentModule
             }
             try {
                 $response = $request->call();
-                $responseUrl = $response->Url;
+                $responseUrl = $response->Url ?? ($terminal->applepay ? 'cardwallet' : 'reservation');
                 $orderStatus = (int) Configuration::get('ALTAPAY_OS_PENDING');
-                if (strtolower($response->Result) === 'success' && $responseUrl == null) {
-                    $responseUrl = 'reservation';
-                    $orderStatus = (int) Configuration::get('authorized_payments_status');
-                    if (empty($orderStatus)) {
-                        $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
-                    }
-                    $transaction = $response->Transactions[$latestTransKey];
-                    $paymentType = $transaction->AuthType;
-                    if (isset($transaction->CapturedAmount)) {
-                        $amount = $transaction->CapturedAmount;
-                    }
-                    if ($paymentType === 'payment' || $paymentType === 'paymentAndCapture') {
-                        $amount = $cart->getOrderTotal(true, Cart::BOTH);
-                        if ($paymentType === 'paymentAndCapture') {
+                // Handling for Apple Pay and reservation
+                if ($responseUrl === 'cardwallet' || $responseUrl === 'reservation') {
+                    if (strtolower($response->Result) === 'success') {
+                        $orderStatus = (int) Configuration::get('authorized_payments_status');
+                        if (empty($orderStatus)) {
                             $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
                         }
-                    }
-                    if ($terminal->applepay) {
-                        $responseUrl = 'cardwallet';
+                        $transaction = $response->Transactions[$latestTransKey];
+                        $paymentType = $transaction->AuthType;
+                        if (isset($transaction->CapturedAmount)) {
+                            $amount = $transaction->CapturedAmount;
+                        }
+                        if ($paymentType === 'payment' || $paymentType === 'paymentAndCapture') {
+                            $amount = $cart->getOrderTotal(true, Cart::BOTH);
+                            if ($paymentType === 'paymentAndCapture') {
+                                $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
+                            }
+                        }
+                    } else {
+                        PrestaShopLogger::addLog($responseUrl . ' request failed for order id ' . $cgConf['uniqueid'], 3, null, $this->name, $this->id, true);
                     }
                 }
 
@@ -2855,13 +2839,7 @@ class ALTAPAY extends PaymentModule
 
         PrestaShopLogger::addLog($message, 3, null, $this->name, $this->id, true);
 
-        return [
-            'success' => false,
-            'result' => 'failure',
-            'message' => 'unable to obtain payment form url',
-            'additionalInfo' => $message,
-            'payment_form_url' => false,
-        ];
+        return $response;
     }
 
     /**
@@ -3016,7 +2994,7 @@ class ALTAPAY extends PaymentModule
             $gatewayTotal = round($gatewayTotal, 2);
             $cmsSubTotal = ($basePrice * $p['cart_quantity']) + ($singleProductTaxAmount * $p['cart_quantity']);
             $cmsTotal = $cmsSubTotal - ($cmsSubTotal * ($discountPercent / 100));
-            $compensationAmount = $cmsTotal - $gatewayTotal;
+            $compensationAmount = round(($cmsTotal - $gatewayTotal), 3);
             // Send compensation amount if Gateway total is not equal to cms total
             if (($compensationAmount > 0 || $compensationAmount < 0)) {
                 ++$i;
@@ -3067,7 +3045,7 @@ class ALTAPAY extends PaymentModule
             $orderLinesTotal += $orderLinePriceWithTax - ($orderLinePriceWithTax * ($orderLine->discount / 100));
         }
 
-        $totalCompensationAmount = $total - $orderLinesTotal;
+        $totalCompensationAmount = round(($total - $orderLinesTotal), 3);
         if (($totalCompensationAmount > 0 || $totalCompensationAmount < 0)) {
             $orderLines[++$i] = $this->compensationOrderlines('total', $totalCompensationAmount);
         }
@@ -3323,7 +3301,7 @@ class ALTAPAY extends PaymentModule
         $orderLine->taxAmount = 0;
         $orderLine->discount = 0;
         $orderLine->unitCode = 'unit';
-        $orderLine->setGoodsType('item');
+        $orderLine->setGoodsType('handling');
 
         return $orderLine;
     }

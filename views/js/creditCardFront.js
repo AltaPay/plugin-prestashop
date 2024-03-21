@@ -138,21 +138,21 @@ document.addEventListener('DOMContentLoaded', function (event) {
                 url: cardwalletresponseurl,
                 data: {
                     providerData: JSON.stringify(event.payment.token),
-                    method: terminalId
+                    method: terminalId,
+                    is_apple_pay: true
                 },
                 type: 'post',
                 dataType: 'JSON',
-                complete: function(response) {
-                    var status
-                    var responseData = response.responseJSON;
-                    if((responseData.status === "Success") && (response.status == 200)) {
-                        status = ApplePaySession.STATUS_SUCCESS;
-                        session.completePayment(status);
-                        window.location.replace(responseData.redirectUrl);
+                success: function(response) {
+                    if(response && response.status === "Success") {
+                        session.completePayment(ApplePaySession.STATUS_SUCCESS);
+                        window.location.replace(response.redirectUrl);
                     } else {
-                        status = ApplePaySession.STATUS_FAILURE;
-                        session.completePayment(status); 
+                        session.completePayment(ApplePaySession.STATUS_FAILURE); 
                     }
+                },
+                error: function (response) {
+                    session.completePayment(ApplePaySession.STATUS_FAILURE);
                 }
             });  
         };
