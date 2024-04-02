@@ -5,6 +5,11 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.7.5]
+### Added
+- Add support for Trustly.
+- Create order on fail callback if reserve amount is greater than zero.
+
 ## [3.7.4]
 ### Fixed
 - Fix: Improve exception handling and error logging.

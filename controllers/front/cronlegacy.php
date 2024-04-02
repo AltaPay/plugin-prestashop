@@ -53,7 +53,7 @@ class AltapayCronLegacyModuleFrontController extends ModuleFrontController
                     if ($subsData['payment_module'] == 'wkstripepayment'
                         && WkProductSubscriptionGlobal::isWkStripeRecurringEnabled()
                     ) {
-                        $stripeResponse = Tools::jsonDecode($subsData['payment_response'], true);
+                        $stripeResponse = json_decode($subsData['payment_response'], true);
                         if (!$this->checkStripeSubscriptionStatus($stripeResponse['stripe_subscription_id'])) {
                             continue;
                         }
@@ -85,7 +85,7 @@ class AltapayCronLegacyModuleFrontController extends ModuleFrontController
                     if ($subsData['payment_module'] == 'wkstripepayment'
                         && WkProductSubscriptionGlobal::isWkStripeRecurringEnabled()
                     ) {
-                        $stripeResponse = Tools::jsonDecode($subscriptionData['payment_response'], true);
+                        $stripeResponse = json_decode($subscriptionData['payment_response'], true);
                         if (!$this->checkStripeSubscriptionStatus($stripeResponse['stripe_subscription_id'])) {
                             continue;
                         }
@@ -209,7 +209,7 @@ class AltapayCronLegacyModuleFrontController extends ModuleFrontController
             $obj_cart->id_shop_group = (int) $shopObj->id_shop_group;
 
             $obj_cart->id_carrier = (int) $subscriptionData['id_carrier'];
-            $obj_cart->delivery_option = Tools::jsonEncode($option);
+            $obj_cart->delivery_option = json_encode($option);
             $obj_cart->id_lang = (int) $id_lang;
             $obj_cart->id_address_delivery = (int) $subscriptionData['id_address_delivery'];
             $obj_cart->id_address_invoice = (int) $subscriptionData['id_address_invoice'];
