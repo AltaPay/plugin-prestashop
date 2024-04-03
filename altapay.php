@@ -29,7 +29,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.7.5';
+        $this->version = '3.7.6';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.3'];
@@ -1073,8 +1073,10 @@ class ALTAPAY extends PaymentModule
                     $transaction = $response->Transactions[$latestTransKey];
                     updateTransactionIdForParentSubscription($orderID, $transaction->TransactionId);
                 }
-                if (markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines))) {
-                    $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+
+                $orderStatus = (int) Configuration::get('manual_capture_payments_status');
+                if (markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines)) && !empty($orderStatus)) {
+                    $order->setCurrentState($orderStatus);
                 }
                 saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier);
             } catch (Exception $e) {
@@ -1138,8 +1140,10 @@ class ALTAPAY extends PaymentModule
                     );
                     exit();
                 }
-
-                $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
+                $refundStatus = (int) Configuration::get('manual_refund_payments_status');
+                if (!empty($refundStatus)) {
+                    $order->setCurrentState($refundStatus);
+                }
                 saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, 'refunded');
             } catch (Exception $e) {
                 $message = $e->getMessage();
@@ -1540,7 +1544,9 @@ class ALTAPAY extends PaymentModule
     public function renderForm()
     {
         $statuses = OrderState::getOrderStates($this->context->language->id);
-        $selectCaptureStatus = $selectAuthStatus = [];
+        $selectCaptureStatus = [];
+        $selectAuthStatus = [['id_option' => '0', 'name' => 'Select payment status']];
+
         foreach ($statuses as $status) {
             $selectCaptureStatus[] = ['key' => $status['id_order_state'], 'name' => $status['name']];
             $selectAuthStatus[] = ['id_option' => $status['id_order_state'], 'name' => $status['name']];
@@ -1625,6 +1631,30 @@ class ALTAPAY extends PaymentModule
                             'name' => 'name',
                         ],
                     ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Order status on manual capture'),
+                        'desc' => $this->l('Leave empty if you don\'t want to update the order status.'),
+                        'name' => 'manual_capture_payments_status',
+                        'required' => false,
+                        'options' => [
+                            'query' => $selectAuthStatus,
+                            'id' => 'id_option',
+                            'name' => 'name',
+                        ],
+                    ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Order status on manual refund'),
+                        'desc' => $this->l('Leave empty if you don\'t want to update the order status.'),
+                        'name' => 'manual_refund_payments_status',
+                        'required' => false,
+                        'options' => [
+                            'query' => $selectAuthStatus,
+                            'id' => 'id_option',
+                            'name' => 'name',
+                        ],
+                    ]
                 ],
                 'submit' => [
                     'title' => $this->l('Save'),
@@ -1674,6 +1704,8 @@ class ALTAPAY extends PaymentModule
             'enable_fraud' => Tools::getValue('enable_fraud', Configuration::get('enable_fraud')),
             'enable_release_refund' => Tools::getValue('enable_release_refund', Configuration::get('enable_release_refund')),
             'authorized_payments_status' => Tools::getValue('authorized_payments_status', Configuration::get('authorized_payments_status')),
+            'manual_capture_payments_status' => Tools::getValue('manual_capture_payments_status', Configuration::get('manual_capture_payments_status')),
+            'manual_refund_payments_status' => Tools::getValue('manual_refund_payments_status', Configuration::get('manual_refund_payments_status')),
         ];
     }
 
@@ -1807,6 +1839,12 @@ class ALTAPAY extends PaymentModule
             }
             if (Tools::getValue('authorized_payments_status') !== '') {
                 Configuration::updateValue('authorized_payments_status', Tools::getValue('authorized_payments_status'));
+            }
+            if (Tools::getValue('manual_capture_payments_status') !== '') {
+                Configuration::updateValue('manual_capture_payments_status', Tools::getValue('manual_capture_payments_status'));
+            }
+            if (Tools::getValue('manual_refund_payments_status') !== '') {
+                Configuration::updateValue('manual_refund_payments_status', Tools::getValue('manual_refund_payments_status'));
             }
         }
         $this->Mhtml .= '<div class="alert alert-success"> ' . $this->l('Settings updated') . '</div>';
