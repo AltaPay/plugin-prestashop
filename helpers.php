@@ -1020,3 +1020,22 @@ function handleVerifyCard(
         true
     );
 }
+
+/**
+ * Use the cart ID to determine unique ID / shop_orderid
+ *
+ * @param int $id_cart
+ *
+ * @return false|string
+ */
+function getUniqueIdFromCartId($id_cart)
+{
+    $results = Db::getInstance()->getRow('SELECT unique_id 
+    FROM `' . _DB_PREFIX_ . 'altapay_transaction` 
+    WHERE id_cart=\'' . pSQL($id_cart) . '\'');
+    if (!$results) {
+        return false;
+    }
+
+    return $results['unique_id'];
+}

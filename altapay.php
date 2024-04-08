@@ -2065,14 +2065,60 @@ class ALTAPAY extends PaymentModule
      */
     public function hookAdminOrder($params)
     {
-        $results = $this->selectOrder($params);
+        $orderDetail = new Order((int) $params['id_order']);
 
-        if (!$results) {
+        if ($orderDetail->module != $this->name) {
             return false;
         }
 
+        $results = $this->selectOrder($params);
+
+        try {
+            $reserved = 0;
+            $captured = 0;
+            $refunded = 0;
+            $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
+            if (!$results) {
+                $shopOrderId = getUniqueIdFromCartId($orderDetail->id_cart);
+                $api->setShopOrderId($shopOrderId);
+            } else {
+                $api->setTransaction($results['payment_id']);
+            }
+
+            $paymentDetails = $api->call();
+
+            if (!$results) {
+                $response['Transactions'] = $paymentDetails;
+                createAltapayOrder(json_decode(json_encode($response)), $orderDetail);
+                $results = $this->selectOrder($params);
+                if (!$results) {
+                    PrestaShopLogger::addLog("Could not sync payment info for Order ID {$params['id_order']}", 3, null, $this->name, $this->id, true);
+
+                    return false;
+                }
+            }
+
+            $status = isset($paymentDetails[0]->TransactionStatus) ? $paymentDetails[0]->TransactionStatus : '';
+
+            foreach ($paymentDetails as $pay) {
+                $reserved += $pay->ReservedAmount;
+                $captured += $pay->CapturedAmount;
+                $refunded += $pay->RefundedAmount;
+            }
+
+            $ap_payment = [
+                'reserved' => $reserved,
+                'captured' => $captured,
+                'refunded' => $refunded,
+                'status' => $status,
+            ];
+
+            $this->smarty->assign('ap_paymentinfo', $ap_payment);
+        } catch (Exception $e) {
+            $this->smarty->assign('ap_error', 'Error: ' . $e->getMessage());
+        }
+
         // collect order info
-        $orderDetail = new Order((int) $params['id_order']);
         $productDetail = $orderDetail->getProducts();
         $shippingDetail = $orderDetail->getShipping();
 
@@ -2105,33 +2151,6 @@ class ALTAPAY extends PaymentModule
             }
         }
         $this->smarty->assign('ap_orders', $apOrders);
-
-        try {
-            $reserved = 0;
-            $captured = 0;
-            $refunded = 0;
-            $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
-            $api->setTransaction($results['payment_id']);
-            $paymentDetails = $api->call();
-            $status = isset($paymentDetails[0]->TransactionStatus) ? $paymentDetails[0]->TransactionStatus : '';
-
-            foreach ($paymentDetails as $pay) {
-                $reserved += $pay->ReservedAmount;
-                $captured += $pay->CapturedAmount;
-                $refunded += $pay->RefundedAmount;
-            }
-
-            $ap_payment = [
-                'reserved' => $reserved,
-                'captured' => $captured,
-                'refunded' => $refunded,
-                'status' => $status,
-            ];
-
-            $this->smarty->assign('ap_paymentinfo', $ap_payment);
-        } catch (Exception $e) {
-            $this->smarty->assign('ap_error', 'Error: ' . $e->getMessage());
-        }
 
         $reconciliation_identifiers = getOrderReconciliationIdentifiers($orderId);
         if (empty($reconciliation_identifiers)) {
