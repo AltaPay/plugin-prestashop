@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
         $this->version = '3.7.7';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.3'];
+        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.5'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -2081,7 +2081,7 @@ class ALTAPAY extends PaymentModule
             if (!$results) {
                 $shopOrderId = getLatestUniqueIdFromCartId($orderDetail->id_cart);
                 if (!$shopOrderId) {
-                    PrestaShopLogger::addLog("Could not sync payment info for Order ID {$params['id_order']}, cart $orderDetail->id_cart not found", 3, null, $this->name, $this->id, true);
+                    PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}, Cart ID: $orderDetail->id_cart not found", 3, null, $this->name, $this->id, true);
 
                     return false;
                 }
@@ -2094,8 +2094,8 @@ class ALTAPAY extends PaymentModule
 
             if (empty($paymentDetails)) {
                 PrestaShopLogger::addLog(
-                    "Could not fetch payment info for Order ID {$params['id_order']}, 
-                    Cart ID: $orderDetail->id_cart, shop_orderid: $shopOrderId, transaction_id: {$results['payment_id']}",
+                    "Could not fetch payment info for Order ID: {$params['id_order']}, 
+                    Cart ID: $orderDetail->id_cart, transaction_id: {$results['payment_id']}, shop_orderid: $shopOrderId",
                     3, null, $this->name, $this->id, true);
 
                 return false;
@@ -2106,7 +2106,7 @@ class ALTAPAY extends PaymentModule
                 createAltapayOrder(json_decode(json_encode($response)), $orderDetail);
                 $results = $this->selectOrder($params);
                 if (!$results) {
-                    PrestaShopLogger::addLog("Could not sync payment info for Order ID {$params['id_order']}", 3, null, $this->name, $this->id, true);
+                    PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}", 3, null, $this->name, $this->id, true);
 
                     return false;
                 }
