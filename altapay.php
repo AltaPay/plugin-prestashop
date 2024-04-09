@@ -2079,7 +2079,7 @@ class ALTAPAY extends PaymentModule
             $refunded = 0;
             $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
             if (!$results) {
-                $shopOrderId = getUniqueIdFromCartId($orderDetail->id_cart);
+                $shopOrderId = getLatestUniqueIdFromCartId($orderDetail->id_cart);
                 $api->setShopOrderId($shopOrderId);
             } else {
                 $api->setTransaction($results['payment_id']);

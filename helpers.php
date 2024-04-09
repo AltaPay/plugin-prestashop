@@ -1028,11 +1028,12 @@ function handleVerifyCard(
  *
  * @return false|string
  */
-function getUniqueIdFromCartId($id_cart)
+function getLatestUniqueIdFromCartId($id_cart)
 {
     $results = Db::getInstance()->getRow('SELECT unique_id 
     FROM `' . _DB_PREFIX_ . 'altapay_transaction` 
-    WHERE id_cart=\'' . pSQL($id_cart) . '\'');
+    WHERE id_cart=\'' . pSQL($id_cart) . '\' 
+    ORDER BY CAST(date_add AS UNSIGNED) DESC');
     if (!$results) {
         return false;
     }
