@@ -2080,7 +2080,7 @@ class ALTAPAY extends PaymentModule
             $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
             if (!$results) {
                 $shopOrderId = getLatestUniqueIdFromCartId($orderDetail->id_cart);
-                if (!$shopOrderId) {
+                if (!empty($shopOrderId)) {
                     PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}, Cart ID: $orderDetail->id_cart not found", 3, null, $this->name, $this->id, true);
 
                     return false;
@@ -2112,7 +2112,7 @@ class ALTAPAY extends PaymentModule
                 }
             }
 
-            $status = isset($paymentDetails[0]->TransactionStatus) ? $paymentDetails[0]->TransactionStatus : '';
+            $status = $paymentDetails[0]->TransactionStatus ?? '';
 
             foreach ($paymentDetails as $pay) {
                 $reserved += $pay->ReservedAmount;
@@ -2129,6 +2129,7 @@ class ALTAPAY extends PaymentModule
 
             $this->smarty->assign('ap_paymentinfo', $ap_payment);
         } catch (Exception $e) {
+            PrestaShopLogger::addLog('Payment API Error: ' . $e->getMessage(), 3, null, $this->name, $this->id, true);
             $this->smarty->assign('ap_error', 'Error: ' . $e->getMessage());
         }
 
