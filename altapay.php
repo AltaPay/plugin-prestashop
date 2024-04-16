@@ -1654,7 +1654,7 @@ class ALTAPAY extends PaymentModule
                             'id' => 'id_option',
                             'name' => 'name',
                         ],
-                    ]
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->l('Save'),
