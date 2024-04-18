@@ -2097,7 +2097,7 @@ class ALTAPAY extends PaymentModule
             $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
             if (!$results) {
                 $shopOrderId = getLatestUniqueIdFromCartId($orderDetail->id_cart);
-                if (!empty($shopOrderId)) {
+                if (empty($shopOrderId)) {
                     PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}, Cart ID: $orderDetail->id_cart not found", 3, null, $this->name, $this->id, true);
 
                     return false;
@@ -3590,7 +3590,7 @@ class ALTAPAY extends PaymentModule
                 $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
 
                 $shopOrderId = getLatestUniqueIdFromCartId($orderDetail->id_cart);
-                if (!empty($shopOrderId)) {
+                if (empty($shopOrderId)) {
                     PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}, Cart ID: $orderDetail->id_cart not found", 3, null, $this->name, $this->id, true);
 
                     return false;
