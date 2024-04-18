@@ -14,6 +14,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 class ALTAPAY extends PaymentModule
 {
+    const ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS = 'no';
     public $url;
     public $captureStatus;
     public $username;
@@ -1074,9 +1075,10 @@ class ALTAPAY extends PaymentModule
                     updateTransactionIdForParentSubscription($orderID, $transaction->TransactionId);
                 }
 
-                $orderStatus = (int) Configuration::get('manual_capture_payments_status');
-                if (markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines)) && !empty($orderStatus)) {
-                    $order->setCurrentState($orderStatus);
+                $orderStatus = Configuration::get('manual_capture_payments_status');
+
+                if (markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines)) && ($orderStatus !== self::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS)) {
+                    $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
                 }
                 saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier);
             } catch (Exception $e) {
@@ -1140,9 +1142,9 @@ class ALTAPAY extends PaymentModule
                     );
                     exit();
                 }
-                $refundStatus = (int) Configuration::get('manual_refund_payments_status');
-                if (!empty($refundStatus)) {
-                    $order->setCurrentState($refundStatus);
+                $refundStatus = Configuration::get('manual_refund_payments_status');
+                if ($refundStatus !== self::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS) {
+                    $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
                 }
                 saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, 'refunded');
             } catch (Exception $e) {
@@ -1633,24 +1635,40 @@ class ALTAPAY extends PaymentModule
                     ],
                     [
                         'type' => 'select',
-                        'label' => $this->l('Order status on manual capture'),
-                        'desc' => $this->l('Leave empty if you don\'t want to update the order status.'),
+                        'label' => $this->l('Update status on manual capture'),
                         'name' => 'manual_capture_payments_status',
                         'required' => false,
                         'options' => [
-                            'query' => $selectAuthStatus,
+                            'query' => [
+                                [
+                                    'id_option' => 'yes',
+                                    'name' => 'Yes',
+                                ],
+                                [
+                                    'id_option' => 'no',
+                                    'name' => 'No',
+                                ]
+                            ],
                             'id' => 'id_option',
                             'name' => 'name',
                         ],
                     ],
                     [
                         'type' => 'select',
-                        'label' => $this->l('Order status on manual refund'),
-                        'desc' => $this->l('Leave empty if you don\'t want to update the order status.'),
+                        'label' => $this->l('Update status on manual refund'),
                         'name' => 'manual_refund_payments_status',
                         'required' => false,
                         'options' => [
-                            'query' => $selectAuthStatus,
+                            'query' => [
+                                [
+                                    'id_option' => 'yes',
+                                    'name' => 'Yes',
+                                ],
+                                [
+                                    'id_option' => 'no',
+                                    'name' => 'No',
+                                ]
+                            ],
                             'id' => 'id_option',
                             'name' => 'name',
                         ],
@@ -1694,6 +1712,8 @@ class ALTAPAY extends PaymentModule
      */
     public function getConfigFieldsValues()
     {
+        $enableCapture = Configuration::get('manual_capture_payments_status') ? Configuration::get('manual_capture_payments_status') : 'yes';
+        $enableRefund = Configuration::get('manual_refund_payments_status') ? Configuration::get('manual_refund_payments_status') : 'yes';
         return [
             'ALTAPAY_USERNAME' => Tools::getValue('ALTAPAY_USERNAME', Configuration::get('ALTAPAY_USERNAME')),
             'ALTAPAY_PASSWORD' => Tools::getValue('ALTAPAY_PASSWORD', Configuration::get('ALTAPAY_PASSWORD')),
@@ -1704,8 +1724,8 @@ class ALTAPAY extends PaymentModule
             'enable_fraud' => Tools::getValue('enable_fraud', Configuration::get('enable_fraud')),
             'enable_release_refund' => Tools::getValue('enable_release_refund', Configuration::get('enable_release_refund')),
             'authorized_payments_status' => Tools::getValue('authorized_payments_status', Configuration::get('authorized_payments_status')),
-            'manual_capture_payments_status' => Tools::getValue('manual_capture_payments_status', Configuration::get('manual_capture_payments_status')),
-            'manual_refund_payments_status' => Tools::getValue('manual_refund_payments_status', Configuration::get('manual_refund_payments_status')),
+            'manual_capture_payments_status' => Tools::getValue('manual_capture_payments_status', $enableCapture),
+            'manual_refund_payments_status' => Tools::getValue('manual_refund_payments_status', $enableRefund),
         ];
     }
 
