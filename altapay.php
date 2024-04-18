@@ -3585,7 +3585,7 @@ class ALTAPAY extends PaymentModule
      */
     public function syncOrderDataFromGateway($results, $orderDetail, $params)
     {
-        if (!$results) {
+        if (empty($results)) {
             try {
                 $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
 
@@ -3608,15 +3608,13 @@ class ALTAPAY extends PaymentModule
                     return false;
                 }
 
+                $response['Transactions'] = $paymentDetails;
+                createAltapayOrder(json_decode(json_encode($response)), $orderDetail);
+                $results = $this->selectOrder($params);
                 if (!$results) {
-                    $response['Transactions'] = $paymentDetails;
-                    createAltapayOrder(json_decode(json_encode($response)), $orderDetail);
-                    $results = $this->selectOrder($params);
-                    if (!$results) {
-                        PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}", 3, null, $this->name, $this->id, true);
+                    PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}", 3, null, $this->name, $this->id, true);
 
-                        return false;
-                    }
+                    return false;
                 }
             } catch (Exception $e) {
                 PrestaShopLogger::addLog('Payment API Error: ' . $e->getMessage(), 3, null, $this->name, $this->id, true);
