@@ -1714,6 +1714,7 @@ class ALTAPAY extends PaymentModule
     {
         $enableCapture = Configuration::get('manual_capture_payments_status') ? Configuration::get('manual_capture_payments_status') : 'yes';
         $enableRefund = Configuration::get('manual_refund_payments_status') ? Configuration::get('manual_refund_payments_status') : 'yes';
+        
         return [
             'ALTAPAY_USERNAME' => Tools::getValue('ALTAPAY_USERNAME', Configuration::get('ALTAPAY_USERNAME')),
             'ALTAPAY_PASSWORD' => Tools::getValue('ALTAPAY_PASSWORD', Configuration::get('ALTAPAY_PASSWORD')),
