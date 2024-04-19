@@ -33,7 +33,7 @@ class ALTAPAY extends PaymentModule
         $this->version = '3.7.6';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.3'];
+        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.5'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -1647,7 +1647,7 @@ class ALTAPAY extends PaymentModule
                                 [
                                     'id_option' => 'no',
                                     'name' => 'No',
-                                ]
+                                ],
                             ],
                             'id' => 'id_option',
                             'name' => 'name',
@@ -1667,7 +1667,7 @@ class ALTAPAY extends PaymentModule
                                 [
                                     'id_option' => 'no',
                                     'name' => 'No',
-                                ]
+                                ],
                             ],
                             'id' => 'id_option',
                             'name' => 'name',
