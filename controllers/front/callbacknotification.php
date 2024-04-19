@@ -57,7 +57,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         $order = getOrderFromUniqueId($shopOrderId);
                         if (Validate::isLoadedObject($order)) {
                             $refundStatus = Configuration::get('manual_refund_payments_status');
-                            if ($refundStatus !== 'no') {
+                            if ($refundStatus !== $this->module::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS) {
                                 $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
                             }
                             saveReconciliationDetails($response, $order);
