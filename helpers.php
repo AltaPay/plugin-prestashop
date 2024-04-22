@@ -1043,9 +1043,11 @@ function getLatestUniqueIdFromCartId($id_cart)
  *
  * @param $order
  * @param $order_state
+ *
  * @return void
  */
-function setOrderStateIfNotExistInHistory($order, $order_state){
+function setOrderStateIfNotExistInHistory($order, $order_state)
+{
     if (empty($order->getHistory($order->id_lang, $order_state))) {
         $order->setCurrentState($order_state);
     }
