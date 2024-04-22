@@ -175,7 +175,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                          * For this scenario we change the order status to 'payment accepted'.
                          * bank_payment_finalized is for ePayments.
                          */
-                        $order->setCurrentState($order_state);
+                        setOrderStateIfNotExistInHistory($order, $order_state);
                         // Update payment status to 'succeeded'
                         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
                     SET `paymentStatus` = \'succeeded\' WHERE `id_order` = ' . (int) $order->id;

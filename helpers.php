@@ -905,7 +905,7 @@ function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $loc
         if (in_array($transactionStatus, $captured_statuses, true)) {
             $order_state = (int) Configuration::get('PS_OS_PAYMENT');
         }
-        $order->setCurrentState($order_state);
+        setOrderStateIfNotExistInHistory($order, $order_state);
         // Update payment status to 'succeeded'
         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
         SET `paymentStatus` = \'succeeded\' WHERE `id_order` = ' . (int) $order->id;
@@ -1036,4 +1036,17 @@ function getLatestUniqueIdFromCartId($id_cart)
     ORDER BY CAST(date_add AS UNSIGNED) DESC';
 
     return Db::getInstance()->getValue($sql);
+}
+
+/**
+ * Updates order state only if it does not exist in order history
+ *
+ * @param $order
+ * @param $order_state
+ * @return void
+ */
+function setOrderStateIfNotExistInHistory($order, $order_state){
+    if (empty($order->getHistory($order->id_lang, $order_state))) {
+        $order->setCurrentState($order_state);
+    }
 }

@@ -129,7 +129,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     $response = capturePayment($order->id, $transactionID, $amountPaid);
                     $orderStatusCaptured = (int) Configuration::get('PS_OS_PAYMENT');
                     if ($orderStatusCaptured != $orderStatus) {
-                        $order->setCurrentState($orderStatusCaptured);
+                        setOrderStateIfNotExistInHistory($order, $orderStatusCaptured);
                     }
                 }
 
