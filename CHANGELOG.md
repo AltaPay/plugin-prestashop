@@ -5,6 +5,10 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.7.6]
+### Added
+- Add configurations to enable/disable order status change upon Capture and Refund from AltaPay grid.
+
 ## [3.7.5]
 ### Added
 - Add support for Trustly.
