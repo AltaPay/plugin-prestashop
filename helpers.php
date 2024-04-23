@@ -594,13 +594,7 @@ function handleFraudPayment($response, $transaction)
             $message = $fraudMsg;
             $paymentProcessed = true;
             try {
-                if (in_array($transaction->TransactionStatus, ['captured', 'bank_payment_finalized'], true)) {
-                    $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
-                } else {
-                    $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
-                }
-                $api->setTransaction($transactionID);
-                $api->call();
+                refundOrReleaseTransactionByStatus($transaction);
                 saveLastErrorMessage($transactionID, $fraudMsg);
                 updatePaymentStatus($transactionID, $fraudStatus);
             } catch (Exception $e) {
@@ -1051,4 +1045,22 @@ function setOrderStateIfNotExistInHistory($order, $order_state)
     if (empty($order->getHistory($order->id_lang, $order_state))) {
         $order->setCurrentState($order_state);
     }
+}
+
+/**
+ * Refunds or Releases a transaction on gateway, based on its status
+ *
+ * @param $transaction
+ *
+ * @return void
+ */
+function refundOrReleaseTransactionByStatus($transaction)
+{
+    if (in_array($transaction->TransactionStatus, ['captured', 'bank_payment_finalized'], true)) {
+        $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
+    } else {
+        $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
+    }
+    $api->setTransaction($transaction->TransactionId);
+    $api->call();
 }

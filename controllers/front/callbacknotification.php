@@ -79,14 +79,8 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     and $altapay_order_details[0]['paymentStatus'] === 'succeeded'
                     and $altapay_order_details[0]['payment_id'] != $transactionId
                     and $postData['status'] === 'succeeded') {
-                    //refund or release incoming payment request
-                    if (in_array($transaction->TransactionStatus, ['captured', 'bank_payment_finalized'], true)) {
-                        $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
-                    } else {
-                        $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
-                    }
-                    $api->setTransaction($transactionId);
-                    $api->call();
+                    // Refund or Release incoming payment request
+                    refundOrReleaseTransactionByStatus($transaction);
                     unlockCallback($lockFileName, $lockFileHandle);
                     exit('Order already Processed!');
                 }
