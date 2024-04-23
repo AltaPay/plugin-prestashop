@@ -43,7 +43,6 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
         $lockFileName = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'callback_lock_' . md5($postData['transaction_id']) . '.lock';
         $lockFileHandle = lockCallback($lockFileName);
 
-        $message = '';
         $customerID = $this->context->customer->id;
         $orderStatus = (int) Configuration::get('authorized_payments_status');
         if (empty($orderStatus)) {
@@ -51,6 +50,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
         }
 
         $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
+        $transaction = null;
         try {
             $response = $callback->call();
             $shopOrderId = $response->shopOrderId;
@@ -186,9 +186,18 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             $errorMessage = $e->getMessage();
         }
 
+        // Successful order exists, set its status to cancel
+        $order = getOrderFromUniqueId($postData['shop_orderid']);
+        if (Validate::isLoadedObject($order) and $transaction->ReservedAmount == 0) {
+            updatePaymentStatus($postData['transaction_id'], $postData['status']);
+            saveLastErrorMessage($postData['transaction_id'], $errorMessage);
+            $orderStatusCancelled = (int) Configuration::get('PS_OS_CANCELED');
+            setOrderStateIfNotExistInHistory($order, $orderStatusCancelled);
+        }
+
         $status = strtolower($response->Result);
         if ($status === 'cancelled') {
-            $unique_id = Tools::getValue('shop_orderid');
+            $unique_id = $postData['shop_orderid'];
             // Updated transaction record to cancel
             $pI = pSQL($unique_id);
             $q = 'UPDATE `' . _DB_PREFIX_ . 'altapay_transaction` set `is_cancelled`=1, `transaction_status` = "' . $status . '" WHERE `unique_id`=\'' . $pI . '\'';
