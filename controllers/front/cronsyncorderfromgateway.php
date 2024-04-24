@@ -244,7 +244,7 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
             $db = Db::getInstance();
 
             // Prepare the query
-            $query = 'SELECT 1 FROM ' . _DB_PREFIX_ . "altapay_order WHERE unique_id = '".pSQL($uniqueId)."'";
+            $query = 'SELECT 1 FROM ' . _DB_PREFIX_ . "altapay_order WHERE unique_id = '" . pSQL($uniqueId) . "'";
 
             // Execute the query with parameters
             // Check if a record exists
