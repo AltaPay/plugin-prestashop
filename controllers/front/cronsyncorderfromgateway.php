@@ -244,16 +244,11 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
             $db = Db::getInstance();
 
             // Prepare the query
-            $query = 'SELECT COUNT(*) FROM ' . _DB_PREFIX_ . 'altapay_order WHERE unique_id = :uniqueId';
-
-            // Prepare the parameters
-            $params = [':uniqueId' => pSQL($uniqueId)];
+            $query = 'SELECT 1 FROM ' . _DB_PREFIX_ . "altapay_order WHERE unique_id = '".pSQL($uniqueId)."'";
 
             // Execute the query with parameters
-            $result = $db->getValue($query, $params);
-
             // Check if a record exists
-            return $result;
+            return $db->getValue($query);
         } catch (Exception $e) {
             PrestaShopLogger::addLog("Cron error: could not validate if transaction data was synced, DB error: {$e->getMessage()}", 3, null, $payment_module->name, $payment_module->id, true);
 
