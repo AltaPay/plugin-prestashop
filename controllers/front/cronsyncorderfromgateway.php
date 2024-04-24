@@ -101,22 +101,16 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
                             }
                         }
 
-                        if (!Validate::isLoadedObject($orderDetail)) {
-                            // Mark in altapay_transaction, transaction data sync failed because order was not loaded.
-                            PrestaShopLogger::addLog("$this->cron_msg_prefix error: could not load order for syncing, " . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
-                            $records_to_mark[] = $record['id'];
-                        } else {
-                            // Sync AltaPay transaction data
-                            createAltapayOrder($response, $orderDetail);
+                        // Sync AltaPay transaction data
+                        createAltapayOrder($response, $orderDetail);
 
-                            if (!empty($this->recordExistsInAltapayOrder($record['unique_id'], $payment_module))) {
-                                ++$total_orders_synced;
-                            } else {
-                                // Mark in altapay_transaction, transaction data sync was attempted but failed.
-                                PrestaShopLogger::addLog("$this->cron_msg_prefix error: could not sync order data, " . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
-                            }
-                            $records_to_mark[] = $record['id'];
+                        if (!empty($this->recordExistsInAltapayOrder($record['unique_id'], $payment_module))) {
+                            ++$total_orders_synced;
+                        } else {
+                            // Mark in altapay_transaction, transaction data sync was attempted but failed.
+                            PrestaShopLogger::addLog("$this->cron_msg_prefix error: could not sync order data, " . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
                         }
+                        $records_to_mark[] = $record['id'];
                     }
                 }
             } catch (Exception $e) {
