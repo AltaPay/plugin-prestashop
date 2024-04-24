@@ -30,7 +30,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.7.6';
+        $this->version = '3.7.7';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.5'];
@@ -385,6 +385,15 @@ class ALTAPAY extends PaymentModule
         // Check if the table contains data
         if ($result == 0 && empty(Configuration::get('ALTAPAY_USERNAME'))) {
             Configuration::updateValue('enable_cc_style', 'checkout-cc');
+        }
+
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_transaction\' AND COLUMN_NAME = \'is_processed_by_cron\'')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_transaction` ADD COLUMN is_processed_by_cron BOOLEAN NOT NULL DEFAULT 0')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
         }
 
         $this->createOrderState();
