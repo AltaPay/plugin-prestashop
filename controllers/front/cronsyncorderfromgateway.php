@@ -49,7 +49,7 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
 
                         // Proceed if transaction is found on AltaPay after fraud configuration check
                         if (empty($response)) {
-                            PrestaShopLogger::addLog("$this->cron_msg_prefix No transaction data on gateway for shoporder_id: {$record['unique_id']}" . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
+                            PrestaShopLogger::addLog("$this->cron_msg_prefix No (successful) transaction data on gateway for shoporder_id: {$record['unique_id']}" . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
                             $records_to_mark[] = $record['id'];
                             ++$total_orders_missing_on_gateway;
                             continue;
@@ -186,7 +186,7 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
             $api->setShopOrderId($shop_orderid);
             $paymentDetails = $api->call();
 
-            if (empty($paymentDetails)) {
+            if (empty($paymentDetails) or $paymentDetails[0]->ReservedAmount == 0) {
                 return false;
             }
 
