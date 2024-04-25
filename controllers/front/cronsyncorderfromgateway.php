@@ -78,7 +78,7 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
                             $orderStatus = $this->getNewOrderStatus($transaction);
                             $currencyPaid = Currency::getIdByIsoCode($transaction->MerchantCurrencyAlpha);
 
-                            if (in_array(strtolower($transaction->TransactionStatus), ['released', 'refunded'])){
+                            if (in_array(strtolower($transaction->TransactionStatus), ['released', 'refunded'])) {
                                 PrestaShopLogger::addLog("$this->cron_msg_prefix error: transaction ID: $transaction->TransactionId $transaction->TransactionStatus, could not create order " . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
                                 // Mark in altapay_transaction, order not created in PrestaShop because transaction status is released/refunded
                                 $records_to_mark[] = $record['id'];
