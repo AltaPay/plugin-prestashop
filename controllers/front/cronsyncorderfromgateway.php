@@ -78,7 +78,14 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
                             $orderStatus = $this->getNewOrderStatus($transaction);
                             $currencyPaid = Currency::getIdByIsoCode($transaction->MerchantCurrencyAlpha);
 
-                            //Create order in PrestaShop
+                            if (in_array(strtolower($transaction->TransactionStatus), ['released', 'refunded'])){
+                                PrestaShopLogger::addLog("$this->cron_msg_prefix error: transaction ID: $transaction->TransactionId $transaction->TransactionStatus, could not create order " . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
+                                // Mark in altapay_transaction, order not created in PrestaShop because transaction status is released/refunded
+                                $records_to_mark[] = $record['id'];
+                                continue;
+                            }
+
+                            // Create order in PrestaShop
                             createOrder($response, $currencyPaid, $cart, $orderStatus);
 
                             // Get newly created order ID
@@ -180,14 +187,14 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
             $api->setShopOrderId($shop_orderid);
             $paymentDetails = $api->call();
 
+            // Ignore if no transaction is found or ReservedAmount = 0
             if (empty($paymentDetails) or $paymentDetails[0]->ReservedAmount == 0) {
                 return false;
             }
 
-            $fraudConfig = Tools::getValue('enable_fraud', Configuration::get('enable_fraud'));
-            $enableReleaseRefund = Tools::getValue('enable_release_refund', Configuration::get('enable_release_refund'));
-            if ($fraudConfig && $enableReleaseRefund && strtolower($paymentDetails[0]->FraudRecommendation) === 'deny') {
-                PrestaShopLogger::addLog("Cron error: fraud payment shop_orderid: $shop_orderid", 3, null, $payment_module->name, $payment_module->id, true);
+            // Ignore if fraud is detected
+            if (strtolower($paymentDetails[0]->FraudRecommendation) === 'deny') {
+                PrestaShopLogger::addLog("$this->cron_msg_prefix error: fraud payment shop_orderid: $shop_orderid", 3, null, $payment_module->name, $payment_module->id, true);
 
                 return false;
             }
@@ -197,7 +204,7 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
 
             return json_decode(json_encode($response));
         } catch (Exception $e) {
-            PrestaShopLogger::addLog("Payments API Error shop_orderid: $shop_orderid, Cron error: " . $e->getMessage(), 3, null, $payment_module->name, $payment_module->id, true);
+            PrestaShopLogger::addLog("$this->cron_msg_prefix Payments API Error shop_orderid: $shop_orderid, exception: " . $e->getMessage(), 3, null, $payment_module->name, $payment_module->id, true);
 
             return false;
         }
