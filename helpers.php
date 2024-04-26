@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.7.6';
+    $pluginVersion = '3.7.7';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -594,13 +594,7 @@ function handleFraudPayment($response, $transaction)
             $message = $fraudMsg;
             $paymentProcessed = true;
             try {
-                if (in_array($transaction->TransactionStatus, ['captured', 'bank_payment_finalized'], true)) {
-                    $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
-                } else {
-                    $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
-                }
-                $api->setTransaction($transactionID);
-                $api->call();
+                refundOrReleaseTransactionByStatus($transaction);
                 saveLastErrorMessage($transactionID, $fraudMsg);
                 updatePaymentStatus($transactionID, $fraudStatus);
             } catch (Exception $e) {
@@ -905,7 +899,7 @@ function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $loc
         if (in_array($transactionStatus, $captured_statuses, true)) {
             $order_state = (int) Configuration::get('PS_OS_PAYMENT');
         }
-        $order->setCurrentState($order_state);
+        setOrderStateIfNotExistInHistory($order, $order_state);
         // Update payment status to 'succeeded'
         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
         SET `paymentStatus` = \'succeeded\' WHERE `id_order` = ' . (int) $order->id;
@@ -1019,4 +1013,54 @@ function handleVerifyCard(
         $module->id,
         true
     );
+}
+
+/**
+ * Use the cart ID to determine unique ID / shop_orderid
+ *
+ * @param int $id_cart
+ *
+ * @return mixed
+ */
+function getLatestUniqueIdFromCartId($id_cart)
+{
+    $sql = 'SELECT unique_id 
+    FROM `' . _DB_PREFIX_ . 'altapay_transaction` 
+    WHERE id_cart=\'' . pSQL($id_cart) . '\' 
+    ORDER BY CAST(date_add AS UNSIGNED) DESC';
+
+    return Db::getInstance()->getValue($sql);
+}
+
+/**
+ * Updates order state only if it does not exist in order history
+ *
+ * @param $order
+ * @param $order_state
+ *
+ * @return void
+ */
+function setOrderStateIfNotExistInHistory($order, $order_state)
+{
+    if (empty($order->getHistory($order->id_lang, $order_state))) {
+        $order->setCurrentState($order_state);
+    }
+}
+
+/**
+ * Refunds or Releases a transaction on gateway, based on its status
+ *
+ * @param $transaction
+ *
+ * @return void
+ */
+function refundOrReleaseTransactionByStatus($transaction)
+{
+    if (in_array($transaction->TransactionStatus, ['captured', 'bank_payment_finalized'], true)) {
+        $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
+    } else {
+        $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
+    }
+    $api->setTransaction($transaction->TransactionId);
+    $api->call();
 }

@@ -30,7 +30,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.7.6';
+        $this->version = '3.7.7';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.5'];
@@ -385,6 +385,15 @@ class ALTAPAY extends PaymentModule
         // Check if the table contains data
         if ($result == 0 && empty(Configuration::get('ALTAPAY_USERNAME'))) {
             Configuration::updateValue('enable_cc_style', 'checkout-cc');
+        }
+
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_transaction\' AND COLUMN_NAME = \'is_processed_by_cron\'')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_transaction` ADD COLUMN is_processed_by_cron BOOLEAN NOT NULL DEFAULT 0')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
         }
 
         $this->createOrderState();
@@ -1919,9 +1928,17 @@ class ALTAPAY extends PaymentModule
      */
     public function hookActionOrderStatusUpdate($params)
     {
+        $orderDetail = new Order((int) $params['id_order']);
+
+        if ($orderDetail->module != $this->name) {
+            return null;
+        }
+
         $results = $this->selectOrder($params);
 
-        if (!$results) {
+        $results = $this->syncOrderDataFromGateway($results, $orderDetail, $params);
+
+        if (empty($results)) {
             return null;
         }
 
@@ -2095,8 +2112,17 @@ class ALTAPAY extends PaymentModule
      */
     public function hookActionOrderStatusPostUpdate($params)
     {
+        $orderDetail = new Order((int) $params['id_order']);
+
+        if ($orderDetail->module != $this->name) {
+            return null;
+        }
+
         $results = $this->selectOrder($params);
-        if (!$results) {
+
+        $results = $this->syncOrderDataFromGateway($results, $orderDetail, $params);
+
+        if (empty($results)) {
             return null;
         }
         $allowedOrderStatuses = unserialize(Configuration::get('AUTOCAPTURE_STATUSES'));
@@ -2124,14 +2150,75 @@ class ALTAPAY extends PaymentModule
      */
     public function hookAdminOrder($params)
     {
-        $results = $this->selectOrder($params);
+        $orderDetail = new Order((int) $params['id_order']);
 
-        if (!$results) {
+        if ($orderDetail->module != $this->name) {
             return false;
         }
 
+        $results = $this->selectOrder($params);
+
+        try {
+            $reserved = 0;
+            $captured = 0;
+            $refunded = 0;
+            $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
+            if (!$results) {
+                $shopOrderId = getLatestUniqueIdFromCartId($orderDetail->id_cart);
+                if (empty($shopOrderId)) {
+                    PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}, Cart ID: $orderDetail->id_cart not found", 3, null, $this->name, $this->id, true);
+
+                    return false;
+                }
+                $api->setShopOrderId($shopOrderId);
+            } else {
+                $api->setTransaction($results['payment_id']);
+            }
+
+            $paymentDetails = $api->call();
+
+            if (empty($paymentDetails)) {
+                PrestaShopLogger::addLog(
+                    "Could not fetch payment info for Order ID: {$params['id_order']}, 
+                    Cart ID: $orderDetail->id_cart, transaction_id: {$results['payment_id']}, shop_orderid: $shopOrderId",
+                    3, null, $this->name, $this->id, true);
+
+                return false;
+            }
+
+            if (!$results) {
+                $response['Transactions'] = $paymentDetails;
+                createAltapayOrder(json_decode(json_encode($response)), $orderDetail);
+                $results = $this->selectOrder($params);
+                if (!$results) {
+                    PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}", 3, null, $this->name, $this->id, true);
+
+                    return false;
+                }
+            }
+
+            $status = $paymentDetails[0]->TransactionStatus ?? '';
+
+            foreach ($paymentDetails as $pay) {
+                $reserved += $pay->ReservedAmount;
+                $captured += $pay->CapturedAmount;
+                $refunded += $pay->RefundedAmount;
+            }
+
+            $ap_payment = [
+                'reserved' => $reserved,
+                'captured' => $captured,
+                'refunded' => $refunded,
+                'status' => $status,
+            ];
+
+            $this->smarty->assign('ap_paymentinfo', $ap_payment);
+        } catch (Exception $e) {
+            PrestaShopLogger::addLog('Payment API Error: ' . $e->getMessage(), 3, null, $this->name, $this->id, true);
+            $this->smarty->assign('ap_error', 'Error: ' . $e->getMessage());
+        }
+
         // collect order info
-        $orderDetail = new Order((int) $params['id_order']);
         $productDetail = $orderDetail->getProducts();
         $shippingDetail = $orderDetail->getShipping();
 
@@ -2164,33 +2251,6 @@ class ALTAPAY extends PaymentModule
             }
         }
         $this->smarty->assign('ap_orders', $apOrders);
-
-        try {
-            $reserved = 0;
-            $captured = 0;
-            $refunded = 0;
-            $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
-            $api->setTransaction($results['payment_id']);
-            $paymentDetails = $api->call();
-            $status = isset($paymentDetails[0]->TransactionStatus) ? $paymentDetails[0]->TransactionStatus : '';
-
-            foreach ($paymentDetails as $pay) {
-                $reserved += $pay->ReservedAmount;
-                $captured += $pay->CapturedAmount;
-                $refunded += $pay->RefundedAmount;
-            }
-
-            $ap_payment = [
-                'reserved' => $reserved,
-                'captured' => $captured,
-                'refunded' => $refunded,
-                'status' => $status,
-            ];
-
-            $this->smarty->assign('ap_paymentinfo', $ap_payment);
-        } catch (Exception $e) {
-            $this->smarty->assign('ap_error', 'Error: ' . $e->getMessage());
-        }
 
         $reconciliation_identifiers = getOrderReconciliationIdentifiers($orderId);
         if (empty($reconciliation_identifiers)) {
@@ -3586,5 +3646,51 @@ class ALTAPAY extends PaymentModule
         }
 
         return false;
+    }
+
+    /**
+     * @return array|false
+     */
+    public function syncOrderDataFromGateway($results, $orderDetail, $params)
+    {
+        if (empty($results)) {
+            try {
+                $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
+
+                $shopOrderId = getLatestUniqueIdFromCartId($orderDetail->id_cart);
+                if (empty($shopOrderId)) {
+                    PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}, Cart ID: $orderDetail->id_cart not found", 3, null, $this->name, $this->id, true);
+
+                    return false;
+                }
+                $api->setShopOrderId($shopOrderId);
+
+                $paymentDetails = $api->call();
+
+                if (empty($paymentDetails)) {
+                    PrestaShopLogger::addLog(
+                        "Could not fetch payment info for Order ID: {$params['id_order']}, 
+                    Cart ID: $orderDetail->id_cart, transaction_id: {$results['payment_id']}, shop_orderid: $shopOrderId",
+                        3, null, $this->name, $this->id, true);
+
+                    return false;
+                }
+
+                $response['Transactions'] = $paymentDetails;
+                createAltapayOrder(json_decode(json_encode($response)), $orderDetail);
+                $results = $this->selectOrder($params);
+                if (!$results) {
+                    PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}", 3, null, $this->name, $this->id, true);
+
+                    return false;
+                }
+            } catch (Exception $e) {
+                PrestaShopLogger::addLog('Payment API Error: ' . $e->getMessage(), 3, null, $this->name, $this->id, true);
+
+                return false;
+            }
+        }
+
+        return $results;
     }
 }

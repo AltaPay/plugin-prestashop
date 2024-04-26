@@ -5,6 +5,13 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.7.7]
+### Added
+- Sync missing order data from gateway.
+### Fixed
+- Fix: Duplicate ok callback triggers order status change.
+- Change order status to cancelled if callback fail is received for an existing order.
+
 ## [3.7.6]
 ### Added
 - Add configurations to enable/disable order status change upon Capture and Refund from AltaPay grid.

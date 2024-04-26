@@ -90,14 +90,8 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     and $altapay_order_details[0]['paymentStatus'] === 'succeeded'
                     and $altapay_order_details[0]['payment_id'] != $transactionID
                     and $postData['status'] === 'succeeded') {
-                    //refund or release incoming payment request
-                    if (in_array($transaction->TransactionStatus, ['captured', 'bank_payment_finalized'], true)) {
-                        $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
-                    } else {
-                        $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
-                    }
-                    $api->setTransaction($transactionID);
-                    $api->call();
+                    // Refund or Release incoming payment request
+                    refundOrReleaseTransactionByStatus($transaction);
                     unlockCallback($lockFileName, $lockFileHandle);
                     Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . (int) $order_id . '&key=' . $customer->secure_key);
                 }
@@ -129,7 +123,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     $response = capturePayment($order->id, $transactionID, $amountPaid);
                     $orderStatusCaptured = (int) Configuration::get('PS_OS_PAYMENT');
                     if ($orderStatusCaptured != $orderStatus) {
-                        $order->setCurrentState($orderStatusCaptured);
+                        setOrderStateIfNotExistInHistory($order, $orderStatusCaptured);
                     }
                 }
 
