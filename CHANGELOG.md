@@ -5,6 +5,10 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.7.8]
+### Fixed
+- Fix: Wrong amount is captured
+
 ## [3.7.7]
 ### Added
 - Sync missing order data from gateway.

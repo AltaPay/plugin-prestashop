@@ -30,7 +30,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.7.7';
+        $this->version = '3.7.8';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.5'];
@@ -1998,14 +1998,10 @@ class ALTAPAY extends PaymentModule
             $api->setTransaction($paymentID);
             $paymentDetails = $api->call();
 
-            $reserved = 0;
             $captured = 0;
-            $refunded = 0;
 
             foreach ($paymentDetails as $pay) {
-                $reserved += (float) $pay->ReservedAmount;
                 $captured += (float) $pay->CapturedAmount;
-                $refunded += (float) $pay->RefundedAmount;
             }
 
             $discountData = $this->getorderCartRule($params['id_order']);
@@ -2017,7 +2013,7 @@ class ALTAPAY extends PaymentModule
                 }
             }
 
-            $amountToCapture = $reserved - $captured;
+            $amountToCapture = (float)$orderDetail->total_paid - $captured;
             $giftWrappingFee = null;
             if ($productDetails->gift) {
                 $giftWrappingFee = $productDetails->total_wrapping;
@@ -2273,7 +2269,7 @@ class ALTAPAY extends PaymentModule
         $tname = $this->name;
         $this->smarty->assign('paymentinfo', $paymentinfo);
         $this->smarty->assign('payment_id', $results['payment_id']);
-        $this->smarty->assign('payment_amount', $results['amount']);
+        $this->smarty->assign('payment_amount', number_format($orderDetail->total_paid, 2));
         $this->smarty->assign('payment_captured', !$results['requireCapture']);
         $this->smarty->assign('this_path', $this->_path);
         $this->smarty->assign('ajax_url', $fet->getAdminLink('AdminModules') . '&configure=' . $tname . '&payment_actions');

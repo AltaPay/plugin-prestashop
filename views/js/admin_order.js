@@ -212,4 +212,9 @@ $(document).ready(function () {
         var element = this;
         return altapay.recalculateAmount(element);
     });
+
+    $('#btn-refresh').click(function (e) {
+        e.preventDefault();
+        location.reload();
+    });
 });

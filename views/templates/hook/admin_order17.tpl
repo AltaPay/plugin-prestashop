@@ -253,6 +253,12 @@
                         </div>
                     </div>
 
+                    <div class="row row-ap">
+                        <div class="col-lg-6">
+                            <a href="#" class="btn btn-primary" id="btn-refresh" data-url="{$ajax_url}"
+                               data-payment-id="{$payment_id}">Refresh</a>
+                        </div>
+                    </div>
                 </div>
                 <br>
                 <div class="col-lg-12" style="margin-top:2%;">
@@ -355,7 +361,6 @@
             } else {
                 $("#transactionOptions").hide();
             }
-
         } else {
             if(capturedAmount > 0 && capturedAmount < reservedAmount && refundedAmount < reservedAmount) {
                 $("#btn-release").hide();
