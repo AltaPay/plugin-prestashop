@@ -213,7 +213,7 @@ $(document).ready(function () {
         return altapay.recalculateAmount(element);
     });
 
-    $("#orderTotal").on("DOMSubtreeModified", function() {
+    $("#orderTotal, #total_order").on("DOMSubtreeModified", function() {
         location.reload();
     });
 });
