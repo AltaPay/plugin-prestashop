@@ -355,6 +355,7 @@
             } else {
                 $("#transactionOptions").hide();
             }
+
         } else {
             if(capturedAmount > 0 && capturedAmount < reservedAmount && refundedAmount < reservedAmount) {
                 $("#btn-release").hide();

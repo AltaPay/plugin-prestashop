@@ -7,7 +7,7 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 ## [3.7.8]
 ### Fixed
-- Fix: Wrong amount is captured
+- Fix: Full amount is being captured instead of the updated order total amount after the order has been modified.
 
 ## [3.7.7]
 ### Added
