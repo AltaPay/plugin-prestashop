@@ -2013,7 +2013,7 @@ class ALTAPAY extends PaymentModule
                 }
             }
 
-            $amountToCapture = (float)$orderDetail->total_paid - $captured;
+            $amountToCapture = (float) $orderDetail->total_paid - $captured;
             $giftWrappingFee = null;
             if ($productDetails->gift) {
                 $giftWrappingFee = $productDetails->total_wrapping;
