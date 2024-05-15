@@ -273,6 +273,38 @@ describe('Presta 1.7', function () {
         })
     })
 
+    it('Capture only order total after order Update', function () {
+        const ord = new Order()
+        ord.visit()
+        cy.get('body').then(($body) => {
+            if ($body.text().includes('€')) {
+                ord.admin()
+                ord.change_currency_to_DKK()
+                ord.re_save_DKK_currency_config()
+                ord.visit()
+            }
+        })
+        ord.add_products_for_order_update_test()
+        cy.fixture('config').then((admin) => {
+            if (admin.CC_TERMINAL_NAME != "") {
+                cy.get('body').then(($a) => {
+                    if ($a.find("label:contains('" + admin.CC_TERMINAL_NAME + "')").length) {
+                        ord.cc_payment(admin.CC_TERMINAL_NAME)
+                        ord.admin()
+                        ord.capture_for_order_update_test()
+                    } else {
+                        cy.log(admin.CC_TERMINAL_NAME + ' not found in page')
+                    }
+
+                })
+
+            }
+            else {
+                cy.log('CC_TERMINAL_NAME skipped')
+            }
+        })
+    })
+
     it('TC#9: iDeal Full Capture & Refund', function () {
 
         const ord = new Order()
