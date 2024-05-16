@@ -330,5 +330,52 @@ class Order
             cy.get('#form_step2_specific_price_save').click().wait(3000)
         }
     }
+
+    add_products_for_order_update_test(){
+        cy.get(':nth-child(1) > .product-miniature > .thumbnail-container > .thumbnail-top > .thumbnail > img').click()
+        cy.get('.add > .btn').click()
+        cy.get('.cart-content-btn > .btn-secondary').click()
+        cy.get('.logo').click()
+        cy.get(':nth-child(3) > .product-miniature > .thumbnail-container > .thumbnail-top > .thumbnail > img').click()
+        cy.get('.add > .btn').click()
+        cy.get('.cart-content-btn > .btn-secondary').click()
+        cy.get('.logo').click()
+        cy.get(':nth-child(2) > .product-miniature > .thumbnail-container > .thumbnail-top > .thumbnail > img').click()
+        cy.get('.add > .btn').click()
+        cy.get('.cart-content-btn > .btn-primary').click()
+        cy.get('.text-sm-center > .btn').click()
+        cy.get('#field-id_gender-1').click()
+        cy.get(':nth-child(4) > .col-md-6 > #field-email').type('demo1@example.com')
+        cy.get('#field-firstname').type('Test')
+        cy.get('#field-lastname').type('Person-dk')
+        cy.get(':nth-child(11) > .col-md-6 > .custom-checkbox > label').click()
+        cy.get(':nth-child(9) > .col-md-6 > .custom-checkbox > label').click()
+        cy.get(':nth-child(8) > .col-md-6 > .custom-checkbox > label').click()
+        cy.get(':nth-child(10) > .col-md-6 > .custom-checkbox > label').click()
+        cy.get('#customer-form > .form-footer > .continue').click()
+        cy.get('#field-address1').type('Nygårdsvej 65')
+        cy.get('#field-postcode').type('2100')
+        cy.get('#field-city').type('København ')
+        cy.get('#field-id_country').select('Denmark')
+        cy.get('.js-address-form > .form-footer > .continue').click()
+        cy.get('#js-delivery > .continue').click()
+        
+
+    }
+
+    capture_for_order_update_test(){        
+
+            cy.get('.mi-shopping_basket').click()
+            cy.get('#subtab-AdminOrders > .link').click()
+            cy.get(':nth-child(1) > .action-type > .btn-group-action > .btn-group > .grid-view-row-link > .material-icons').click()
+            cy.get('#reservedAmount').should('have.text', '96.05')
+            cy.get('#orderProductsTable tbody tr:first td.cellProductActions .js-order-product-delete-btn').click().wait(3000)
+            cy.get('#update_order_status_action_input').select('Shipped')
+            cy.get('#update_order_status_action_btn').click().wait(3000)
+            cy.get('#capturedAmount').should('have.text', '60.15')
+            cy.get('#orderTotal').should('have.text', 'kr60.15')
+            
+        
+    }
 }
 export default Order
