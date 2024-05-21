@@ -31,6 +31,8 @@ Installing this plug-in will enable the web shop to handle card transactions thr
 
 [Plugin updates](#plugin-updates)
 
+[Pay By Link](#pay-by-link)
+
 [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
@@ -213,6 +215,20 @@ From version 3.6.12 onwards, you will receive notification on both back office o
 
 ![order_page](docs/PluginUpdates/order_page.png)
 
+## Pay By Link
+
+The extension also supports the Pay by Link feature provided by default in Prestashop.
+
+In Prestashop, make sure to click on 'Send an email to the customer with the link to process the payment' and do not press 'Create Order'. The customer will receive an email with a link to select the payment method and process the payment, as shown in the screenshot below.
+
+![sendpaymentlink1.6.x](docs/PayByLink/sendpaymentlink1.6.x.png)
+
+![emailnotification](docs/PayByLink/emailnotification.png)
+
+![emailconfirmation](docs/PayByLink/emailconfirmation.png)
+
+> You can find more details on how to create an order from the admin here.: https://devdocs.prestashop-project.org/8/development/page-reference/back-office/order/add-new-order/
+
 ## Troubleshooting
 
 **PHP Warning: Input variables exceeded 1000. To increase the limit change max_input_vars in php.ini.**
@@ -242,6 +258,3 @@ From Admin Dashboard navigate to **Advanced Parameters > Logs**
 **For Nginx** it would be **/var/log/nginx/error.log** 
 
 **_Note: Your path may vary from the mentioned above._**
-
-
-
