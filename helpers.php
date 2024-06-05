@@ -845,6 +845,7 @@ function createOrder($response, $currencyPaid, $cart, $orderStatus)
     // Load the customer
     $customer = new Customer((int) $cart->id_customer);
     $customerSecureKey = $customer->secure_key;
+
     return $module->validateOrder($cartID, $orderStatus, $amountPaid,
         $paymentMethod, null, null,
         (int) $currencyPaid, false, $customerSecureKey);
@@ -1194,6 +1195,7 @@ function markAltaPayCallbackRecord($record_id, $status = 1)
 
         return Db::getInstance()->execute($sql);
     }
+
     return false;
 }
 
