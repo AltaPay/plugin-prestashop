@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.7.8';
+    $pluginVersion = '3.7.9';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -1060,4 +1060,167 @@ function refundOrReleaseTransactionByStatus($transaction)
     }
     $api->setTransaction($transaction->TransactionId);
     $api->call();
+}
+
+/**
+ * @param $postData
+ * @param $record_id
+ *
+ * @return void
+ */
+function createOrderOkCallback($postData, $record_id = null)
+{
+    // Create lock file name based on transaction_id so that it locks creation of current order only.
+    // Locking prevents attempt to create order in PrestaShop if notification & ok callbacks get processed simultaneously.
+
+    $lockFileName = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'callback_lock_' . md5($postData['transaction_id']) . '.lock';
+    $lockFileHandle = lockCallback($lockFileName);
+    $message = '';
+    $module = Module::getInstanceByName('altapay');
+    try {
+        // Load the cart
+        $cart = getCartFromUniqueId($postData['shop_orderid']);
+        if (!Validate::isLoadedObject($cart)) {
+            markAltaPayCallbackRecord($record_id, 2);
+            exit('Could not load cart - exiting');
+        }
+        $agreementType = 'unscheduled';
+        $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
+        $response = $callback->call();
+        $shopOrderId = $response->shopOrderId;
+        $paymentType = $response->type;
+        $transaction = getTransaction($response);
+        $orderStatus = (int) Configuration::get('authorized_payments_status');
+        if (empty($orderStatus) or in_array($transaction->TransactionStatus, ['bank_payment_finalized', 'captured'], true)) {
+            $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
+        }
+
+        $currencyPaid = Currency::getIdByIsoCode($transaction->MerchantCurrencyAlpha);
+        $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
+        $customer = new Customer($cart->id_customer);
+        $transactionID = $transaction->TransactionId;
+        $ccToken = $response->creditCardToken;
+        $maskedPan = $response->maskedCreditCard;
+        $payment_module = createOrder($response, $currencyPaid, $cart, $orderStatus);
+
+        // Load order
+        $order = new Order((int) $payment_module->currentOrder);
+
+        if (!Validate::isLoadedObject($order)) {
+            markAltaPayCallbackRecord($record_id, 2);
+            saveLogs('Something went wrong');
+            redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
+        }
+
+        if (!empty($transaction->ReconciliationIdentifiers)) {
+            $reconciliation_identifier = $transaction->ReconciliationIdentifiers[0]->Id;
+            $reconciliation_type = $transaction->ReconciliationIdentifiers[0]->Type;
+            saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $reconciliation_type);
+        }
+        if ($paymentType === 'paymentAndCapture' && $response->requireCapture === true) {
+            $response = capturePayment($order->id, $transactionID, $amountPaid);
+            $orderStatusCaptured = (int) Configuration::get('PS_OS_PAYMENT');
+            if ($orderStatusCaptured != $orderStatus) {
+                setOrderStateIfNotExistInHistory($order, $orderStatusCaptured);
+            }
+        }
+
+        if ($paymentType === 'verifyCard') {
+            handleVerifyCard($shopOrderId, $transaction, $ccToken, $maskedPan, $cart->id_customer, $cart, $agreementType);
+        }
+        if (in_array($paymentType, ['subscription', 'subscriptionAndCharge'])) {
+            $sql = 'INSERT INTO `' . _DB_PREFIX_
+                . 'altapay_saved_credit_card` (time,userID,agreement_id,agreement_type,id_order) VALUES (Now(),'
+                . pSQL($cart->id_customer) . ',"' . pSQL($transactionID) . '","'
+                . pSQL('recurring') . '","' . pSQL($order->id)
+                . '")';
+            Db::getInstance()->executeS($sql);
+        }
+
+        // Log order
+        createAltapayOrder($response, $order);
+        unlockCallback($lockFileName, $lockFileHandle);
+        markAltaPayCallbackRecord($record_id);
+        Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
+    } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
+        $message = $e->getResponse()->getBody();
+    } catch (API\PHP\Altapay\Exceptions\ResponseHeaderException $e) {
+        $message = $e->getHeader()->ErrorMessage;
+    } catch (API\PHP\Altapay\Exceptions\ResponseMessageException $e) {
+        $message = $e->getMessage();
+    } catch (Exception $e) {
+        $message = $e->getMessage();
+    }
+    markAltaPayCallbackRecord($record_id, 2);
+    saveLogs($message);
+    redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
+}
+
+/**
+ * @param array $postData
+ * @param string $callback_type
+ *
+ * @return false|int
+ */
+function saveAltaPayCallbackRequest($postData, $callback_type = 'ok')
+{
+    $xml = $postData['xml'];
+    // Encode the XML data
+    $xmlEncoded = base64_encode($xml);
+    // Replace with encoded xml in POST array
+    $postData['xml'] = $xmlEncoded;
+    $jsonPostData = json_encode($postData);
+
+    $sql = 'INSERT INTO `' . _DB_PREFIX_
+        . "altapay_callback_requests` (shop_orderid, transaction_id, request_data, callback_type) VALUES (
+        '" . pSQL($postData['shop_orderid']) . "', '" . pSQL($postData['transaction_id']) . "', '" . pSQL($jsonPostData) . "', '" . pSQL($callback_type) . "')";
+    if (Db::getInstance()->execute($sql)) {
+        return (int) Db::getInstance()->Insert_ID();
+    }
+
+    return false;
+}
+
+/**
+ * @param $record_id
+ * @param int $status
+ *
+ * @return bool
+ */
+function markAltaPayCallbackRecord($record_id, $status = 1)
+{
+    if (!empty($record_id)) {
+        $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_callback_requests` SET `processing_status` = ' . (int) $status . ' WHERE `id` = ' . (int) $record_id . ' LIMIT 1';
+
+        return Db::getInstance()->execute($sql);
+    }
+}
+
+/** Sends a non-blocking POST request to a specified URL.
+ *
+ * This function sends a POST request to the given URL with the provided data.
+ * It ensures the request is sent and received by the remote server without
+ * waiting for a response.
+ *
+ * @param string $url the URL to send the POST request to
+ * @param array $data The data to be sent in the POST request. This should be an associative array.
+ */
+function sendAsyncPostRequest($url, $data)
+{
+    // Initialize cURL session
+    $ch = curl_init();
+
+    // Configure cURL options
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);  // Connection timeout in seconds
+    curl_setopt($ch, CURLOPT_TIMEOUT, 1);  // Request timeout in seconds
+
+    // Execute the cURL request
+    curl_exec($ch);
+
+    // Close the cURL session
+    curl_close($ch);
 }

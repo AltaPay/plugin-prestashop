@@ -35,20 +35,12 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         $lockFileHandle = lockCallback($lockFileName);
 
         $message = '';
-        $orderStatus = (int) Configuration::get('authorized_payments_status');
-        if (empty($orderStatus)) {
-            $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
-        }
-        $customerID = $this->context->customer->id;
         $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
         try {
             $response = $callback->call();
             $shopOrderId = $response->shopOrderId;
             $paymentType = $response->type;
             $transaction = getTransaction($response);
-            if (in_array($transaction->TransactionStatus, ['bank_payment_finalized', 'captured'], true)) {
-                $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
-            }
 
             // Load the cart
             $cart = getCartFromUniqueId($shopOrderId);
@@ -56,13 +48,9 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 unlockCallback($lockFileName, $lockFileHandle);
                 exit('Could not load cart - exiting');
             }
-            $currencyPaid = Currency::getIdByIsoCode($transaction->MerchantCurrencyAlpha);
             $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
             $customer = new Customer($cart->id_customer);
             $transactionID = $transaction->TransactionId;
-            $ccToken = $response->creditCardToken;
-            $maskedPan = $response->maskedCreditCard;
-            $agreementType = 'unscheduled';
             $fraudPayment = handleFraudPayment($response, $transaction);
             //Check if this is a duplicate callback
             if (!empty($shopOrderId)) {
@@ -101,52 +89,24 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             if ($fraudPayment['payment_status']) {
                 saveLogs($transaction->FraudExplanation);
                 redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
-            } else {
-                // Check if an order exist
-                $order = getOrderFromUniqueId($shopOrderId);
-                if (Validate::isLoadedObject($order)) {
-                    updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
-                } else {
-                    createOrder($response, $currencyPaid, $cart, $orderStatus);
-                }
             }
-            // Load order
-            $order = new Order((int) $this->module->currentOrder);
 
+            // Check if an order exist, update it and redirect to success
+            $order = getOrderFromUniqueId($shopOrderId);
             if (Validate::isLoadedObject($order)) {
-                if (!empty($transaction->ReconciliationIdentifiers)) {
-                    $reconciliation_identifier = $transaction->ReconciliationIdentifiers[0]->Id;
-                    $reconciliation_type = $transaction->ReconciliationIdentifiers[0]->Type;
-                    saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $reconciliation_type);
-                }
-                if ($paymentType === 'paymentAndCapture' && $response->requireCapture === true) {
-                    $response = capturePayment($order->id, $transactionID, $amountPaid);
-                    $orderStatusCaptured = (int) Configuration::get('PS_OS_PAYMENT');
-                    if ($orderStatusCaptured != $orderStatus) {
-                        setOrderStateIfNotExistInHistory($order, $orderStatusCaptured);
-                    }
-                }
-
-                if ($paymentType === 'verifyCard') {
-                    handleVerifyCard($shopOrderId, $transaction, $ccToken, $maskedPan, $customerID, $cart, $agreementType);
-                }
-                if (in_array($paymentType, ['subscription', 'subscriptionAndCharge'])) {
-                    $sql = 'INSERT INTO `' . _DB_PREFIX_
-                        . 'altapay_saved_credit_card` (time,userID,agreement_id,agreement_type,id_order) VALUES (Now(),'
-                        . pSQL($customerID) . ',"' . pSQL($transactionID) . '","'
-                        . pSQL('recurring') . '","' . pSQL($order->id)
-                        . '")';
-                    Db::getInstance()->executeS($sql);
-                }
-
-                // Log order
-                createAltapayOrder($response, $order);
-                unlockCallback($lockFileName, $lockFileHandle);
-                Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
-            } else {
-                saveLogs('Something went wrong');
-                redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
+                updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
             }
+            $record_id = false;
+            if (!empty(Configuration::get('process_callbacks_async'))) {
+                $record_id = saveAltaPayCallbackRequest($postData);
+            }
+            unlockCallback($lockFileName, $lockFileHandle);
+            if (!empty($record_id)) {
+                sendAsyncPostRequest($this->context->link->getModuleLink($this->module->name, 'asyncprocesscallbacksfromgateway'), ['id' => $record_id, 'shop_orderid' => $postData['shop_orderid'], 'transaction_id' => $postData['transaction_id']]);
+                $redirectUrl = $this->context->link->getModuleLink('altapay', 'callbackopenvalidate', ['order_id' => $postData['shop_orderid']]);
+                Tools::redirect($redirectUrl);
+            }
+            createOrderOkCallback($postData);
         } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
             $message = $e->getResponse()->getBody();
         } catch (API\PHP\Altapay\Exceptions\ResponseHeaderException $e) {
