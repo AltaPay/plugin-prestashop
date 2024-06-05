@@ -172,9 +172,6 @@ function markAsRefund($paymentId, $orderlines = [])
             $sql = 'UPDATE ' . _DB_PREFIX_ . 'altapay_orderlines SET refunded = '
                    . $quantity . " WHERE altapay_payment_id = '" . pSQL($paymentId) . "' AND product_id = '" . pSQL($productId) . "'";
             Db::getInstance()->Execute($sql);
-        } else {
-            // Product which have not been captured cannot be refunded
-            continue;
         }
     }
 
