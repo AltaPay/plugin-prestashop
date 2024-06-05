@@ -831,7 +831,7 @@ function redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle)
  * @param $cart
  * @param $orderStatus
  *
- * @return void
+ * @return mixed
  */
 function createOrder($response, $currencyPaid, $cart, $orderStatus)
 {
@@ -845,7 +845,7 @@ function createOrder($response, $currencyPaid, $cart, $orderStatus)
     // Load the customer
     $customer = new Customer((int) $cart->id_customer);
     $customerSecureKey = $customer->secure_key;
-    $module->validateOrder($cartID, $orderStatus, $amountPaid,
+    return $module->validateOrder($cartID, $orderStatus, $amountPaid,
         $paymentMethod, null, null,
         (int) $currencyPaid, false, $customerSecureKey);
 }
@@ -1194,6 +1194,7 @@ function markAltaPayCallbackRecord($record_id, $status = 1)
 
         return Db::getInstance()->execute($sql);
     }
+    return false;
 }
 
 /** Sends a non-blocking POST request to a specified URL.
