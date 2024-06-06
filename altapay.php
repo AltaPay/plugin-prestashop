@@ -2169,7 +2169,7 @@ class ALTAPAY extends PaymentModule
         $allowedOrderStatuses = unserialize(Configuration::get('AUTOCAPTURE_STATUSES'));
 
         $currentOrderStatus = $params['newOrderStatus'];
-        if ($currentOrderStatus and in_array($currentOrderStatus->id, $allowedOrderStatuses) and $currentOrderStatus->id != Configuration::get('PS_OS_SHIPPING')) {
+        if (!empty($allowedOrderStatuses) and $currentOrderStatus and in_array($currentOrderStatus->id, $allowedOrderStatuses) and $currentOrderStatus->id != Configuration::get('PS_OS_SHIPPING')) {
             $paymentID = $results['payment_id'];
             $this->performCapture($paymentID, $params, false, true);
         } else {
