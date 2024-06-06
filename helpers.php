@@ -846,9 +846,11 @@ function createOrder($response, $currencyPaid, $cart, $orderStatus)
     $customer = new Customer((int) $cart->id_customer);
     $customerSecureKey = $customer->secure_key;
 
-    return $module->validateOrder($cartID, $orderStatus, $amountPaid,
+    $module->validateOrder($cartID, $orderStatus, $amountPaid,
         $paymentMethod, null, null,
         (int) $currencyPaid, false, $customerSecureKey);
+
+    return $module;
 }
 
 /**
