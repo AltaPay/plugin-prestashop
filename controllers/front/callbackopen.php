@@ -11,7 +11,7 @@ class AltapayCallbackopenModuleFrontController extends ModuleFrontController
     /**
      * If the payment state is "open", the order will not be created and plugin will
      * wait for the order created through notification callback.
-     * Plugin will shows the loader and redirects to success/failure page.
+     * Plugin will show the loader and redirect to success/failure page.
      */
 
     /**
