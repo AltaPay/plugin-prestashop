@@ -5,13 +5,11 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
-## [3.7.10]
-### Fixed
-- Empty cart page shown instead of order confirmation page upon successful order.
-
-## [3.7.9]
+## [3.8.0]
 ### Added
 - Add configuration to support asynchronous processing of AltaPay payment callbacks.
+### Fixed
+- Fix: Display nonformatted amount in capture input.
 
 ## [3.7.8]
 ### Fixed
