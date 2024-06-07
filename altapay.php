@@ -2314,7 +2314,7 @@ class ALTAPAY extends PaymentModule
         $tname = $this->name;
         $this->smarty->assign('paymentinfo', $paymentinfo);
         $this->smarty->assign('payment_id', $results['payment_id']);
-        $this->smarty->assign('payment_amount', number_format($orderDetail->total_paid, 2));
+        $this->smarty->assign('payment_amount', number_format($orderDetail->total_paid, 2, '.', ''));
         $this->smarty->assign('payment_captured', !$results['requireCapture']);
         $this->smarty->assign('this_path', $this->_path);
         $this->smarty->assign('ajax_url', $fet->getAdminLink('AdminModules') . '&configure=' . $tname . '&payment_actions');
