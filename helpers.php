@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.7.9';
+    $pluginVersion = '3.8.0';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -846,9 +846,11 @@ function createOrder($response, $currencyPaid, $cart, $orderStatus)
     $customer = new Customer((int) $cart->id_customer);
     $customerSecureKey = $customer->secure_key;
 
-    return $module->validateOrder($cartID, $orderStatus, $amountPaid,
+    $module->validateOrder($cartID, $orderStatus, $amountPaid,
         $paymentMethod, null, null,
         (int) $currencyPaid, false, $customerSecureKey);
+
+    return $module;
 }
 
 /**

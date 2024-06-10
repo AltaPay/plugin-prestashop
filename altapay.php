@@ -30,10 +30,10 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.7.9';
+        $this->version = '3.8.0';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.5'];
+        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.6'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -2169,7 +2169,7 @@ class ALTAPAY extends PaymentModule
         $allowedOrderStatuses = unserialize(Configuration::get('AUTOCAPTURE_STATUSES'));
 
         $currentOrderStatus = $params['newOrderStatus'];
-        if ($currentOrderStatus and in_array($currentOrderStatus->id, $allowedOrderStatuses) and $currentOrderStatus->id != Configuration::get('PS_OS_SHIPPING')) {
+        if (!empty($allowedOrderStatuses) and $currentOrderStatus and in_array($currentOrderStatus->id, $allowedOrderStatuses) and $currentOrderStatus->id != Configuration::get('PS_OS_SHIPPING')) {
             $paymentID = $results['payment_id'];
             $this->performCapture($paymentID, $params, false, true);
         } else {
@@ -2314,7 +2314,7 @@ class ALTAPAY extends PaymentModule
         $tname = $this->name;
         $this->smarty->assign('paymentinfo', $paymentinfo);
         $this->smarty->assign('payment_id', $results['payment_id']);
-        $this->smarty->assign('payment_amount', number_format($orderDetail->total_paid, 2));
+        $this->smarty->assign('payment_amount', number_format($orderDetail->total_paid, 2, '.', ''));
         $this->smarty->assign('payment_captured', !$results['requireCapture']);
         $this->smarty->assign('this_path', $this->_path);
         $this->smarty->assign('ajax_url', $fet->getAdminLink('AdminModules') . '&configure=' . $tname . '&payment_actions');
