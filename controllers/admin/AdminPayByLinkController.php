@@ -1,4 +1,11 @@
 <?php
+/**
+ * AltaPay module for PrestaShop
+ *
+ * Copyright © 2020 AltaPay. All rights reserved.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 class AdminPayByLinkController extends ModuleAdminController
 {
@@ -18,7 +25,11 @@ class AdminPayByLinkController extends ModuleAdminController
         parent::initContent();
     }
 
-
+    /**
+     * Process an AJAX request to get the payment link and optionally send a custom email.
+     *
+     * @return void
+     */
     public function ajaxProcessGetUrl()
     {
         $paymentLink = Tools::getValue('payment_link');
@@ -28,6 +39,12 @@ class AdminPayByLinkController extends ModuleAdminController
             $this->sendCustomEmail($customerId, $paymentLink);
         }
     }
+
+    /**
+     * Process an AJAX request to capture the remaining amount of a payment.
+     *
+     * @return void
+     */
     public function ajaxProcessCaptureRemaining()
     {
         $orderID = Tools::getValue('orderid');
@@ -44,6 +61,7 @@ class AdminPayByLinkController extends ModuleAdminController
                 $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
                 $api->setAmount($amount);
             }
+            $api->setOrderLines($this->OrderlineForBackorderItems($amount));
             $api->setTransaction($paymentID);
             $api->setReconciliationIdentifier($reconciliation_identifier);
             $response = $api->call();
@@ -80,6 +98,11 @@ class AdminPayByLinkController extends ModuleAdminController
         }
     }
 
+    /**
+     * Process an AJAX request to refund the remaining amount of a payment.
+     *
+     * @return void
+     */
     protected function ajaxProcessRefundRemaining() {
         try {
             $orderID = Tools::getValue('orderid');
@@ -90,6 +113,7 @@ class AdminPayByLinkController extends ModuleAdminController
             $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
             $api->setAmount($refundAmount);
             $api->setTransaction($paymentID);
+            $api->setOrderLines($this->OrderlineForBackorderItems($refundAmount));
             $api->setReconciliationIdentifier($reconciliation_identifier);
             $response = $api->call();
 
@@ -130,6 +154,14 @@ class AdminPayByLinkController extends ModuleAdminController
             exit();
         }
     }
+
+    /**
+     * Sends a custom email containing a payment link to the specified customer.
+     *
+     * @param int $customerId
+     * @param string $paymentUrl
+     * @return void
+     */
     protected function sendCustomEmail($customerId, $paymentUrl)
     {
         $customer = new Customer($customerId);
@@ -168,6 +200,24 @@ class AdminPayByLinkController extends ModuleAdminController
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Invalid customer ID.']);
         }
+    }
+
+    /**
+     *  Create an OrderLine object for backorder items with the remaining amount.
+     *
+     * @param $remainingAmount
+     * @return \API\PHP\Altapay\Request\OrderLine
+     */
+    public function OrderlineForBackorderItems($remainingAmount) {
+        $orderLine = new API\PHP\Altapay\Request\OrderLine(
+            'Remaining Total',
+            'rm-total',
+            1,
+            $remainingAmount
+        );
+        $orderLine->setGoodsType('item');
+
+        return $orderLine;
     }
 
 }

@@ -5,6 +5,10 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.8.1]
+### Added
+- Support "Pay by Link" functionality with the ability to edit existing orders by replacing or increasing the quantity.
+
 ## [3.8.0]
 ### Added
 - Add configuration to support asynchronous processing of AltaPay payment callbacks.

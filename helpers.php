@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.8.0';
+    $pluginVersion = '3.8.1';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -658,6 +658,11 @@ function updateTransactionIdForParentSubscription($id_order, $paymentId)
     Db::getInstance()->Execute($sql);
 }
 
+/**
+ * @param $id_order
+ * @param $paymentId
+ * @return void
+ */
 function updateParentTransIdChildOrder($id_order, $paymentId)
 {
     $sql = 'UPDATE 
@@ -1055,6 +1060,16 @@ function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $loc
     }
 }
 
+
+/**
+ * @param $cart
+ * @param $order
+ * @param $response
+ * @param $shopOrderId
+ * @param $lockFileName
+ * @param $lockFileHandle
+ * @return void
+ */
 function updateChildOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle)
 {
     $module = Module::getInstanceByName('altapay');
@@ -1240,6 +1255,13 @@ function refundOrReleaseTransactionByStatus($transaction)
     $api->call();
 }
 
+/**
+ * Get the terminal ID based on the remote name and shop ID.
+ *
+ * @param string $remote_name
+ * @param int $shop_id
+ * @return int|string
+ */
 function getTerminalIdByRemoteName($remote_name, $shop_id = 1)
 {
     $terminal_id = '';
@@ -1262,7 +1284,17 @@ function getTerminalIdByRemoteName($remote_name, $shop_id = 1)
     return $terminal_id;
 }
 
-function saveTransactionData($result, $payment_form_url, $cartId, $terminalName) {
+/**
+ * Save transaction data to the database.
+ *
+ * @param array $result
+ * @param string $payment_form_url
+ * @param int $cartId
+ * @param string $terminalName
+ * @return void
+ */
+function saveTransactionData($result, $payment_form_url, $cartId, $terminalName)
+{
     $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction`
 				(id_cart, payment_form_url, unique_id, amount, terminal_name, date_add, token) VALUES ' .
         "('" . (int)$cartId . "', '" . pSQL($payment_form_url) . "', '" . pSQL($result['uniqueid']) . "', '"
@@ -1272,31 +1304,33 @@ function saveTransactionData($result, $payment_form_url, $cartId, $terminalName)
     Db::getInstance()->Execute($sql);
 }
 
-function getReservedAmount($cartId, $shopOrderId) {
-    // Define the query
-    $query = "SELECT amount FROM " . _DB_PREFIX_ . "altapay_transaction
-        WHERE is_cancelled != 1 AND unique_id = '" . pSQL($shopOrderId) . "' AND id_cart = '" . $cartId . "'
-        LIMIT 10";
-
-    // Get a reference to the database object
-    $db = Db::getInstance();
-    // Execute the query, fetch & return the results
-    return $db->executeS($query);
-}
-
-function getTransactionStatus($paymentId) {
+/**
+ * Get the transaction status (captured and refunded amounts) for the given payment ID.
+ *
+ * @param string $paymentId
+ * @return array|null
+ */
+function getTransactionStatus($paymentId)
+{
     $sql = 'SELECT captured, refunded 
             FROM ' . _DB_PREFIX_ . 'altapay_orderlines 
             WHERE altapay_payment_id = "' . pSQL($paymentId) . '"';
 
 
-   return Db::getInstance()->getRow($sql);
+    return Db::getInstance()->getRow($sql);
 }
 
+/**
+ * Check if the given shop order ID represents a child order.
+ *
+ * @param string $shopOrderId
+ * @return bool
+ */
 function isChildOrder($shopOrderId)
 {
     return strpos($shopOrderId, '_') !== false;
 }
+
 /**
  * @param $postData
  * @param $record_id
