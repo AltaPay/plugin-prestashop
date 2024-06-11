@@ -39,8 +39,8 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
                 exit($error);
             }
 
-            $total_orders_synced = $total_orders_created = $total_orders_missing_on_gateway = 0;
-            $records_to_mark = $records = [];
+            $total_orders_synced = $total_orders_missing_on_gateway = 0;
+            $records_to_mark_as_processed = $records_to_mark_as_order_creation = $records = [];
             try {
                 $records = $this->findMissingAltaPayTransactionRecords($payment_module);
                 if (!empty($records)) {
@@ -50,7 +50,7 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
                         // Proceed if transaction is found on AltaPay after fraud configuration check
                         if (empty($response)) {
                             PrestaShopLogger::addLog("$this->cron_msg_prefix No (successful) transaction data on gateway for shoporder_id: {$record['unique_id']}" . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
-                            $records_to_mark[] = $record['id'];
+                            $records_to_mark_as_processed[] = $record['id'];
                             ++$total_orders_missing_on_gateway;
                             continue;
                         }
@@ -58,7 +58,7 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
 
                         if (!Validate::isLoadedObject($cart)) {
                             PrestaShopLogger::addLog("$this->cron_msg_prefix error could not load cart: " . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
-                            $records_to_mark[] = $record['id'];
+                            $records_to_mark_as_processed[] = $record['id'];
                             continue;
                         }
 
@@ -70,42 +70,14 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
 
                             if (!Validate::isLoadedObject($orderDetail)) {
                                 PrestaShopLogger::addLog("$this->cron_msg_prefix error: could not load order ID : $id_order, " . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
-                                $records_to_mark[] = $record['id'];
+                                $records_to_mark_as_processed[] = $record['id'];
                                 continue;
                             }
                         } else {
-                            $transaction = getTransaction($response);
-                            $orderStatus = $this->getNewOrderStatus($transaction);
-                            $currencyPaid = Currency::getIdByIsoCode($transaction->MerchantCurrencyAlpha);
-
-                            if (in_array(strtolower($transaction->TransactionStatus), ['released', 'refunded'])) {
-                                PrestaShopLogger::addLog("$this->cron_msg_prefix error: transaction ID: $transaction->TransactionId $transaction->TransactionStatus, could not create order " . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
-                                // Mark in altapay_transaction, order not created in PrestaShop because transaction status is released/refunded
-                                $records_to_mark[] = $record['id'];
-                                continue;
-                            }
-
-                            // Create order in PrestaShop
-                            createOrder($response, $currencyPaid, $cart, $orderStatus);
-
-                            // Get newly created order ID
-                            if ($payment_module->currentOrder) {
-                                $orderDetail = new Order((int) $payment_module->currentOrder);
-
-                                if (!Validate::isLoadedObject($orderDetail)) {
-                                    PrestaShopLogger::addLog("$this->cron_msg_prefix error: could not load cron created order ID: $payment_module->currentOrder, " . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
-                                    // Mark in altapay_transaction, order creation in PrestaShop was attempted but loading failed.
-                                    $records_to_mark[] = $record['id'];
-                                    continue;
-                                }
-                                ++$total_orders_created;
-                                PrestaShopLogger::addLog("$this->cron_msg_prefix created an order ID: $payment_module->currentOrder, " . json_encode($record), 1, null, $payment_module->name, $payment_module->id, true);
-                            } else {
-                                PrestaShopLogger::addLog("$this->cron_msg_prefix error: could not create order " . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
-                                // Mark in altapay_transaction, order creation in PrestaShop was attempted but failed.
-                                $records_to_mark[] = $record['id'];
-                                continue;
-                            }
+                            // Mark as order needs to be created in PrestaShop
+                            PrestaShopLogger::addLog("$this->cron_msg_prefix order for shop_orderid: {$record['unique_id']} missing in PrestaShop, " . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
+                            $records_to_mark_as_order_creation[] = $record['id'];
+                            continue;
                         }
 
                         // Sync AltaPay transaction data
@@ -117,7 +89,7 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
                             // Mark in altapay_transaction, transaction data sync was attempted but failed.
                             PrestaShopLogger::addLog("$this->cron_msg_prefix error: could not sync order data, " . json_encode($record), 3, null, $payment_module->name, $payment_module->id, true);
                         }
-                        $records_to_mark[] = $record['id'];
+                        $records_to_mark_as_processed[] = $record['id'];
                     }
                 }
             } catch (Exception $e) {
@@ -125,8 +97,13 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
             }
 
             // Mark records as processed by cron in altapay_transaction
-            if (!empty($records_to_mark)) {
-                $this->markAsProcessed($records_to_mark);
+            if (!empty($records_to_mark_as_processed)) {
+                $this->markRecords($records_to_mark_as_processed);
+            }
+
+            // Mark records in altapay_transaction as orders to be created
+            if (!empty($records_to_mark_as_order_creation)) {
+                $this->markRecords($records_to_mark_as_order_creation, 2);
             }
 
             $msg = "\r\n\n";
@@ -135,9 +112,9 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
             $msg .= "Ended at: {$timing_info['end']}\n";
             $msg .= "Execution time: {$timing_info['execution_time']} seconds\n";
             $msg .= 'Total Records fetched: ' . count($records) . "\n";
-            $msg .= 'Total Records Processed: ' . count($records_to_mark) . "\n";
+            $msg .= 'Total Records Processed: ' . count($records_to_mark_as_processed) . "\n";
             $msg .= "Total Order Synced: $total_orders_synced\n";
-            $msg .= "Total Order Created: $total_orders_created\n";
+            $msg .= 'Total Order need to be created: ' . count($records_to_mark_as_order_creation) . "\n";
             $msg .= "Total Unique Ids Missing on Gateway: $total_orders_missing_on_gateway\n";
             PrestaShopLogger::addLog($msg, 1, null, $payment_module->name, $payment_module->id, true);
             exit($msg);
@@ -261,15 +238,16 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
      * Mark the records as processed by cron in altapay_transaction
      *
      * @param array $ids array of IDs to update
+     * @param int $status
      *
      * @return bool true on success, false on failure
      */
-    private function markAsProcessed($ids)
+    private function markRecords($ids, $status = 1)
     {
         $db = Db::getInstance();
 
         $query = 'UPDATE `' . _DB_PREFIX_ . 'altapay_transaction` 
-        SET `is_processed_by_cron` = 1 WHERE `id` IN (' . implode(',', $ids) . ')';
+        SET `is_processed_by_cron` = ' . (int) $status . '  WHERE `id` IN (' . implode(',', $ids) . ')';
 
         return $db->execute($query);
     }

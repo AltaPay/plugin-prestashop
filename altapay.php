@@ -31,10 +31,10 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.7.8';
+        $this->version = '3.8.0';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.5'];
+        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.6'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -429,12 +429,32 @@ class ALTAPAY extends PaymentModule
 
         if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_transaction\' AND COLUMN_NAME = \'is_processed_by_cron\'')) {
-            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_transaction` ADD COLUMN is_processed_by_cron BOOLEAN NOT NULL DEFAULT 0')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_transaction` ADD COLUMN is_processed_by_cron int(10) unsigned NOT NULL DEFAULT 0')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        } else {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_transaction` MODIFY `is_processed_by_cron` int(10) unsigned NOT NULL DEFAULT 0')
+            ) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
             }
         }
+
+        Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'altapay_callback_requests` (
+		`id` int(11) NOT NULL AUTO_INCREMENT,
+		`shop_orderid` varchar(255) NOT NULL,
+		`transaction_id` varchar(255) NOT NULL,
+		`request_data` mediumtext NOT NULL,
+		`callback_type` varchar(25) NOT NULL,
+		`id_order` int(10) unsigned NOT NULL DEFAULT 0,
+		`processing_status` int(10) unsigned NOT NULL DEFAULT 0,
+		`created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		`updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+		PRIMARY KEY  (`id`)
+		) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
 
         $this->createOrderState();
 
@@ -1750,6 +1770,26 @@ class ALTAPAY extends PaymentModule
                             'name' => 'name',
                         ],
                     ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Process callbacks asynchronously'),
+                        'name' => 'process_callbacks_async',
+                        'required' => false,
+                        'options' => [
+                            'query' => [
+                                [
+                                    'id_option' => '0',
+                                    'name' => 'No',
+                                ],
+                                [
+                                    'id_option' => '1',
+                                    'name' => 'Yes',
+                                ],
+                            ],
+                            'id' => 'id_option',
+                            'name' => 'name',
+                        ],
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->l('Save'),
@@ -1791,6 +1831,7 @@ class ALTAPAY extends PaymentModule
     {
         $enableCapture = Configuration::get('manual_capture_payments_status') ? Configuration::get('manual_capture_payments_status') : 'yes';
         $enableRefund = Configuration::get('manual_refund_payments_status') ? Configuration::get('manual_refund_payments_status') : 'yes';
+        $process_callbacks_async = Configuration::get('process_callbacks_async') ? Configuration::get('process_callbacks_async') : 0;
 
         return [
             'ALTAPAY_USERNAME' => Tools::getValue('ALTAPAY_USERNAME', Configuration::get('ALTAPAY_USERNAME')),
@@ -1804,6 +1845,7 @@ class ALTAPAY extends PaymentModule
             'authorized_payments_status' => Tools::getValue('authorized_payments_status', Configuration::get('authorized_payments_status')),
             'manual_capture_payments_status' => Tools::getValue('manual_capture_payments_status', $enableCapture),
             'manual_refund_payments_status' => Tools::getValue('manual_refund_payments_status', $enableRefund),
+            'process_callbacks_async' => Tools::getValue('process_callbacks_async', $process_callbacks_async),
         ];
     }
 
@@ -1943,6 +1985,9 @@ class ALTAPAY extends PaymentModule
             }
             if (Tools::getValue('manual_refund_payments_status') !== '') {
                 Configuration::updateValue('manual_refund_payments_status', Tools::getValue('manual_refund_payments_status'));
+            }
+            if (Tools::getValue('process_callbacks_async') !== '') {
+                Configuration::updateValue('process_callbacks_async', Tools::getValue('process_callbacks_async'));
             }
         }
         $this->Mhtml .= '<div class="alert alert-success"> ' . $this->l('Settings updated') . '</div>';
@@ -2199,7 +2244,7 @@ class ALTAPAY extends PaymentModule
         $allowedOrderStatuses = unserialize(Configuration::get('AUTOCAPTURE_STATUSES'));
 
         $currentOrderStatus = $params['newOrderStatus'];
-        if ($currentOrderStatus and in_array($currentOrderStatus->id, $allowedOrderStatuses) and $currentOrderStatus->id != Configuration::get('PS_OS_SHIPPING')) {
+        if (!empty($allowedOrderStatuses) and $currentOrderStatus and in_array($currentOrderStatus->id, $allowedOrderStatuses) and $currentOrderStatus->id != Configuration::get('PS_OS_SHIPPING')) {
             $paymentID = $results['payment_id'];
             $this->performCapture($paymentID, $params, false, true);
         } else {
@@ -2383,7 +2428,7 @@ class ALTAPAY extends PaymentModule
         $tname = $this->name;
         $this->smarty->assign('paymentinfo', $paymentinfo);
         $this->smarty->assign('payment_id', $results['payment_id']);
-        $this->smarty->assign('payment_amount', number_format($orderDetail->total_paid, 2));
+        $this->smarty->assign('payment_amount', number_format($orderDetail->total_paid, 2, '.', ''));
         $this->smarty->assign('payment_captured', !$results['requireCapture']);
         $this->smarty->assign('this_path', $this->_path);
         $this->smarty->assign('ajax_url', $fet->getAdminLink('AdminModules') . '&configure=' . $tname . '&payment_actions');
