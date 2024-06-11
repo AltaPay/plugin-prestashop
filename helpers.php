@@ -583,7 +583,7 @@ function chargeAltaPayAgreement($order_id, $parent_order_id)
                 $uniqueId = (($transaction->AuthType === 'subscription_payment') ? "$transaction->ShopOrderId ($transaction->TransactionId)" : $transaction->ShopOrderId);
                 createAltapayOrder($response, $order, 'subscription_payment_succeeded');
                 saveAltaPayTransaction($uniqueId, $transaction->CapturedAmount, $transaction->Terminal, $response->Result);
-                saveOrderReconciliationIdentifier($order_id, $reconciliation_identifier);
+                saveOrderReconciliationIdentifier($order_id, $reconciliation_identifier, $uniqueId);
                 $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
             }
         } catch (Exception $e) {
@@ -1389,7 +1389,7 @@ function createOrderOkCallback($postData, $record_id = null)
         if (!empty($transaction->ReconciliationIdentifiers)) {
             $reconciliation_identifier = $transaction->ReconciliationIdentifiers[0]->Id;
             $reconciliation_type = $transaction->ReconciliationIdentifiers[0]->Type;
-            saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $reconciliation_type);
+            saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $shopOrderId, $reconciliation_type);
         }
         if ($paymentType === 'paymentAndCapture' && $response->requireCapture === true) {
             $response = capturePayment($order->id, $transactionID, $amountPaid);
