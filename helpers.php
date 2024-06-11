@@ -1219,7 +1219,7 @@ function getPaymentFormUrl($id_cart, $unique_id)
             AND unique_id LIKE \'' . pSQL($unique_id) . "%\_%' 
             ORDER BY CAST(date_add AS UNSIGNED) DESC";
 
-    return Db::getInstance()->getRow($sql);
+    return Db::getInstance()->executeS($sql);
 }
 
 /**
@@ -1395,7 +1395,7 @@ function createOrderOkCallback($postData, $record_id = null)
             saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $shopOrderId, $reconciliation_type);
         }
         if ($paymentType === 'paymentAndCapture' && $response->requireCapture === true) {
-            $response = capturePayment($order->id, $transactionID, $amountPaid);
+            $response = capturePayment($order->id, $transactionID, $amountPaid, $shopOrderId);
             $orderStatusCaptured = (int) Configuration::get('PS_OS_PAYMENT');
             if ($orderStatusCaptured != $orderStatus && !$isChildOrder) {
                 setOrderStateIfNotExistInHistory($order, $orderStatusCaptured);

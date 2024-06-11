@@ -17,7 +17,7 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
             $this->redirectBackToCheckout('altapay_cancel=1&isPaymentStep=true&step=3#altapay_cancel');
         }
 
-        if(isChildOrder($shopOrderId)) {
+        if (isChildOrder($shopOrderId)) {
             $recordExist = Db::getInstance()->getRow('SELECT * FROM ' . _DB_PREFIX_ . 'altapay_child_order ' .
                 'WHERE unique_id = \'' . pSQL($shopOrderId) . '\'');
 
