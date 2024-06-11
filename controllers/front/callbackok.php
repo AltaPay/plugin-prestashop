@@ -109,7 +109,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 }
             }
             $record_id = false;
-            if (!empty(Configuration::get('process_callbacks_async'))) {
+            if (!empty(Configuration::get('process_callbacks_async')) && !$isChildOrder) {
                 $record_id = saveAltaPayCallbackRequest($postData);
             }
             unlockCallback($lockFileName, $lockFileHandle);
