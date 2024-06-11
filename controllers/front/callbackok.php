@@ -113,7 +113,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 $record_id = saveAltaPayCallbackRequest($postData);
             }
             unlockCallback($lockFileName, $lockFileHandle);
-            if (!empty($record_id)) {
+            if (!empty($record_id) && !$isChildOrder) {
                 sendAsyncPostRequest($this->context->link->getModuleLink($this->module->name, 'asyncprocesscallbacksfromgateway'), ['id' => $record_id, 'shop_orderid' => $postData['shop_orderid'], 'transaction_id' => $postData['transaction_id']]);
                 $redirectUrl = $this->context->link->getModuleLink('altapay', 'callbackopenvalidate', ['order_id' => $postData['shop_orderid']]);
                 Tools::redirect($redirectUrl);

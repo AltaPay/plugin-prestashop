@@ -106,7 +106,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $captured_statuses = ['bank_payment_finalized', 'captured'];
             $order_state = (int) Configuration::get('authorized_payments_status');
 
-            if(!$isChildOrder) {
+            if (!$isChildOrder) {
                 if (empty($order_state)) {
                     $order_state = (int) Configuration::get('PS_OS_PAYMENT');
                 }
@@ -122,7 +122,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $fraudPayment = handleFraudPayment($response, $transaction);
             $errorStatus = ['cancelled', 'declined', 'error', 'failed', 'incomplete', 'open'];
             if (!in_array($resultStatus, $errorStatus, true) && !$fraudPayment['payment_status']) {
-                if($isChildOrder) {
+                if ($isChildOrder) {
                     $this->processChildOrder($cart, $response, $transactionStatus, $auth_statuses, $captured_statuses, $order_state, $lockFileName, $lockFileHandle);
                     exit('Store transaction details for the Item Added from Back order');
                 }
@@ -253,13 +253,13 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
         unlockCallback($lockFileName, $lockFileHandle);
         exit($message);
     }
+
     public function processChildOrder($cart, $response, $transactionStatus, $auth_statuses, $captured_statuses, $order_state, $lockFileName, $lockFileHandle)
     {
         $shopOrderId = $response->shopOrderId;
         // Check if an order exist
         $order = getChildOrderFromUniqueId($shopOrderId);
-        if(!Validate::isLoadedObject($order)) {
-
+        if (!Validate::isLoadedObject($order)) {
             $order_id = Order::getOrderByCartId((int) ($cart->id));
             $orderDetail = new Order((int) $order_id);
 
@@ -274,7 +274,6 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             unlockCallback($lockFileName, $lockFileHandle);
         } elseif (Validate::isLoadedObject($order)) {
             if (in_array($transactionStatus, $auth_statuses, true) or in_array($transactionStatus, $captured_statuses, true)) {
-
                 setOrderStateIfNotExistInHistory($order, $order_state);
                 // Update payment status to 'succeeded'
                 $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_child_order` 

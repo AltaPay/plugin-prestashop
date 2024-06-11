@@ -132,7 +132,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                 // Redirect to payment selection page
                 if ($fraudPayment['payment_status']) {
                     saveLogs($transaction->FraudExplanation);
-                    !$isChildOrder ? redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle): exit('Error in the Payment!');
+                    !$isChildOrder ? redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle) : exit('Error in the Payment!');
                 } else {
                     // Check if an order exist
                     $order = $isChildOrder ? getChildOrderFromUniqueId($shopOrderId) : getOrderFromUniqueId($shopOrderId);
@@ -148,7 +148,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                     }
                 }
                 // Load order
-                if($isChildOrder) {
+                if ($isChildOrder) {
                     $order_id = Order::getOrderByCartId((int) ($cart->id));
                     $order = new Order((int) $order_id);
                 } else {
@@ -182,7 +182,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                     }
 
                     // Log order
-                    createAltapayOrder($response, $order,'succeeded', $isChildOrder);
+                    createAltapayOrder($response, $order, 'succeeded', $isChildOrder);
                     unlockCallback($lockFileName, $lockFileHandle);
                     Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
                 } else {
@@ -204,7 +204,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
         $order = getOrderFromUniqueId($postData['shop_orderid']);
 
         if (Validate::isLoadedObject($order) and $transaction->ReservedAmount == 0) {
-            if($isChildOrder) {
+            if ($isChildOrder) {
                 updatePaymentStatusForChildOrder($postData['transaction_id'], $postData['status']);
                 saveLastErrorMessageForChildOrder($postData['transaction_id'], $errorMessage);
             } else {

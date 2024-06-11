@@ -27,6 +27,7 @@ class ALTAPAY extends PaymentModule
     private $api_error = '';
 
     const ADMIN_SEND_PAYMENT_LINK_CONTROLLER = 'AltapaySendPaymentLink';
+
     public function __construct()
     {
         $this->name = 'altapay';
@@ -38,7 +39,7 @@ class ALTAPAY extends PaymentModule
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
-        $this->controllers = array();
+        $this->controllers = [];
         $config = Configuration::getMultiple([
             'AUTOCAPTURE_STATUSES',
             'ALTAPAY_TERMINAL',
@@ -542,9 +543,10 @@ class ALTAPAY extends PaymentModule
 
         return true;
     }
+
     private function installTab()
     {
-        $tab = new Tab;
+        $tab = new Tab();
         $tab->active = 1;
         foreach (Language::getLanguages() as $lang) {
             $tab->name[$lang['id_lang']] = 'altapay';
@@ -2328,18 +2330,18 @@ class ALTAPAY extends PaymentModule
                 $childOrderId = $backorder_payment_url['unique_id'];
                 $responseApi = $this->getPaymentData($childOrderId);
                 $resultChildOrder = $this->selectChildOrder($childOrderId);
-                $requireCapture = (bool)$resultChildOrder['requireCapture'];
+                $requireCapture = (bool) $resultChildOrder['requireCapture'];
                 $transData = getTransactionStatus($resultChildOrder['payment_id']);
 
-                if(isset($transData['refunded']) && !$transData['refunded']) {
+                if (isset($transData['refunded']) && !$transData['refunded']) {
                     $this->smarty->assign('can_refund', true);
                 }
 
-                if(!$resultChildOrder) {
+                if (!$resultChildOrder) {
                     $this->smarty->assign('payment_url', $backorder_payment_url['payment_form_url']);
                 }
 
-                if($backorder_payment_url and $requireCapture) {
+                if ($backorder_payment_url and $requireCapture) {
                     $this->smarty->assign('is_require_capture', $requireCapture);
                 }
 
@@ -2410,7 +2412,6 @@ class ALTAPAY extends PaymentModule
             $reconciliation_identifiers = [];
         }
 
-
         // prepare for view
         $paymentinfo = [
             'Transaction Date' => Tools::htmlentitiesUTF8(date('F j, Y, g:i a', $results['date_add'])),
@@ -2446,6 +2447,7 @@ class ALTAPAY extends PaymentModule
             return $this->display(__FILE__, '/views/templates/hook/admin_order.tpl');
         }
     }
+
     /**
      * Hook for displaying custom column in orders grid in admin panel for PrestaShop 1.6.x
      *
@@ -3048,11 +3050,7 @@ class ALTAPAY extends PaymentModule
                 $request->setAgreement(['type' => 'recurring']);
             }
 
-
-
             if (!empty($shopOrderId)) {
-
-
                 $request->setType($type)->setTerminal($cgConf['terminal'])
                     ->setShopOrderId($shopOrderId)
                     ->setAmount($remainingAmount)
@@ -3062,7 +3060,6 @@ class ALTAPAY extends PaymentModule
                     ->setFraudService(null)
                     ->setOrderLines($this->orderAddedFromBackOffice($remainingAmount))
                     ->setSaleReconciliationIdentifier(sha1(uniqid(time(), true)));
-
             } else {
                 $request->setType($type)->setTerminal($cgConf['terminal'])
                     ->setShopOrderId($cgConf['uniqueid'])
@@ -3885,13 +3882,13 @@ class ALTAPAY extends PaymentModule
             $api->setShopOrderId($shopOrderId);
             $paymentDetails = $api->call();
             $reserved = 0;
-            $terminalName = "";
+            $terminalName = '';
             foreach ($paymentDetails as $pay) {
                 $reserved += $pay->ReservedAmount;
                 $terminalName = $pay->Terminal;
             }
             $remoteId = getTerminalIdByRemoteName($terminalName);
-            $amount = (float)$order->total_paid - $reserved;
+            $amount = (float) $order->total_paid - $reserved;
 
             if ($amount > 0) {
                 $shopOrderId .= '_' . substr(uniqid(), -3);
@@ -3926,7 +3923,8 @@ class ALTAPAY extends PaymentModule
         return $api->call();
     }
 
-    public function orderAddedFromBackOffice($remainingAmount) {
+    public function orderAddedFromBackOffice($remainingAmount)
+    {
         $orderLine = new API\PHP\Altapay\Request\OrderLine(
             'Remaining Total',
             'rm-total',

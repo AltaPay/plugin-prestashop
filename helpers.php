@@ -226,7 +226,6 @@ function markChildOrderAsRefund($paymentId)
         WHERE altapay_payment_id = "' . pSQL($paymentId) . '"';
 
         Db::getInstance()->Execute($sql);
-
     }
 
     return true;
@@ -661,6 +660,7 @@ function updateTransactionIdForParentSubscription($id_order, $paymentId)
 /**
  * @param $id_order
  * @param $paymentId
+ *
  * @return void
  */
 function updateParentTransIdChildOrder($id_order, $paymentId)
@@ -1060,7 +1060,6 @@ function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $loc
     }
 }
 
-
 /**
  * @param $cart
  * @param $order
@@ -1068,6 +1067,7 @@ function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $loc
  * @param $shopOrderId
  * @param $lockFileName
  * @param $lockFileHandle
+ *
  * @return void
  */
 function updateChildOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle)
@@ -1260,6 +1260,7 @@ function refundOrReleaseTransactionByStatus($transaction)
  *
  * @param string $remote_name
  * @param int $shop_id
+ *
  * @return int|string
  */
 function getTerminalIdByRemoteName($remote_name, $shop_id = 1)
@@ -1291,13 +1292,14 @@ function getTerminalIdByRemoteName($remote_name, $shop_id = 1)
  * @param string $payment_form_url
  * @param int $cartId
  * @param string $terminalName
+ *
  * @return void
  */
 function saveTransactionData($result, $payment_form_url, $cartId, $terminalName)
 {
     $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction`
 				(id_cart, payment_form_url, unique_id, amount, terminal_name, date_add, token) VALUES ' .
-        "('" . (int)$cartId . "', '" . pSQL($payment_form_url) . "', '" . pSQL($result['uniqueid']) . "', '"
+        "('" . (int) $cartId . "', '" . pSQL($payment_form_url) . "', '" . pSQL($result['uniqueid']) . "', '"
         . pSQL($result['amount']) . "', '" . pSQL($terminalName) . "' , '" . pSQL(time()) . "', '')" .
         ' ON DUPLICATE KEY UPDATE `amount` = ' . pSQL($result['amount']);
 
@@ -1308,6 +1310,7 @@ function saveTransactionData($result, $payment_form_url, $cartId, $terminalName)
  * Get the transaction status (captured and refunded amounts) for the given payment ID.
  *
  * @param string $paymentId
+ *
  * @return array|null
  */
 function getTransactionStatus($paymentId)
@@ -1316,7 +1319,6 @@ function getTransactionStatus($paymentId)
             FROM ' . _DB_PREFIX_ . 'altapay_orderlines 
             WHERE altapay_payment_id = "' . pSQL($paymentId) . '"';
 
-
     return Db::getInstance()->getRow($sql);
 }
 
@@ -1324,6 +1326,7 @@ function getTransactionStatus($paymentId)
  * Check if the given shop order ID represents a child order.
  *
  * @param string $shopOrderId
+ *
  * @return bool
  */
 function isChildOrder($shopOrderId)
@@ -1371,7 +1374,7 @@ function createOrderOkCallback($postData, $record_id = null)
         $transactionID = $transaction->TransactionId;
         $ccToken = $response->creditCardToken;
         $maskedPan = $response->maskedCreditCard;
-        if(!$isChildOrder) {
+        if (!$isChildOrder) {
             $payment_module = createOrder($response, $currencyPaid, $cart, $orderStatus);
             // Load order
             $order = new Order((int) $payment_module->currentOrder);
@@ -1412,7 +1415,7 @@ function createOrderOkCallback($postData, $record_id = null)
         }
 
         // Log order
-        createAltapayOrder($response, $order,'succeeded', $isChildOrder);
+        createAltapayOrder($response, $order, 'succeeded', $isChildOrder);
         unlockCallback($lockFileName, $lockFileHandle);
         markAltaPayCallbackRecord($record_id);
         Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);

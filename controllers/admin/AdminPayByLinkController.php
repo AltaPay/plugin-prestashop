@@ -6,7 +6,6 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 class AdminPayByLinkController extends ModuleAdminController
 {
     public function __construct()
@@ -35,7 +34,7 @@ class AdminPayByLinkController extends ModuleAdminController
         $paymentLink = Tools::getValue('payment_link');
 
         if (Tools::isSubmit('send_email')) {
-            $customerId = (int)Tools::getValue('customer_id');
+            $customerId = (int) Tools::getValue('customer_id');
             $this->sendCustomEmail($customerId, $paymentLink);
         }
     }
@@ -103,7 +102,8 @@ class AdminPayByLinkController extends ModuleAdminController
      *
      * @return void
      */
-    protected function ajaxProcessRefundRemaining() {
+    protected function ajaxProcessRefundRemaining()
+    {
         try {
             $orderID = Tools::getValue('orderid');
             $paymentID = Tools::getValue('payment_id');
@@ -160,6 +160,7 @@ class AdminPayByLinkController extends ModuleAdminController
      *
      * @param int $customerId
      * @param string $paymentUrl
+     *
      * @return void
      */
     protected function sendCustomEmail($customerId, $paymentUrl)
@@ -170,10 +171,10 @@ class AdminPayByLinkController extends ModuleAdminController
             $toName = $customer->firstname . ' ' . $customer->lastname;
             $subject = $this->l('Action Required: Payment Link for Outstanding Amount');
             $template = 'addition_item_email';
-            $templateVars = array(
+            $templateVars = [
                 '{customer_name}' => $customer->firstname . ' ' . $customer->lastname,
-                '{payment_link}' => $paymentUrl
-            );
+                '{payment_link}' => $paymentUrl,
+            ];
             $from = Configuration::get('PS_SHOP_EMAIL');
             $fromName = Configuration::get('PS_SHOP_NAME');
 
@@ -189,11 +190,10 @@ class AdminPayByLinkController extends ModuleAdminController
                     $fromName,
                     null,
                     null,
-                    dirname(__file__) . '/mails/'
+                    dirname(__FILE__) . '/mails/'
                 );
 
                 echo json_encode(['status' => 'success', 'message' => 'Email sent successfully!']);
-
             } catch (Exception $e) {
                 echo json_encode(['status' => 'error', 'message' => 'Failed to send email.']);
             }
@@ -206,9 +206,11 @@ class AdminPayByLinkController extends ModuleAdminController
      *  Create an OrderLine object for backorder items with the remaining amount.
      *
      * @param $remainingAmount
+     *
      * @return \API\PHP\Altapay\Request\OrderLine
      */
-    public function OrderlineForBackorderItems($remainingAmount) {
+    public function OrderlineForBackorderItems($remainingAmount)
+    {
         $orderLine = new API\PHP\Altapay\Request\OrderLine(
             'Remaining Total',
             'rm-total',
@@ -219,5 +221,4 @@ class AdminPayByLinkController extends ModuleAdminController
 
         return $orderLine;
     }
-
 }
