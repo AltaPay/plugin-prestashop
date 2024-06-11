@@ -9,3 +9,19 @@
 .row-ap {
 	margin-bottom: 10px;
 }
+.btn-ap {
+	width: 20vw;
+}
+a.btn-ap:focus {
+	background: #25b9d7 !important;
+}
+.send-message .alert {
+	padding: 0.5rem 15px 0.5rem 2.875rem;
+	margin-bottom: 6px;
+}
+.alert::before {
+	top: 6px;
+}
+.send-message {
+	margin-top: 5px;
+}

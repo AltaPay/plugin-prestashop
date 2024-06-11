@@ -28,6 +28,37 @@ var altapay = {
         });
     },
 
+    capture_child_order: function (element) {
+        var namespace = this;
+        var dataArray = [];
+        dataArray.push({name: 'action', value: 'captureRemaining'});
+        dataArray.push({name: 'payment_id', value: $(element).data('payment-id')});
+        dataArray.push({name: 'orderid', value: $(element).data('orderid')});
+        dataArray.push({name: 'remaining_amount', value: $(element).data('remaining_amount')});
+        $.ajax({
+            type: 'POST',
+            url: $(element).data('url'),
+            data: dataArray,
+            success: function (result) {
+                // If result is a JSON string, parse it
+                if (typeof result === 'string') {
+                    try {
+                        result = JSON.parse(result);
+                    } catch (e) {
+                        console.error("Invalid JSON string", e);
+                        jAlert("An error occurred while processing the response.", 'ERROR', function () {
+                            document.location.reload();
+                        });
+                        return;
+                    }
+
+                    // Check the status
+                    namespace.handleResponse(result);
+                }
+            }
+        });
+    },
+
     // Perform refund
     refund: function (element) {
         var namespace = this;
@@ -54,22 +85,71 @@ var altapay = {
         });
     },
 
-    // Perform release
-    release: function (element) {
+    refund_child_order: function (element) {
         var namespace = this;
+        var dataArray = [];
+        dataArray.push({name: 'action', value: 'refundRemaining'});
+        dataArray.push({name: 'payment_id', value: $(element).data('payment-id')});
+        dataArray.push({name: 'orderid', value: $(element).data('orderid')});
+        dataArray.push({name: 'remaining_amount', value: $(element).data('remaining_amount')});
         $.ajax({
             type: 'POST',
             url: $(element).data('url'),
+            data: dataArray,
+            success: function (result) {
+                // If result is a JSON string, parse it
+                if (typeof result === 'string') {
+                    try {
+                        result = JSON.parse(result);
+                    } catch (e) {
+                        console.error("Invalid JSON string", e);
+                        jAlert("An error occurred while processing the response.", 'ERROR', function () {
+                            document.location.reload();
+                        });
+                        return;
+                    }
+
+                    // Check the status
+                    namespace.handleResponse(result);
+                }
+            }
+        });
+    },
+
+
+    // Perform release
+    sendemail: function (element) {
+        payment_link = $(element).data('paymentlink');
+
+        var namespace = this;
+        $.ajax({
+            type: 'POST',
+            cache: false,
+            dataType: 'json',
+            url: $(element).data('url'),
             data: {
-                action: 'release',
-                payment_id: $(element).data('payment-id')
+                action:'getUrl',
+                send_email: true,
+                payment_link: payment_link
             },
             success: function (result) {
                 if (result.status === 'success') {
-                    altapay.cancelOrder();
+                    $('.send-message').html('<div class="alert alert-success">' + result.message + '</div>');
+                } else {
+                    $('.send-message').html('<div class="alert alert-danger">' + result.message + '</div>');
                 }
-                namespace.handleResponse(result);
+                // Hide the message after 30 seconds
+                setTimeout(function () {
+                    $('.send-message').empty();
+                }, 5000);
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+                $('.send-message').html('<div class="alert alert-danger">An error occurred: ' + xhr.responseText + '</div>');
 
+                setTimeout(function () {
+                    $('.send-message').empty();
+                }, 5000);
             }
         });
     },
@@ -215,5 +295,39 @@ $(document).ready(function () {
 
     $("#orderTotal, #total_order").on("DOMSubtreeModified", function() {
         location.reload();
+    });
+
+    $('#send-email-btn').click(function (e) {
+        e.preventDefault();
+        var element = this;
+        return altapay.sendemail(element);
+    });
+
+    $('#btn-remaining-capture').click(function (e) {
+        e.preventDefault();
+        var element = this;
+        var remainingAmount = $(this).data('remaining_amount');
+        if (isNaN(remainingAmount)) {
+            return;
+        }
+        jConfirm('Are you sure you want to capture the additional amount <b>' + remainingAmount.toFixed(2) + '</b>?', 'Capture', function (r) {
+            if (r === true) {
+                altapay.capture_child_order(element);
+            }
+        });
+    });
+
+    $('#btn-remaining-refund').click(function (e) {
+        e.preventDefault();
+        var element = this;
+        var remainingAmount = $(this).data('remaining_amount');
+        if (isNaN(remainingAmount)) {
+            return;
+        }
+        jConfirm('Are you sure you want to refund the additional amount <b>' + remainingAmount.toFixed(2) + '</b>?', 'Capture', function (r) {
+            if (r === true) {
+                altapay.refund_child_order(element);
+            }
+        });
     });
 });

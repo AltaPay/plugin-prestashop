@@ -96,6 +96,18 @@ function getOrderFromUniqueId($uniqueId)
     return new Order((int) $results['id_order']);
 }
 
+function getChildOrderFromUniqueId($uniqueId)
+{
+    $results = Db::getInstance()->getRow('SELECT id_order 
+    FROM `' . _DB_PREFIX_ . 'altapay_order` 
+    WHERE unique_id = \'' . $uniqueId . '\'');
+    if (!$results) {
+        return false;
+    }
+
+    return new Order((int) $results['id_order']);
+}
+
 /**
  * Method for marking and updating status of order as captured in case of a captured action in database
  *
@@ -131,6 +143,24 @@ function markAsCaptured($paymentId, $orderlines = [])
                 VALUES("' . pSQL($paymentId) . '", "' . pSQL($productId) . '", ' . (int) $quantity . ')';
             Db::getInstance()->Execute($sqlOrderLine);
         }
+    }
+
+    return true;
+}
+
+function markChildOrderAsCaptured($paymentId)
+{
+    $sql = 'UPDATE ' . _DB_PREFIX_ . 'altapay_child_order SET requireCapture = 0 WHERE payment_id = ' . (int) $paymentId
+        . ' LIMIT 1';
+    Db::getInstance()->Execute($sql);
+
+    $result = getTransactionStatus($paymentId);
+
+    if (!isset($result['captured'])) {
+        $sqlOrderLine = 'INSERT INTO ' . _DB_PREFIX_ .
+            'altapay_orderlines (altapay_payment_id, captured) 
+                VALUES("' . pSQL($paymentId) . '", "1")';
+        Db::getInstance()->Execute($sqlOrderLine);
     }
 
     return true;
@@ -181,6 +211,30 @@ function markAsRefund($paymentId, $orderlines = [])
     return true;
 }
 
+function markChildOrderAsRefund($paymentId)
+{
+    $sqlRequireCapture = 'SELECT requireCapture 
+    FROM ' . _DB_PREFIX_ . 'altapay_child_order WHERE payment_id = ' . pSQL($paymentId);
+    $result = Db::getInstance()->getRow($sqlRequireCapture);
+    // Only payments which have been captured/partial captured will be considered
+    if (!isset($result['requireCapture']) || $result['requireCapture'] != 0) {
+        return false;
+    }
+
+    $transactionData = getTransactionStatus($paymentId);
+    if (isset($transactionData['refunded'])) {
+        // Update only of there is a capture for this product
+        $sql = 'UPDATE ' . _DB_PREFIX_ . 'altapay_orderlines 
+        SET refunded = 1 
+        WHERE altapay_payment_id = "' . pSQL($paymentId) . '"';
+
+        Db::getInstance()->Execute($sql);
+
+    }
+
+    return true;
+}
+
 /**
  * Method to update latest error message from gateway response in database
  *
@@ -194,6 +248,14 @@ function saveLastErrorMessage($paymentId, $latestError)
     $sql = 'UPDATE 
     ' . _DB_PREFIX_ . 'altapay_order SET latestError = \'' . pSQL($latestError) . '\' WHERE payment_id='
            . pSQL($paymentId) . ' LIMIT 1';
+    Db::getInstance()->Execute($sql);
+}
+
+function saveLastErrorMessageForChildOrder($paymentId, $latestError)
+{
+    $sql = 'UPDATE 
+    ' . _DB_PREFIX_ . 'altapay_child_order SET latestError = \'' . pSQL($latestError) . '\' WHERE payment_id='
+        . pSQL($paymentId) . ' LIMIT 1';
     Db::getInstance()->Execute($sql);
 }
 
@@ -213,6 +275,14 @@ function updatePaymentStatus($paymentId, $paymentStatus)
     Db::getInstance()->Execute($sql);
 }
 
+function updatePaymentStatusForChildOrder($paymentId, $paymentStatus)
+{
+    $sql = 'UPDATE 
+    ' . _DB_PREFIX_ . 'altapay_child_order SET paymentStatus = \'' . pSQL($paymentStatus) . '\' WHERE payment_id='
+        . pSQL($paymentId) . ' LIMIT 1';
+    Db::getInstance()->Execute($sql);
+}
+
 /**
  * Method for creating orders at prestashop backend
  *
@@ -222,7 +292,7 @@ function updatePaymentStatus($paymentId, $paymentStatus)
  *
  * @return void
  */
-function createAltapayOrder($response, $current_order, $payment_status = 'succeeded')
+function createAltapayOrder($response, $current_order, $payment_status = 'succeeded', $ischildOrder = false)
 {
     $latestTransKey = 0;
     if (isset($response) && isset($response->Transactions)) {
@@ -255,21 +325,43 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
     }
     $customerInfo = $transaction->CustomerInfo;
     $cardCountry = $customerInfo->CountryOfOrigin->Country;
-    //insert into order log
-    $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_order`
+
+    if ($ischildOrder) {
+        // Remove the underscore and everything after it
+        $parentShopId = explode('_', $uniqueId)[0];
+        //insert into order log
+        $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_child_order`
+        (order_id, unique_id, parent_unique_id, payment_id, cardMask, cardToken, cardBrand, cardExpiryDate, cardCountry, 
+        paymentType, paymentTerminal, paymentStatus, paymentNature, requireCapture, date_add) 
+        VALUES ' .
+            "('" . $current_order->id . "', '" . pSQL($uniqueId) . "', '" . pSQL($parentShopId) . "', '"
+            . pSQL($paymentId) . "', '" . pSQL($cardMask) . "', '"
+            . pSQL($cardToken) . "', '" . pSQL($cardBrand) . "', '"
+            . pSQL($cardExpiryDate) . "', '"
+            . pSQL($cardCountry) . "', '" . pSQL($paymentType) . "', '"
+            . pSQL($paymentTerminal) . "', '"
+            . pSQL($paymentStatus) . "', '" . pSQL($paymentNature) . "', '"
+            . pSQL($requireCapture) . "', '" . time()
+            . "')" . ' ON DUPLICATE KEY UPDATE `paymentStatus` = ' . "'" . pSQL($paymentStatus) . "'";
+
+        Db::getInstance()->Execute($sql);
+    } else {
+        //insert into order log
+        $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_order`
         (id_order, unique_id, payment_id, cardMask, cardToken, cardBrand, cardExpiryDate, cardCountry, 
         paymentType, paymentTerminal, paymentStatus, paymentNature, requireCapture, date_add) 
         VALUES ' .
-        "('" . $current_order->id . "', '" . pSQL($uniqueId) . "', '"
-        . pSQL($paymentId) . "', '" . pSQL($cardMask) . "', '"
-        . pSQL($cardToken) . "', '" . pSQL($cardBrand) . "', '"
-        . pSQL($cardExpiryDate) . "', '"
-        . pSQL($cardCountry) . "', '" . pSQL($paymentType) . "', '"
-        . pSQL($paymentTerminal) . "', '"
-        . pSQL($paymentStatus) . "', '" . pSQL($paymentNature) . "', '"
-        . pSQL($requireCapture) . "', '" . time()
-        . "')" . ' ON DUPLICATE KEY UPDATE `paymentStatus` = ' . "'" . pSQL($paymentStatus) . "'";
-    Db::getInstance()->Execute($sql);
+            "('" . $current_order->id . "', '" . pSQL($uniqueId) . "', '"
+            . pSQL($paymentId) . "', '" . pSQL($cardMask) . "', '"
+            . pSQL($cardToken) . "', '" . pSQL($cardBrand) . "', '"
+            . pSQL($cardExpiryDate) . "', '"
+            . pSQL($cardCountry) . "', '" . pSQL($paymentType) . "', '"
+            . pSQL($paymentTerminal) . "', '"
+            . pSQL($paymentStatus) . "', '" . pSQL($paymentNature) . "', '"
+            . pSQL($requireCapture) . "', '" . time()
+            . "')" . ' ON DUPLICATE KEY UPDATE `paymentStatus` = ' . "'" . pSQL($paymentStatus) . "'";
+        Db::getInstance()->Execute($sql);
+    }
 
     if (Validate::isLoadedObject($current_order)) {
         $payment = $current_order->getOrderPaymentCollection();
@@ -292,6 +384,13 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
 function getAltapayOrderDetails($orderID)
 {
     $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE id_order =' . (int) $orderID;
+
+    return Db::getInstance()->executeS($sql);
+}
+
+function getAltapayChildOrderDetails($orderID)
+{
+    $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_child_order` WHERE id_order =' . (int) $orderID;
 
     return Db::getInstance()->executeS($sql);
 }
@@ -378,11 +477,11 @@ function getCvvLess($cartId, $shopOrderId)
  *
  * @return void
  */
-function saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $type = 'captured')
+function saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $shopOrderId, $type = 'captured')
 {
     Db::getInstance()->Execute('INSERT INTO `' . _DB_PREFIX_ . 'altapay_order_reconciliation`
-		(id_order, reconciliation_identifier, transaction_type) 
-        VALUES ' . "('" . (int) $orderID . "', '" . pSQL($reconciliation_identifier) . "', '" . pSQL($type) . "')");
+		(id_order, unique_id, reconciliation_identifier, transaction_type) 
+        VALUES ' . "('" . (int) $orderID . "','" . $shopOrderId . "','" . pSQL($reconciliation_identifier) . "', '" . pSQL($type) . "')");
 }
 
 /**
@@ -404,14 +503,25 @@ function getOrderReconciliationIdentifiers($orderID)
  *
  * @return void
  */
-function saveOrderReconciliationIdentifierIfNotExists($orderID, $reconciliation_identifier, $type)
+function saveOrderReconciliationIdentifierIfNotExists($orderID, $reconciliation_identifier, $type, $shopOrderId)
 {
     $sql = 'SELECT id FROM `' . _DB_PREFIX_ . 'altapay_order_reconciliation` WHERE id_order =' . (int) $orderID .
         " AND reconciliation_identifier ='" . pSQL($reconciliation_identifier) .
         "' AND transaction_type ='" . pSQL($type) . "'";
 
     if (!Db::getInstance()->getRow($sql)) {
-        saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $type);
+        saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $shopOrderId, $type);
+    }
+}
+
+function saveChildOrderIdentifier($orderID, $reconciliation_identifier, $type, $shopOrderId)
+{
+    $sql = 'SELECT id FROM `' . _DB_PREFIX_ . 'altapay_order_reconciliation` WHERE unique_id =' . $shopOrderId .
+        " AND reconciliation_identifier ='" . pSQL($reconciliation_identifier) .
+        "' AND transaction_type ='" . pSQL($type) . "'";
+
+    if (!Db::getInstance()->getRow($sql)) {
+        saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $shopOrderId, $type);
     }
 }
 
@@ -551,6 +661,14 @@ function updateTransactionIdForParentSubscription($id_order, $paymentId)
     Db::getInstance()->Execute($sql);
 }
 
+function updateParentTransIdChildOrder($id_order, $paymentId)
+{
+    $sql = 'UPDATE 
+    ' . _DB_PREFIX_ . 'altapay_child_order SET payment_id = \'' . pSQL($paymentId) . '\' WHERE id_order='
+        . (int) $id_order . ' LIMIT 1';
+    Db::getInstance()->Execute($sql);
+}
+
 /**
  * Retrieve the latest transaction from a given response object
  *
@@ -684,7 +802,7 @@ function saveReconciliationDetails($response, $order)
             foreach ($transaction->ReconciliationIdentifiers as $reconciliationIdentifier) {
                 $reconciliation_identifier = $reconciliationIdentifier->Id;
                 $reconciliation_type = $reconciliationIdentifier->Type;
-                saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
+                saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type, $response->shopOrderId);
             }
         }
     }
@@ -798,7 +916,7 @@ function unlockCallback($lockFileName, $fileHandle)
  *
  * @return \API\PHP\Altapay\Response\AbstractResponse|\API\PHP\Altapay\Response\Embeds\Transaction[]|string
  */
-function capturePayment($order_id, $transaction_id, $amount)
+function capturePayment($order_id, $transaction_id, $amount, $shopOrderId)
 {
     $reconciliation_identifier = sha1($transaction_id . time());
     $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
@@ -806,7 +924,7 @@ function capturePayment($order_id, $transaction_id, $amount)
     $api->setAmount($amount);
     $api->setReconciliationIdentifier($reconciliation_identifier);
     $response = $api->call();
-    saveOrderReconciliationIdentifier($order_id, $reconciliation_identifier);
+    saveOrderReconciliationIdentifier($order_id, $reconciliation_identifier, $shopOrderId);
 
     return $response;
 }
@@ -914,7 +1032,7 @@ function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $loc
             $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
             $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
 
-            saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
+            saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type, $shopOrderId);
         }
         $customer = new Customer($cart->id_customer);
         unlockCallback($lockFileName, $lockFileHandle);
@@ -923,6 +1041,52 @@ function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $loc
         // Update payment status to 'declined'
         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
             SET `paymentStatus` = \'declined\' WHERE `id_order` = ' . (int) $order->id;
+        Db::getInstance()->Execute($sql);
+        unlockCallback($lockFileName, $lockFileHandle);
+        exit('Order status updated to Error');
+    } else {
+        // Unexpected scenario
+        $mNa = $module->name;
+        PrestaShopLogger::addLog('Unexpected scenario: Callback notification was received for Transaction '
+            . $shopOrderId . ' with payment status ' . $transactionStatus, 3, '1005', $mNa,
+            $module->id, true);
+        unlockCallback($lockFileName, $lockFileHandle);
+        exit('Unrecognized status received ' . $transactionStatus);
+    }
+}
+
+function updateChildOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle)
+{
+    $module = Module::getInstanceByName('altapay');
+    if ($response && is_array($response->Transactions)) {
+        $transactionStatus = $response->Transactions[0]->TransactionStatus;
+    }
+    $auth_statuses = ['preauth', 'invoice_initialized', 'recurring_confirmed'];
+    $captured_statuses = ['bank_payment_finalized', 'captured'];
+    if (in_array($transactionStatus, $auth_statuses, true) or in_array($transactionStatus, $captured_statuses, true)) {
+        // Update payment status to 'succeeded'
+        $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_child_order` 
+        SET `paymentStatus` = \'succeeded\' WHERE `unique_id` = ' . $shopOrderId;
+        Db::getInstance()->Execute($sql);
+        $payment = $order->getOrderPaymentCollection();
+        if (isset($payment[0])) {
+            $payment[0]->transaction_id = pSQL($shopOrderId);
+            $payment[0]->save();
+        }
+
+        if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
+            $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
+            $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+
+            saveChildOrderIdentifier($order->id, $reconciliation_identifier, $reconciliation_type, $shopOrderId);
+        }
+        $customer = new Customer($cart->id_customer);
+        unlockCallback($lockFileName, $lockFileHandle);
+        Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
+    } elseif ($transactionStatus === 'epayment_declined') {
+        // Update payment status to 'declined'
+        $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_child_order` 
+            SET `paymentStatus` = \'declined\' WHERE `unique_id` = ' . $shopOrderId;
         Db::getInstance()->Execute($sql);
         unlockCallback($lockFileName, $lockFileHandle);
         exit('Order status updated to Error');
@@ -1032,6 +1196,17 @@ function getLatestUniqueIdFromCartId($id_cart)
     return Db::getInstance()->getValue($sql);
 }
 
+function getPaymentFormUrl($id_cart, $unique_id)
+{
+    $sql = 'SELECT unique_id, payment_form_url, amount
+            FROM `' . _DB_PREFIX_ . 'altapay_transaction` 
+            WHERE id_cart = \'' . pSQL($id_cart) . '\' 
+            AND unique_id LIKE \'' . pSQL($unique_id) . "%\_%' 
+            ORDER BY CAST(date_add AS UNSIGNED) DESC";
+
+    return Db::getInstance()->getRow($sql);
+}
+
 /**
  * Updates order state only if it does not exist in order history
  *
@@ -1063,4 +1238,62 @@ function refundOrReleaseTransactionByStatus($transaction)
     }
     $api->setTransaction($transaction->TransactionId);
     $api->call();
+}
+
+function getTerminalIdByRemoteName($remote_name, $shop_id = 1)
+{
+    $terminal_id = '';
+    try {
+        if (filter_var($shop_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+            throw new Exception('Invalid shop id');
+        }
+        $query = 'SELECT id_terminal FROM `' . _DB_PREFIX_ . "altapay_terminals` WHERE active = 1 AND remote_name = '" . pSQL($remote_name) . "' AND shop_id = '" . $shop_id . "' ";
+
+        $result = Db::getInstance()->getRow($query);
+        $terminal_id = $result['id_terminal'];
+    } catch (Exception $e) {
+        $context = Context::getContext();
+        if (isset($context->controller) && isset($context->controller->errors)) {
+            $context->controller->errors[] = $e->getMessage();
+        }
+        PrestaShopLogger::addLog($e->getMessage(), 4);
+    }
+
+    return $terminal_id;
+}
+
+function saveTransactionData($result, $payment_form_url, $cartId, $terminalName) {
+    $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_transaction`
+				(id_cart, payment_form_url, unique_id, amount, terminal_name, date_add, token) VALUES ' .
+        "('" . (int)$cartId . "', '" . pSQL($payment_form_url) . "', '" . pSQL($result['uniqueid']) . "', '"
+        . pSQL($result['amount']) . "', '" . pSQL($terminalName) . "' , '" . pSQL(time()) . "', '')" .
+        ' ON DUPLICATE KEY UPDATE `amount` = ' . pSQL($result['amount']);
+
+    Db::getInstance()->Execute($sql);
+}
+
+function getReservedAmount($cartId, $shopOrderId) {
+    // Define the query
+    $query = "SELECT amount FROM " . _DB_PREFIX_ . "altapay_transaction
+        WHERE is_cancelled != 1 AND unique_id = '" . pSQL($shopOrderId) . "' AND id_cart = '" . $cartId . "'
+        LIMIT 10";
+
+    // Get a reference to the database object
+    $db = Db::getInstance();
+    // Execute the query, fetch & return the results
+    return $db->executeS($query);
+}
+
+function getTransactionStatus($paymentId) {
+    $sql = 'SELECT captured, refunded 
+            FROM ' . _DB_PREFIX_ . 'altapay_orderlines 
+            WHERE altapay_payment_id = "' . pSQL($paymentId) . '"';
+
+
+   return Db::getInstance()->getRow($sql);
+}
+
+function isChildOrder($shopOrderId)
+{
+    return strpos($shopOrderId, '_') !== false;
 }

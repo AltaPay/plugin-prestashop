@@ -26,6 +26,7 @@ class ALTAPAY extends PaymentModule
     public $fields_form;
     private $api_error = '';
 
+    const ADMIN_SEND_PAYMENT_LINK_CONTROLLER = 'AltapaySendPaymentLink';
     public function __construct()
     {
         $this->name = 'altapay';
@@ -37,7 +38,7 @@ class ALTAPAY extends PaymentModule
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
-
+        $this->controllers = array();
         $config = Configuration::getMultiple([
             'AUTOCAPTURE_STATUSES',
             'ALTAPAY_TERMINAL',
@@ -79,6 +80,8 @@ class ALTAPAY extends PaymentModule
             || !$this->registerHook('actionFrontControllerSetMedia')
             || !$this->registerHook('actionOrderStatusPostUpdate')
             || !$this->registerHook('actionAdminOrdersListingFieldsModifier')
+            || !$this->registerHook('actionOrderEdited')
+            || !$this->installTab()
         ) {
             return false;
         }
@@ -125,9 +128,46 @@ class ALTAPAY extends PaymentModule
         Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'altapay_order_reconciliation` (
             `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
             `id_order` int(10) unsigned NOT NULL,
+            `unique_id` varchar(255) NULL,
             `reconciliation_identifier` varchar(255) NOT NULL,
             `transaction_type` varchar(255) NOT NULL,            
             PRIMARY KEY (`id`)
+        ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8');
+
+        if (!Db::getInstance()->Execute('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_order_reconciliation\' AND COLUMN_NAME =\'unique_id\'')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE  `' . _DB_PREFIX_ .
+                'altapay_order_reconciliation`  add column unique_id varchar(255) NULL AFTER id_order')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+
+        Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'altapay_child_order` (
+            `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+            `unique_id` varchar(255) NOT NULL,
+            `parent_unique_id` varchar(255) NOT NULL,
+            `order_id` varchar(10) NULL,
+            `payment_id` varchar(255) NULL,
+            `cardMask` varchar(20) NULL,
+            `cardToken` varchar(255) NULL,
+            `cardBrand` varchar(255) NULL,
+            `cardExpiryDate` varchar(255) NULL,
+            `cardCountry` varchar(255) NULL,
+            `paymentType` varchar(255) NULL,
+            `paymentTerminal` varchar(255) NULL,
+            `paymentStatus` varchar(255) NULL,
+            `paymentNature` varchar(255) NULL,
+            `orderDetails` varchar(255) Null,
+            `requireCapture` tinyint(1) NOT NULL DEFAULT \'0\',
+            `errorCode` varchar(255) NULL,
+            `errorText` varchar(255) NULL,
+            `latestError` varchar(255) NULL,
+            `date_add` varchar(50) NOT NULL,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `unique_id` (`unique_id`),
+            KEY `cardToken` (`cardToken`)
         ) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8');
 
         Db::getInstance()->Execute('INSERT INTO `' . _DB_PREFIX_ . 'request_sql` (`name`, `sql`) 
@@ -475,11 +515,37 @@ class ALTAPAY extends PaymentModule
             || !Configuration::deleteByName('ALTAPAY_PASSWORD')
             || !Configuration::deleteByName('ALTAPAY_URL')
             || !parent::uninstall()
+            && $this->uninstallTab()
         ) {
             return false;
         }
 
         return true;
+    }
+    private function installTab()
+    {
+        $tab = new Tab;
+        $tab->active = 1;
+        foreach (Language::getLanguages() as $lang) {
+            $tab->name[$lang['id_lang']] = 'altapay';
+        }
+        $tab->class_name = 'AdminPayByLink';
+        $tab->module = $this->name;
+        $tab->id_parent = 0;
+
+        return $tab->add();
+    }
+
+    private function uninstallTab()
+    {
+        $tabId = (int) Tab::getIdFromClassName('AltapaySendPaymentLink');
+        if (!$tabId) {
+            return true;
+        }
+
+        $tab = new Tab($tabId);
+
+        return $tab->delete();
     }
 
     public function hookHeader($params)
@@ -1089,7 +1155,8 @@ class ALTAPAY extends PaymentModule
                 if (markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines)) && ($orderStatus !== self::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS)) {
                     $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
                 }
-                saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier);
+                $transaction = getTransaction($response);
+                saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $transaction->ShopOrderId);
             } catch (Exception $e) {
                 // Save the latest error message in db
                 saveLastErrorMessage($paymentID, $e->getMessage());
@@ -1155,7 +1222,8 @@ class ALTAPAY extends PaymentModule
                 if ($refundStatus !== self::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS) {
                     $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
                 }
-                saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, 'refunded');
+                $transaction = getTransaction($response);
+                saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $transaction->ShopOrderId, 'refunded');
             } catch (Exception $e) {
                 $message = $e->getMessage();
                 saveLastErrorMessage($paymentID, $message);
@@ -1975,6 +2043,12 @@ class ALTAPAY extends PaymentModule
             . (int) $params['id_order']);
     }
 
+    private function selectChildOrder($shopOrderId)
+    {
+        return Db::getInstance()->getRow('SELECT requireCapture, payment_id FROM ' . _DB_PREFIX_ . 'altapay_child_order ' .
+            'WHERE unique_id = \'' . pSQL($shopOrderId) . '\'');
+    }
+
     /**
      * Method is being triggered whenever capture action is performed
      *
@@ -1999,9 +2073,10 @@ class ALTAPAY extends PaymentModule
             $paymentDetails = $api->call();
 
             $captured = 0;
-
+            $shopOrderId = null;
             foreach ($paymentDetails as $pay) {
                 $captured += (float) $pay->CapturedAmount;
+                $shopOrderId = $pay->ShopOrderId;
             }
 
             $discountData = $this->getorderCartRule($params['id_order']);
@@ -2052,7 +2127,7 @@ class ALTAPAY extends PaymentModule
                 $api->setAmount($amountToCapture);
                 $api->call();
             }
-            saveOrderReconciliationIdentifier($params['id_order'], $reconciliation_identifier);
+            saveOrderReconciliationIdentifier($params['id_order'], $reconciliation_identifier, $shopOrderId);
         } catch (Exception $e) {
             $this->returnError($paymentID, $e);
         }
@@ -2199,6 +2274,43 @@ class ALTAPAY extends PaymentModule
                 $reserved += $pay->ReservedAmount;
                 $captured += $pay->CapturedAmount;
                 $refunded += $pay->RefundedAmount;
+                $shopOrderId = $pay->ShopOrderId;
+            }
+
+            $backorder_payment_url = getPaymentFormUrl($orderDetail->id_cart, $shopOrderId);
+
+            if ($backorder_payment_url) {
+                $childOrderId = $backorder_payment_url['unique_id'];
+                $responseApi = $this->getPaymentData($childOrderId);
+                $resultChildOrder = $this->selectChildOrder($childOrderId);
+                $requireCapture = (bool)$resultChildOrder['requireCapture'];
+                $transData = getTransactionStatus($resultChildOrder['payment_id']);
+
+                if(isset($transData['refunded']) && !$transData['refunded']) {
+                    $this->smarty->assign('can_refund', true);
+                }
+
+                if(!$resultChildOrder) {
+                    $this->smarty->assign('payment_url', $backorder_payment_url['payment_form_url']);
+                }
+
+                if($backorder_payment_url and $requireCapture) {
+                    $this->smarty->assign('is_require_capture', $requireCapture);
+                }
+
+                foreach ($responseApi as $response) {
+                    $reserved += $response->ReservedAmount;
+                }
+                $additionalAmount = $orderDetail->total_paid - $reserved;
+
+                $ajaxUrl = $this->context->link->getAdminLink('AdminPayByLink', true) . '&sendEmail&customer_id=' . $orderDetail->id_customer;
+                $this->context->smarty->assign('sendemail_ajax_url', $ajaxUrl);
+                $this->smarty->assign('reserve_amount', (float) $reserved);
+                $this->smarty->assign('id_order', (float) $params['id_order']);
+                $this->smarty->assign('additional_amount', $additionalAmount);
+                $this->smarty->assign('reserved_payment_id', $resultChildOrder['payment_id']);
+                $this->smarty->assign('child_order_id', $childOrderId);
+                $this->smarty->assign('is_order_updated', ($orderDetail->total_paid > $reserved) ? true : false);
             }
 
             $ap_payment = [
@@ -2229,7 +2341,7 @@ class ALTAPAY extends PaymentModule
         if (!empty($shippingDetail[0]['id_order_invoice'])) {
             $this->smarty->assign('ap_shipping_details', $shippingDetail);
         }
-        $this->smarty->assign('ap_coupon_discount', $discounts);
+        $this->smarty->assign('a p_coupon_discount', $discounts);
         $this->smarty->assign('ap_order_detail', $orderDetail->total_discounts);
         $apOrders = [];
         $apOrderlines = $this->getOrderActions($results['payment_id']);
@@ -2252,6 +2364,8 @@ class ALTAPAY extends PaymentModule
         if (empty($reconciliation_identifiers)) {
             $reconciliation_identifiers = [];
         }
+
+
         // prepare for view
         $paymentinfo = [
             'Transaction Date' => Tools::htmlentitiesUTF8(date('F j, Y, g:i a', $results['date_add'])),
@@ -2287,7 +2401,6 @@ class ALTAPAY extends PaymentModule
             return $this->display(__FILE__, '/views/templates/hook/admin_order.tpl');
         }
     }
-
     /**
      * Hook for displaying custom column in orders grid in admin panel for PrestaShop 1.6.x
      *
@@ -2714,7 +2827,7 @@ class ALTAPAY extends PaymentModule
      *
      * @throws Exception
      */
-    public function createTransaction($savecard, $tokenId, $payment_method = false, $providerData = null, $is_apple_pay = false)
+    public function createTransaction($savecard, $tokenId, $payment_method = false, $providerData = null, $is_apple_pay = false, $shopOrderId = null, $remainingAmount = null)
     {
         $cart = $this->context->cart;
         $ccToken = null;
@@ -2733,7 +2846,7 @@ class ALTAPAY extends PaymentModule
         }
         $cgConf = [];
         // Config
-        $cgConf['payment_type'] = $terminal->payment_type;
+        $cgConf['payment_type'] = $terminal->payment_type ?? 'payment';
         $cgConf['currency'] = $this->context->currency->iso_code;
         $cgConf['language'] = $this->context->language->iso_code;
         $cgConf['uniqueid'] = uniqid('PS');
@@ -2889,16 +3002,35 @@ class ALTAPAY extends PaymentModule
             } elseif (in_array($type, ['subscription', 'subscriptionAndCharge'])) {
                 $request->setAgreement(['type' => 'recurring']);
             }
-            $request->setType($type)->setTerminal($cgConf['terminal'])
-                ->setShopOrderId($cgConf['uniqueid'])
-                ->setAmount($amount)
-                ->setCurrency($cgConf['currency'])
-                ->setCustomerInfo($customer)
-                ->setTransactionInfo($transactionInfo)
-                ->setCookie($cgConf['cookie'])
-                ->setFraudService(null)
-                ->setOrderLines($this->getOrderLines($cart))
-                ->setSaleReconciliationIdentifier(sha1(uniqid(time(), true)));
+
+
+
+            if (!empty($shopOrderId)) {
+
+
+                $request->setType($type)->setTerminal($cgConf['terminal'])
+                    ->setShopOrderId($shopOrderId)
+                    ->setAmount($remainingAmount)
+                    ->setCurrency($cgConf['currency'])
+                    ->setCustomerInfo($customer)
+                    ->setTransactionInfo($transactionInfo)
+                    ->setFraudService(null)
+                    ->setOrderLines($this->orderAddedFromBackOffice($remainingAmount))
+                    ->setSaleReconciliationIdentifier(sha1(uniqid(time(), true)));
+
+            } else {
+                $request->setType($type)->setTerminal($cgConf['terminal'])
+                    ->setShopOrderId($cgConf['uniqueid'])
+                    ->setAmount($amount)
+                    ->setCurrency($cgConf['currency'])
+                    ->setCustomerInfo($customer)
+                    ->setTransactionInfo($transactionInfo)
+                    ->setCookie($cgConf['cookie'])
+                    ->setFraudService(null)
+                    ->setOrderLines($this->getOrderLines($cart))
+                    ->setSaleReconciliationIdentifier(sha1(uniqid(time(), true)));
+            }
+
             if (!$isReservation) {
                 $request->setConfig($config)->setLanguage($cgConf['language']);
             }
@@ -2925,16 +3057,16 @@ class ALTAPAY extends PaymentModule
                             }
                         }
                     } else {
-                        PrestaShopLogger::addLog($responseUrl . ' request failed for order id ' . $cgConf['uniqueid'], 3, null, $this->name, $this->id, true);
+                        PrestaShopLogger::addLog($responseUrl . ' request failed for order id ' . !empty($shopOrderId) ? $shopOrderId : $cgConf['uniqueid'], 3, null, $this->name, $this->id, true);
                     }
                 }
 
                 return [
                     'success' => true,
                     'status' => $orderStatus,
-                    'uniqueid' => $cgConf['uniqueid'],
+                    'uniqueid' => (!empty($shopOrderId) ? $shopOrderId : $cgConf['uniqueid']),
                     'terminal' => $cgConf['terminal'],
-                    'amount' => $amount,
+                    'amount' => (!empty($shopOrderId) ? $remainingAmount : $amount),
                     'result' => 'Success',
                     'payment_form_url' => $responseUrl,
                     'response' => $response,
@@ -3087,6 +3219,7 @@ class ALTAPAY extends PaymentModule
 
             $productImageUrl = $this->context->link->getImageLink($p['link_rewrite'], $p['id_image'], 'home_default');
             $orderDetails[$i]['productID'] = $productID;
+            $orderDetails[$i]['qty'] = $p['cart_quantity'];
             $orderDetails[$i]['discountPercent'] = $discountPercent;
             if ($cartRuleFreeShipping) {
                 $orderDetails[$i]['shipping'] = 'free';
@@ -3688,5 +3821,75 @@ class ALTAPAY extends PaymentModule
         }
 
         return $results;
+    }
+
+    public function hookActionOrderEdited($params)
+    {
+        $order = $params['order'];
+        $orderId = $order->id;
+        $orderDetails = $this->getEditOrderDetails($orderId);
+
+        $shopOrderId = null;
+        foreach ($orderDetails as $data) {
+            $shopOrderId = $data['unique_id'];
+            break; // Exit loop after getting the first unique_id
+        }
+
+        if ($shopOrderId) {
+            $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
+            $api->setShopOrderId($shopOrderId);
+            $paymentDetails = $api->call();
+            $reserved = 0;
+            $terminalName = "";
+            foreach ($paymentDetails as $pay) {
+                $reserved += $pay->ReservedAmount;
+                $terminalName = $pay->Terminal;
+            }
+            $remoteId = getTerminalIdByRemoteName($terminalName);
+            $amount = (float)$order->total_paid - $reserved;
+
+            if ($amount > 0) {
+                $shopOrderId .= '_' . substr(uniqid(), -3);
+                $savedCreditCard = $_COOKIE['selectedCreditCard'] ?? null;
+                $saveCard = $_COOKIE['savecard'] ?? null;
+                $result = $this->createTransaction($saveCard, $savedCreditCard, $remoteId, null, false, $shopOrderId, $amount);
+                if ($result['success'] && !empty($result['payment_form_url'])) {
+                    saveTransactionData($result, $result['payment_form_url'], $this->context->cart->id, $terminalName);
+                }
+            }
+        }
+    }
+
+    private function getEditOrderDetails($orderId)
+    {
+        $sql = 'SELECT unique_id, paymentTerminal FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE id_order = "' . $orderId . '"';
+
+        return Db::getInstance()->executeS($sql);
+    }
+
+    public function getPaymentData($cartId)
+    {
+        $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
+        $shopOrderId = getLatestUniqueIdFromCartId($cartId);
+        if (empty($shopOrderId)) {
+            PrestaShopLogger::addLog("ShopOrder does not exist, Cart ID: $cartId not found", 3, null, $this->name, $this->id, true);
+
+            return false;
+        }
+        $api->setShopOrderId($shopOrderId);
+
+        return $api->call();
+    }
+
+    public function orderAddedFromBackOffice($remainingAmount) {
+        $orderLine = new API\PHP\Altapay\Request\OrderLine(
+            'Remaining Total',
+            'rm-total',
+            1,
+            $remainingAmount
+        );
+        $orderLine->setGoodsType('item');
+
+        return $orderLine;
     }
 }

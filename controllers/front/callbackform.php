@@ -30,11 +30,16 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
     public function postProcess()
     {
         $css_dir = null;
+
         $postData = getAltaPayCallbackData();
-        $cart = getCartFromUniqueId($postData['shop_orderid']);
+        $shopOrderId = strstr($postData['shop_orderid'], '_', true) ?? $postData['shop_orderid'];
+        
+        $cart = getCartFromUniqueId($shopOrderId);
+
+
         $checksum = !empty($postData['checksum']) ? $postData['checksum'] : '';
-        $terminalRemoteName = getCvvLess($cart->id, $postData['shop_orderid']);
-        $terminal_name = getTransactionTerminalByUniqueId($postData['shop_orderid']);
+        $terminalRemoteName = getCvvLess($cart->id, $shopOrderId);
+        $terminal_name = getTransactionTerminalByUniqueId($shopOrderId);
         $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
 
         if (!empty($checksum) and !empty($secret) and calculateChecksum($postData, $secret) !== $checksum) {
@@ -54,6 +59,9 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             $this->context->smarty->assign('pathUri', $this->module->getPathUri());
             $this->context->smarty->assign('products', $cart->getProducts());
+            if (strpos($postData['shop_orderid'], '_') !== false) {
+                $this->context->smarty->assign('amount', $postData['amount']);
+            }
             if ($themeName === 'at_movic') {
                 $this->setTemplate('module:altapay/views/templates/front/paymentform_atmovic.tpl');
             } else {

@@ -253,6 +253,36 @@
                         </div>
                     </div>
 
+                    {if $payment_url}
+                        <div class="row row-ap">
+                            <div class="col-lg-6">
+                                <a href="#" class="btn btn-primary btn-ap" id="send-email-btn" data-paymentlink="{$payment_url}" data-url="{$sendemail_ajax_url}">Request Payment Link for ({$additional_amount})</a>
+                                <div class="send-message"></div>
+                            </div>
+                            <div class="col-lg-12">
+                                <p>Send the customer a payment link for the additional item added to the order.</p>
+                            </div>
+                        </div>
+                    {/if}
+
+                    {if $is_require_capture}
+                        <div class="row row-ap">
+                            <div class="col-lg-6">
+                                <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-capture" data-url="{$sendemail_ajax_url}" data-orderid="{$id_order}"
+                                   data-payment-id="{$reserved_payment_id}" data-remaining_amount="{$additional_amount}">Capture Additional Amount ({$additional_amount})</a>
+                            </div>
+                        </div>
+                    {/if}
+
+                    {if $can_refund}
+                        <div class="row row-ap">
+                            <div class="col-lg-6">
+                                <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-refund" data-url="{$sendemail_ajax_url}" data-orderid="{$id_order}"
+                                   data-payment-id="{$reserved_payment_id}" data-remaining_amount="{$additional_amount}">Refund Additional Amount ({$additional_amount})</a>
+                            </div>
+                        </div>
+                    {/if}
+
                 </div>
                 <br>
                 <div class="col-lg-12" style="margin-top:2%;">
@@ -301,6 +331,27 @@
                             </tbody>
                         </table>
                     </div>
+                        {if $child_order_id}
+                            <h3>New Item Added to Order</h3>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <tbody>
+                                    <tr>
+                                        <td>Transaction ID (For additional item)</td>
+                                        <td>{$child_order_id}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Payment ID</td>
+                                        <td>{$reserved_payment_id}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Additional Amount</td>
+                                        <td>{$additional_amount}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        {/if}
                 </div>
             </div>
 
