@@ -1323,6 +1323,7 @@ function createOrderOkCallback($postData, $record_id = null)
         $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
         $response = $callback->call();
         $shopOrderId = $response->shopOrderId;
+        $isChildOrder = isChildOrder($shopOrderId);
         $paymentType = $response->type;
         $transaction = getTransaction($response);
         $orderStatus = (int) Configuration::get('authorized_payments_status');
@@ -1336,10 +1337,14 @@ function createOrderOkCallback($postData, $record_id = null)
         $transactionID = $transaction->TransactionId;
         $ccToken = $response->creditCardToken;
         $maskedPan = $response->maskedCreditCard;
-        $payment_module = createOrder($response, $currencyPaid, $cart, $orderStatus);
-
-        // Load order
-        $order = new Order((int) $payment_module->currentOrder);
+        if(!$isChildOrder) {
+            $payment_module = createOrder($response, $currencyPaid, $cart, $orderStatus);
+            // Load order
+            $order = new Order((int) $payment_module->currentOrder);
+        } else {
+            $order_id = Order::getOrderByCartId((int) ($cart->id));
+            $order = new Order((int) $order_id);
+        }
 
         if (!Validate::isLoadedObject($order)) {
             markAltaPayCallbackRecord($record_id, 2);
@@ -1355,7 +1360,7 @@ function createOrderOkCallback($postData, $record_id = null)
         if ($paymentType === 'paymentAndCapture' && $response->requireCapture === true) {
             $response = capturePayment($order->id, $transactionID, $amountPaid);
             $orderStatusCaptured = (int) Configuration::get('PS_OS_PAYMENT');
-            if ($orderStatusCaptured != $orderStatus) {
+            if ($orderStatusCaptured != $orderStatus && !$isChildOrder) {
                 setOrderStateIfNotExistInHistory($order, $orderStatusCaptured);
             }
         }
@@ -1373,7 +1378,7 @@ function createOrderOkCallback($postData, $record_id = null)
         }
 
         // Log order
-        createAltapayOrder($response, $order);
+        createAltapayOrder($response, $order,'succeeded', $isChildOrder);
         unlockCallback($lockFileName, $lockFileHandle);
         markAltaPayCallbackRecord($record_id);
         Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);

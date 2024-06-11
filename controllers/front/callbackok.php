@@ -39,6 +39,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         try {
             $response = $callback->call();
             $shopOrderId = $response->shopOrderId;
+            $isChildOrder = isChildOrder($shopOrderId);
             $paymentType = $response->type;
             $transaction = getTransaction($response);
 
@@ -54,16 +55,22 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             $fraudPayment = handleFraudPayment($response, $transaction);
             //Check if this is a duplicate callback
             if (!empty($shopOrderId)) {
+                $tableName = $isChildOrder ? 'altapay_child_order' : 'altapay_order';
+
                 $condition = "unique_id = '" . pSQL($shopOrderId) . "' AND paymentStatus = 'succeeded'";
-                $query = 'SELECT id_order FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE ' . $condition;
+                $query = 'SELECT id_order FROM `' . _DB_PREFIX_ . $tableName . '` WHERE ' . $condition;
                 $result = Db::getInstance()->executeS($query);
                 // Check if the order already saved with the success status
                 if (!empty($result)) {
                     // Check if an order exist
                     $order = new Order((int) $result[0]['id_order']);
                     if (Validate::isLoadedObject($order) and $paymentType === 'paymentAndCapture' and $response->requireCapture === true) {
-                        $response = capturePayment($order->id, $transactionID, $amountPaid);
-                        updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
+                        $response = capturePayment($order->id, $transactionID, $amountPaid, $shopOrderId);
+                        if ($isChildOrder) {
+                            updateChildOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
+                        } else {
+                            updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
+                        }
                     }
                     unlockCallback($lockFileName, $lockFileHandle);
                     Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . (int) $order->id . '&key=' . $customer->secure_key);
@@ -73,7 +80,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             // Check if this is a duplicate payment
             $order_id = Order::getOrderByCartId((int) ($cart->id));
             if (!empty($order_id)) {
-                $altapay_order_details = getAltapayOrderDetails($order_id);
+                $altapay_order_details = $isChildOrder ? getAltapayChildOrderDetails($order_id) : getAltapayOrderDetails($order_id);
                 if (!empty($altapay_order_details)
                     and $altapay_order_details[0]['paymentStatus'] === 'succeeded'
                     and $altapay_order_details[0]['payment_id'] != $transactionID
@@ -92,9 +99,14 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             }
 
             // Check if an order exist, update it and redirect to success
-            $order = getOrderFromUniqueId($shopOrderId);
+            $order = $isChildOrder ? getChildOrderFromUniqueId($shopOrderId) : getOrderFromUniqueId($shopOrderId);
+
             if (Validate::isLoadedObject($order)) {
-                updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
+                if ($isChildOrder) {
+                    updateChildOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
+                } else {
+                    updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
+                }
             }
             $record_id = false;
             if (!empty(Configuration::get('process_callbacks_async'))) {

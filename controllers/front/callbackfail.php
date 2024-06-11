@@ -132,11 +132,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                 // Redirect to payment selection page
                 if ($fraudPayment['payment_status']) {
                     saveLogs($transaction->FraudExplanation);
-                    if ($isChildOrder) {
-                        exit('Error in the Payment!');
-                    } else {
-                        redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
-                    }
+                    !$isChildOrder ? redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle): exit('Error in the Payment!');
                 } else {
                     // Check if an order exist
                     $order = $isChildOrder ? getChildOrderFromUniqueId($shopOrderId) : getOrderFromUniqueId($shopOrderId);
@@ -186,7 +182,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                     }
 
                     // Log order
-                    createAltapayOrder($response, $order);
+                    createAltapayOrder($response, $order,'succeeded', $isChildOrder);
                     unlockCallback($lockFileName, $lockFileHandle);
                     Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
                 } else {
