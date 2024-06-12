@@ -31,7 +31,7 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
     {
         $css_dir = null;
         $postData = getAltaPayCallbackData();
-        $shopOrderId = strstr($postData['shop_orderid'], '_', true) ?: $postData['shop_orderid'];
+        $shopOrderId = $postData['shop_orderid'];
 
         $cart = getCartFromUniqueId($shopOrderId);
         $checksum = !empty($postData['checksum']) ? $postData['checksum'] : '';
@@ -52,13 +52,13 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
         }
         $this->context->smarty->assign('stylingclass', $payment_style);
         $this->context->smarty->assign('summarydetails', $cart->getSummaryDetails());
+        if (strpos($postData['shop_orderid'], '_') !== false) {
+            $this->context->smarty->assign('amount', $postData['amount']);
+        }
         // Different conventions of assigning details for Version 1.6 and 1.7 respectively
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             $this->context->smarty->assign('pathUri', $this->module->getPathUri());
             $this->context->smarty->assign('products', $cart->getProducts());
-            if (strpos($postData['shop_orderid'], '_') !== false) {
-                $this->context->smarty->assign('amount', $postData['amount']);
-            }
             if ($themeName === 'at_movic') {
                 $this->setTemplate('module:altapay/views/templates/front/paymentform_atmovic.tpl');
             } else {

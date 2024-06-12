@@ -3859,10 +3859,9 @@ class ALTAPAY extends PaymentModule
 
     public function hookActionOrderEdited($params)
     {
-        error_log('hookActionOrderEdited' . PHP_EOL, 3, '/var/www/html/modules/altapay/altapay.log');
-
         $order = $params['order'];
         $orderId = $order->id;
+        $cartId = (int)$order->id_cart;
         $orderDetails = $this->getEditOrderDetails($orderId);
 
         $shopOrderId = $orderDetails[0]['unique_id'] ?? null;
@@ -3884,7 +3883,7 @@ class ALTAPAY extends PaymentModule
                 $shopOrderId .= '_' . substr(uniqid(), -3);
                 $result = $this->createTransaction(null, null, $remoteId, null, false, $shopOrderId, $amount);
                 if ($result['success'] && !empty($result['payment_form_url'])) {
-                    saveTransactionData($result, $result['payment_form_url'], $this->context->cart->id, $terminalName);
+                    saveTransactionData($result, $result['payment_form_url'], $cartId, $terminalName);
                 }
             }
         }
