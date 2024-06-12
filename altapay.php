@@ -536,7 +536,7 @@ class ALTAPAY extends PaymentModule
             || !Configuration::deleteByName('ALTAPAY_PASSWORD')
             || !Configuration::deleteByName('ALTAPAY_URL')
             || !parent::uninstall()
-            && $this->uninstallTab()
+            || $this->uninstallTab()
         ) {
             return false;
         }
@@ -2327,6 +2327,7 @@ class ALTAPAY extends PaymentModule
             $backorder_payment_url = getPaymentFormUrl($orderDetail->id_cart, $shopOrderId);
 
             if ($backorder_payment_url) {
+                $reserved = 0;
                 $childOrderId = $backorder_payment_url['unique_id'];
                 $responseApi = $this->getPaymentData($childOrderId);
                 $resultChildOrder = $this->selectChildOrder($childOrderId);
@@ -2342,7 +2343,7 @@ class ALTAPAY extends PaymentModule
                 }
 
                 if ($backorder_payment_url and $requireCapture) {
-                    $this->smarty->assign('is_require_capture', $requireCapture);
+                    $this->smarty->assign('is_require_capture', true);
                 }
 
                 foreach ($responseApi as $response) {
@@ -2352,12 +2353,10 @@ class ALTAPAY extends PaymentModule
 
                 $ajaxUrl = $this->context->link->getAdminLink('AdminPayByLink', true) . '&sendEmail&customer_id=' . $orderDetail->id_customer;
                 $this->context->smarty->assign('sendemail_ajax_url', $ajaxUrl);
-                $this->smarty->assign('reserve_amount', (float) $reserved);
-                $this->smarty->assign('id_order', (float) $params['id_order']);
+                $this->smarty->assign('id_order', $params['id_order']);
                 $this->smarty->assign('additional_amount', $additionalAmount);
                 $this->smarty->assign('reserved_payment_id', $resultChildOrder['payment_id']);
                 $this->smarty->assign('child_order_id', $childOrderId);
-                $this->smarty->assign('is_order_updated', ($orderDetail->total_paid > $reserved) ? true : false);
             }
 
             $ap_payment = [
@@ -2388,7 +2387,7 @@ class ALTAPAY extends PaymentModule
         if (!empty($shippingDetail[0]['id_order_invoice'])) {
             $this->smarty->assign('ap_shipping_details', $shippingDetail);
         }
-        $this->smarty->assign('a p_coupon_discount', $discounts);
+        $this->smarty->assign('ap_coupon_discount', $discounts);
         $this->smarty->assign('ap_order_detail', $orderDetail->total_discounts);
         $apOrders = [];
         $apOrderlines = $this->getOrderActions($results['payment_id']);
@@ -3050,28 +3049,25 @@ class ALTAPAY extends PaymentModule
                 $request->setAgreement(['type' => 'recurring']);
             }
 
+            $requestShopOrderId = $cgConf['uniqueid'];
+            $requestAmount = $amount;
+            $requestOrderLines = $this->getOrderLines($cart);
             if (!empty($shopOrderId)) {
-                $request->setType($type)->setTerminal($cgConf['terminal'])
-                    ->setShopOrderId($shopOrderId)
-                    ->setAmount($remainingAmount)
-                    ->setCurrency($cgConf['currency'])
-                    ->setCustomerInfo($customer)
-                    ->setTransactionInfo($transactionInfo)
-                    ->setFraudService(null)
-                    ->setOrderLines($this->orderAddedFromBackOffice($remainingAmount))
-                    ->setSaleReconciliationIdentifier(sha1(uniqid(time(), true)));
-            } else {
-                $request->setType($type)->setTerminal($cgConf['terminal'])
-                    ->setShopOrderId($cgConf['uniqueid'])
-                    ->setAmount($amount)
-                    ->setCurrency($cgConf['currency'])
-                    ->setCustomerInfo($customer)
-                    ->setTransactionInfo($transactionInfo)
-                    ->setCookie($cgConf['cookie'])
-                    ->setFraudService(null)
-                    ->setOrderLines($this->getOrderLines($cart))
-                    ->setSaleReconciliationIdentifier(sha1(uniqid(time(), true)));
+                $requestShopOrderId = $shopOrderId;
+                $requestAmount = $remainingAmount;
+                $requestOrderLines = $this->orderAddedFromBackOffice($remainingAmount);
             }
+
+            $request->setType($type)->setTerminal($cgConf['terminal'])
+                ->setShopOrderId($requestShopOrderId)
+                ->setAmount($requestAmount)
+                ->setCurrency($cgConf['currency'])
+                ->setCustomerInfo($customer)
+                ->setTransactionInfo($transactionInfo)
+                ->setCookie($cgConf['cookie'])
+                ->setFraudService(null)
+                ->setOrderLines($requestOrderLines)
+                ->setSaleReconciliationIdentifier(sha1(uniqid(time(), true)));
 
             if (!$isReservation) {
                 $request->setConfig($config)->setLanguage($cgConf['language']);
@@ -3099,16 +3095,16 @@ class ALTAPAY extends PaymentModule
                             }
                         }
                     } else {
-                        PrestaShopLogger::addLog($responseUrl . ' request failed for order id ' . !empty($shopOrderId) ? $shopOrderId : $cgConf['uniqueid'], 3, null, $this->name, $this->id, true);
+                        PrestaShopLogger::addLog($responseUrl . ' request failed for order id ' . $requestShopOrderId, 3, null, $this->name, $this->id, true);
                     }
                 }
 
                 return [
                     'success' => true,
                     'status' => $orderStatus,
-                    'uniqueid' => (!empty($shopOrderId) ? $shopOrderId : $cgConf['uniqueid']),
+                    'uniqueid' => $requestShopOrderId,
                     'terminal' => $cgConf['terminal'],
-                    'amount' => (!empty($shopOrderId) ? $remainingAmount : $amount),
+                    'amount' => $requestAmount,
                     'result' => 'Success',
                     'payment_form_url' => $responseUrl,
                     'response' => $response,
@@ -3867,15 +3863,13 @@ class ALTAPAY extends PaymentModule
 
     public function hookActionOrderEdited($params)
     {
+        error_log('hookActionOrderEdited' . PHP_EOL, 3, '/var/www/html/modules/altapay/altapay.log');
+
         $order = $params['order'];
         $orderId = $order->id;
         $orderDetails = $this->getEditOrderDetails($orderId);
 
-        $shopOrderId = null;
-        foreach ($orderDetails as $data) {
-            $shopOrderId = $data['unique_id'];
-            break; // Exit loop after getting the first unique_id
-        }
+        $shopOrderId = $orderDetails[0]['unique_id'] ?? null;
 
         if ($shopOrderId) {
             $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
@@ -3892,9 +3886,7 @@ class ALTAPAY extends PaymentModule
 
             if ($amount > 0) {
                 $shopOrderId .= '_' . substr(uniqid(), -3);
-                $savedCreditCard = $_COOKIE['selectedCreditCard'] ?? null;
-                $saveCard = $_COOKIE['savecard'] ?? null;
-                $result = $this->createTransaction($saveCard, $savedCreditCard, $remoteId, null, false, $shopOrderId, $amount);
+                $result = $this->createTransaction(null, null, $remoteId, null, false, $shopOrderId, $amount);
                 if ($result['success'] && !empty($result['payment_form_url'])) {
                     saveTransactionData($result, $result['payment_form_url'], $this->context->cart->id, $terminalName);
                 }
@@ -3911,13 +3903,14 @@ class ALTAPAY extends PaymentModule
 
     public function getPaymentData($cartId)
     {
-        $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
         $shopOrderId = getLatestUniqueIdFromCartId($cartId);
         if (empty($shopOrderId)) {
             PrestaShopLogger::addLog("ShopOrder does not exist, Cart ID: $cartId not found", 3, null, $this->name, $this->id, true);
 
             return false;
         }
+
+        $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
         $api->setShopOrderId($shopOrderId);
 
         return $api->call();

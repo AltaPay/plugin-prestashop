@@ -1219,7 +1219,7 @@ function getPaymentFormUrl($id_cart, $unique_id)
             AND unique_id LIKE \'' . pSQL($unique_id) . "%\_%' 
             ORDER BY CAST(date_add AS UNSIGNED) DESC";
 
-    return Db::getInstance()->executeS($sql);
+    return Db::getInstance()->getRow($sql);
 }
 
 /**
