@@ -31,7 +31,7 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
     {
         $css_dir = null;
         $postData = getAltaPayCallbackData();
-        $shopOrderId = $postData['shop_orderid'];
+        $shopOrderId = strstr($postData['shop_orderid'], '_', true) ?: $postData['shop_orderid'];
 
         $cart = getCartFromUniqueId($shopOrderId);
         $checksum = !empty($postData['checksum']) ? $postData['checksum'] : '';
@@ -42,7 +42,6 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
         if (!empty($checksum) and !empty($secret) and calculateChecksum($postData, $secret) !== $checksum) {
             exit('Invalid request');
         }
-
         $themeName = Context::getContext()->shop->theme_name;
         $this->context->smarty->assign('theme_name', $themeName);
         $this->context->smarty->assign('cssClass', $terminalRemoteName);

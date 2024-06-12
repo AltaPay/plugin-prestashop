@@ -245,7 +245,13 @@
                                data-payment-id="{$payment_id}">Refund</a>
                         </div>
                     </div>
-
+                    {if ($payment_url || $is_require_capture || $can_refund)}
+                    <div class="row row-ap">
+                        <div class="col-lg-12">
+                            <p>Refund back-ordered items before processing the main order refund.</p>
+                        </div>
+                    </div>
+                    {/if}
                     <div class="row row-ap">
                         <div class="col-lg-6">
                             <a href="#" class="btn btn-danger" id="btn-release" data-url="{$ajax_url}"

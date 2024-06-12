@@ -2325,13 +2325,22 @@ class ALTAPAY extends PaymentModule
             }
 
             $backorder_payment_url = getPaymentFormUrl($orderDetail->id_cart, $shopOrderId);
-            $remainingAmount = 0;
             if ($backorder_payment_url) {
                 $childOrderId = $backorder_payment_url['unique_id'];
+                $parentShopOrderId = strstr($backorder_payment_url['unique_id'], '_', true);
+
+                $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
+                $api->setShopOrderId($parentShopOrderId);
+                $paymentDetails = $api->call();
+                $reservedAmount = 0;
+                foreach ($paymentDetails as $pay) {
+                    $reservedAmount += $pay->ReservedAmount;
+                }
+
+                $additional_amount = (float) $orderDetail->total_paid - $reservedAmount;
                 $resultChildOrder = $this->selectChildOrder($childOrderId);
                 $requireCapture = (bool) $resultChildOrder['requireCapture'];
                 $transData = getTransactionStatus($resultChildOrder['payment_id']);
-                $remainingAmount = $backorder_payment_url['amount'];
 
                 if (isset($transData['refunded']) && !$transData['refunded']) {
                     $this->smarty->assign('can_refund', true);
@@ -2345,12 +2354,10 @@ class ALTAPAY extends PaymentModule
                     $this->smarty->assign('is_require_capture', true);
                 }
 
-                $additionalAmount = $orderDetail->total_paid - $remainingAmount;
-
                 $ajaxUrl = $this->context->link->getAdminLink('AdminPayByLink', true) . '&sendEmail&customer_id=' . $orderDetail->id_customer;
                 $this->context->smarty->assign('sendemail_ajax_url', $ajaxUrl);
                 $this->smarty->assign('id_order', $params['id_order']);
-                $this->smarty->assign('additional_amount', $additionalAmount);
+                $this->smarty->assign('additional_amount', $additional_amount);
                 $this->smarty->assign('reserved_payment_id', $resultChildOrder['payment_id']);
                 $this->smarty->assign('child_order_id', $childOrderId);
             }
@@ -3861,7 +3868,7 @@ class ALTAPAY extends PaymentModule
     {
         $order = $params['order'];
         $orderId = $order->id;
-        $cartId = (int)$order->id_cart;
+        $cartId = (int) $order->id_cart;
         $orderDetails = $this->getEditOrderDetails($orderId);
 
         $shopOrderId = $orderDetails[0]['unique_id'] ?? null;
