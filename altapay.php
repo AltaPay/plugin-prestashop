@@ -536,7 +536,7 @@ class ALTAPAY extends PaymentModule
             || !Configuration::deleteByName('ALTAPAY_PASSWORD')
             || !Configuration::deleteByName('ALTAPAY_URL')
             || !parent::uninstall()
-            || $this->uninstallTab()
+            || !$this->uninstallTab()
         ) {
             return false;
         }
@@ -546,21 +546,26 @@ class ALTAPAY extends PaymentModule
 
     private function installTab()
     {
-        $tab = new Tab();
+        $tabId = (int) Tab::getIdFromClassName('AdminPayByLink');
+        if (!$tabId) {
+            $tabId = null;
+        }
+
+        $tab = new Tab($tabId);
         $tab->active = 1;
         foreach (Language::getLanguages() as $lang) {
             $tab->name[$lang['id_lang']] = 'altapay';
         }
         $tab->class_name = 'AdminPayByLink';
         $tab->module = $this->name;
-        $tab->id_parent = 0;
+        $tab->id_parent = -1;
 
         return $tab->add();
     }
 
     private function uninstallTab()
     {
-        $tabId = (int) Tab::getIdFromClassName('AltapaySendPaymentLink');
+        $tabId = (int) Tab::getIdFromClassName('AdminPayByLink');
         if (!$tabId) {
             return true;
         }
