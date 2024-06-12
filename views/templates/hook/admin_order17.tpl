@@ -266,6 +266,9 @@
                                 <div class="send-message"></div>
                             </div>
                             <div class="col-lg-12">
+                                <p><strong>Payment Link: </strong> <a href="{$payment_url}">{$payment_url}</a></p>
+                            </div>
+                            <div class="col-lg-12">
                                 <p>Send the customer a payment link for the additional item added to the order.</p>
                             </div>
                         </div>

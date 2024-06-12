@@ -2881,7 +2881,7 @@ class ALTAPAY extends PaymentModule
      *
      * @throws Exception
      */
-    public function createTransaction($savecard, $tokenId, $payment_method = false, $providerData = null, $is_apple_pay = false, $shopOrderId = null, $remainingAmount = null)
+    public function createTransaction($savecard, $tokenId, $payment_method = false, $providerData = null, $is_apple_pay = false, $shopOrderId = null, $remainingAmount = null, $currencyCode = null)
     {
         $cart = $this->context->cart;
         $ccToken = null;
@@ -2890,8 +2890,9 @@ class ALTAPAY extends PaymentModule
         $results = null;
         $latestTransKey = 0;
         $response = ['success' => false, 'payment_form_url' => '', 'apple_pay_terminal' => $is_apple_pay];
+        $currencyCode = !empty($currencyCode) ? $currencyCode : $this->context->currency->iso_code;
         // Terminal
-        $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
+        $terminal = $this->getTerminal($payment_method, $currencyCode);
         if (!is_object($terminal)) {
             $message = 'Could not determine remote terminal - possibly currency mismatch';
             PrestaShopLogger::addLog($message, 3, null, $this->name, $this->id, true);
@@ -2901,7 +2902,7 @@ class ALTAPAY extends PaymentModule
         $cgConf = [];
         // Config
         $cgConf['payment_type'] = $terminal->payment_type ?? 'payment';
-        $cgConf['currency'] = $this->context->currency->iso_code;
+        $cgConf['currency'] = $currencyCode;
         $cgConf['language'] = $this->context->language->iso_code;
         $cgConf['uniqueid'] = uniqid('PS');
         $cgConf['terminal'] = $terminal->remote_name;
@@ -3875,9 +3876,7 @@ class ALTAPAY extends PaymentModule
         $orderId = $order->id;
         $cartId = (int) $order->id_cart;
         $orderDetails = $this->getEditOrderDetails($orderId);
-
         $shopOrderId = $orderDetails[0]['unique_id'] ?? null;
-
         if ($shopOrderId) {
             $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
             $api->setShopOrderId($shopOrderId);
@@ -3889,11 +3888,17 @@ class ALTAPAY extends PaymentModule
                 $terminalName = $pay->Terminal;
             }
             $remoteId = getTerminalIdByRemoteName($terminalName);
-            $amount = (float) $order->total_paid - $reserved;
+            $amount = (float) $order->total_paid - (float) $reserved;
 
+            $currency_iso_code = null;
+            $id_currency = $order->id_currency;
+            if ($id_currency) {
+                $currency = new Currency($id_currency);
+                $currency_iso_code = $currency->iso_code;
+            }
             if ($amount > 0) {
                 $shopOrderId .= '_' . substr(uniqid(), -3);
-                $result = $this->createTransaction(null, null, $remoteId, null, false, $shopOrderId, $amount);
+                $result = $this->createTransaction(null, null, $remoteId, null, false, $shopOrderId, $amount, $currency_iso_code);
                 if ($result['success'] && !empty($result['payment_form_url'])) {
                     saveTransactionData($result, $result['payment_form_url'], $cartId, $terminalName);
                 }
