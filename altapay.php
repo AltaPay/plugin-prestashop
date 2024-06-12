@@ -2325,14 +2325,13 @@ class ALTAPAY extends PaymentModule
             }
 
             $backorder_payment_url = getPaymentFormUrl($orderDetail->id_cart, $shopOrderId);
-
+            $remainingAmount = 0;
             if ($backorder_payment_url) {
-                $reserved = 0;
                 $childOrderId = $backorder_payment_url['unique_id'];
-                $responseApi = $this->getPaymentData($childOrderId);
                 $resultChildOrder = $this->selectChildOrder($childOrderId);
                 $requireCapture = (bool) $resultChildOrder['requireCapture'];
                 $transData = getTransactionStatus($resultChildOrder['payment_id']);
+                $remainingAmount = $backorder_payment_url['amount'];
 
                 if (isset($transData['refunded']) && !$transData['refunded']) {
                     $this->smarty->assign('can_refund', true);
@@ -2346,10 +2345,7 @@ class ALTAPAY extends PaymentModule
                     $this->smarty->assign('is_require_capture', true);
                 }
 
-                foreach ($responseApi as $response) {
-                    $reserved += $response->ReservedAmount;
-                }
-                $additionalAmount = $orderDetail->total_paid - $reserved;
+                $additionalAmount = $orderDetail->total_paid - $remainingAmount;
 
                 $ajaxUrl = $this->context->link->getAdminLink('AdminPayByLink', true) . '&sendEmail&customer_id=' . $orderDetail->id_customer;
                 $this->context->smarty->assign('sendemail_ajax_url', $ajaxUrl);
