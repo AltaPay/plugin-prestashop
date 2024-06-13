@@ -262,14 +262,11 @@
                     {if $payment_url}
                         <div class="row row-ap">
                             <div class="col-lg-6">
-                                <a href="#" class="btn btn-primary btn-ap" id="send-email-btn" data-paymentlink="{$payment_url}" data-url="{$sendemail_ajax_url}">Request Payment Link for ({$additional_amount})</a>
+                                <a href="#" class="btn btn-primary btn-ap" id="send-email-btn" data-paymentlink="{$payment_url}" data-url="{$sendemail_ajax_url}" style="text-align: left;width: auto;">Email the payment link to receive the additional amount ({$additional_amount})</a>
                                 <div class="send-message"></div>
                             </div>
                             <div class="col-lg-12">
                                 <p><strong>Payment Link: </strong> <a href="{$payment_url}">{$payment_url}</a></p>
-                            </div>
-                            <div class="col-lg-12">
-                                <p>Send the customer a payment link for the additional item added to the order.</p>
                             </div>
                         </div>
                     {/if}
