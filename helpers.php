@@ -340,7 +340,7 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
         Db::getInstance()->Execute($sql);
 
         if (Validate::isLoadedObject($current_order)) {
-            $current_order->addOrderPayment($transaction->Amount, $paymentTerminal, $uniqueId);
+            $current_order->addOrderPayment($transaction->ReservedAmount, $paymentTerminal, $uniqueId);
         }
     } else {
         //insert into order log
