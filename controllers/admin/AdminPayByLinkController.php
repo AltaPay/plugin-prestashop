@@ -190,10 +190,9 @@ class AdminPayByLinkController extends ModuleAdminController
                     $fromName,
                     null,
                     null,
-                    dirname(__FILE__, 3) . '/mails/',
-                    false,
-                    null
+                    dirname(__FILE__) . '/mails/'
                 );
+
                 echo json_encode(['status' => 'success', 'message' => 'Email sent successfully!']);
             } catch (Exception $e) {
                 echo json_encode(['status' => 'error', 'message' => 'Failed to send email.']);
@@ -213,8 +212,8 @@ class AdminPayByLinkController extends ModuleAdminController
     public function OrderlineForBackorderItems($remainingAmount)
     {
         $orderLine = new API\PHP\Altapay\Request\OrderLine(
-            'Remaining Total',
-            'rm-total',
+            'Total',
+            'additional-amount',
             1,
             $remainingAmount
         );
