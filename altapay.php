@@ -2879,12 +2879,23 @@ class ALTAPAY extends PaymentModule
      * @param bool $payment_method
      * @param string $providerData
      * @param bool $is_apple_pay
-     *
+     * @param null $shopOrderId
+     * @param null $remainingAmount
+     * @param null $currencyCode
+     * @param object $parent_order
      * @return array If the transaction failed, the array contains information about the failure
      *
      * @throws Exception
      */
-    public function createTransaction($savecard, $tokenId, $payment_method = false, $providerData = null, $is_apple_pay = false, $shopOrderId = null, $remainingAmount = null, $currencyCode = null)
+    public function createTransaction($savecard,
+                                      $tokenId,
+                                      $payment_method = false,
+                                      $providerData = null,
+                                      $is_apple_pay = false,
+                                      $shopOrderId = null,
+                                      $remainingAmount = null,
+                                      $currencyCode = null,
+                                      $parent_order = null)
     {
         $cart = $this->context->cart;
         $ccToken = null;
@@ -2962,14 +2973,28 @@ class ALTAPAY extends PaymentModule
             $this->context->shop->id
         );
 
+        if ($parent_order) {
+            $cart = new Cart((int)$parent_order->id_cart);
+            $id_address_invoice = $cart->id_address_invoice;
+            $id_address_delivery = $cart->id_address_delivery;
+            $customer_firstname = $parent_order->getCustomer()->firstname;
+            $customer_lastname = $parent_order->getCustomer()->lastname;
+            $customer_email = $parent_order->getCustomer()->email;
+        } else {
+            $id_address_invoice = $this->context->cart->id_address_invoice;
+            $id_address_delivery = $this->context->cart->id_address_delivery;
+            $customer_firstname = $this->context->customer->firstname;
+            $customer_lastname = $this->context->customer->lastname;
+            $customer_email = $this->context->customer->email;
+        }
         // Billing address
-        $invoice_address = new Address($this->context->cart->id_address_invoice);
+        $invoice_address = new Address($id_address_invoice);
         $country = new Country($invoice_address->id_country);
         $state = new State($invoice_address->id_state);
 
         $address = new API\PHP\Altapay\Request\Address();
-        $address->Firstname = $this->context->customer->firstname;
-        $address->Lastname = $this->context->customer->lastname;
+        $address->Firstname = $customer_firstname;
+        $address->Lastname = $customer_lastname;
         $address->Address = $invoice_address->address1;
         $address->City = $invoice_address->city;
         $address->PostalCode = $invoice_address->postcode;
@@ -2977,12 +3002,12 @@ class ALTAPAY extends PaymentModule
         $address->Country = $country->iso_code;
 
         $customer = new API\PHP\Altapay\Request\Customer($address);
-        $customer->setEmail($this->context->customer->email);
+        $customer->setEmail($customer_email);
         $customer->setPhone($invoice_address->phone ?: $invoice_address->phone_mobile);
-        $customer->setUsername($this->context->customer->email);
+        $customer->setUsername($customer_email);
 
         // Shipping address
-        $sp_address = new Address($this->context->cart->id_address_delivery);
+        $sp_address = new Address($id_address_delivery);
         $sp_country = new Country($sp_address->id_country);
         $sp_state = new State($sp_address->id_state);
 
@@ -3904,7 +3929,7 @@ class ALTAPAY extends PaymentModule
                 $childOrders = Db::getInstance()->getValue('SELECT COUNT(*) FROM ' . _DB_PREFIX_ . 'altapay_transaction where
                 unique_id="' . $shopOrderId . '"');
                 if ($childOrders == 0) {
-                    $result = $this->createTransaction(null, null, $remoteId, null, false, $shopOrderId, $amount, $currency_iso_code);
+                    $result = $this->createTransaction(null, null, $remoteId, null, false, $shopOrderId, $amount, $currency_iso_code, $order);
                     if ($result['success'] && !empty($result['payment_form_url'])) {
                         saveTransactionData($result, $result['payment_form_url'], $cartId, $terminalName);
                     }
@@ -3938,8 +3963,8 @@ class ALTAPAY extends PaymentModule
     public function orderAddedFromBackOffice($remainingAmount)
     {
         $orderLine = new API\PHP\Altapay\Request\OrderLine(
-            'Remaining Total',
-            'rm-total',
+            'Total',
+            'additional-amount',
             1,
             $remainingAmount
         );
