@@ -259,14 +259,14 @@
                     <div class="col-sm-6">
                         {if $payment_url}
                             <div class="row row-ap">
-                                <div class="col-lg-6">
+                                <div class="col-lg-12" style="padding: 0;">
                                     <a href="#" class="btn btn-primary btn-ap" id="send-email-btn"
                                        data-paymentlink="{$payment_url}" data-url="{$sendemail_ajax_url}"
                                        style="text-align: left;width: auto;">Email the payment link to receive the
                                         additional amount ({$additional_amount})</a>
                                     <div class="send-message"></div>
                                 </div>
-                                <div class="col-lg-12">
+                                <div class="col-lg-12" style="padding: 0;">
                                     <p><strong>Payment Link: </strong> <a href="{$payment_url}">{$payment_url}</a></p>
                                 </div>
                             </div>
@@ -274,24 +274,30 @@
 
                         {if $is_require_capture}
                             <div class="row row-ap">
-                                <div class="col-lg-6">
+                                <div class="col-lg-6" style="padding: 0;">
                                     <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-capture"
                                        data-url="{$sendemail_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
-                                       data-remaining_amount="{$additional_amount}">Capture Additional Amount
-                                        ({$additional_amount})</a>
+                                       data-remaining_amount="{$additional_amount}"
+                                       style="text-align: left;width: auto;">
+                                        Capture Additional Amount
+                                        ({$additional_amount})
+                                    </a>
                                 </div>
                             </div>
                         {/if}
 
                         {if $can_refund}
                             <div class="row row-ap">
-                                <div class="col-lg-6">
+                                <div class="col-lg-6" style="padding: 0;">
                                     <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-refund"
                                        data-url="{$sendemail_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
-                                       data-remaining_amount="{$additional_amount}">Refund Additional Amount
-                                        ({$additional_amount})</a>
+                                       data-remaining_amount="{$additional_amount}"
+                                       style="text-align: left;width: auto;">
+                                        Refund Additional Amount
+                                        ({$additional_amount})
+                                    </a>
                                 </div>
                             </div>
                         {/if}

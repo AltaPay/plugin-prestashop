@@ -2098,7 +2098,7 @@ class ALTAPAY extends PaymentModule
     private function selectChildOrder($shopOrderId)
     {
         return Db::getInstance()->getRow('SELECT requireCapture, payment_id FROM ' . _DB_PREFIX_ . 'altapay_child_order ' .
-            'WHERE unique_id = \'' . pSQL($shopOrderId) . '\'');
+            'WHERE parent_unique_id = \'' . pSQL($shopOrderId) . '\'');
     }
 
     /**
@@ -2280,6 +2280,7 @@ class ALTAPAY extends PaymentModule
         }
 
         $results = $this->selectOrder($params);
+        $reservedAmount = 0;
 
         try {
             $reserved = 0;
@@ -2329,6 +2330,9 @@ class ALTAPAY extends PaymentModule
                 $shopOrderId = $pay->ShopOrderId;
             }
 
+            if ($orderDetail->total_paid > $reservedAmount) {
+                $this->altaPayOrderEdited($params);
+            }
             $backorder_payment_url = getPaymentFormUrl($orderDetail->id_cart, $shopOrderId);
             if ($backorder_payment_url) {
                 $childOrderId = $backorder_payment_url['unique_id'];
@@ -2337,13 +2341,12 @@ class ALTAPAY extends PaymentModule
                 $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
                 $api->setShopOrderId($parentShopOrderId);
                 $paymentDetails = $api->call();
-                $reservedAmount = 0;
                 foreach ($paymentDetails as $pay) {
                     $reservedAmount += $pay->ReservedAmount;
                 }
 
                 $additional_amount = (float) $orderDetail->total_paid - $reservedAmount;
-                $resultChildOrder = $this->selectChildOrder($childOrderId);
+                $resultChildOrder = $this->selectChildOrder($parentShopOrderId);
                 $requireCapture = (bool) $resultChildOrder['requireCapture'];
                 $transData = getTransactionStatus($resultChildOrder['payment_id']);
 
@@ -2996,7 +2999,7 @@ class ALTAPAY extends PaymentModule
         //Calling transactionInfo method from helpers file
         $transactionInfo = transactionInfo();
         $amount = $cart->getOrderTotal(true, Cart::BOTH);
-        if ($this->context->customer->isLogged()) {
+        if ($this->context->customer && $this->context->customer->isLogged()) {
             $customer->setCreatedDate(new \DateTime($this->context->customer->date_add));
         }
         $customerId = $this->context->customer->id;
@@ -3870,9 +3873,9 @@ class ALTAPAY extends PaymentModule
         return $results;
     }
 
-    public function hookActionOrderEdited($params)
+    public function altaPayOrderEdited($params)
     {
-        $order = $params['order'];
+        $order = new Order((int) $params['id_order']);
         $orderId = $order->id;
         $cartId = (int) $order->id_cart;
         $orderDetails = $this->getEditOrderDetails($orderId);
@@ -3896,11 +3899,15 @@ class ALTAPAY extends PaymentModule
                 $currency = new Currency($id_currency);
                 $currency_iso_code = $currency->iso_code;
             }
-            if ($amount > 0) {
-                $shopOrderId .= '_' . substr(uniqid(), -3);
-                $result = $this->createTransaction(null, null, $remoteId, null, false, $shopOrderId, $amount, $currency_iso_code);
-                if ($result['success'] && !empty($result['payment_form_url'])) {
-                    saveTransactionData($result, $result['payment_form_url'], $cartId, $terminalName);
+            if ($amount > 0 && !$this->selectChildOrder($shopOrderId)) {
+                $shopOrderId .= '_child';
+                $childOrders = Db::getInstance()->getValue('SELECT COUNT(*) FROM ' . _DB_PREFIX_ . 'altapay_transaction where
+                unique_id="' . $shopOrderId . '"');
+                if ($childOrders == 0) {
+                    $result = $this->createTransaction(null, null, $remoteId, null, false, $shopOrderId, $amount, $currency_iso_code);
+                    if ($result['success'] && !empty($result['payment_form_url'])) {
+                        saveTransactionData($result, $result['payment_form_url'], $cartId, $terminalName);
+                    }
                 }
             }
         }

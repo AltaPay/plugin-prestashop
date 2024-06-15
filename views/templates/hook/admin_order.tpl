@@ -273,24 +273,30 @@
 
                         {if $is_require_capture}
                             <div class="row row-ap">
-                                <div class="col-lg-6">
+                                <div class="col-lg-6" style="padding: 0;">
                                     <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-capture"
                                        data-url="{$sendemail_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
-                                       data-remaining_amount="{$additional_amount}">Capture Additional Amount
-                                        ({$additional_amount})</a>
+                                       data-remaining_amount="{$additional_amount}"
+                                       style="text-align: left;width: auto;">
+                                        Capture Additional Amount
+                                        ({$additional_amount})
+                                    </a>
                                 </div>
                             </div>
                         {/if}
 
                         {if $can_refund}
                             <div class="row row-ap">
-                                <div class="col-lg-6">
+                                <div class="col-lg-6" style="padding: 0;">
                                     <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-refund"
                                        data-url="{$sendemail_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
-                                       data-remaining_amount="{$additional_amount}">Refund Additional Amount
-                                        ({$additional_amount})</a>
+                                       data-remaining_amount="{$additional_amount}"
+                                       style="text-align: left;width: auto;">
+                                        Refund Additional Amount
+                                        ({$additional_amount})
+                                    </a>
                                 </div>
                             </div>
                         {/if}
