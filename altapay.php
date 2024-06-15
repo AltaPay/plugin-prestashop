@@ -2883,6 +2883,7 @@ class ALTAPAY extends PaymentModule
      * @param null $remainingAmount
      * @param null $currencyCode
      * @param object $parent_order
+     *
      * @return array If the transaction failed, the array contains information about the failure
      *
      * @throws Exception
@@ -2974,7 +2975,7 @@ class ALTAPAY extends PaymentModule
         );
 
         if ($parent_order) {
-            $cart = new Cart((int)$parent_order->id_cart);
+            $cart = new Cart((int) $parent_order->id_cart);
             $id_address_invoice = $cart->id_address_invoice;
             $id_address_delivery = $cart->id_address_delivery;
             $customer_firstname = $parent_order->getCustomer()->firstname;
