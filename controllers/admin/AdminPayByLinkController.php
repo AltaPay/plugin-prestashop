@@ -190,9 +190,10 @@ class AdminPayByLinkController extends ModuleAdminController
                     $fromName,
                     null,
                     null,
-                    dirname(__FILE__) . '/mails/'
+                    dirname(__FILE__, 3) . '/mails/',
+                    false,
+                    null
                 );
-
                 echo json_encode(['status' => 'success', 'message' => 'Email sent successfully!']);
             } catch (Exception $e) {
                 echo json_encode(['status' => 'error', 'message' => 'Failed to send email.']);
