@@ -54,7 +54,7 @@ class ALTAPAY extends PaymentModule
         $this->confirmUninstall = $this->l('Are you sure about removing these details?');
 
         // Make sure currencies are configured for this payment module
-        if (!count(Currency::checkPaymentCurrencies($this->id))) {
+        if (empty(Currency::checkPaymentCurrencies($this->id)) || !count(Currency::checkPaymentCurrencies($this->id))) {
             $this->warning = $this->l('No currency has been set for this module.');
         }
     }
