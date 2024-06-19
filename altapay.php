@@ -149,7 +149,7 @@ class ALTAPAY extends PaymentModule
             `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
             `unique_id` varchar(255) NOT NULL,
             `parent_unique_id` varchar(255) NOT NULL,
-            `order_id` varchar(10) NULL,
+            `id_order` varchar(10) NULL,
             `payment_id` varchar(255) NULL,
             `cardMask` varchar(20) NULL,
             `cardToken` varchar(255) NULL,

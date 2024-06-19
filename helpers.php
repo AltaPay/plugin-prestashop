@@ -103,14 +103,14 @@ function getOrderFromUniqueId($uniqueId)
  */
 function getChildOrderFromUniqueId($uniqueId)
 {
-    $results = Db::getInstance()->getRow('SELECT order_id
+    $results = Db::getInstance()->getRow('SELECT id_order
     FROM `' . _DB_PREFIX_ . 'altapay_child_order` 
     WHERE unique_id = \'' . pSQL($uniqueId) . '\'');
     if (!$results) {
         return false;
     }
 
-    return new Order((int) $results['order_id']);
+    return new Order((int) $results['id_order']);
 }
 
 /**
@@ -351,7 +351,7 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
         $parentShopId = explode('_', $uniqueId)[0];
         //insert into order log
         $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'altapay_child_order`
-        (order_id, unique_id, parent_unique_id, payment_id, cardMask, cardToken, cardBrand, cardExpiryDate, cardCountry, 
+        (id_order, unique_id, parent_unique_id, payment_id, cardMask, cardToken, cardBrand, cardExpiryDate, cardCountry, 
         paymentType, paymentTerminal, paymentStatus, paymentNature, requireCapture, date_add) 
         VALUES ' .
             "('" . $current_order->id . "', '" . pSQL($uniqueId) . "', '" . pSQL($parentShopId) . "', '"
