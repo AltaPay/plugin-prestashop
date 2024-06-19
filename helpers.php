@@ -96,16 +96,20 @@ function getOrderFromUniqueId($uniqueId)
     return new Order((int) $results['id_order']);
 }
 
+/**
+ * @param $uniqueId
+ * @return false|Order
+ */
 function getChildOrderFromUniqueId($uniqueId)
 {
-    $results = Db::getInstance()->getRow('SELECT id_order 
+    $results = Db::getInstance()->getRow('SELECT order_id
     FROM `' . _DB_PREFIX_ . 'altapay_child_order` 
     WHERE unique_id = \'' . pSQL($uniqueId) . '\'');
     if (!$results) {
         return false;
     }
 
-    return new Order((int) $results['id_order']);
+    return new Order((int) $results['order_id']);
 }
 
 /**
@@ -148,6 +152,10 @@ function markAsCaptured($paymentId, $orderlines = [])
     return true;
 }
 
+/**
+ * @param $paymentId
+ * @return bool
+ */
 function markChildOrderAsCaptured($paymentId)
 {
     $sql = 'UPDATE ' . _DB_PREFIX_ . 'altapay_child_order SET requireCapture = 0 WHERE payment_id = \'' . pSQL($paymentId)
@@ -206,6 +214,10 @@ function markAsRefund($paymentId, $orderlines = [])
     return true;
 }
 
+/**
+ * @param $paymentId
+ * @return bool
+ */
 function markChildOrderAsRefund($paymentId)
 {
     $sqlRequireCapture = 'SELECT requireCapture  FROM ' . _DB_PREFIX_ . 'altapay_child_order WHERE payment_id = \'' . pSQL($paymentId) . "'";
@@ -244,6 +256,11 @@ function saveLastErrorMessage($paymentId, $latestError)
     Db::getInstance()->Execute($sql);
 }
 
+/**
+ * @param $paymentId
+ * @param $latestError
+ * @return void
+ */
 function saveLastErrorMessageForChildOrder($paymentId, $latestError)
 {
     $sql = 'UPDATE 
@@ -268,6 +285,11 @@ function updatePaymentStatus($paymentId, $paymentStatus)
     Db::getInstance()->Execute($sql);
 }
 
+/**
+ * @param $paymentId
+ * @param $paymentStatus
+ * @return void
+ */
 function updatePaymentStatusForChildOrder($paymentId, $paymentStatus)
 {
     $sql = 'UPDATE 
@@ -385,6 +407,10 @@ function getAltapayOrderDetails($orderID)
     return Db::getInstance()->executeS($sql);
 }
 
+/**
+ * @param $orderID
+ * @return array
+ */
 function getAltapayChildOrderDetails($orderID)
 {
     if (filter_var($orderID, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
@@ -519,6 +545,13 @@ function saveOrderReconciliationIdentifierIfNotExists($orderID, $reconciliation_
     }
 }
 
+/**
+ * @param $orderID
+ * @param $reconciliation_identifier
+ * @param $type
+ * @param $shopOrderId
+ * @return void
+ */
 function saveChildOrderIdentifier($orderID, $reconciliation_identifier, $type, $shopOrderId)
 {
     $sql = 'SELECT id FROM `' . _DB_PREFIX_ . 'altapay_order_reconciliation` WHERE unique_id =\'' . pSQL($shopOrderId) .
@@ -929,7 +962,7 @@ function unlockCallback($lockFileName, $fileHandle)
  * @param $order_id
  * @param $transaction_id
  * @param $amount
- *
+ * @param $shopOrderId
  * @return \API\PHP\Altapay\Response\AbstractResponse|\API\PHP\Altapay\Response\Embeds\Transaction[]|string
  */
 function capturePayment($order_id, $transaction_id, $amount, $shopOrderId)
@@ -1215,6 +1248,11 @@ function getLatestUniqueIdFromCartId($id_cart)
     return Db::getInstance()->getValue($sql);
 }
 
+/**
+ * @param $id_cart
+ * @param $unique_id
+ * @return mixed
+ */
 function getPaymentFormUrl($id_cart, $unique_id)
 {
     $sql = 'SELECT unique_id, payment_form_url, amount
@@ -1389,6 +1427,9 @@ function createOrderOkCallback($postData, $record_id = null)
         } else {
             $order_id = Order::getOrderByCartId((int) ($cart->id));
             $order = new Order((int) $order_id);
+            if(in_array($transaction->TransactionStatus, ['bank_payment_finalized', 'captured'], true)){
+                markChildOrderAsCaptured($transactionID);
+            }
         }
 
         if (!Validate::isLoadedObject($order)) {

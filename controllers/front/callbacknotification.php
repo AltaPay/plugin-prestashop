@@ -122,7 +122,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $errorStatus = ['cancelled', 'declined', 'error', 'failed', 'incomplete', 'open'];
             if (!in_array($resultStatus, $errorStatus, true) && !$fraudPayment['payment_status']) {
                 if ($isChildOrder) {
-                    $this->processChildOrder($cart, $response, $transactionStatus, $auth_statuses, $captured_statuses, $order_state, $lockFileName, $lockFileHandle);
+                    $this->processChildOrder($transactionId, $response, $transactionStatus, $auth_statuses, $captured_statuses, $lockFileName, $lockFileHandle);
                 }
                 // NO ORDER FOUND, CREATE?
                 if (!Validate::isLoadedObject($order)) {
@@ -254,7 +254,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
         exit($message);
     }
 
-    public function processChildOrder($cart, $response, $transactionStatus, $auth_statuses, $captured_statuses, $order_state, $lockFileName, $lockFileHandle)
+    public function processChildOrder($transactionId, $response, $transactionStatus, $auth_statuses, $captured_statuses, $lockFileName, $lockFileHandle)
     {
         $shopOrderId = $response->shopOrderId;
         // Check if an order exist
@@ -281,6 +281,9 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
 
                     saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type, $shopOrderId);
+                }
+                if (in_array($transactionStatus, $captured_statuses, true)) {
+                    markChildOrderAsCaptured($transactionId);
                 }
                 unlockCallback($lockFileName, $lockFileHandle);
                 exit('Child Order status updated');
