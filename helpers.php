@@ -98,6 +98,7 @@ function getOrderFromUniqueId($uniqueId)
 
 /**
  * @param $uniqueId
+ *
  * @return false|Order
  */
 function getChildOrderFromUniqueId($uniqueId)
@@ -154,6 +155,7 @@ function markAsCaptured($paymentId, $orderlines = [])
 
 /**
  * @param $paymentId
+ *
  * @return bool
  */
 function markChildOrderAsCaptured($paymentId)
@@ -216,6 +218,7 @@ function markAsRefund($paymentId, $orderlines = [])
 
 /**
  * @param $paymentId
+ *
  * @return bool
  */
 function markChildOrderAsRefund($paymentId)
@@ -259,6 +262,7 @@ function saveLastErrorMessage($paymentId, $latestError)
 /**
  * @param $paymentId
  * @param $latestError
+ *
  * @return void
  */
 function saveLastErrorMessageForChildOrder($paymentId, $latestError)
@@ -288,6 +292,7 @@ function updatePaymentStatus($paymentId, $paymentStatus)
 /**
  * @param $paymentId
  * @param $paymentStatus
+ *
  * @return void
  */
 function updatePaymentStatusForChildOrder($paymentId, $paymentStatus)
@@ -409,6 +414,7 @@ function getAltapayOrderDetails($orderID)
 
 /**
  * @param $orderID
+ *
  * @return array
  */
 function getAltapayChildOrderDetails($orderID)
@@ -550,6 +556,7 @@ function saveOrderReconciliationIdentifierIfNotExists($orderID, $reconciliation_
  * @param $reconciliation_identifier
  * @param $type
  * @param $shopOrderId
+ *
  * @return void
  */
 function saveChildOrderIdentifier($orderID, $reconciliation_identifier, $type, $shopOrderId)
@@ -963,6 +970,7 @@ function unlockCallback($lockFileName, $fileHandle)
  * @param $transaction_id
  * @param $amount
  * @param $shopOrderId
+ *
  * @return \API\PHP\Altapay\Response\AbstractResponse|\API\PHP\Altapay\Response\Embeds\Transaction[]|string
  */
 function capturePayment($order_id, $transaction_id, $amount, $shopOrderId)
@@ -1251,6 +1259,7 @@ function getLatestUniqueIdFromCartId($id_cart)
 /**
  * @param $id_cart
  * @param $unique_id
+ *
  * @return mixed
  */
 function getPaymentFormUrl($id_cart, $unique_id)
@@ -1427,7 +1436,7 @@ function createOrderOkCallback($postData, $record_id = null)
         } else {
             $order_id = Order::getOrderByCartId((int) ($cart->id));
             $order = new Order((int) $order_id);
-            if(in_array($transaction->TransactionStatus, ['bank_payment_finalized', 'captured'], true)){
+            if (in_array($transaction->TransactionStatus, ['bank_payment_finalized', 'captured'], true)) {
                 markChildOrderAsCaptured($transactionID);
             }
         }
