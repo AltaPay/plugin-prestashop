@@ -256,18 +256,32 @@
                 <br>
                 <div class="col-sm-12">
                     <div class="col-sm-6">
-                        {if $payment_url}
+                        {if !$reserved_payment_id && $additional_amount}
                             <div class="row row-ap">
-                                <div class="col-lg-6">
-                                    <a href="#" class="btn btn-primary btn-ap" id="send-email-btn"
-                                       data-paymentlink="{$payment_url}" data-url="{$sendemail_ajax_url}"
-                                       style="text-align: left;width: auto;">Email the payment link to receive the
-                                        additional amount ({$additional_amount})</a>
-                                    <div class="send-message"></div>
+                                <div class="col-lg-12" style="padding: 0;">
+                                    {if !$payment_url}
+                                        <label>
+                                            <span>Additional Payment</span>
+                                            <input id="order-additional-amount" class="form-control input" type="text"
+                                                   value="{$additional_amount}"/>
+                                        </label>
+                                        <label for="send-payment-link-email">
+                                            Send Email?
+                                            <input type="checkbox" id="send-payment-link-email" value="1" checked="checked">
+                                        </label>
+                                        <a href="#" class="btn btn-primary btn-ap" id="generate-payment-link-btn"
+                                           data-orderid="{$id_order}" data-url="{$generate_payment_link_ajax_url}"
+                                           style="text-align: left;width: auto;margin-bottom: 5px;">Generate Link</a>
+                                        <div class="send-message"></div>
+                                    {/if}
                                 </div>
-                                <div class="col-lg-12">
-                                    <p><strong>Payment Link: </strong> <a href="{$payment_url}">{$payment_url}</a></p>
-                                </div>
+                                {if $payment_url}
+                                    <div class="col-lg-12" style="padding: 0;">
+                                        <p>
+                                            <strong>Payment Link for additional amount: </strong> <a href="{$payment_url}">{$payment_url}</a>
+                                        </p>
+                                    </div>
+                                {/if}
                             </div>
                         {/if}
 
@@ -275,7 +289,7 @@
                             <div class="row row-ap">
                                 <div class="col-lg-6" style="padding: 0;">
                                     <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-capture"
-                                       data-url="{$sendemail_ajax_url}" data-orderid="{$id_order}"
+                                       data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
                                        data-remaining_amount="{$additional_amount}"
                                        style="text-align: left;width: auto;">
@@ -290,7 +304,7 @@
                             <div class="row row-ap">
                                 <div class="col-lg-6" style="padding: 0;">
                                     <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-refund"
-                                       data-url="{$sendemail_ajax_url}" data-orderid="{$id_order}"
+                                       data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
                                        data-remaining_amount="{$additional_amount}"
                                        style="text-align: left;width: auto;">

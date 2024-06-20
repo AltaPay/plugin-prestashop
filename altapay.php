@@ -2278,9 +2278,8 @@ class ALTAPAY extends PaymentModule
         if ($orderDetail->module != $this->name) {
             return false;
         }
-
+        $payment_amount = $orderDetail->total_paid;
         $results = $this->selectOrder($params);
-        $reservedAmount = 0;
 
         try {
             $reserved = 0;
@@ -2330,43 +2329,41 @@ class ALTAPAY extends PaymentModule
                 $shopOrderId = $pay->ShopOrderId;
             }
 
-            if ($orderDetail->total_paid > $reservedAmount) {
-                $this->altaPayOrderEdited($params);
-            }
-            $backorder_payment_url = getPaymentFormUrl($orderDetail->id_cart, $shopOrderId);
-            if ($backorder_payment_url) {
-                $childOrderId = $backorder_payment_url['unique_id'];
-                $parentShopOrderId = strstr($backorder_payment_url['unique_id'], '_', true);
+            if ($payment_amount > $reserved) {
+                $additional_amount = (float) $payment_amount - $reserved;
+                $payment_amount = $reserved;
+                $backorder_payment_url = getPaymentFormUrl($orderDetail->id_cart, $shopOrderId);
 
-                $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
-                $api->setShopOrderId($parentShopOrderId);
-                $paymentDetails = $api->call();
-                foreach ($paymentDetails as $pay) {
-                    $reservedAmount += $pay->ReservedAmount;
+                $childOrderId = null;
+                $childOrderPaymentID = null;
+
+                if ($backorder_payment_url) {
+                    $childOrderId = $backorder_payment_url['unique_id'];
+                    $parentShopOrderId = strstr($backorder_payment_url['unique_id'], '_', true);
+                    $resultChildOrder = $this->selectChildOrder($parentShopOrderId);
+                    $requireCapture = (bool) $resultChildOrder['requireCapture'];
+                    $transData = getTransactionStatus($resultChildOrder['payment_id']);
+
+                    if (isset($transData['refunded']) && !$transData['refunded']) {
+                        $this->smarty->assign('can_refund', true);
+                    }
+
+                    if (!$resultChildOrder) {
+                        $this->smarty->assign('payment_url', $backorder_payment_url['payment_form_url']);
+                    }
+
+                    if ($requireCapture) {
+                        $this->smarty->assign('is_require_capture', true);
+                    }
+
+                    $childOrderPaymentID = $resultChildOrder['payment_id'];
                 }
 
-                $additional_amount = (float) $orderDetail->total_paid - $reservedAmount;
-                $resultChildOrder = $this->selectChildOrder($parentShopOrderId);
-                $requireCapture = (bool) $resultChildOrder['requireCapture'];
-                $transData = getTransactionStatus($resultChildOrder['payment_id']);
-
-                if (isset($transData['refunded']) && !$transData['refunded']) {
-                    $this->smarty->assign('can_refund', true);
-                }
-
-                if (!$resultChildOrder) {
-                    $this->smarty->assign('payment_url', $backorder_payment_url['payment_form_url']);
-                }
-
-                if ($backorder_payment_url and $requireCapture) {
-                    $this->smarty->assign('is_require_capture', true);
-                }
-
-                $ajaxUrl = $this->context->link->getAdminLink('AdminPayByLink', true) . '&sendEmail&customer_id=' . $orderDetail->id_customer;
-                $this->context->smarty->assign('sendemail_ajax_url', $ajaxUrl);
+                $ajaxUrl = $this->context->link->getAdminLink('AdminPayByLink', true) . '&generatePaymentLink&customer_id=' . $orderDetail->id_customer;
+                $this->context->smarty->assign('generate_payment_link_ajax_url', $ajaxUrl);
                 $this->smarty->assign('id_order', $params['id_order']);
                 $this->smarty->assign('additional_amount', $additional_amount);
-                $this->smarty->assign('reserved_payment_id', $resultChildOrder['payment_id']);
+                $this->smarty->assign('reserved_payment_id', $childOrderPaymentID);
                 $this->smarty->assign('child_order_id', $childOrderId);
             }
 
@@ -2439,7 +2436,7 @@ class ALTAPAY extends PaymentModule
         $tname = $this->name;
         $this->smarty->assign('paymentinfo', $paymentinfo);
         $this->smarty->assign('payment_id', $results['payment_id']);
-        $this->smarty->assign('payment_amount', number_format($orderDetail->total_paid, 2, '.', ''));
+        $this->smarty->assign('payment_amount', number_format($payment_amount, 2, '.', ''));
         $this->smarty->assign('payment_captured', !$results['requireCapture']);
         $this->smarty->assign('this_path', $this->_path);
         $this->smarty->assign('ajax_url', $fet->getAdminLink('AdminModules') . '&configure=' . $tname . '&payment_actions');
@@ -3089,11 +3086,12 @@ class ALTAPAY extends PaymentModule
 
             $requestShopOrderId = $cgConf['uniqueid'];
             $requestAmount = $amount;
-            $requestOrderLines = $this->getOrderLines($cart);
             if (!empty($shopOrderId)) {
                 $requestShopOrderId = $shopOrderId;
                 $requestAmount = $remainingAmount;
                 $requestOrderLines = $this->orderAddedFromBackOffice($remainingAmount);
+            } else {
+                $requestOrderLines = $this->getOrderLines($cart);
             }
 
             $request->setType($type)->setTerminal($cgConf['terminal'])
@@ -3899,9 +3897,9 @@ class ALTAPAY extends PaymentModule
         return $results;
     }
 
-    public function altaPayOrderEdited($params)
+    public function altaPayOrderEdited($id_order, $amount)
     {
-        $order = new Order((int) $params['id_order']);
+        $order = new Order((int) $id_order);
         $orderId = $order->id;
         $cartId = (int) $order->id_cart;
         $orderDetails = $this->getEditOrderDetails($orderId);
@@ -3910,14 +3908,11 @@ class ALTAPAY extends PaymentModule
             $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
             $api->setShopOrderId($shopOrderId);
             $paymentDetails = $api->call();
-            $reserved = 0;
             $terminalName = '';
             foreach ($paymentDetails as $pay) {
-                $reserved += $pay->ReservedAmount;
                 $terminalName = $pay->Terminal;
             }
             $remoteId = getTerminalIdByRemoteName($terminalName);
-            $amount = (float) $order->total_paid - (float) $reserved;
 
             $currency_iso_code = null;
             $id_currency = $order->id_currency;
@@ -3930,9 +3925,11 @@ class ALTAPAY extends PaymentModule
                 $childOrders = Db::getInstance()->getValue('SELECT COUNT(*) FROM ' . _DB_PREFIX_ . 'altapay_transaction where
                 unique_id="' . $shopOrderId . '"');
                 if ($childOrders == 0) {
-                    $result = $this->createTransaction(null, null, $remoteId, null, false, $shopOrderId, $amount, $currency_iso_code, $order);
+                    $result = $this->createTransaction(null, null, $remoteId, null, false, $shopOrderId, (float) $amount, $currency_iso_code, $order);
                     if ($result['success'] && !empty($result['payment_form_url'])) {
                         saveTransactionData($result, $result['payment_form_url'], $cartId, $terminalName);
+
+                        return $result['payment_form_url'];
                     }
                 }
             }

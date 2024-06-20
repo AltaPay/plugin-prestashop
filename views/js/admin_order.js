@@ -115,13 +115,8 @@ var altapay = {
             }
         });
     },
-
-
-    // Perform release
-    sendemail: function (element) {
-        payment_link = $(element).data('paymentlink');
-
-        var namespace = this;
+    generatePaymentLink: function (element) {
+        order_id = $(element).data('orderid');
         $.ajax({
             type: 'POST',
             cache: false,
@@ -129,8 +124,9 @@ var altapay = {
             url: $(element).data('url'),
             data: {
                 action:'getUrl',
-                send_email: true,
-                payment_link: payment_link
+                send_email: $('#send-payment-link-email').prop("checked") ? 1 : 0,
+                amount: $('#order-additional-amount').val(),
+                order_id: order_id
             },
             success: function (result) {
                 if (result.status === 'success') {
@@ -141,7 +137,8 @@ var altapay = {
                 // Hide the message after 30 seconds
                 setTimeout(function () {
                     $('.send-message').empty();
-                }, 5000);
+                    document.location.reload();
+                }, 2000);
             },
             error: function (xhr, status, error) {
                 console.error(xhr.responseText);
@@ -149,7 +146,7 @@ var altapay = {
 
                 setTimeout(function () {
                     $('.send-message').empty();
-                }, 5000);
+                }, 2000);
             }
         });
     },
@@ -297,10 +294,10 @@ $(document).ready(function () {
         location.reload();
     });
 
-    $('#send-email-btn').click(function (e) {
+    $('#generate-payment-link-btn').click(function (e) {
         e.preventDefault();
         var element = this;
-        return altapay.sendemail(element);
+        return altapay.generatePaymentLink(element);
     });
 
     $('#btn-remaining-capture').click(function (e) {
