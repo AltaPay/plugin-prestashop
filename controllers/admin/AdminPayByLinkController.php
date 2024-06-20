@@ -31,12 +31,18 @@ class AdminPayByLinkController extends ModuleAdminController
      */
     public function ajaxProcessGetUrl()
     {
-        $paymentLink = Tools::getValue('payment_link');
+        $amount = Tools::getValue('amount');
+        $order_id = Tools::getValue('order_id');
+        $send_email = Tools::getValue('send_email');
+        $paymentLink = $this->module->altaPayOrderEdited($order_id, $amount);
 
-        if (Tools::isSubmit('send_email')) {
+        if ($send_email && $paymentLink) {
             $customerId = (int) Tools::getValue('customer_id');
-            $this->sendCustomEmail($customerId, $paymentLink);
+            $this->sendCustomEmail($customerId, $paymentLink, $amount, $order_id);
         }
+
+        echo json_encode(['status' => 'success', 'message' => 'Success!']);
+        exit();
     }
 
     /**
@@ -158,22 +164,30 @@ class AdminPayByLinkController extends ModuleAdminController
     /**
      * Sends a custom email containing a payment link to the specified customer.
      *
-     * @param int $customerId
-     * @param string $paymentUrl
+     * @param $customerId
+     * @param $paymentUrl
+     * @param $amount
+     * @param $order_id
      *
      * @return void
      */
-    protected function sendCustomEmail($customerId, $paymentUrl)
+    protected function sendCustomEmail($customerId, $paymentUrl, $amount, $order_id)
     {
         $customer = new Customer($customerId);
         if (Validate::isLoadedObject($customer)) {
             $to = $customer->email;
             $toName = $customer->firstname . ' ' . $customer->lastname;
             $subject = $this->l('Action Required: Payment Link for Outstanding Amount');
-            $template = 'addition_item_email';
+            if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+                $template = 'addition_item_email';
+            } else {
+                $template = 'addition_item_email16';
+            }
             $templateVars = [
                 '{customer_name}' => $customer->firstname . ' ' . $customer->lastname,
                 '{payment_link}' => $paymentUrl,
+                '{amount}' => $amount,
+                '{id_order}' => $order_id,
             ];
             $from = Configuration::get('PS_SHOP_EMAIL');
             $fromName = Configuration::get('PS_SHOP_NAME');
@@ -196,11 +210,14 @@ class AdminPayByLinkController extends ModuleAdminController
                 );
 
                 echo json_encode(['status' => 'success', 'message' => 'Email sent successfully!']);
+                exit();
             } catch (Exception $e) {
                 echo json_encode(['status' => 'error', 'message' => 'Failed to send email.']);
+                exit();
             }
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Invalid customer ID.']);
+            exit();
         }
     }
 
