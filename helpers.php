@@ -167,7 +167,7 @@ function markChildOrderAsCaptured($paymentId)
     $result = getTransactionStatus($paymentId);
 
     if (!isset($result['captured'])) {
-        $sqlOrderLine = 'INSERT INTO ' . _DB_PREFIX_ . 'altapay_orderlines (altapay_payment_id, captured,refunded)  VALUES("' . pSQL($paymentId) . '", "1", "0")';
+        $sqlOrderLine = 'INSERT INTO ' . _DB_PREFIX_ . 'altapay_orderlines (altapay_payment_id, product_id, captured,refunded)  VALUES("' . pSQL($paymentId) . '", "1", "1", "0")';
         Db::getInstance()->Execute($sqlOrderLine);
     }
 

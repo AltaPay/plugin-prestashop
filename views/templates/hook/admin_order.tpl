@@ -291,10 +291,10 @@
                                     <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-capture"
                                        data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
-                                       data-remaining_amount="{$additional_amount}"
+                                       data-remaining_amount="{$additional_amount_reserved}"
                                        style="text-align: left;width: auto;">
                                         Capture Additional Amount
-                                        ({$additional_amount})
+                                        ({$additional_amount_reserved})
                                     </a>
                                 </div>
                             </div>
@@ -306,10 +306,10 @@
                                     <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-refund"
                                        data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
-                                       data-remaining_amount="{$additional_amount}"
+                                       data-remaining_amount="{$additional_amount_reserved}"
                                        style="text-align: left;width: auto;">
                                         Refund Additional Amount
-                                        ({$additional_amount})
+                                        ({$additional_amount_reserved})
                                     </a>
                                 </div>
                             </div>
@@ -363,7 +363,7 @@
                         </table>
                     </div>
                         {if $child_order_id}
-                            <h3>New Item Added to Order</h3>
+                            <h3 style="margin: 0;">New Item Added to Order</h3>
                             <div class="table-responsive">
                                 <table class="table table-bordered">
                                     <tbody>
@@ -378,6 +378,14 @@
                                     <tr>
                                         <td>Additional Amount</td>
                                         <td>{$additional_amount}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Additional Amount Reserved</td>
+                                        <td>{$additional_amount_reserved}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Additional Amount Captured</td>
+                                        <td>{$child_order_captured}</td>
                                     </tr>
                                     </tbody>
                                 </table>
