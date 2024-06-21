@@ -178,6 +178,12 @@ class AdminPayByLinkController extends ModuleAdminController
             $to = $customer->email;
             $toName = $customer->firstname . ' ' . $customer->lastname;
             $subject = $this->l('Action Required: Payment Link for Outstanding Amount');
+            $order = new Order($order_id);
+            // Get currency object
+            $currency = new Currency($order->id_currency);
+            // Get currency symbol
+            $currencySymbol = $currency->sign;
+
             if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
                 $template = 'addition_item_email';
             } else {
@@ -209,7 +215,7 @@ class AdminPayByLinkController extends ModuleAdminController
                     null
                 );
 
-                echo json_encode(['status' => 'success', 'message' => 'Email sent successfully!']);
+                echo json_encode(['status' => 'success', 'message' => 'Payment link of ' . $currencySymbol . ''. $amount . ' sent to ' . $customer->email]);
                 exit();
             } catch (Exception $e) {
                 echo json_encode(['status' => 'error', 'message' => 'Failed to send email.']);
