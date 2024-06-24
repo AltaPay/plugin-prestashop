@@ -1476,7 +1476,13 @@ function createOrderOkCallback($postData, $record_id = null)
         createAltapayOrder($response, $order, 'succeeded', $isChildOrder);
         unlockCallback($lockFileName, $lockFileHandle);
         markAltaPayCallbackRecord($record_id);
-        Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
+        if($isChildOrder) {
+            $redirectUrl = Context::getContext()->link->getModuleLink('altapay', 'orderconfirmation', array('id_order' => $order->id));
+        } else {
+            $redirectUrl = Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
+        }
+
+        Tools::redirect($redirectUrl);
     } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
         $message = $e->getResponse()->getBody();
     } catch (API\PHP\Altapay\Exceptions\ResponseHeaderException $e) {
