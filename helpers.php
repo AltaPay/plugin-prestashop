@@ -1140,9 +1140,11 @@ function updateChildOrder($cart, $order, $response, $shopOrderId, $lockFileName,
 
             saveChildOrderIdentifier($order->id, $reconciliation_identifier, $reconciliation_type, $shopOrderId);
         }
-        $customer = new Customer($cart->id_customer);
         unlockCallback($lockFileName, $lockFileHandle);
-        Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
+        // Check if an order exist, update it and redirect to success
+        $redirectUrl = Context::getContext()->link->getModuleLink('altapay', 'orderconfirmation', ['id_order' => $order->id]);
+
+        Tools::redirect($redirectUrl);
     } elseif ($transactionStatus === 'epayment_declined') {
         // Update payment status to 'declined'
         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_child_order` 
@@ -1424,7 +1426,7 @@ function createOrderOkCallback($postData, $record_id = null)
         }
 
         $currencyPaid = Currency::getIdByIsoCode($transaction->MerchantCurrencyAlpha);
-        $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
+        $amountPaid = $isChildOrder ? $postData['amount'] : $cart->getOrderTotal(true, Cart::BOTH);
         $customer = new Customer($cart->id_customer);
         $transactionID = $transaction->TransactionId;
         $ccToken = $response->creditCardToken;
