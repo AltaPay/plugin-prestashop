@@ -144,6 +144,7 @@ class ALTAPAY extends PaymentModule
 
             if (!$result) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
                 return false;
             }
         }
@@ -2349,7 +2350,7 @@ class ALTAPAY extends PaymentModule
                     $childOrderAmountReserved = $child_order_transaction['amount'];
                     $parentShopOrderId = strstr($childOrderId, '_', true);
                     $resultChildOrder = $this->selectChildOrder($parentShopOrderId);
-                    if($resultChildOrder){
+                    if ($resultChildOrder) {
                         $requireCapture = (bool) $resultChildOrder['requireCapture'];
                         $transData = getTransactionStatus($resultChildOrder['payment_id']);
                     }

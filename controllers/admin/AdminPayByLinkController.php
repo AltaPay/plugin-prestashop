@@ -215,7 +215,7 @@ class AdminPayByLinkController extends ModuleAdminController
                     null
                 );
 
-                echo json_encode(['status' => 'success', 'message' => 'Payment link of ' . $currencySymbol . ''. $amount . ' sent to ' . $customer->email]);
+                echo json_encode(['status' => 'success', 'message' => 'Payment link of ' . $currencySymbol . '' . $amount . ' sent to ' . $customer->email]);
                 exit();
             } catch (Exception $e) {
                 echo json_encode(['status' => 'error', 'message' => 'Failed to send email.']);
