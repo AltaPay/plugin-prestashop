@@ -423,7 +423,7 @@ function getAltapayChildOrderDetails($orderID)
         return false;
     }
 
-    $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_child_order` WHERE id_order =' . (int) $orderID;
+    $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_child_order` WHERE id_order =' . $orderID;
 
     return Db::getInstance()->executeS($sql);
 }
@@ -720,7 +720,7 @@ function updateParentTransIdChildOrder($id_order, $paymentId)
 
     $sql = 'UPDATE 
     ' . _DB_PREFIX_ . 'altapay_child_order SET payment_id = \'' . pSQL($paymentId) . '\' WHERE id_order='
-        . (int) $id_order . ' LIMIT 1';
+        . $id_order . ' LIMIT 1';
 
     return Db::getInstance()->Execute($sql);
 }
