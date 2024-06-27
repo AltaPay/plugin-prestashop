@@ -49,7 +49,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                 unlockCallback($lockFileName, $lockFileHandle);
                 exit('Could not load cart - exiting');
             }
-            $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
+            $amountPaid = $isChildOrder ? $response->amount : $cart->getOrderTotal(true, Cart::BOTH);
             $customer = new Customer($cart->id_customer);
             $transactionID = $transaction->TransactionId;
             $fraudPayment = handleFraudPayment($response, $transaction);
@@ -73,7 +73,13 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                         }
                     }
                     unlockCallback($lockFileName, $lockFileHandle);
-                    Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . (int) $order->id . '&key=' . $customer->secure_key);
+                    if ($isChildOrder) {
+                        $redirectUrl = Context::getContext()->link->getModuleLink('altapay', 'orderconfirmation', ['id_order' => $order->id]);
+                    } else {
+                        $redirectUrl = 'index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . (int) $order->id . '&key=' . $customer->secure_key;
+                    }
+
+                    Tools::redirect($redirectUrl);
                 }
             }
 
@@ -88,7 +94,13 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
                     // Refund or Release incoming payment request
                     refundOrReleaseTransactionByStatus($transaction);
                     unlockCallback($lockFileName, $lockFileHandle);
-                    Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . (int) $order_id . '&key=' . $customer->secure_key);
+                    if ($isChildOrder) {
+                        $redirectUrl = Context::getContext()->link->getModuleLink('altapay', 'orderconfirmation', ['id_order' => $order_id]);
+                    } else {
+                        $redirectUrl = 'index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . (int) $order_id . '&key=' . $customer->secure_key;
+                    }
+
+                    Tools::redirect($redirectUrl);
                 }
             }
 
