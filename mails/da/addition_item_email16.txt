@@ -1,0 +1,12 @@
+Link til betaling af ordre {id_order}
+
+Hej {customer_name}
+
+Vi har oprettet et link til nem betaling af ordre {id_order}.
+Beløbet til betaling er {amount} kr.
+
+Når du klikker på linket åbnes vindue hvor du får mulighed for at vælge betalingsmetode og gennemføre betalingen:
+{payment_link}
+
+Mvh.
+{shop_name}

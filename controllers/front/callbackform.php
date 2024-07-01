@@ -31,16 +31,17 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
     {
         $css_dir = null;
         $postData = getAltaPayCallbackData();
-        $cart = getCartFromUniqueId($postData['shop_orderid']);
+        $shopOrderId = strstr($postData['shop_orderid'], '_', true) ?: $postData['shop_orderid'];
+
+        $cart = getCartFromUniqueId($shopOrderId);
         $checksum = !empty($postData['checksum']) ? $postData['checksum'] : '';
-        $terminalRemoteName = getCvvLess($cart->id, $postData['shop_orderid']);
-        $terminal_name = getTransactionTerminalByUniqueId($postData['shop_orderid']);
+        $terminalRemoteName = getCvvLess($cart->id, $shopOrderId);
+        $terminal_name = getTransactionTerminalByUniqueId($shopOrderId);
         $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
 
         if (!empty($checksum) and !empty($secret) and calculateChecksum($postData, $secret) !== $checksum) {
             exit('Invalid request');
         }
-
         $themeName = Context::getContext()->shop->theme_name;
         $this->context->smarty->assign('theme_name', $themeName);
         $this->context->smarty->assign('cssClass', $terminalRemoteName);
@@ -50,6 +51,9 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
         }
         $this->context->smarty->assign('stylingclass', $payment_style);
         $this->context->smarty->assign('summarydetails', $cart->getSummaryDetails());
+        if (strpos($postData['shop_orderid'], '_') !== false) {
+            $this->context->smarty->assign('amount', $postData['amount']);
+        }
         // Different conventions of assigning details for Version 1.6 and 1.7 respectively
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             $this->context->smarty->assign('pathUri', $this->module->getPathUri());

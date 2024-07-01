@@ -1,0 +1,7 @@
+Hallo {customer_name},
+
+Vielen Dank für Ihre Bestellung bei {shop_name}!
+
+Bitte klicken Sie auf den Link, um die Zahlung abzuschließen: [here]({payment_link}).
+
+[{shop_name}]({shop_url})

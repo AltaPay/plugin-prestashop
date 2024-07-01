@@ -1,0 +1,12 @@
+Link to order payment {id_order}
+
+Hello {customer_name}
+
+We have created a link for easy order payment {id_order}.
+The amount to pay is {amount} kr.
+
+When you click on the link, a window will open where you can select the payment method and complete the payment:
+{payment_link}
+
+Regards.
+{shop_name}

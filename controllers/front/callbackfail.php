@@ -54,6 +54,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
         try {
             $response = $callback->call();
             $shopOrderId = $response->shopOrderId;
+            $isChildOrder = isChildOrder($shopOrderId);
             $cardHolderMessageMustBeShown = false;
             $merchantError = '';
 
@@ -84,7 +85,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             }
             if ($transaction->ReservedAmount > 0) {
                 $currencyPaid = Currency::getIdByIsoCode($transaction->MerchantCurrencyAlpha);
-                $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
+                $amountPaid = $isChildOrder ? $response->amount : $cart->getOrderTotal(true, Cart::BOTH);
                 $customer = new Customer($cart->id_customer);
                 $transactionID = $transaction->TransactionId;
                 $ccToken = $response->creditCardToken;
@@ -94,15 +95,18 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
 
                 //Check if this is a duplicate callback
                 if (!empty($shopOrderId)) {
+                    $tableName = $isChildOrder ? 'altapay_child_order' : 'altapay_order';
+
                     $condition = "unique_id = '" . pSQL($shopOrderId) . "' AND paymentStatus = 'succeeded'";
-                    $query = 'SELECT id_order FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE ' . $condition;
+                    $query = 'SELECT id_order FROM `' . _DB_PREFIX_ . $tableName . '` WHERE ' . $condition;
+
                     $result = Db::getInstance()->executeS($query);
                     // Check if the order already saved with the success status
                     if (!empty($result)) {
                         // Check if an order exist
                         $order = new Order((int) $result[0]['id_order']);
                         if (Validate::isLoadedObject($order) and $paymentType === 'paymentAndCapture' and $response->requireCapture === true) {
-                            $response = capturePayment($order->id, $transactionID, $amountPaid);
+                            $response = capturePayment($order->id, $transactionID, $amountPaid, $shopOrderId);
                             updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
                         }
                         unlockCallback($lockFileName, $lockFileHandle);
@@ -113,7 +117,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                 // Check if this is a duplicate payment
                 $order_id = Order::getOrderByCartId((int) ($cart->id));
                 if (!empty($order_id)) {
-                    $altapay_order_details = getAltapayOrderDetails($order_id);
+                    $altapay_order_details = $isChildOrder ? getAltapayChildOrderDetails($order_id) : getAltapayOrderDetails($order_id);
                     if (!empty($altapay_order_details)
                         and $altapay_order_details[0]['paymentStatus'] === 'succeeded'
                         and $altapay_order_details[0]['payment_id'] != $transactionID
@@ -121,36 +125,52 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                         // Refund or Release incoming payment request
                         refundOrReleaseTransactionByStatus($transaction);
                         unlockCallback($lockFileName, $lockFileHandle);
-                        Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . (int) $order_id . '&key=' . $customer->secure_key);
+                        if ($isChildOrder) {
+                            $redirectUrl = Context::getContext()->link->getModuleLink('altapay', 'orderconfirmation', ['id_order' => $order_id]);
+                        } else {
+                            $redirectUrl = 'index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . (int) $order_id . '&key=' . $customer->secure_key;
+                        }
+
+                        Tools::redirect($redirectUrl);
                     }
                 }
 
                 // Redirect to payment selection page
                 if ($fraudPayment['payment_status']) {
                     saveLogs($transaction->FraudExplanation);
-                    redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
+                    !$isChildOrder ? redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle) : exit('Error in the Payment!');
                 } else {
                     // Check if an order exist
-                    $order = getOrderFromUniqueId($shopOrderId);
+                    $order = $isChildOrder ? getChildOrderFromUniqueId($shopOrderId) : getOrderFromUniqueId($shopOrderId);
+
                     if (Validate::isLoadedObject($order)) {
-                        updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
-                    } else {
+                        if ($isChildOrder) {
+                            updateChildOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
+                        } else {
+                            updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
+                        }
+                    } elseif (!$isChildOrder) {
                         createOrder($response, $currencyPaid, $cart, $orderStatus);
                     }
                 }
                 // Load order
-                $order = new Order((int) $this->module->currentOrder);
+                if ($isChildOrder) {
+                    $order_id = Order::getOrderByCartId((int) ($cart->id));
+                    $order = new Order((int) $order_id);
+                } else {
+                    $order = new Order((int) $this->module->currentOrder);
+                }
 
                 if (Validate::isLoadedObject($order)) {
                     if (!empty($transaction->ReconciliationIdentifiers)) {
                         $reconciliation_identifier = $transaction->ReconciliationIdentifiers[0]->Id;
                         $reconciliation_type = $transaction->ReconciliationIdentifiers[0]->Type;
-                        saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $reconciliation_type);
+                        saveOrderReconciliationIdentifier($order->id, $reconciliation_identifier, $shopOrderId, $reconciliation_type);
                     }
                     if ($paymentType === 'paymentAndCapture' && $response->requireCapture === true) {
-                        $response = capturePayment($order->id, $transactionID, $amountPaid);
+                        $response = capturePayment($order->id, $transactionID, $amountPaid, $shopOrderId);
                         $orderStatusCaptured = (int) Configuration::get('PS_OS_PAYMENT');
-                        if ($orderStatusCaptured != $orderStatus) {
+                        if (($orderStatusCaptured != $orderStatus) && !$isChildOrder) {
                             setOrderStateIfNotExistInHistory($order, $orderStatusCaptured);
                         }
                     }
@@ -168,9 +188,15 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                     }
 
                     // Log order
-                    createAltapayOrder($response, $order);
+                    createAltapayOrder($response, $order, 'succeeded', $isChildOrder);
                     unlockCallback($lockFileName, $lockFileHandle);
-                    Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
+                    if ($isChildOrder) {
+                        $redirectUrl = Context::getContext()->link->getModuleLink('altapay', 'orderconfirmation', ['id_order' => $order->id]);
+                    } else {
+                        $redirectUrl = 'index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . (int) $order->id . '&key=' . $customer->secure_key;
+                    }
+
+                    Tools::redirect($redirectUrl);
                 } else {
                     saveLogs('Something went wrong');
                     redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
@@ -188,11 +214,17 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
 
         // Successful order exists, set its status to cancel
         $order = getOrderFromUniqueId($postData['shop_orderid']);
+
         if (Validate::isLoadedObject($order) and $transaction->ReservedAmount == 0) {
-            updatePaymentStatus($postData['transaction_id'], $postData['status']);
-            saveLastErrorMessage($postData['transaction_id'], $errorMessage);
-            $orderStatusCancelled = (int) Configuration::get('PS_OS_CANCELED');
-            setOrderStateIfNotExistInHistory($order, $orderStatusCancelled);
+            if ($isChildOrder) {
+                updatePaymentStatusForChildOrder($postData['transaction_id'], $postData['status']);
+                saveLastErrorMessageForChildOrder($postData['transaction_id'], $errorMessage);
+            } else {
+                updatePaymentStatus($postData['transaction_id'], $postData['status']);
+                saveLastErrorMessage($postData['transaction_id'], $errorMessage);
+                $orderStatusCancelled = (int) Configuration::get('PS_OS_CANCELED');
+                setOrderStateIfNotExistInHistory($order, $orderStatusCancelled);
+            }
         }
 
         $status = strtolower($response->Result);

@@ -245,7 +245,6 @@
                                data-payment-id="{$payment_id}">Refund</a>
                         </div>
                     </div>
-
                     <div class="row row-ap">
                         <div class="col-lg-6">
                             <a href="#" class="btn btn-danger" id="btn-release" data-url="{$ajax_url}"
@@ -255,6 +254,69 @@
 
                 </div>
                 <br>
+
+                <div class="col-sm-12">
+                    <div class="col-sm-6">
+                        {if !$reserved_payment_id && $additional_amount}
+                            <div class="row row-ap">
+                                <div class="col-lg-12" style="padding: 0;">
+                                    {if !$payment_url}
+                                    <label>
+                                        <span>Additional Payment</span>
+                                        <input id="order-additional-amount" class="form-control input" type="text"
+                                               value="{$additional_amount}"/>
+                                    </label>
+                                    <label for="send-payment-link-email">
+                                        Send Email?
+                                        <input type="checkbox" id="send-payment-link-email" value="1" checked="checked">
+                                    </label>
+                                    <a href="#" class="btn btn-primary btn-ap" id="generate-payment-link-btn"
+                                       data-orderid="{$id_order}" data-url="{$generate_payment_link_ajax_url}"
+                                       style="text-align: left;width: auto;margin-bottom: 5px;">Generate Link</a>
+                                    <div class="send-message"></div>
+                                    {/if}
+                                </div>
+                                {if $payment_url}
+                                    <div class="col-lg-12" style="padding: 0;">
+                                        <p>
+                                            <strong>Payment Link for additional amount: </strong> <a href="{$payment_url}">{$payment_url}</a>
+                                        </p>
+                                    </div>
+                                {/if}
+                            </div>
+                        {/if}
+
+                        {if $is_require_capture}
+                            <div class="row row-ap">
+                                <div class="col-lg-6" style="padding: 0;">
+                                    <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-capture"
+                                       data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
+                                       data-payment-id="{$reserved_payment_id}"
+                                       data-remaining_amount="{$additional_amount_reserved}"
+                                       style="text-align: left;width: auto;">
+                                        Capture Additional Amount
+                                        ({$additional_amount_reserved})
+                                    </a>
+                                </div>
+                            </div>
+                        {/if}
+
+                        {if $can_refund}
+                            <div class="row row-ap">
+                                <div class="col-lg-6" style="padding: 0;">
+                                    <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-refund"
+                                       data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
+                                       data-payment-id="{$reserved_payment_id}"
+                                       data-remaining_amount="{$additional_amount_reserved}"
+                                       style="text-align: left;width: auto;">
+                                        Refund Additional Amount
+                                        ({$additional_amount_reserved})
+                                    </a>
+                                </div>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
                 <div class="col-lg-12" style="margin-top:2%;">
                     <!--<img src="{$this_path}img/altapay_logo.png" width="130" height="54" class="img-responsive">-->
 
@@ -301,6 +363,35 @@
                             </tbody>
                         </table>
                     </div>
+                        {if $child_order_id}
+                            <h3>New Item Added to Order</h3>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <tbody>
+                                    <tr>
+                                        <td>Transaction ID (For additional item)</td>
+                                        <td>{$child_order_id}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Payment ID</td>
+                                        <td>{$reserved_payment_id}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Additional Amount</td>
+                                        <td>{$additional_amount}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Additional Amount Reserved</td>
+                                        <td>{$additional_amount_reserved}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Additional Amount Captured</td>
+                                        <td>{$child_order_captured}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        {/if}
                 </div>
             </div>
 
