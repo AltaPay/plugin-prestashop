@@ -367,7 +367,11 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
         Db::getInstance()->Execute($sql);
 
         if (Validate::isLoadedObject($current_order)) {
-            $current_order->addOrderPayment($transaction->ReservedAmount, $paymentTerminal, $uniqueId);
+            try {
+                $current_order->addOrderPayment($transaction->ReservedAmount, $paymentTerminal, $uniqueId);
+            } catch (Exception $e) {
+                PrestaShopLogger::addLog("Child shop_orderid $uniqueId, Parent ID : $current_order->id, {$e->getMessage()}", 4);
+            }
         }
     } else {
         //insert into order log
@@ -387,12 +391,16 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
         Db::getInstance()->Execute($sql);
 
         if (Validate::isLoadedObject($current_order)) {
-            $payment = $current_order->getOrderPaymentCollection();
-            if (isset($payment[0])) {
-                $payment[0]->transaction_id = pSQL($uniqueId);
-                $payment[0]->card_number = pSQL($cardMask);
-                $payment[0]->card_brand = pSQL($cardBrand);
-                $payment[0]->save();
+            try {
+                $payment = $current_order->getOrderPaymentCollection();
+                if (isset($payment[0])) {
+                    $payment[0]->transaction_id = pSQL($uniqueId);
+                    $payment[0]->card_number = pSQL($cardMask);
+                    $payment[0]->card_brand = pSQL($cardBrand);
+                    $payment[0]->save();
+                }
+            } catch (Exception $e) {
+                PrestaShopLogger::addLog("Order ID : $current_order->id, {$e->getMessage()}", 4);
             }
         }
     }
