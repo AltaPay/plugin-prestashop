@@ -30,7 +30,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.8.0';
+        $this->version = '3.8.1';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.6'];
@@ -2651,7 +2651,10 @@ class ALTAPAY extends PaymentModule
         }
 
         $this->context->controller->addJquery();
-        $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
+        // Check if the current controller is 'order'
+        if ($this->context->controller->php_self == 'order') {
+            $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
+        }
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             Media::addJsDef(['cardwalleturl' => $this->context->link->getModuleLink('altapay', 'cardwalletsession')]);
             Media::addJsDef(['cardwalletresponseurl' => $this->context->link->getModuleLink('altapay', 'payment')]);
