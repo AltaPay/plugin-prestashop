@@ -2768,7 +2768,7 @@ class ALTAPAY extends PaymentModule
      * @return void
      */
     public function hookActionFrontControllerSetMedia($params)
-    {       
+    {
         $cart = $this->context->cart;
         $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
         $currency = new Currency($cart->id_currency);
