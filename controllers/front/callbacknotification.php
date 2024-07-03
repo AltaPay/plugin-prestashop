@@ -39,7 +39,8 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $transaction = getTransaction($response);
             $transactionId = $transaction->TransactionId;
             $shopOrderId = $response->shopOrderId;
-
+            $isChildOrder = isChildOrder($shopOrderId);
+            $tableName = $isChildOrder ? 'altapay_child_order' : 'altapay_order';
             // Load the cart
             $cart = getCartFromUniqueId($shopOrderId);
             if (!Validate::isLoadedObject($cart)) {
@@ -48,22 +49,28 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             }
             if (!empty($shopOrderId)) {
                 $condition = "unique_id = '" . pSQL($shopOrderId) . "' AND paymentStatus = 'succeeded'";
-                $query = 'SELECT id_order, payment_id FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE ' . $condition;
+                $query = 'SELECT id_order, payment_id FROM `' . _DB_PREFIX_ . $tableName . '` WHERE ' . $condition;
                 $result = Db::getInstance()->executeS($query);
+
                 // Check if the order already saved with the success status
                 if (!empty($result)) {
                     if ($postData['status'] === 'succeeded' and $postData['payment_status'] === 'bank_payment_refunded'
                         and $transactionId == $result[0]['payment_id']) {
-                        $order = getOrderFromUniqueId($shopOrderId);
-                        if (Validate::isLoadedObject($order)) {
-                            $refundStatus = Configuration::get('manual_refund_payments_status');
-                            if ($refundStatus !== $this->module::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS) {
-                                $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
+                        if ($isChildOrder) {
+                            $order = getChildOrderFromUniqueId($shopOrderId);
+                        } else {
+                            $order = getOrderFromUniqueId($shopOrderId);
+                            if (Validate::isLoadedObject($order)) {
+                                $refundStatus = Configuration::get('manual_refund_payments_status');
+                                if ($refundStatus !== $this->module::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS) {
+                                    $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
+                                }
                             }
-                            saveReconciliationDetails($response, $order);
-                            unlockCallback($lockFileName, $lockFileHandle);
-                            exit('Order refund status updated.');
                         }
+
+                        saveReconciliationDetails($response, $order);
+                        unlockCallback($lockFileName, $lockFileHandle);
+                        exit('Order refund status updated.');
                     } else {
                         unlockCallback($lockFileName, $lockFileHandle);
                         exit('Order already Processed!!');
@@ -74,7 +81,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             // Check if this is a duplicate payment
             $order_id = Order::getOrderByCartId((int) ($cart->id));
             if (!empty($order_id)) {
-                $altapay_order_details = getAltapayOrderDetails($order_id);
+                $altapay_order_details = $isChildOrder ? getAltapayChildOrderDetails($order_id) : getAltapayOrderDetails($order_id);
                 if (!empty($altapay_order_details)
                     and $altapay_order_details[0]['paymentStatus'] === 'succeeded'
                     and $altapay_order_details[0]['payment_id'] != $transactionId
@@ -97,20 +104,26 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             $auth_statuses = ['preauth', 'invoice_initialized', 'recurring_confirmed'];
             $captured_statuses = ['bank_payment_finalized', 'captured'];
             $order_state = (int) Configuration::get('authorized_payments_status');
-            if (empty($order_state)) {
-                $order_state = (int) Configuration::get('PS_OS_PAYMENT');
-            }
-            if (in_array($transactionStatus, $captured_statuses, true)) {
-                $order_state = (int) Configuration::get('PS_OS_PAYMENT');
-            }
 
+            if (!$isChildOrder) {
+                if (empty($order_state)) {
+                    $order_state = (int) Configuration::get('PS_OS_PAYMENT');
+                }
+                if (in_array($transactionStatus, $captured_statuses, true)) {
+                    $order_state = (int) Configuration::get('PS_OS_PAYMENT');
+                }
+            }
             $resultStatus = strtolower($response->Result);
             updateTransactionStatus($shopOrderId, $resultStatus);
+
             // Check if an order exist
             $order = getOrderFromUniqueId($shopOrderId);
             $fraudPayment = handleFraudPayment($response, $transaction);
             $errorStatus = ['cancelled', 'declined', 'error', 'failed', 'incomplete', 'open'];
             if (!in_array($resultStatus, $errorStatus, true) && !$fraudPayment['payment_status']) {
+                if ($isChildOrder) {
+                    $this->processChildOrder($cart, $transactionId, $response, $transactionStatus, $auth_statuses, $captured_statuses, $lockFileName, $lockFileHandle);
+                }
                 // NO ORDER FOUND, CREATE?
                 if (!Validate::isLoadedObject($order)) {
                     // Payment successful - create order
@@ -150,7 +163,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                             $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
                             $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
 
-                            saveOrderReconciliationIdentifierIfNotExists($currentOrder->id, $reconciliation_identifier, $reconciliation_type);
+                            saveOrderReconciliationIdentifierIfNotExists($currentOrder->id, $reconciliation_identifier, $reconciliation_type, $shopOrderId);
                         }
                         unlockCallback($lockFileName, $lockFileHandle);
                         exit('Order created');
@@ -174,17 +187,12 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
                     SET `paymentStatus` = \'succeeded\' WHERE `id_order` = ' . (int) $order->id;
                         Db::getInstance()->Execute($sql);
-                        $payment = $order->getOrderPaymentCollection();
-                        if (isset($payment[0])) {
-                            $payment[0]->transaction_id = pSQL($shopOrderId);
-                            $payment[0]->save();
-                        }
 
                         if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
                             $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
                             $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
 
-                            saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type);
+                            saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type, $shopOrderId);
                         }
                         unlockCallback($lockFileName, $lockFileHandle);
                         exit('Order status updated to Accepted');
@@ -205,6 +213,13 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         exit('Unrecognized status received ' . $transactionStatus);
                     }
                 }
+            } elseif (Validate::isLoadedObject($order) and $transactionStatus === 'epayment_declined') {
+                // Update payment status to 'declined'
+                $sql = 'UPDATE `' . _DB_PREFIX_ . $tableName . '`
+                        SET `paymentStatus` = \'declined\' WHERE `id_order` = ' . (int) $order->id;
+                Db::getInstance()->Execute($sql);
+                unlockCallback($lockFileName, $lockFileHandle);
+                exit('Order status updated to Error');
             } else {
                 updateTransactionStatus($shopOrderId, $resultStatus);
                 // Unexpected scenario
@@ -237,5 +252,44 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
         );
         unlockCallback($lockFileName, $lockFileHandle);
         exit($message);
+    }
+
+    public function processChildOrder($cart, $transactionId, $response, $transactionStatus, $auth_statuses, $captured_statuses, $lockFileName, $lockFileHandle)
+    {
+        $shopOrderId = $response->shopOrderId;
+        // Check if an order exist
+        $order = getChildOrderFromUniqueId($shopOrderId);
+        if (!Validate::isLoadedObject($order)) {
+            $order_id = Order::getOrderByCartId((int) ($cart->id));
+            $order = new Order((int) $order_id);
+            createAltapayOrder($response, $order, 'succeeded', true);
+            if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
+                $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
+                $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+
+                saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type, $shopOrderId);
+            }
+            unlockCallback($lockFileName, $lockFileHandle);
+            exit('Store transaction details for the Item Added from Back order');
+        } elseif (Validate::isLoadedObject($order)) {
+            if (in_array($transactionStatus, $auth_statuses, true) or in_array($transactionStatus, $captured_statuses, true)) {
+                // Update payment status to 'succeeded'
+                $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_child_order` 
+                    SET `paymentStatus` = \'succeeded\' WHERE `unique_id` = \'' . pSQL($shopOrderId) . "'";
+                Db::getInstance()->Execute($sql);
+
+                if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
+                    $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
+                    $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+
+                    saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type, $shopOrderId);
+                }
+                if (in_array($transactionStatus, $captured_statuses, true)) {
+                    markChildOrderAsCaptured($transactionId);
+                }
+                unlockCallback($lockFileName, $lockFileHandle);
+                exit('Child Order status updated');
+            }
+        }
     }
 }

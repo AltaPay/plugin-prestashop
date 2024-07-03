@@ -17,6 +17,17 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
             $this->redirectBackToCheckout('altapay_cancel=1&isPaymentStep=true&step=3#altapay_cancel');
         }
 
+        if (isChildOrder($shopOrderId)) {
+            $recordExist = Db::getInstance()->getRow('SELECT * FROM ' . _DB_PREFIX_ . 'altapay_child_order ' .
+                'WHERE unique_id = \'' . pSQL($shopOrderId) . '\'');
+
+            if (!$recordExist) {
+                $this->ajaxDie(json_encode(['success' => false]));
+            } elseif ($recordExist['paymentStatus'] !== 'succeeded') {
+                $this->redirectBackToCheckout('altapay_cancel=1&isPaymentStep=true&step=3#altapay_cancel');
+            }
+        }
+
         if (!empty($shopOrderId)) {
             $data = Db::getInstance()->getRow('SELECT transaction_status FROM `' . _DB_PREFIX_ . 'altapay_transaction` WHERE unique_id = "' . pSQL($shopOrderId) . '"');
 

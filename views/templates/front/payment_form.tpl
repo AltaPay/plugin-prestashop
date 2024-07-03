@@ -20,5 +20,15 @@
     <input type="button" class="btn btn-success PensioSubmitButton customPayButton" disabled="disabled" value="{l s='Confirm' mod='altapay'}" style="display:none;">
 </div>
 </div>
+{if isset($amount)}
+<table id="cart_summary" class="table table-bordered">
+    <tr class="cart_total_price">
+        <td colspan="4" class="total_price_container text-right"><span>Remaining Total</span></td>
+        <td colspan="2" class="price" id="total_price_container">
+            <span id="total_price"> {$currency_code}{$amount}</span>
+        </td>
+    </tr>
+</table>
+{else}
 {include file = "$cart_info_path"}
-
+{/if}

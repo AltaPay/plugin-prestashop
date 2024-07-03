@@ -76,7 +76,11 @@ class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontControlle
             $this->context->smarty->assign('paymentNature', $orderPaymentNature);
             $this->setTemplate('module:altapay/views/templates/front/orderConfirmationRegisteredUser.tpl');
         } else {
-            $this->setTemplate('module:altapay/views/templates/front/orderConfirmationGuestUser.tpl');
+            if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+                $this->setTemplate('module:altapay/views/templates/front/orderConfirmationGuestUser17.tpl');
+            } else {
+                $this->setTemplate('orderConfirmationGuestUser.tpl');
+            }
         }
     }
 }
