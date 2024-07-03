@@ -2769,6 +2769,8 @@ class ALTAPAY extends PaymentModule
      */
     public function hookActionFrontControllerSetMedia($params)
     {
+        PrestaShopLogger::addLog("controller ". print_r($this->context->controller->php_self, true), 1, null, $this->name, $this->id, true);
+         
         $cart = $this->context->cart;
         $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
         $currency = new Currency($cart->id_currency);
@@ -2790,8 +2792,8 @@ class ALTAPAY extends PaymentModule
         }
 
         $this->context->controller->addJquery();
-        // Check if the current controller is 'order'
-        if ($this->context->controller->php_self == 'order') {
+        // Check if the current controller is 'order' or 'order-opc'
+        if ($this->context->controller->php_self == 'order' || $this->context->controller->php_self == 'order-opc') {
             $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
         }
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
