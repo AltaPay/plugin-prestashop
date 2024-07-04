@@ -3995,9 +3995,10 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Capture all the reserved additional amounts.
-     * 
+     *
      * @param $recordExist
      * @param $orderId
+     *
      * @return void
      */
     public function captureChildOrder($recordExist, $orderId)
@@ -4011,8 +4012,8 @@ class ALTAPAY extends PaymentModule
         $childReservedAmount = 0;
         $childShopOrderId = null;
         foreach ($childPaymentDetails as $pay) {
-            $childCapturedAmount += (float)$pay->CapturedAmount;
-            $childReservedAmount += (float)$pay->ReservedAmount;
+            $childCapturedAmount += (float) $pay->CapturedAmount;
+            $childReservedAmount += (float) $pay->ReservedAmount;
             $childShopOrderId = $pay->ShopOrderId;
         }
         $amount = $childReservedAmount - $childCapturedAmount;
