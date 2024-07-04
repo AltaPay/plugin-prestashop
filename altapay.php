@@ -2790,7 +2790,10 @@ class ALTAPAY extends PaymentModule
         }
 
         $this->context->controller->addJquery();
-        $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
+        // Check if the current controller is 'order' or 'order-opc'
+        if ($this->context->controller->php_self == 'order' || $this->context->controller->php_self == 'order-opc') {
+            $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
+        }
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             Media::addJsDef(['cardwalleturl' => $this->context->link->getModuleLink('altapay', 'cardwalletsession')]);
             Media::addJsDef(['cardwalletresponseurl' => $this->context->link->getModuleLink('altapay', 'payment')]);
