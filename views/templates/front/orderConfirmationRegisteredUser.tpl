@@ -158,15 +158,3 @@
 
     </div>
 </section>
-<br>
-<?php
-    if (array_key_exists('delete', $_POST)) {
-        deleteRecord();
-    }
-    function deleteRecord()
-    {
-        echo 'Done';
-    }
-?>
-
-
