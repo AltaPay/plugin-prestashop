@@ -2129,9 +2129,11 @@ class ALTAPAY extends PaymentModule
             $paymentDetails = $api->call();
 
             $captured = 0;
+            $reserved = 0;
             $shopOrderId = null;
             foreach ($paymentDetails as $pay) {
                 $captured += (float) $pay->CapturedAmount;
+                $reserved += (float) $pay->ReservedAmount;
                 $shopOrderId = $pay->ShopOrderId;
             }
 
@@ -2144,7 +2146,7 @@ class ALTAPAY extends PaymentModule
                 }
             }
 
-            $amountToCapture = (float) $orderDetail->total_paid - $captured;
+            $amountToCapture = min((float) $orderDetail->total_paid, $reserved - $captured);
             $giftWrappingFee = null;
             if ($productDetails->gift) {
                 $giftWrappingFee = $productDetails->total_wrapping;
@@ -2157,32 +2159,21 @@ class ALTAPAY extends PaymentModule
             $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
             $api->setTransaction($paymentID);
             $api->setReconciliationIdentifier($reconciliation_identifier);
+            $orderLines = $this->populateOrderLinesFromPost(array_column(
+                $productDetails->getList($params['id_order']),
+                'product_quantity'),
+                $params['id_order'],
+                $backendDiscount,
+                $giftWrappingFee,
+                false,
+                true,
+                true
+            );
+            $api->setOrderLines($orderLines);
+            $api->setAmount($amountToCapture);
+            $api->call();
 
-            if ($amountToCapture > 0 && $captured == 0) {
-                $orderLines = $this->populateOrderLinesFromPost(array_column(
-                    $productDetails->getList($params['id_order']),
-                    'product_quantity'),
-                    $params['id_order'],
-                    $backendDiscount,
-                    $giftWrappingFee,
-                    false,
-                    true,
-                    true
-                );
-                $api->setOrderLines($orderLines);
-                if ($statusCapture) {
-                    $api->setAmount((float) $orderDetail->total_paid);
-                } else {
-                    $api->setAmount($amountToCapture);
-                }
-                $api->call();
-                markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($orderLines));
-            } elseif ($amountToCapture > 0 && $captured > 0 && $captureRemainedAmount) {
-                $orderLines = $this->createOrderStatusOrderLines($amountToCapture);
-                $api->setOrderLines($orderLines);
-                $api->setAmount($amountToCapture);
-                $api->call();
-            }
+            markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($orderLines));
             saveOrderReconciliationIdentifier($params['id_order'], $reconciliation_identifier, $shopOrderId);
         } catch (Exception $e) {
             $this->returnError($paymentID, $e);

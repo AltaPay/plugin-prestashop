@@ -8,6 +8,8 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 ## [unreleased]
 ### Fixed
 - Load plugin javascript only on Checkout page.
+- Capture the payment only from the reserved amount on status update.
+- Fixed the Smarty template issue when redirecting to the success page.
 
 ## [3.8.1]
 ### Added
