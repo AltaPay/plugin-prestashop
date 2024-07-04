@@ -29,40 +29,9 @@ class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontControlle
         // Assignment of order detail variables
         $orderID = (int) $_REQUEST['id_order'];
         $order = new Order($orderID);
-        $orderPaymentNature = '';
         $productDetails = $order->getProducts();
         $deliveryAddress = new Address((int) ($order->id_address_delivery));
         $invoiceAddress = new Address((int) ($order->id_address_invoice));
-        $altapayOrderDetails = getAltapayOrderDetails($orderID);
-        $terminalTokenControlStatus = 0;
-
-        // Loop through the order details to check and assign payment nature
-        foreach ($altapayOrderDetails as $altapayOrderDetail) {
-            $orderPaymentNature = $altapayOrderDetail['paymentNature'];
-            if ($orderPaymentNature === 'CreditCard') {
-                $card = $altapayOrderDetail['cardMask'];
-                $cardToken = $altapayOrderDetail['cardToken'];
-                $cardBrand = $altapayOrderDetail['cardBrand'];
-                $cardExpiryDate = $altapayOrderDetail['cardExpiryDate'];
-                $userID = $this->context->customer->id;
-
-                $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_saved_credit_card` WHERE userID = "' . pSQL($userID) . '" and creditcardNumber ="' . pSQL($card) . '" ';
-                $results = Db::getInstance()->executeS($sql);
-
-                $orderTerminalRemoteName = getAltapayOrderDetails($orderID)[0]['paymentTerminal'];
-
-                $terminalTokenControlStatus = getTerminalTokenControlStatus($orderTerminalRemoteName)[0]['ccTokenControl_'];
-
-                $this->context->smarty->assign('creditCardStatus', $results ? 1 : 0);
-                $this->context->smarty->assign('cardMask', $card);
-                $this->context->smarty->assign('cardToken', $cardToken);
-                $this->context->smarty->assign('cardBrand', $cardBrand);
-                $this->context->smarty->assign('cardExpiryDate', $cardExpiryDate);
-            } else {
-                $this->context->smarty->assign('cardMask', 0);
-                $this->context->smarty->assign('cardToken', 0);
-            }
-        }
 
         // Assigment of necessary variables to render in template
         $this->context->smarty->assign('deliveryAddress', $deliveryAddress);
@@ -72,15 +41,11 @@ class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontControlle
         $this->context->smarty->assign('orderDetails', $order);
 
         // Display appropriate template according to user logged in statys
-        if ($this->context->customer->isLogged() && $terminalTokenControlStatus) {
-            $this->context->smarty->assign('paymentNature', $orderPaymentNature);
-            $this->setTemplate('module:altapay/views/templates/front/orderConfirmationRegisteredUser.tpl');
+
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+            $this->setTemplate('module:altapay/views/templates/front/orderConfirmationGuestUser17.tpl');
         } else {
-            if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
-                $this->setTemplate('module:altapay/views/templates/front/orderConfirmationGuestUser17.tpl');
-            } else {
-                $this->setTemplate('orderConfirmationGuestUser.tpl');
-            }
+            $this->setTemplate('orderConfirmationGuestUser.tpl');
         }
     }
 }

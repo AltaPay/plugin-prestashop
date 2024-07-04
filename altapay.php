@@ -2077,7 +2077,7 @@ class ALTAPAY extends PaymentModule
             return null;
         }
         if ($newStatus->id == $shippedStatus) { // A capture will be made if necessary
-            $this->performCapture($paymentID, $params, true, true);
+            $this->performCapture($paymentID, $params);
         }
 
         return $results;
@@ -2110,14 +2110,13 @@ class ALTAPAY extends PaymentModule
      *
      * @param string $paymentID
      * @param array $params
-     * @param bool $captureRemainedAmount
-     * @param bool $statusCapture
+     * @param bool $captureRemaining
      *
      * @return void
      *
      * @throws PrestaShopException
      */
-    public function performCapture($paymentID, $params, $captureRemainedAmount = true, $statusCapture = false)
+    public function performCapture($paymentID, $params, $captureRemaining = true)
     {
         try {
             $orderDetail = new Order((int) $params['id_order']);
@@ -2137,6 +2136,10 @@ class ALTAPAY extends PaymentModule
                 $shopOrderId = $pay->ShopOrderId;
             }
 
+            if ($captured > 0 && !$captureRemaining) {
+                return null;
+            }
+
             $discountData = $this->getorderCartRule($params['id_order']);
             $backendDiscount = 0;
             foreach ($discountData as $key => $discount) {
@@ -2144,6 +2147,14 @@ class ALTAPAY extends PaymentModule
                 if ($this->enableBackendDiscount($orderSummary['discounts'], $idCartRule)) {
                     $backendDiscount += $discountData[$key]['value'];
                 }
+            }
+
+            $recordExist = Db::getInstance()->getRow('SELECT * FROM ' . _DB_PREFIX_ . 'altapay_child_order ' .
+                'WHERE parent_unique_id = \'' . pSQL($shopOrderId) . '\'');
+
+            if ($recordExist) {
+                // Capture addition reserved amount
+                $this->captureChildOrder($recordExist, $params['id_order']);
             }
 
             $amountToCapture = min((float) $orderDetail->total_paid, $reserved - $captured);
@@ -2248,7 +2259,7 @@ class ALTAPAY extends PaymentModule
         $currentOrderStatus = $params['newOrderStatus'];
         if (!empty($allowedOrderStatuses) and $currentOrderStatus and in_array($currentOrderStatus->id, $allowedOrderStatuses) and $currentOrderStatus->id != Configuration::get('PS_OS_SHIPPING')) {
             $paymentID = $results['payment_id'];
-            $this->performCapture($paymentID, $params, false, true);
+            $this->performCapture($paymentID, $params, false);
         } else {
             return null;
         }
@@ -3980,5 +3991,40 @@ class ALTAPAY extends PaymentModule
         $orderLine->setGoodsType('item');
 
         return $orderLine;
+    }
+
+    /**
+     * Capture all the reserved additional amounts.
+     * 
+     * @param $recordExist
+     * @param $orderId
+     * @return void
+     */
+    public function captureChildOrder($recordExist, $orderId)
+    {
+        $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
+        $api->setTransaction($recordExist['payment_id']);
+        $childPaymentDetails = $api->call();
+        $childPaymentID = $recordExist['payment_id'];
+
+        $childCapturedAmount = 0;
+        $childReservedAmount = 0;
+        $childShopOrderId = null;
+        foreach ($childPaymentDetails as $pay) {
+            $childCapturedAmount += (float)$pay->CapturedAmount;
+            $childReservedAmount += (float)$pay->ReservedAmount;
+            $childShopOrderId = $pay->ShopOrderId;
+        }
+        $amount = $childReservedAmount - $childCapturedAmount;
+        $reconciliation_identifier = sha1($childPaymentID . time());
+
+        $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
+        $api->setAmount($amount);
+        $api->setTransaction($childPaymentID);
+        $api->setReconciliationIdentifier($reconciliation_identifier);
+        $api->call();
+
+        markChildOrderAsCaptured($childPaymentID);
+        saveOrderReconciliationIdentifier($orderId, $reconciliation_identifier, $childShopOrderId);
     }
 }
