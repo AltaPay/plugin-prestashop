@@ -5,9 +5,10 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
-## [unreleased]
+## [3.8.2]
 ### Fixed
 - Load plugin javascript only on Checkout page.
+- Gracefully handle & log errors in adding or updating PrestaShop Order Payment.
 
 ## [3.8.1]
 ### Added
