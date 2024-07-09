@@ -2149,14 +2149,6 @@ class ALTAPAY extends PaymentModule
                 }
             }
 
-            $recordExist = Db::getInstance()->getRow('SELECT * FROM ' . _DB_PREFIX_ . 'altapay_child_order ' .
-                'WHERE parent_unique_id = \'' . pSQL($shopOrderId) . '\'');
-
-            if ($recordExist) {
-                // Capture addition reserved amount
-                $this->captureChildOrder($recordExist, $params['id_order']);
-            }
-
             $amountToCapture = min((float) $orderDetail->total_paid, $reserved - $captured);
             $giftWrappingFee = null;
             if ($productDetails->gift) {
@@ -2183,6 +2175,13 @@ class ALTAPAY extends PaymentModule
             $api->setOrderLines($orderLines);
             $api->setAmount($amountToCapture);
             $api->call();
+
+            $childOrder = Db::getInstance()->getRow('SELECT * FROM ' . _DB_PREFIX_ . 'altapay_child_order ' .
+                'WHERE parent_unique_id = \'' . pSQL($shopOrderId) . '\'');
+
+            if($childOrder) {
+                $this->captureChildOrder($childOrder, $params['id_order']);
+            }
 
             markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($orderLines));
             saveOrderReconciliationIdentifier($params['id_order'], $reconciliation_identifier, $shopOrderId);
@@ -3996,17 +3995,17 @@ class ALTAPAY extends PaymentModule
     /**
      * Capture all the reserved additional amounts.
      *
-     * @param $recordExist
+     * @param $childOrder
      * @param $orderId
      *
      * @return void
      */
-    public function captureChildOrder($recordExist, $orderId)
+    public function captureChildOrder($childOrder, $orderId)
     {
         $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
-        $api->setTransaction($recordExist['payment_id']);
+        $api->setTransaction($childOrder['payment_id']);
         $childPaymentDetails = $api->call();
-        $childPaymentID = $recordExist['payment_id'];
+        $childPaymentID = $childOrder['payment_id'];
 
         $childCapturedAmount = 0;
         $childReservedAmount = 0;
