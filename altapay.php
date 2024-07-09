@@ -2179,7 +2179,7 @@ class ALTAPAY extends PaymentModule
             $childOrder = Db::getInstance()->getRow('SELECT * FROM ' . _DB_PREFIX_ . 'altapay_child_order ' .
                 'WHERE parent_unique_id = \'' . pSQL($shopOrderId) . '\'');
 
-            if($childOrder) {
+            if ($childOrder) {
                 $this->captureChildOrder($childOrder, $params['id_order']);
             }
 
