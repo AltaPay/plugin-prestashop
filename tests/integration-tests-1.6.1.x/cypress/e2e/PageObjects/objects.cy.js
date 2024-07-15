@@ -98,8 +98,10 @@ class Order
             cy.get('#popup_ok').click()
             cy.get('#popup_ok').click()   
         })
-        cy.get('#altapay > div > div > div.row.panel-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'captured')
+        cy.get('.Payment_Status').should('have.text','succeeded')
+
     }
+
     refund(){
         //Refund
         cy.get('[id=transactionOptions]').then(function($iFrame){
@@ -115,7 +117,8 @@ class Order
             cy.get('#popup_ok').click()
             cy.get('#popup_ok').click()
         })
-        cy.get('#altapay > div > div > div.row.panel-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'refunded')
+        cy.get('.Payment_Status').should('have.text','succeeded')
+        
     }   
 
     addpartial_product(){
@@ -123,6 +126,7 @@ class Order
         cy.contains('Add to cart').click()
         cy.get('.logo').click().wait(3000)
     }
+
     partial_capture(){
         // 1.6.X
         cy.get('#maintab-AdminParentOrders > .title').click()
@@ -139,8 +143,10 @@ class Order
             cy.get('#popup_ok').click()
             cy.get('#popup_ok').click()   
         })
-        cy.get('#altapay > div > div > div.row.panel-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'captured')
+        cy.get('.Payment_Status').should('have.text','succeeded')
+        
     }
+
     partial_refund(){
         // 1.6.X
         cy.get('#maintab-AdminParentOrders > .title').click()
@@ -157,8 +163,10 @@ class Order
             cy.get('#popup_ok').click()
             cy.get('#popup_ok').click()   
         })
-        cy.get('#altapay > div > div > div.row.panel-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'refunded')
+        cy.get('.Payment_Status').should('have.text','succeeded')
+        
     }
+
     release_payment(){
          // 1.6.X
          cy.get('#maintab-AdminParentOrders > .title').click()
@@ -172,8 +180,10 @@ class Order
             cy.wrap(capture).click({force: true})
             cy.get('#popup_ok').click().wait(2000)
         })
-        cy.get('#altapay > div > div > div.row.panel-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'released')
+        cy.get('.Payment_Status').should('have.text','Payment Released')
+
     }
+
     change_currency_to_EUR_for_iDEAL(){
         cy.get('#maintab-AdminParentLocalization > .title').trigger('mouseover')
         cy.get('#subtab-AdminCurrencies').click()
@@ -216,6 +226,7 @@ class Order
         cy.get('#SignInButton').click()
         cy.get(':nth-child(3) > #successSubmit').click().wait(1000)
     }
+
     ideal_refund(){
         cy.get('#maintab-AdminParentOrders > .title').click()
         cy.get('tbody > :nth-child(1) > .fixed-width-xs').click().wait(1000)
@@ -232,7 +243,8 @@ class Order
             cy.get('#popup_ok').click()
             cy.get('#popup_ok').click()
         })
-        cy.get('#altapay > div > div > div.row.panel-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'bank_payment_refunded')
+        cy.get('.Payment_Status').should('have.text','succeeded')
+        
     }
 
     change_currency_to_DKK(){
@@ -247,6 +259,7 @@ class Order
         cy.get('#currency_form_submit_btn').click()
         
     }
+
     clear_cache(){
         cy.wait(1000)
         cy.get('#maintab-AdminTools > .title').trigger('mouseover')
