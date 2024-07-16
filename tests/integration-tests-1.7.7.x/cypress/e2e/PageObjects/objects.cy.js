@@ -100,7 +100,8 @@ class Order
         cy.get('#btn-capture').click()
         cy.get('#popup_ok').click()
         cy.get('#popup_ok').click()
-        cy.get('#altapay > div > div > div.card-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'captured')
+        cy.get('.Payment_Status').should('have.text','succeeded')
+        
     }
 
     refund(){
@@ -109,7 +110,8 @@ class Order
         cy.get('#btn-refund').click()
         cy.get('#popup_ok').click()
         cy.get('#popup_ok').click()
-        cy.get('#altapay > div > div > div.card-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'refunded')
+        cy.get('.Payment_Status').should('have.text','succeeded')
+        
     }   
 
     
@@ -119,7 +121,8 @@ class Order
         cy.get(':nth-child(1) > .action-type > .btn-group-action > .btn-group > .grid-view-row-link > .material-icons').click()
         cy.get('#btn-release').click()
         cy.get('#popup_ok').click().wait(2000)
-        cy.get('#altapay > div > div > div.card-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'released')
+        cy.get('.Payment_Status').should('have.text', 'Payment Released')
+        
     }
 
     change_currency_to_EUR_for_iDEAL(){
@@ -250,7 +253,8 @@ class Order
         cy.get('#btn-capture').click()
         cy.get('#popup_ok').click()
         cy.get('#popup_ok').click()
-        cy.get('#altapay > div > div > div.card-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'captured')
+        cy.get('.Payment_Status').should('have.text','succeeded')
+        
     }
 
     partial_refund(){
@@ -261,7 +265,8 @@ class Order
         cy.get('#btn-refund').click()
         cy.get('#popup_ok').click()
         cy.get('#popup_ok').click()
-        cy.get('#altapay > div > div > div.card-body > div:nth-child(4) > div:nth-child(1) > div > div > table > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', 'refunded')
+        cy.get('.Payment_Status').should('have.text','succeeded')
+        
     }
     //Discount Cases
     create_discounts(){

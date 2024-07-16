@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.8.2';
+        $this->version = '3.8.3';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.7'];
@@ -2077,7 +2077,7 @@ class ALTAPAY extends PaymentModule
             return null;
         }
         if ($newStatus->id == $shippedStatus) { // A capture will be made if necessary
-            $this->performCapture($paymentID, $params, true, true);
+            $this->performCapture($paymentID, $params);
         }
 
         return $results;
@@ -2110,14 +2110,13 @@ class ALTAPAY extends PaymentModule
      *
      * @param string $paymentID
      * @param array $params
-     * @param bool $captureRemainedAmount
-     * @param bool $statusCapture
+     * @param bool $captureRemaining
      *
      * @return void
      *
      * @throws PrestaShopException
      */
-    public function performCapture($paymentID, $params, $captureRemainedAmount = true, $statusCapture = false)
+    public function performCapture($paymentID, $params, $captureRemaining = true)
     {
         try {
             $orderDetail = new Order((int) $params['id_order']);
@@ -2129,10 +2128,16 @@ class ALTAPAY extends PaymentModule
             $paymentDetails = $api->call();
 
             $captured = 0;
+            $reserved = 0;
             $shopOrderId = null;
             foreach ($paymentDetails as $pay) {
                 $captured += (float) $pay->CapturedAmount;
+                $reserved += (float) $pay->ReservedAmount;
                 $shopOrderId = $pay->ShopOrderId;
+            }
+
+            if ($captured > 0 && !$captureRemaining) {
+                return null;
             }
 
             $discountData = $this->getorderCartRule($params['id_order']);
@@ -2144,7 +2149,7 @@ class ALTAPAY extends PaymentModule
                 }
             }
 
-            $amountToCapture = (float) $orderDetail->total_paid - $captured;
+            $amountToCapture = min((float) $orderDetail->total_paid, $reserved - $captured);
             $giftWrappingFee = null;
             if ($productDetails->gift) {
                 $giftWrappingFee = $productDetails->total_wrapping;
@@ -2157,32 +2162,28 @@ class ALTAPAY extends PaymentModule
             $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
             $api->setTransaction($paymentID);
             $api->setReconciliationIdentifier($reconciliation_identifier);
+            $orderLines = $this->populateOrderLinesFromPost(array_column(
+                $productDetails->getList($params['id_order']),
+                'product_quantity'),
+                $params['id_order'],
+                $backendDiscount,
+                $giftWrappingFee,
+                false,
+                true,
+                true
+            );
+            $api->setOrderLines($orderLines);
+            $api->setAmount($amountToCapture);
+            $api->call();
 
-            if ($amountToCapture > 0 && $captured == 0) {
-                $orderLines = $this->populateOrderLinesFromPost(array_column(
-                    $productDetails->getList($params['id_order']),
-                    'product_quantity'),
-                    $params['id_order'],
-                    $backendDiscount,
-                    $giftWrappingFee,
-                    false,
-                    true,
-                    true
-                );
-                $api->setOrderLines($orderLines);
-                if ($statusCapture) {
-                    $api->setAmount((float) $orderDetail->total_paid);
-                } else {
-                    $api->setAmount($amountToCapture);
-                }
-                $api->call();
-                markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($orderLines));
-            } elseif ($amountToCapture > 0 && $captured > 0 && $captureRemainedAmount) {
-                $orderLines = $this->createOrderStatusOrderLines($amountToCapture);
-                $api->setOrderLines($orderLines);
-                $api->setAmount($amountToCapture);
-                $api->call();
+            $childOrder = Db::getInstance()->getRow('SELECT * FROM ' . _DB_PREFIX_ . 'altapay_child_order ' .
+                'WHERE parent_unique_id = \'' . pSQL($shopOrderId) . '\'');
+
+            if ($childOrder) {
+                $this->captureChildOrder($childOrder, $params['id_order']);
             }
+
+            markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($orderLines));
             saveOrderReconciliationIdentifier($params['id_order'], $reconciliation_identifier, $shopOrderId);
         } catch (Exception $e) {
             $this->returnError($paymentID, $e);
@@ -2257,7 +2258,7 @@ class ALTAPAY extends PaymentModule
         $currentOrderStatus = $params['newOrderStatus'];
         if (!empty($allowedOrderStatuses) and $currentOrderStatus and in_array($currentOrderStatus->id, $allowedOrderStatuses) and $currentOrderStatus->id != Configuration::get('PS_OS_SHIPPING')) {
             $paymentID = $results['payment_id'];
-            $this->performCapture($paymentID, $params, false, true);
+            $this->performCapture($paymentID, $params, false);
         } else {
             return null;
         }
@@ -3989,5 +3990,41 @@ class ALTAPAY extends PaymentModule
         $orderLine->setGoodsType('item');
 
         return $orderLine;
+    }
+
+    /**
+     * Capture all the reserved additional amounts.
+     *
+     * @param $childOrder
+     * @param $orderId
+     *
+     * @return void
+     */
+    public function captureChildOrder($childOrder, $orderId)
+    {
+        $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
+        $api->setTransaction($childOrder['payment_id']);
+        $childPaymentDetails = $api->call();
+        $childPaymentID = $childOrder['payment_id'];
+
+        $childCapturedAmount = 0;
+        $childReservedAmount = 0;
+        $childShopOrderId = null;
+        foreach ($childPaymentDetails as $pay) {
+            $childCapturedAmount += (float) $pay->CapturedAmount;
+            $childReservedAmount += (float) $pay->ReservedAmount;
+            $childShopOrderId = $pay->ShopOrderId;
+        }
+        $amount = $childReservedAmount - $childCapturedAmount;
+        $reconciliation_identifier = sha1($childPaymentID . time());
+
+        $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
+        $api->setAmount($amount);
+        $api->setTransaction($childPaymentID);
+        $api->setReconciliationIdentifier($reconciliation_identifier);
+        $api->call();
+
+        markChildOrderAsCaptured($childPaymentID);
+        saveOrderReconciliationIdentifier($orderId, $reconciliation_identifier, $childShopOrderId);
     }
 }

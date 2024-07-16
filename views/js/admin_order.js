@@ -151,6 +151,26 @@ var altapay = {
         });
     },
 
+    // Perform release
+    release: function (element) {
+        var namespace = this;
+        $.ajax({
+            type: 'POST',
+            url: $(element).data('url'),
+            data: {
+                action: 'release',
+                payment_id: $(element).data('payment-id')
+            },
+            success: function (result) {
+                if (result.status === 'success') {
+                    altapay.cancelOrder();
+                }
+                namespace.handleResponse(result);
+
+            }
+        });
+    },
+
     cancelOrder: function () {
         // Find the order status dropdown element by its ID
         var dropdown = document.getElementById('id_order_state');
