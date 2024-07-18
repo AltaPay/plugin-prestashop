@@ -33,6 +33,8 @@ Installing this plug-in will enable the web shop to handle card transactions thr
 
 [Pay By Link](#pay-by-link)
 
+[Generate payment link for additional amount](#generate-payment-link-for-additional-amount)
+
 [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
@@ -228,6 +230,14 @@ In Prestashop, make sure to click on 'Send an email to the customer with the lin
 ![emailconfirmation](docs/PayByLink/emailconfirmation.png)
 
 > You can find more details on how to create an order from the admin here.: https://devdocs.prestashop-project.org/8/development/page-reference/back-office/order/add-new-order/
+
+## Generate payment link for additional amount
+
+You can generate a payment link for the additional order amount. If your customer wants to increase product quantities or add more products to the order, after updating the order amount, you will see a form with the additional amount.
+
+To generate the payment link, click on the **Generate Link** button on the **Generate Payment Link** form. You can change the amount and check the **Send email** option to send the payment link to the customer via email.
+
+![generatepaymentlink](docs/PayByLink/generatepaymentlink.png)
 
 ## Troubleshooting
 

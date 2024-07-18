@@ -11,7 +11,7 @@
 
             <div class="card-header panel-heading">
                 <img src="{$this_path}/logo.png" height="14" width="14">
-                Payment information
+                Payment information (AltaPay)
                 {if !empty($altapay_module_update) }
                     <p style="float: right;">
                         <span style="border-radius: 8px; font-weight: normal;border: solid 2px #fbbb22;padding: 5px 15px;">
@@ -20,19 +20,16 @@
                     </p>
                 {/if}
             </div>
-
             <div class="card-body" style="background-color: #fff;">
-
                 {if isset($ap_error)}
                     <div class="alert alert-danger">{$ap_error}</div>
                 {/if}
-
                 <!-- Actions -->
                 <div class="col-lg-12">
                     <div class="row row-ap">
                         <div class="col-lg-12">
                             <div class="table-responsive">
-
+                                {if $ap_product_details}
                                 <table class="table table-bordered">
                                     <tr style="font-weight: bold">
                                         <td>
@@ -124,7 +121,6 @@
                                         {else}
                                             {assign var="product_amount" value=number_format($amount_without_tax,2,'.','')-(number_format($amount_without_tax,2,'.','')*($discountPercent/100))}
                                         {/if}
-{*                                        {assign var="product_amount" value=number_format($amount_without_tax,2,'.','')-(number_format($amount_without_tax,2,'.','')*($discountPercent/100))}*}
                                         {if preg_match('/\.\d{3,}/', $product_amount)}
                                             {if substr($product_amount, -1) <= 5}
                                                 <td class="ap-total-amount">{number_format(intval(((number_format($amount_without_tax,2,'.','')-(number_format($amount_without_tax,2,'.','')*($discountPercent/100)))*100))/100,2,'.','')}</td>
@@ -204,11 +200,12 @@
                                         </tr>
                                     {/foreach}
                                 </table>
+                                {/if}
                             </div>
                         </div>
                     </div>
                 </div>
-
+                {if $payment_id}
                 <div class="col-sm-6" id="transactionOptions">
                     <div class="row row-ap">
                         <div class="col-lg-2">
@@ -251,23 +248,34 @@
                                data-payment-id="{$payment_id}">Release payment</a>
                         </div>
                     </div>
-
                 </div>
                 <br>
-
+                {/if}
                 <div class="col-sm-12">
                     <div class="col-sm-6">
                         {if !$reserved_payment_id && $additional_amount}
                             <div class="row row-ap">
                                 <div class="col-lg-12" style="padding: 0;">
                                     {if !$payment_url}
-                                    <label>
-                                        <span>Additional Payment</span>
+                                    <h4>Generate Payment Link</h4>
+                                    <label style="display:block;">
+                                        <span>Amount</span>
                                         <input id="order-additional-amount" class="form-control input" type="text"
-                                               value="{$additional_amount}"/>
+                                                value="{$additional_amount}" style="width: auto;"/>
                                     </label>
-                                    <label for="send-payment-link-email">
-                                        Send Email?
+                                    {if !$payment_id}
+                                        <label style="display: block;">
+                                            <span style="display: block;">Terminal</span>
+                                            <select class="custom-select" id="order-terminal"
+                                                style="width:auto;height:38px;vertical-align:initial;">
+                                                {foreach $terminals as $terminal}
+                                                    <option value="{$terminal['id']}">{$terminal['name']}</option>
+                                                {/foreach}
+                                            </select>
+                                        </label>
+                                    {/if}
+                                    <label for="send-payment-link-email" style="display: block;">
+                                        Send email?
                                         <input type="checkbox" id="send-payment-link-email" value="1" checked="checked">
                                     </label>
                                     <a href="#" class="btn btn-primary btn-ap" id="generate-payment-link-btn"
@@ -288,15 +296,12 @@
 
                         {if $is_require_capture}
                             <div class="row row-ap">
-                                <div class="col-lg-6" style="padding: 0;">
+                                <div class="col-lg-12" style="padding: 0;">
                                     <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-capture"
                                        data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
                                        data-remaining_amount="{$additional_amount_reserved}"
-                                       style="text-align: left;width: auto;">
-                                        Capture Additional Amount
-                                        ({$additional_amount_reserved})
-                                    </a>
+                                       style="text-align: left;width: auto;">Capture <strong>{$additional_amount_reserved}</strong> <small>(Payment Link)</small></a>
                                 </div>
                             </div>
                         {/if}
@@ -308,18 +313,13 @@
                                        data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
                                        data-remaining_amount="{$additional_amount_reserved}"
-                                       style="text-align: left;width: auto;">
-                                        Refund Additional Amount
-                                        ({$additional_amount_reserved})
-                                    </a>
+                                       style="text-align: left;width: auto;">Refund <strong>{$additional_amount_reserved}</strong> <small>(Payment Link)</small></a>
                                 </div>
                             </div>
                         {/if}
                     </div>
                 </div>
                 <div class="col-lg-12" style="margin-top:2%;">
-                    <!--<img src="{$this_path}img/altapay_logo.png" width="130" height="54" class="img-responsive">-->
-
                     <!-- Details -->
                     {if $ap_paymentinfo}
                     <div class="row row-ap">
@@ -348,9 +348,10 @@
                         </div>
                     </div>
                 </div>
-                {/if}
+            {/if}
                 <div class="row row-ap">
                     <div class="col-lg-12">
+                    {if $paymentinfo}
                     <div class="table-responsive">
                         <table class="table table-bordered">
                             <tbody>
@@ -363,13 +364,14 @@
                             </tbody>
                         </table>
                     </div>
+                    {/if}
                         {if $child_order_id}
-                            <h3>New Item Added to Order</h3>
+                            <h3>Additional Payment via Payment Link</h3>
                             <div class="table-responsive">
                                 <table class="table table-bordered">
                                     <tbody>
                                     <tr>
-                                        <td>Transaction ID (For additional item)</td>
+                                        <td>Transaction ID</td>
                                         <td>{$child_order_id}</td>
                                     </tr>
                                     <tr>
@@ -377,15 +379,15 @@
                                         <td>{$reserved_payment_id}</td>
                                     </tr>
                                     <tr>
-                                        <td>Additional Amount</td>
+                                        <td>Amount</td>
                                         <td>{$additional_amount}</td>
                                     </tr>
                                     <tr>
-                                        <td>Additional Amount Reserved</td>
+                                        <td>Amount Reserved</td>
                                         <td>{$additional_amount_reserved}</td>
                                     </tr>
                                     <tr>
-                                        <td>Additional Amount Captured</td>
+                                        <td>Amount Captured</td>
                                         <td>{$child_order_captured}</td>
                                     </tr>
                                     </tbody>
@@ -436,7 +438,7 @@
         var capturedAmount = parseFloat($("#capturedAmount").text());
         var reservedAmount = parseFloat($("#reservedAmount").text());
         var refundedAmount = parseFloat($("#refundedAmount").text());
-        
+
         if(value === 'paymentAndCapture' || value === 'subscriptionAndCharge')
         {
             if(refundedAmount < reservedAmount) {

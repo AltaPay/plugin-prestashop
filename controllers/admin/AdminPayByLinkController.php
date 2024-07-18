@@ -34,7 +34,8 @@ class AdminPayByLinkController extends ModuleAdminController
         $amount = Tools::getValue('amount');
         $order_id = Tools::getValue('order_id');
         $send_email = Tools::getValue('send_email');
-        $paymentLink = $this->module->altaPayOrderEdited($order_id, $amount);
+        $terminal = Tools::getValue('terminal');
+        $paymentLink = $this->module->altaPayOrderEdited($order_id, $amount, $terminal);
 
         if ($send_email && $paymentLink) {
             $customerId = (int) Tools::getValue('customer_id');
@@ -88,7 +89,7 @@ class AdminPayByLinkController extends ModuleAdminController
             echo json_encode(
                 [
                     'status' => 'success',
-                    'message' => 'Remaining amount for the reservation was captured successfully',
+                    'message' => 'Reservation captured successfully',
                 ]
             );
         } catch (Exception $e) {
@@ -97,7 +98,7 @@ class AdminPayByLinkController extends ModuleAdminController
             echo json_encode(
                 [
                     'status' => 'error',
-                    'message' => 'Could not capture remaining reserved amount. ' . $e->getMessage(),
+                    'message' => 'Could not capture reserved amount. ' . $e->getMessage(),
                 ]
             );
         }

@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.8.3';
+        $this->version = '3.8.4';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.7'];
@@ -2266,6 +2266,69 @@ class ALTAPAY extends PaymentModule
         return $results;
     }
 
+    public function showAltaPayGeneratePaymentLinkForm($orderDetail, $params)
+    {
+        $shopOrderId = getLatestUniqueIdFromCartId($orderDetail->id_cart);
+        $child_order_transaction = getPaymentFormUrl($orderDetail->id_cart, strstr($shopOrderId, '_', true));
+        $childOrderAmountReserved = 0;
+        $childOrderPaymentID = null;
+        $childOrderId = null;
+        $childOrderCaptured = null;
+
+        if ($child_order_transaction) {
+            $childOrderId = $child_order_transaction['unique_id'];
+            $childOrderAmountReserved = $child_order_transaction['amount'];
+            $parentShopOrderId = strstr($childOrderId, '_', true);
+            $resultChildOrder = $this->selectChildOrder($parentShopOrderId);
+            if ($resultChildOrder) {
+                $requireCapture = (bool) $resultChildOrder['requireCapture'];
+                $transData = getTransactionStatus($resultChildOrder['payment_id']);
+            }
+
+            if (!$resultChildOrder) {
+                $this->smarty->assign('payment_url', $child_order_transaction['payment_form_url']);
+            }
+
+            if (isset($transData['refunded']) && !$transData['refunded']) {
+                $this->smarty->assign('can_refund', true);
+            }
+
+            if (isset($transData['captured']) && $transData['captured']) {
+                $childOrderCaptured = $childOrderAmountReserved;
+            }
+
+            if ($requireCapture) {
+                $this->smarty->assign('is_require_capture', true);
+            }
+
+            $childOrderPaymentID = $resultChildOrder['payment_id'];
+        }
+
+        $reconciliation_identifiers = getOrderReconciliationIdentifiers($params['id_order']);
+        $terminals = $this->getAltapayTerminals();
+
+        $this->smarty->assign('this_path', $this->_path);
+
+        $ajaxUrl = $this->context->link->getAdminLink('AdminPayByLink', true) . '&customer_id=' . $orderDetail->id_customer;
+        $this->context->smarty->assign('generate_payment_link_ajax_url', $ajaxUrl);
+        $this->smarty->assign('id_order', $params['id_order']);
+        $this->smarty->assign('additional_amount', $orderDetail->total_paid);
+        $this->smarty->assign('additional_amount_reserved', $childOrderAmountReserved);
+        $this->smarty->assign('reserved_payment_id', $childOrderPaymentID);
+        $this->smarty->assign('child_order_id', $childOrderId);
+        $this->smarty->assign('child_order_captured', $childOrderCaptured);
+        $this->smarty->assign('ap_paymentinfo', null);
+        $this->smarty->assign('reconciliation_identifiers', $reconciliation_identifiers);
+        $this->smarty->assign('terminals', $terminals);
+        $this->context->controller->addJS($this->_path . 'views/js/admin_order.js');
+        $this->context->controller->addCSS($this->_path . 'views/css/admin_order.css', 'all');
+        
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+            return $this->display(__FILE__, '/views/templates/hook/admin_order17.tpl');
+        } else {
+            return $this->display(__FILE__, '/views/templates/hook/admin_order.tpl');
+        }
+    }
     /**
      * Displays payment info on order detail pages in back office
      *
@@ -2281,7 +2344,7 @@ class ALTAPAY extends PaymentModule
         $orderDetail = new Order((int) $params['id_order']);
 
         if ($orderDetail->module != $this->name) {
-            return false;
+            return $this->showAltaPayGeneratePaymentLinkForm($orderDetail, $params);
         }
         $payment_amount = $orderDetail->total_paid;
         $results = $this->selectOrder($params);
@@ -3918,20 +3981,23 @@ class ALTAPAY extends PaymentModule
         return $results;
     }
 
-    public function altaPayOrderEdited($id_order, $amount)
+    public function altaPayOrderEdited($id_order, $amount, $terminal)
     {
         $order = new Order((int) $id_order);
         $orderId = $order->id;
         $cartId = (int) $order->id_cart;
         $orderDetails = $this->getEditOrderDetails($orderId);
-        $shopOrderId = $orderDetails[0]['unique_id'] ?? null;
+        $shopOrderId = $orderDetails[0]['unique_id'] ?? uniqid('PS');
+        $terminalName = !empty($terminal) ? $terminal : null;
         if ($shopOrderId) {
-            $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
-            $api->setShopOrderId($shopOrderId);
-            $paymentDetails = $api->call();
-            $terminalName = '';
-            foreach ($paymentDetails as $pay) {
-                $terminalName = $pay->Terminal;
+            if(empty($terminalName)){
+                $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
+                $api->setShopOrderId($shopOrderId);
+                $paymentDetails = $api->call();
+                $terminalName = '';
+                foreach ($paymentDetails as $pay) {
+                    $terminalName = $pay->Terminal;
+                }
             }
             $remoteId = getTerminalIdByRemoteName($terminalName);
 
