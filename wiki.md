@@ -213,9 +213,9 @@ In order to reconcile payments please follow the steps below:
 
 From version 3.6.12 onwards, you will receive notification on both back office order details page and AltaPay's module configuration page when a new version of the plugin is available for installation. We recommend to update the plugin regularly upon receiving such notifications to ensure optimal performance and access to the latest features.
 
-![configuration_page](docs/PluginUpdates/configuration_page.png)
+![configuration_page](Docs/PluginUpdates/configuration_page.png)
 
-![order_page](docs/PluginUpdates/order_page.png)
+![order_page](Docs/PluginUpdates/order_page.png)
 
 ## Pay By Link
 
@@ -223,11 +223,11 @@ The extension also supports the Pay by Link feature provided by default in Prest
 
 In Prestashop, make sure to click on 'Send an email to the customer with the link to process the payment' and do not press 'Create Order'. The customer will receive an email with a link to select the payment method and process the payment, as shown in the screenshot below.
 
-![sendpaymentlink1.6.x](docs/PayByLink/sendpaymentlink1.6.x.png)
+![sendpaymentlink1.6.x](Docs/PayByLink/sendpaymentlink1.6.x.png)
 
-![emailnotification](docs/PayByLink/emailnotification.png)
+![emailnotification](Docs/PayByLink/emailnotification.png)
 
-![emailconfirmation](docs/PayByLink/emailconfirmation.png)
+![emailconfirmation](Docs/PayByLink/emailconfirmation.png)
 
 > You can find more details on how to create an order from the admin here.: https://devdocs.prestashop-project.org/8/development/page-reference/back-office/order/add-new-order/
 
@@ -237,7 +237,7 @@ You can generate a payment link for the additional order amount. If your custome
 
 To generate the payment link, click on the **Generate Link** button on the **Generate Payment Link** form. You can change the amount and check the **Send email** option to send the payment link to the customer via email.
 
-![generatepaymentlink](docs/PayByLink/generatepaymentlink.png)
+![generatepaymentlink](Docs/PayByLink/generatepaymentlink.png)
 
 ## Troubleshooting
 
