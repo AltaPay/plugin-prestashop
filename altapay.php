@@ -2322,13 +2322,14 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign('terminals', $terminals);
         $this->context->controller->addJS($this->_path . 'views/js/admin_order.js');
         $this->context->controller->addCSS($this->_path . 'views/css/admin_order.css', 'all');
-        
+
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
             return $this->display(__FILE__, '/views/templates/hook/admin_order17.tpl');
         } else {
             return $this->display(__FILE__, '/views/templates/hook/admin_order.tpl');
         }
     }
+
     /**
      * Displays payment info on order detail pages in back office
      *
@@ -3990,7 +3991,7 @@ class ALTAPAY extends PaymentModule
         $shopOrderId = $orderDetails[0]['unique_id'] ?? uniqid('PS');
         $terminalName = !empty($terminal) ? $terminal : null;
         if ($shopOrderId) {
-            if(empty($terminalName)){
+            if (empty($terminalName)) {
                 $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
                 $api->setShopOrderId($shopOrderId);
                 $paymentDetails = $api->call();
