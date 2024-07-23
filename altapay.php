@@ -708,7 +708,7 @@ class ALTAPAY extends PaymentModule
         }
         $iconOptions = [];
         $fieldsForm = [];
-        $tokenControl = $terminal_nature = $terminal_identifier =[];
+        $tokenControl = $terminal_nature = $terminal_identifier = [];
         $directory = _PS_MODULE_DIR_ . '/' . $this->name . '/' . $this->paymentMethodIconDir;
         $scanned_directory = array_diff(scandir($directory), ['..', '.', '.DS_Store']);
         foreach ($scanned_directory as $filename) {
@@ -1068,7 +1068,7 @@ class ALTAPAY extends PaymentModule
                     'id' => $terminal->Title,
                     'name' => $terminal->Title,
                     'nature' => $termNature,
-                    'identifier' => $terminal->PrimaryMethod->Identifier ?? ''
+                    'identifier' => $terminal->PrimaryMethod->Identifier ?? '',
                 ];
             } else {
                 $terminalArray[$terminal->Title] = $terminal;
