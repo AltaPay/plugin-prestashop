@@ -36,7 +36,7 @@ try {
     $response = $api->call();
     $i = 1;
     foreach ($response->Terminals as $term) {
-        $terminal = new Altapay_Models_Terminal($i);
+        $terminal = new Altapay_Models_Terminal();
         if ($term->Country == 'DK') {
             $terminal->display_name = $term->Title;
             $terminal->remote_name = $term->Title;

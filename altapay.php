@@ -650,10 +650,9 @@ class ALTAPAY extends PaymentModule
             } elseif (!$terminalsForStoreCountry) {
                 $this->Mhtml .= '<div class="alert alert-warning">Could not find terminals matching your country, please check the Payment methods for terminal config.</div>';
             } else {
-                $i = 1;
                 $position = 1;
                 foreach ($response->Terminals as $term) {
-                    $terminal = new Altapay_Models_Terminal($i);
+                    $terminal = new Altapay_Models_Terminal();
                     if ($term->Country == $countryConfigured) {
                         $terminal->display_name = $term->Title;
                         $terminal->remote_name = $term->Title;
@@ -670,7 +669,6 @@ class ALTAPAY extends PaymentModule
                         $terminal->identifier = $term->PrimaryMethod->Identifier ?? '';
                         $terminal->save();
                     }
-                    ++$i;
                 }
                 $this->Mhtml .= '<div class="alert alert-success">Terminals successfully configured!</div>';
             }
