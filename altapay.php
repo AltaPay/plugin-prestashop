@@ -2273,7 +2273,8 @@ class ALTAPAY extends PaymentModule
         $childOrderAmountReserved = 0;
         $childOrderPaymentID = null;
         $childOrderId = null;
-        $childOrderCaptured = null;
+        $childOrderCaptured = 0;
+        $requireCapture = null;
 
         if ($child_order_transaction) {
             $childOrderId = $child_order_transaction['unique_id'];
@@ -2309,11 +2310,13 @@ class ALTAPAY extends PaymentModule
 
         $this->smarty->assign('this_path', $this->_path);
 
+        $currency = new Currency($orderDetail->id_currency);
         $ajaxUrl = $this->context->link->getAdminLink('AdminPayByLink', true) . '&customer_id=' . $orderDetail->id_customer;
         $this->context->smarty->assign('generate_payment_link_ajax_url', $ajaxUrl);
         $this->smarty->assign('id_order', $params['id_order']);
         $this->smarty->assign('additional_amount', $orderDetail->total_paid);
         $this->smarty->assign('additional_amount_reserved', $childOrderAmountReserved);
+        $this->smarty->assign('currency', $currency);
         $this->smarty->assign('reserved_payment_id', $childOrderPaymentID);
         $this->smarty->assign('child_order_id', $childOrderId);
         $this->smarty->assign('child_order_captured', $childOrderCaptured);
@@ -2516,6 +2519,7 @@ class ALTAPAY extends PaymentModule
         ];
         $fet = $this->context->link;
         $tname = $this->name;
+        $currency = new Currency($orderDetail->id_currency);
         $this->smarty->assign('paymentinfo', $paymentinfo);
         $this->smarty->assign('payment_id', $results['payment_id']);
         $this->smarty->assign('payment_amount', number_format($payment_amount, 2, '.', ''));
@@ -2525,6 +2529,7 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign('token', Tools::getAdminTokenLite('AdminModules'));
         $this->smarty->assign('reconciliation_identifiers', $reconciliation_identifiers);
         $this->smarty->assign('altapay_module_update', $this->isAltaPayModuleUpdateAvailable());
+        $this->smarty->assign('currency', $currency);
 
         $this->context->controller->addCSS($this->_path . 'views/css/admin_order.css', 'all');
         $this->context->controller->addJS($this->_path . 'views/js/admin_order.js');

@@ -261,7 +261,7 @@
                                     <label style="display:block;">
                                         <span>Amount</span>
                                         <input id="order-additional-amount" class="form-control input" type="text"
-                                                value="{$additional_amount}" style="width: auto;"/>
+                                                value="{round($additional_amount, 2)}" style="width: auto;"/>
                                     </label>
                                     {if !$payment_id}
                                         <label style="display: block;">
@@ -301,7 +301,7 @@
                                        data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
                                        data-remaining_amount="{$additional_amount_reserved}"
-                                       style="text-align: left;width: auto;">Capture <strong>{$additional_amount_reserved}</strong> <small>(Payment Link)</small></a>
+                                       style="text-align: left;width: auto;">Capture <strong>{displayPrice price=$additional_amount_reserved currency=$currency->id}</strong> <small>(Payment Link)</small></a>
                                 </div>
                             </div>
                         {/if}
@@ -313,7 +313,7 @@
                                        data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
                                        data-remaining_amount="{$additional_amount_reserved}"
-                                       style="text-align: left;width: auto;">Refund <strong>{$additional_amount_reserved}</strong> <small>(Payment Link)</small></a>
+                                       style="text-align: left;width: auto;">Refund <strong>{displayPrice price=$additional_amount_reserved currency=$currency->id}</strong> <small>(Payment Link)</small></a>
                                 </div>
                             </div>
                         {/if}
@@ -333,15 +333,15 @@
                                 </tr>
                                 <tr>
                                     <td>Reserved amount</td>
-                                    <td id="reservedAmount" value="{$ap_paymentinfo['reserved']}">{$ap_paymentinfo['reserved']}</td>
+                                    <td id="reservedAmount" value="{$ap_paymentinfo['reserved']}">{displayPrice price=$ap_paymentinfo['reserved'] currency=$currency->id}</td>
                                 </tr>
                                 <tr>
                                     <td>Captured amount</td>
-                                    <td id="capturedAmount" value="{$ap_paymentinfo['captured']}">{$ap_paymentinfo['captured']}</td>
+                                    <td id="capturedAmount" value="{$ap_paymentinfo['captured']}">{displayPrice price=$ap_paymentinfo['captured'] currency=$currency->id}</td>
                                 </tr>
                                 <tr>
                                     <td>Refunded amount</td>
-                                    <td id="refundedAmount" value="{$ap_paymentinfo['refunded']}">{$ap_paymentinfo['refunded']}</td>
+                                    <td id="refundedAmount" value="{$ap_paymentinfo['refunded']}">{displayPrice price=$ap_paymentinfo['refunded'] currency=$currency->id}</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -380,15 +380,15 @@
                                     </tr>
                                     <tr>
                                         <td>Amount</td>
-                                        <td>{$additional_amount}</td>
+                                        <td>{displayPrice price=$additional_amount currency=$currency->id}</td>
                                     </tr>
                                     <tr>
                                         <td>Amount Reserved</td>
-                                        <td>{$additional_amount_reserved}</td>
+                                        <td>{displayPrice price=$additional_amount_reserved currency=$currency->id}</td>
                                     </tr>
                                     <tr>
                                         <td>Amount Captured</td>
-                                        <td>{$child_order_captured}</td>
+                                       <td>{displayPrice price=$child_order_captured currency=$currency->id}</td>
                                     </tr>
                                     </tbody>
                                 </table>

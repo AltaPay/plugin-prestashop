@@ -135,11 +135,10 @@ var altapay = {
                 } else {
                     $('.send-message').html('<div class="alert alert-danger">' + result.message + '</div>');
                 }
-                // Hide the message after 30 seconds
                 setTimeout(function () {
                     $('.send-message').empty();
                     document.location.reload();
-                }, 2000);
+                }, 3000);
             },
             error: function (xhr, status, error) {
                 console.error(xhr.responseText);
@@ -147,7 +146,7 @@ var altapay = {
 
                 setTimeout(function () {
                     $('.send-message').empty();
-                }, 2000);
+                }, 3000);
             }
         });
     },
