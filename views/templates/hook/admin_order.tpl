@@ -310,7 +310,7 @@
                                        data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
                                        data-remaining_amount="{$additional_amount_reserved}"
-                                       style="text-align: left;width: auto;">Capture <strong>{$additional_amount_reserved}</strong> <small>(Payment Link)</small></a>
+                                       style="text-align: left;width: auto;">Capture <strong>{displayPrice price=$additional_amount_reserved currency=$currency->id}</strong> <small>(Payment Link)</small></a>
                                 </div>
                             </div>
                         {/if}
@@ -322,7 +322,7 @@
                                        data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
                                        data-remaining_amount="{$additional_amount_reserved}"
-                                       style="text-align: left;width: auto;">Refund <strong>{$additional_amount_reserved}</strong> <small>(Payment Link)</small></a>
+                                       style="text-align: left;width: auto;">Refund <strong>{displayPrice price=$additional_amount_reserved currency=$currency->id}</strong> <small>(Payment Link)</small></a>
                                 </div>
                             </div>
                         {/if}
