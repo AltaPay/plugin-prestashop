@@ -9,15 +9,19 @@
 $(function () {
     $(document).ready(function () {
         $("#terminalNature").hide();
+        $("#terminalIdentifier").hide();
         let index = $("#terminalName").prop('selectedIndex');
         $('#terminalNature option:eq(' + index + ')').prop('selected', true);
+        $('#terminalIdentifier option:eq(' + index + ')').prop('selected', true);
         check();
     });
 
     $("#terminalName").change(function () {
         $("#terminalNature").hide();
+        $("#terminalIdentifier").hide();
         let index = $("#terminalName").prop('selectedIndex');
         $('#terminalNature option:eq(' + index + ')').prop('selected', true);
+        $('#terminalIdentifier option:eq(' + index + ')').prop('selected', true);
         check();
     });
 

@@ -1577,3 +1577,41 @@ function sendAsyncPostRequest($url, $data)
     // Close the cURL session
     curl_close($ch);
 }
+
+/**
+ * Get Terminal logo based on payment method identifier
+ *
+ * @param string $identifier
+ * @return string
+ */
+function getPaymentMethodIcon($identifier = '')
+{
+    $defaultValue = 'ideal.png';
+
+    $paymentMethodIcons = [
+        "ApplePay" => "apple_pay.png",
+        "Bancontact" => "bancontact.png",
+        "BankPayment" => "bank.png",
+        "CreditCard" => "creditcard.png",
+        "iDeal" => "ideal.png",
+        "Invoice" => "invoice.png",
+        "Klarna" => "klarna_pink.png",
+        "MobilePay" => "mobilepay.png",
+        "OpenBanking" => "bank.png",
+        "Payconiq" => "payconiq.png",
+        "PayPal" => "paypal.png",
+        "Przelewy24" => "przelewy24.png",
+        "Sepa" => "sepa.png",
+        "SwishSweden" => "swish.png",
+        "Trustly" => "trustly_primary.png",
+        "Twint" => "twint.png",
+        "ViaBill" => "viabill.png",
+        "Vipps" => "vipps.png"
+    ];
+
+    if (isset($paymentMethodIcons[$identifier])) {
+        return $paymentMethodIcons[$identifier];
+    }
+
+    return $defaultValue;
+}

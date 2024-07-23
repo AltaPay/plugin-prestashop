@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.8.3';
+        $this->version = '3.8.5';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.7'];
@@ -267,6 +267,7 @@ class ALTAPAY extends PaymentModule
             `custom_message` varchar(255) DEFAULT \'\',
             `nature` text,
             `secret` varchar(255) DEFAULT \'\',
+            `identifier` varchar(255) DEFAULT \'\',
             `position` int(11) NOT NULL DEFAULT \'0\',
             `active` int(11) NOT NULL DEFAULT \'0\',
             `cvvLess` BOOLEAN NOT NULL DEFAULT \'0\',
@@ -339,6 +340,14 @@ class ALTAPAY extends PaymentModule
         if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'secret\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN secret varchar(255) DEFAULT ""')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'identifier\'')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN identifier varchar(255) DEFAULT ""')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
@@ -648,7 +657,7 @@ class ALTAPAY extends PaymentModule
                     if ($term->Country == $countryConfigured) {
                         $terminal->display_name = $term->Title;
                         $terminal->remote_name = $term->Title;
-                        $terminal->icon_filename = ' ';
+                        $terminal->icon_filename = getPaymentMethodIcon($term->PrimaryMethod->Identifier ?? '');
                         $terminal->currency = $this->context->currency->iso_code;
                         $terminal->ccTokenControl_ = 0;
                         $terminal->applepay = 0;
@@ -658,6 +667,7 @@ class ALTAPAY extends PaymentModule
                         $terminal->active = 1;
                         $terminal->shop_id = 1;
                         $terminal->nature = json_encode($term->Natures);
+                        $terminal->identifier = $term->PrimaryMethod->Identifier ?? '';
                         $terminal->save();
                     }
                     ++$i;
@@ -685,7 +695,7 @@ class ALTAPAY extends PaymentModule
     public function renderAddForm()
     {
         $currencyOptions = [];
-        $terminalNature = [];
+        $terminalNature = $terminalIdentifier = [];
         foreach (Currency::getCurrencies((int) Context::getContext()->language->id) as $currency) {
             if (in_array($currency->iso_code, array_column($currencyOptions, 'id'))) {
                 continue;
@@ -698,10 +708,13 @@ class ALTAPAY extends PaymentModule
         }
         $iconOptions = [];
         $fieldsForm = [];
-        $tokenControl = $terminal_nature = [];
+        $tokenControl = $terminal_nature = $terminal_identifier =[];
         $directory = _PS_MODULE_DIR_ . '/' . $this->name . '/' . $this->paymentMethodIconDir;
         $scanned_directory = array_diff(scandir($directory), ['..', '.', '.DS_Store']);
         foreach ($scanned_directory as $filename) {
+            if (pathinfo($filename, PATHINFO_EXTENSION) != 'png') {
+                continue;
+            }
             $iconOptions[] = [
                 'id' => $filename,
                 'name' => $filename,
@@ -730,6 +743,10 @@ class ALTAPAY extends PaymentModule
                 'id' => $terminal['nature'],
                 'name' => $terminal['nature'],
             ];
+            $terminalIdentifier[] = [
+                'id' => $terminal['identifier'],
+                'name' => $terminal['identifier'],
+            ];
         }
 
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
@@ -756,6 +773,19 @@ class ALTAPAY extends PaymentModule
                 'required' => false,
                 'options' => [
                     'query' => $terminalNature,
+                    'id' => 'id',
+                    'name' => 'name',
+                ],
+            ];
+
+            $terminal_identifier = [
+                'type' => 'select',
+                'label' => '',
+                'name' => 'terminal_identifier',
+                'id' => 'terminalIdentifier',
+                'required' => false,
+                'options' => [
+                    'query' => $terminalIdentifier,
                     'id' => 'id',
                     'name' => 'name',
                 ],
@@ -914,6 +944,7 @@ class ALTAPAY extends PaymentModule
 
                 $tokenControl,
                 $terminal_nature,
+                $terminal_identifier,
 
                 [
                     'type' => 'select',
@@ -1037,6 +1068,7 @@ class ALTAPAY extends PaymentModule
                     'id' => $terminal->Title,
                     'name' => $terminal->Title,
                     'nature' => $termNature,
+                    'identifier' => $terminal->PrimaryMethod->Identifier ?? ''
                 ];
             } else {
                 $terminalArray[$terminal->Title] = $terminal;
