@@ -1341,7 +1341,7 @@ class ALTAPAY extends PaymentModule
                     $rateBasePrice = 1 + ($cartDetails['rate'] / 100);
                     $price_without_reduction = 0;
 
-                    if(isset($p['price_without_reduction'])){
+                    if (isset($p['price_without_reduction'])) {
                         $price_without_reduction = $cartDetails['price_without_reduction'];
                     } elseif (isset($p['total_wt'])) {
                         $price_without_reduction = $cartDetails['total_wt'];
@@ -3345,13 +3345,13 @@ class ALTAPAY extends PaymentModule
             $price_without_reduction = 0;
             $price_with_reduction = 0;
 
-            if(isset($p['price_without_reduction'])){
+            if (isset($p['price_without_reduction'])) {
                 $price_without_reduction = $p['price_without_reduction'];
             } elseif (isset($p['total_wt'])) {
                 $price_without_reduction = $p['total_wt'];
             }
 
-            if(isset($p['price_with_reduction'])){
+            if (isset($p['price_with_reduction'])) {
                 $price_with_reduction = $p['price_with_reduction'];
             } elseif (isset($p['price_wt'])) {
                 $price_with_reduction = $p['price_wt'];
