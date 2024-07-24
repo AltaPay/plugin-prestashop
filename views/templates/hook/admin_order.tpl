@@ -342,15 +342,15 @@
                                 </tr>
                                 <tr>
                                     <td>Reserved amount</td>
-                                    <td id="reservedAmount" value="{$ap_paymentinfo['reserved']}">{displayPrice price=$ap_paymentinfo['reserved'] currency=$currency->id}</td>
+                                    <td id="reservedAmount" value="{$ap_paymentinfo['reserved']}">{$ap_paymentinfo['reserved']}</td>
                                 </tr>
                                 <tr>
                                     <td>Captured amount</td>
-                                    <td id="capturedAmount" value="{$ap_paymentinfo['captured']}">{displayPrice price=$ap_paymentinfo['captured'] currency=$currency->id}</td>
+                                    <td id="capturedAmount" value="{$ap_paymentinfo['captured']}">{$ap_paymentinfo['captured']}</td>
                                 </tr>
                                 <tr>
                                     <td>Refunded amount</td>
-                                    <td id="refundedAmount" value="{$ap_paymentinfo['refunded']}">{displayPrice price=$ap_paymentinfo['refunded'] currency=$currency->id}</td>
+                                    <td id="refundedAmount" value="{$ap_paymentinfo['refunded']}">{$ap_paymentinfo['refunded']}</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -389,15 +389,15 @@
                                     </tr>
                                     <tr>
                                         <td>Amount</td>
-                                        <td>{displayPrice price=$additional_amount currency=$currency->id}</td>
+                                        <td>{$additional_amount}</td>
                                     </tr>
                                     <tr>
                                         <td>Amount Reserved</td>
-                                        <td>{displayPrice price=$additional_amount_reserved currency=$currency->id}</td>
+                                        <td>{$additional_amount_reserved}</td>
                                     </tr>
                                     <tr>
                                         <td>Amount Captured</td>
-                                        <td>{displayPrice price=$child_order_captured currency=$currency->id}</td>
+                                        <td>{$child_order_captured}</td>
                                     </tr>
                                     </tbody>
                                 </table>
