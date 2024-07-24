@@ -5,6 +5,10 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.8.5]
+### Added
+- Configure terminal logo automatically.
+
 ## [3.8.3]
 ### Fixed
 - Capture the payment only from the reserved amount on status update.
