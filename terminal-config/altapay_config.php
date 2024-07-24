@@ -38,10 +38,10 @@ try {
     foreach ($response->Terminals as $term) {
         $terminal = new Altapay_Models_Terminal();
         if ($term->Country == 'DK') {
-            $terminal_identifier = $term->PrimaryMethod->Identifier ?? '';
+            $terminal_identifier = $term->PrimaryMethod->Identifier ?? ' ';
             $terminal->display_name = $term->Title;
             $terminal->remote_name = $term->Title;
-            $terminal->icon_filename = getPaymentMethodIcon($term->PrimaryMethod->Identifier ?? '');
+            $terminal->icon_filename = getPaymentMethodIcon($terminal_identifier);
             $terminal->currency = $currency;
             $terminal->ccTokenControl_ = 0;
             $terminal->applepay = ($terminal_identifier == 'ApplePay');
