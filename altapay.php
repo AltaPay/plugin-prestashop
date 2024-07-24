@@ -1339,9 +1339,16 @@ class ALTAPAY extends PaymentModule
                 $cartDetails = $cart->getProducts()[$key];
                 if ($productDetails) {
                     $rateBasePrice = 1 + ($cartDetails['rate'] / 100);
+                    $price_without_reduction = 0;
+
+                    if(isset($p['price_without_reduction'])){
+                        $price_without_reduction = $cartDetails['price_without_reduction'];
+                    } elseif (isset($p['total_wt'])) {
+                        $price_without_reduction = $cartDetails['total_wt'];
+                    }
                     //Calculation of base price
-                    $basePrice = $cartDetails['price_without_reduction'] / $rateBasePrice;
-                    $productTax = $cartDetails['price_without_reduction'] - $basePrice;
+                    $basePrice = $price_without_reduction / $rateBasePrice;
+                    $productTax = $price_without_reduction - $basePrice;
                     $productName = $cartDetails['name'];
                     $productQuantity = $orderedQuantity;
                     $reductionPercent = $productDetails['reduction_percent'];
@@ -3335,9 +3342,24 @@ class ALTAPAY extends PaymentModule
         foreach ($products as $p) {
             $rateBasePrice = 1 + ($p['rate'] / 100);
             //Calculation of base price
-            $basePrice = $p['price_without_reduction'] / $rateBasePrice;
+            $price_without_reduction = 0;
+            $price_with_reduction = 0;
 
-            $singleProductTaxAmount = $p['price_without_reduction'] - $basePrice;
+            if(isset($p['price_without_reduction'])){
+                $price_without_reduction = $p['price_without_reduction'];
+            } elseif (isset($p['total_wt'])) {
+                $price_without_reduction = $p['total_wt'];
+            }
+
+            if(isset($p['price_with_reduction'])){
+                $price_with_reduction = $p['price_with_reduction'];
+            } elseif (isset($p['price_wt'])) {
+                $price_with_reduction = $p['price_wt'];
+            }
+
+            $basePrice = $price_without_reduction / $rateBasePrice;
+
+            $singleProductTaxAmount = $price_without_reduction - $basePrice;
             $productID = $p['id_product'];
             $discountPercent = 0;
 
@@ -3350,10 +3372,10 @@ class ALTAPAY extends PaymentModule
                     $orderSubtotal,
                     $freeGiftVoucher
                 );
-            } elseif (empty($vouchers) and !empty($p['reduction']) and !empty($p['price_without_reduction'])) {
-                $discountAmount = $p['price_without_reduction'] - $p['price_with_reduction'];
-                $discountPercent = ($discountAmount / $p['price_without_reduction']) * 100;
-            } elseif (!empty($vouchers) and !empty($p['reduction']) and !empty($p['price_without_reduction'])) {
+            } elseif (empty($vouchers) and !empty($p['reduction']) and !empty($price_without_reduction)) {
+                $discountAmount = $price_without_reduction - $price_with_reduction;
+                $discountPercent = ($discountAmount / $price_without_reduction) * 100;
+            } elseif (!empty($vouchers) and !empty($p['reduction']) and !empty($price_without_reduction)) {
                 $voucherPercentDiscount = $this->getVoucherDiscounts(
                     $vouchers,
                     $productID,
@@ -3364,7 +3386,7 @@ class ALTAPAY extends PaymentModule
                 );
                 $voucherDiscountAmount = ($p['total_wt'] * ($voucherPercentDiscount / 100));
                 $rowTotal = $p['total_wt'] - $voucherDiscountAmount;
-                $originalPrice = $p['price_without_reduction'] * $p['cart_quantity'];
+                $originalPrice = $price_without_reduction * $p['cart_quantity'];
                 $discountAmount = $originalPrice - $rowTotal;
                 $discountPercent = ($discountAmount / $originalPrice) * 100;
                 $discountPercent = number_format($discountPercent, 2, '.', '');
