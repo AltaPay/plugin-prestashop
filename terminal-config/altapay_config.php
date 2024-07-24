@@ -38,19 +38,20 @@ try {
     foreach ($response->Terminals as $term) {
         $terminal = new Altapay_Models_Terminal();
         if ($term->Country == 'DK') {
+            $terminal_identifier = $term->PrimaryMethod->Identifier ?? '';
             $terminal->display_name = $term->Title;
             $terminal->remote_name = $term->Title;
             $terminal->icon_filename = getPaymentMethodIcon($term->PrimaryMethod->Identifier ?? '');
             $terminal->currency = $currency;
             $terminal->ccTokenControl_ = 0;
-            $terminal->applepay = 0;
+            $terminal->applepay = ($terminal_identifier == 'ApplePay');
             $terminal->payment_type = 'payment';
             $terminal->active = 1;
             $terminal->position = $i++;
             $terminal->cvvLess = 0;
             $terminal->shop_id = 1;
             $terminal->nature = json_encode($term->Natures);
-            $terminal->identifier = $term->PrimaryMethod->Identifier ?? '';
+            $terminal->identifier = $terminal_identifier;
             $terminal->save();
         }
     }

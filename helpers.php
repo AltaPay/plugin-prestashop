@@ -1587,7 +1587,7 @@ function sendAsyncPostRequest($url, $data)
  */
 function getPaymentMethodIcon($identifier = '')
 {
-    $defaultValue = '';
+    $defaultValue = ' ';
 
     $paymentMethodIcons = [
         'ApplePay' => 'apple_pay.png',
