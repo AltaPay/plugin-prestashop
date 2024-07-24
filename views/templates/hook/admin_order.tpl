@@ -274,11 +274,7 @@
                                             <select class="custom-select" id="order-terminal"
                                                 style="width:auto;height:38px;vertical-align:initial;">
                                                 {foreach $terminals as $terminal}
-                                                    {if $terminal['id'] == 'EmbraceIT Test Terminal'}
-                                                        <option value="{$terminal['id']}" selected>{$terminal['name']}</option>
-                                                    {else}
-                                                        <option value="{$terminal['id']}">{$terminal['name']}</option>
-                                                    {/if} 
+                                                    <option value="{$terminal['id']}">{$terminal['name']}</option>
                                                 {/foreach}
                                             </select>
                                         </label>
