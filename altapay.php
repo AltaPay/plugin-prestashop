@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.8.3';
+        $this->version = '3.8.4';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.7'];
@@ -1339,9 +1339,16 @@ class ALTAPAY extends PaymentModule
                 $cartDetails = $cart->getProducts()[$key];
                 if ($productDetails) {
                     $rateBasePrice = 1 + ($cartDetails['rate'] / 100);
+                    $price_without_reduction = 0;
+
+                    if (isset($p['price_without_reduction'])) {
+                        $price_without_reduction = $cartDetails['price_without_reduction'];
+                    } elseif (isset($p['total_wt'])) {
+                        $price_without_reduction = $cartDetails['total_wt'];
+                    }
                     //Calculation of base price
-                    $basePrice = $cartDetails['price_without_reduction'] / $rateBasePrice;
-                    $productTax = $cartDetails['price_without_reduction'] - $basePrice;
+                    $basePrice = $price_without_reduction / $rateBasePrice;
+                    $productTax = $price_without_reduction - $basePrice;
                     $productName = $cartDetails['name'];
                     $productQuantity = $orderedQuantity;
                     $reductionPercent = $productDetails['reduction_percent'];
@@ -2266,6 +2273,73 @@ class ALTAPAY extends PaymentModule
         return $results;
     }
 
+    public function showAltaPayGeneratePaymentLinkForm($orderDetail, $params)
+    {
+        $shopOrderId = getLatestUniqueIdFromCartId($orderDetail->id_cart);
+        $child_order_transaction = getPaymentFormUrl($orderDetail->id_cart, strstr($shopOrderId, '_', true));
+        $childOrderAmountReserved = 0;
+        $childOrderPaymentID = null;
+        $childOrderId = null;
+        $childOrderCaptured = 0;
+        $requireCapture = null;
+
+        if ($child_order_transaction) {
+            $childOrderId = $child_order_transaction['unique_id'];
+            $childOrderAmountReserved = $child_order_transaction['amount'];
+            $parentShopOrderId = strstr($childOrderId, '_', true);
+            $resultChildOrder = $this->selectChildOrder($parentShopOrderId);
+            if ($resultChildOrder) {
+                $requireCapture = (bool) $resultChildOrder['requireCapture'];
+                $transData = getTransactionStatus($resultChildOrder['payment_id']);
+            }
+
+            if (!$resultChildOrder) {
+                $this->smarty->assign('payment_url', $child_order_transaction['payment_form_url']);
+            }
+
+            if (isset($transData['refunded']) && !$transData['refunded']) {
+                $this->smarty->assign('can_refund', true);
+            }
+
+            if (isset($transData['captured']) && $transData['captured']) {
+                $childOrderCaptured = $childOrderAmountReserved;
+            }
+
+            if ($requireCapture) {
+                $this->smarty->assign('is_require_capture', true);
+            }
+
+            $childOrderPaymentID = $resultChildOrder['payment_id'];
+        }
+
+        $reconciliation_identifiers = getOrderReconciliationIdentifiers($params['id_order']);
+        $terminals = $this->getAltapayTerminals();
+
+        $this->smarty->assign('this_path', $this->_path);
+
+        $currency = new Currency($orderDetail->id_currency);
+        $ajaxUrl = $this->context->link->getAdminLink('AdminPayByLink', true) . '&customer_id=' . $orderDetail->id_customer;
+        $this->context->smarty->assign('generate_payment_link_ajax_url', $ajaxUrl);
+        $this->smarty->assign('id_order', $params['id_order']);
+        $this->smarty->assign('additional_amount', $orderDetail->total_paid);
+        $this->smarty->assign('additional_amount_reserved', $childOrderAmountReserved);
+        $this->smarty->assign('currency', $currency);
+        $this->smarty->assign('reserved_payment_id', $childOrderPaymentID);
+        $this->smarty->assign('child_order_id', $childOrderId);
+        $this->smarty->assign('child_order_captured', $childOrderCaptured);
+        $this->smarty->assign('ap_paymentinfo', null);
+        $this->smarty->assign('reconciliation_identifiers', $reconciliation_identifiers);
+        $this->smarty->assign('terminals', $terminals);
+        $this->context->controller->addJS($this->_path . 'views/js/admin_order.js');
+        $this->context->controller->addCSS($this->_path . 'views/css/admin_order.css', 'all');
+
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+            return $this->display(__FILE__, '/views/templates/hook/admin_order17.tpl');
+        } else {
+            return $this->display(__FILE__, '/views/templates/hook/admin_order.tpl');
+        }
+    }
+
     /**
      * Displays payment info on order detail pages in back office
      *
@@ -2281,7 +2355,7 @@ class ALTAPAY extends PaymentModule
         $orderDetail = new Order((int) $params['id_order']);
 
         if ($orderDetail->module != $this->name) {
-            return false;
+            return $this->showAltaPayGeneratePaymentLinkForm($orderDetail, $params);
         }
         $payment_amount = $orderDetail->total_paid;
         $results = $this->selectOrder($params);
@@ -2452,6 +2526,7 @@ class ALTAPAY extends PaymentModule
         ];
         $fet = $this->context->link;
         $tname = $this->name;
+        $currency = new Currency($orderDetail->id_currency);
         $this->smarty->assign('paymentinfo', $paymentinfo);
         $this->smarty->assign('payment_id', $results['payment_id']);
         $this->smarty->assign('payment_amount', number_format($payment_amount, 2, '.', ''));
@@ -2461,6 +2536,7 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign('token', Tools::getAdminTokenLite('AdminModules'));
         $this->smarty->assign('reconciliation_identifiers', $reconciliation_identifiers);
         $this->smarty->assign('altapay_module_update', $this->isAltaPayModuleUpdateAvailable());
+        $this->smarty->assign('currency', $currency);
 
         $this->context->controller->addCSS($this->_path . 'views/css/admin_order.css', 'all');
         $this->context->controller->addJS($this->_path . 'views/js/admin_order.js');
@@ -3266,9 +3342,24 @@ class ALTAPAY extends PaymentModule
         foreach ($products as $p) {
             $rateBasePrice = 1 + ($p['rate'] / 100);
             //Calculation of base price
-            $basePrice = $p['price_without_reduction'] / $rateBasePrice;
+            $price_without_reduction = 0;
+            $price_with_reduction = 0;
 
-            $singleProductTaxAmount = $p['price_without_reduction'] - $basePrice;
+            if (isset($p['price_without_reduction'])) {
+                $price_without_reduction = $p['price_without_reduction'];
+            } elseif (isset($p['total_wt'])) {
+                $price_without_reduction = $p['total_wt'];
+            }
+
+            if (isset($p['price_with_reduction'])) {
+                $price_with_reduction = $p['price_with_reduction'];
+            } elseif (isset($p['price_wt'])) {
+                $price_with_reduction = $p['price_wt'];
+            }
+
+            $basePrice = $price_without_reduction / $rateBasePrice;
+
+            $singleProductTaxAmount = $price_without_reduction - $basePrice;
             $productID = $p['id_product'];
             $discountPercent = 0;
 
@@ -3281,10 +3372,10 @@ class ALTAPAY extends PaymentModule
                     $orderSubtotal,
                     $freeGiftVoucher
                 );
-            } elseif (empty($vouchers) and !empty($p['reduction']) and !empty($p['price_without_reduction'])) {
-                $discountAmount = $p['price_without_reduction'] - $p['price_with_reduction'];
-                $discountPercent = ($discountAmount / $p['price_without_reduction']) * 100;
-            } elseif (!empty($vouchers) and !empty($p['reduction']) and !empty($p['price_without_reduction'])) {
+            } elseif (empty($vouchers) and !empty($p['reduction']) and !empty($price_without_reduction)) {
+                $discountAmount = $price_without_reduction - $price_with_reduction;
+                $discountPercent = ($discountAmount / $price_without_reduction) * 100;
+            } elseif (!empty($vouchers) and !empty($p['reduction']) and !empty($price_without_reduction)) {
                 $voucherPercentDiscount = $this->getVoucherDiscounts(
                     $vouchers,
                     $productID,
@@ -3295,7 +3386,7 @@ class ALTAPAY extends PaymentModule
                 );
                 $voucherDiscountAmount = ($p['total_wt'] * ($voucherPercentDiscount / 100));
                 $rowTotal = $p['total_wt'] - $voucherDiscountAmount;
-                $originalPrice = $p['price_without_reduction'] * $p['cart_quantity'];
+                $originalPrice = $price_without_reduction * $p['cart_quantity'];
                 $discountAmount = $originalPrice - $rowTotal;
                 $discountPercent = ($discountAmount / $originalPrice) * 100;
                 $discountPercent = number_format($discountPercent, 2, '.', '');
@@ -3918,20 +4009,23 @@ class ALTAPAY extends PaymentModule
         return $results;
     }
 
-    public function altaPayOrderEdited($id_order, $amount)
+    public function altaPayOrderEdited($id_order, $amount, $terminal)
     {
         $order = new Order((int) $id_order);
         $orderId = $order->id;
         $cartId = (int) $order->id_cart;
         $orderDetails = $this->getEditOrderDetails($orderId);
-        $shopOrderId = $orderDetails[0]['unique_id'] ?? null;
+        $shopOrderId = $orderDetails[0]['unique_id'] ?? uniqid('PS');
+        $terminalName = !empty($terminal) ? $terminal : null;
         if ($shopOrderId) {
-            $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
-            $api->setShopOrderId($shopOrderId);
-            $paymentDetails = $api->call();
-            $terminalName = '';
-            foreach ($paymentDetails as $pay) {
-                $terminalName = $pay->Terminal;
+            if (empty($terminalName)) {
+                $api = new API\PHP\Altapay\Api\Others\Payments(getAuth());
+                $api->setShopOrderId($shopOrderId);
+                $paymentDetails = $api->call();
+                $terminalName = '';
+                foreach ($paymentDetails as $pay) {
+                    $terminalName = $pay->Terminal;
+                }
             }
             $remoteId = getTerminalIdByRemoteName($terminalName);
 

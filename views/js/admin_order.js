@@ -126,7 +126,8 @@ var altapay = {
                 action:'getUrl',
                 send_email: $('#send-payment-link-email').prop("checked") ? 1 : 0,
                 amount: $('#order-additional-amount').val(),
-                order_id: order_id
+                order_id: order_id,
+                terminal: $('#order-terminal').length > 0 ? $('#order-terminal').val() : null
             },
             success: function (result) {
                 if (result.status === 'success') {
@@ -134,11 +135,10 @@ var altapay = {
                 } else {
                     $('.send-message').html('<div class="alert alert-danger">' + result.message + '</div>');
                 }
-                // Hide the message after 30 seconds
                 setTimeout(function () {
                     $('.send-message').empty();
                     document.location.reload();
-                }, 2000);
+                }, 3000);
             },
             error: function (xhr, status, error) {
                 console.error(xhr.responseText);
@@ -146,7 +146,7 @@ var altapay = {
 
                 setTimeout(function () {
                     $('.send-message').empty();
-                }, 2000);
+                }, 3000);
             }
         });
     },
@@ -327,7 +327,7 @@ $(document).ready(function () {
         if (isNaN(remainingAmount)) {
             return;
         }
-        jConfirm('Are you sure you want to capture the additional amount <b>' + remainingAmount.toFixed(2) + '</b>?', 'Capture', function (r) {
+        jConfirm('Are you sure you want to capture <b>' + remainingAmount.toFixed(2) + '</b>?', 'Capture', function (r) {
             if (r === true) {
                 altapay.capture_child_order(element);
             }
@@ -341,7 +341,7 @@ $(document).ready(function () {
         if (isNaN(remainingAmount)) {
             return;
         }
-        jConfirm('Are you sure you want to refund the additional amount <b>' + remainingAmount.toFixed(2) + '</b>?', 'Capture', function (r) {
+        jConfirm('Are you sure you want to refund <b>' + remainingAmount.toFixed(2) + '</b>?', 'Capture', function (r) {
             if (r === true) {
                 altapay.refund_child_order(element);
             }

@@ -31,7 +31,7 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
     {
         $css_dir = null;
         $postData = getAltaPayCallbackData();
-        $shopOrderId = strstr($postData['shop_orderid'], '_', true) ?: $postData['shop_orderid'];
+        $shopOrderId = $postData['shop_orderid'];
 
         $cart = getCartFromUniqueId($shopOrderId);
         $checksum = !empty($postData['checksum']) ? $postData['checksum'] : '';
