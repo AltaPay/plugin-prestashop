@@ -11,7 +11,7 @@
 
             <div class="panel-heading">
                 <img src="{$this_path}/logo.png" height="14" width="14">
-                Payment Information
+                Payment information (AltaPay)
                 {if !empty($altapay_module_update) }
                     <p style="float: right;">
                         <span style="border-radius: 8px; font-weight: normal;border: solid 2px #fbbb22;padding: 5px 15px;">
@@ -21,7 +21,7 @@
                 {/if}
             </div>
 
-            <div class="row panel-body">
+            <div class="row panel-body" style="padding-top: 0;">
 
                 {if isset($ap_error)}
                     <div class="alert alert-danger">{$ap_error}</div>
@@ -32,7 +32,7 @@
                     <div class="row row-ap">
                         <div class="col-lg-12">
                             <div class="table-responsive">
-
+                                {if $ap_product_details}
                                 <table class="table table-bordered">
                                     <tr style="font-weight: bold">
                                         <td>
@@ -124,7 +124,6 @@
                                         {else}
                                             {assign var="product_amount" value=number_format($amount_without_tax,2,'.','')-(number_format($amount_without_tax,2,'.','')*($discountPercent/100))}
                                         {/if}
-{*                                        {assign var="product_amount" value=number_format($amount_without_tax,2,'.','')-(number_format($amount_without_tax,2,'.','')*($discountPercent/100))}*}
                                         {if preg_match('/\.\d{3,}/', $product_amount)}
                                             {if substr($product_amount, -1) <= 5}
                                                 <td class="ap-total-amount">{number_format(intval(((number_format($amount_without_tax,2,'.','')-(number_format($amount_without_tax,2,'.','')*($discountPercent/100)))*100))/100,2,'.','')}</td>
@@ -204,11 +203,13 @@
                                         </tr>
                                     {/foreach}
                                 </table>
+                                {/if}
                             </div>
                         </div>
                     </div>
                 </div>
 
+                {if $payment_id}
                 <div class="col-sm-6" id="transactionOptions">
                     <div class="row row-ap">
                         <div class="col-lg-2">
@@ -254,25 +255,38 @@
 
                 </div>
                 <br>
+                {/if}
                 <div class="col-sm-12">
                     <div class="col-sm-6">
                         {if !$reserved_payment_id && $additional_amount}
                             <div class="row row-ap">
                                 <div class="col-lg-12" style="padding: 0;">
                                     {if !$payment_url}
-                                        <label>
-                                            <span>Additional Payment</span>
-                                            <input id="order-additional-amount" class="form-control input" type="text"
-                                                   value="{$additional_amount}"/>
+                                    <h4>Generate Payment Link</h4>
+                                    <label style="display:block;">
+                                        <span>Amount</span>
+                                        <input id="order-additional-amount" class="form-control input" type="text"
+                                                value="{round($additional_amount, 2)}" style="width: auto;"/>
+                                    </label>
+                                    {if !$payment_id}
+                                        <label style="display: block;">
+                                            <span style="display: block;">Terminal</span>
+                                            <select class="custom-select" id="order-terminal"
+                                                style="width:auto;height:38px;vertical-align:initial;">
+                                                {foreach $terminals as $terminal}
+                                                    <option value="{$terminal['id']}">{$terminal['name']}</option>
+                                                {/foreach}
+                                            </select>
                                         </label>
-                                        <label for="send-payment-link-email">
-                                            Send Email?
-                                            <input type="checkbox" id="send-payment-link-email" value="1" checked="checked">
-                                        </label>
-                                        <a href="#" class="btn btn-primary btn-ap" id="generate-payment-link-btn"
-                                           data-orderid="{$id_order}" data-url="{$generate_payment_link_ajax_url}"
-                                           style="text-align: left;width: auto;margin-bottom: 5px;">Generate Link</a>
-                                        <div class="send-message"></div>
+                                    {/if}
+                                    <label for="send-payment-link-email" style="display: block;">
+                                        Send email?
+                                        <input type="checkbox" id="send-payment-link-email" value="1" checked="checked">
+                                    </label>
+                                    <a href="#" class="btn btn-primary btn-ap" id="generate-payment-link-btn"
+                                        data-orderid="{$id_order}" data-url="{$generate_payment_link_ajax_url}"
+                                        style="text-align: left;width: auto;margin-bottom: 5px;">Generate Link</a>
+                                    <div class="send-message"></div>
                                     {/if}
                                 </div>
                                 {if $payment_url}
@@ -292,10 +306,7 @@
                                        data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
                                        data-remaining_amount="{$additional_amount_reserved}"
-                                       style="text-align: left;width: auto;">
-                                        Capture Additional Amount
-                                        ({$additional_amount_reserved})
-                                    </a>
+                                       style="text-align: left;width: auto;">Capture <strong>{displayPrice price=$additional_amount_reserved currency=$currency->id}</strong> <small>(Payment Link)</small></a>
                                 </div>
                             </div>
                         {/if}
@@ -307,18 +318,13 @@
                                        data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
                                        data-payment-id="{$reserved_payment_id}"
                                        data-remaining_amount="{$additional_amount_reserved}"
-                                       style="text-align: left;width: auto;">
-                                        Refund Additional Amount
-                                        ({$additional_amount_reserved})
-                                    </a>
+                                       style="text-align: left;width: auto;">Refund <strong>{displayPrice price=$additional_amount_reserved currency=$currency->id}</strong> <small>(Payment Link)</small></a>
                                 </div>
                             </div>
                         {/if}
                     </div>
                 </div>
                 <div class="col-lg-12" style="margin-top:2%;">
-                    <!--<img src="{$this_path}img/altapay_logo.png" width="130" height="54" class="img-responsive">-->
-
                     <!-- Details -->
                     {if $ap_paymentinfo}
                     <div class="row row-ap">
@@ -350,6 +356,7 @@
                 {/if}
                 <div class="row row-ap">
                     <div class="col-lg-12">
+                    {if $paymentinfo}
                     <div class="table-responsive">
                         <table class="table table-bordered">
                             <tbody>
@@ -362,13 +369,14 @@
                             </tbody>
                         </table>
                     </div>
+                    {/if}
                         {if $child_order_id}
-                            <h3 style="margin: 0;">New Item Added to Order</h3>
+                            <h3 style="margin: 0;">Additional Payment via Payment Link</h3>
                             <div class="table-responsive">
                                 <table class="table table-bordered">
                                     <tbody>
                                     <tr>
-                                        <td>Transaction ID (For additional item)</td>
+                                        <td>Transaction ID</td>
                                         <td>{$child_order_id}</td>
                                     </tr>
                                     <tr>
@@ -376,15 +384,15 @@
                                         <td>{$reserved_payment_id}</td>
                                     </tr>
                                     <tr>
-                                        <td>Additional Amount</td>
+                                        <td>Amount</td>
                                         <td>{$additional_amount}</td>
                                     </tr>
                                     <tr>
-                                        <td>Additional Amount Reserved</td>
+                                        <td>Amount Reserved</td>
                                         <td>{$additional_amount_reserved}</td>
                                     </tr>
                                     <tr>
-                                        <td>Additional Amount Captured</td>
+                                        <td>Amount Captured</td>
                                         <td>{$child_order_captured}</td>
                                     </tr>
                                     </tbody>

@@ -34,14 +34,23 @@ class AdminPayByLinkController extends ModuleAdminController
         $amount = Tools::getValue('amount');
         $order_id = Tools::getValue('order_id');
         $send_email = Tools::getValue('send_email');
-        $paymentLink = $this->module->altaPayOrderEdited($order_id, $amount);
+        $terminal = Tools::getValue('terminal');
+        $paymentLink = $this->module->altaPayOrderEdited($order_id, $amount, $terminal);
+        $order = new Order($order_id);
+        $currency = new Currency($order->id_currency);
+        $amountFormatted = Tools::displayPrice($amount, $currency);
 
         if ($send_email && $paymentLink) {
             $customerId = (int) Tools::getValue('customer_id');
-            $this->sendCustomEmail($customerId, $paymentLink, $amount, $order_id);
+            $this->sendCustomEmail($customerId, $paymentLink, $amountFormatted, $order_id);
         }
 
-        echo json_encode(['status' => 'success', 'message' => 'Success!']);
+        if ($paymentLink) {
+            echo json_encode(['status' => 'success', 'message' => 'Success!']);
+            exit();
+        }
+
+        echo json_encode(['status' => 'error', 'message' => 'Error while generating payment link.']);
         exit();
     }
 
@@ -88,7 +97,7 @@ class AdminPayByLinkController extends ModuleAdminController
             echo json_encode(
                 [
                     'status' => 'success',
-                    'message' => 'Remaining amount for the reservation was captured successfully',
+                    'message' => 'Reservation captured successfully',
                 ]
             );
         } catch (Exception $e) {
@@ -97,7 +106,7 @@ class AdminPayByLinkController extends ModuleAdminController
             echo json_encode(
                 [
                     'status' => 'error',
-                    'message' => 'Could not capture remaining reserved amount. ' . $e->getMessage(),
+                    'message' => 'Could not capture reserved amount. ' . $e->getMessage(),
                 ]
             );
         }
@@ -178,11 +187,6 @@ class AdminPayByLinkController extends ModuleAdminController
             $to = $customer->email;
             $toName = $customer->firstname . ' ' . $customer->lastname;
             $subject = $this->l('Action Required: Payment Link for Outstanding Amount');
-            $order = new Order($order_id);
-            // Get currency object
-            $currency = new Currency($order->id_currency);
-            // Get currency symbol
-            $currencySymbol = $currency->sign;
 
             if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
                 $template = 'addition_item_email';
@@ -215,7 +219,7 @@ class AdminPayByLinkController extends ModuleAdminController
                     null
                 );
 
-                echo json_encode(['status' => 'success', 'message' => 'Payment link of ' . $currencySymbol . '' . $amount . ' sent to ' . $customer->email]);
+                echo json_encode(['status' => 'success', 'message' => 'Payment link of ' . $amount . ' sent to ' . $customer->email]);
                 exit();
             } catch (Exception $e) {
                 echo json_encode(['status' => 'error', 'message' => 'Failed to send email.']);
