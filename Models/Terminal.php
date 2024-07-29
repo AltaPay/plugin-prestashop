@@ -26,6 +26,7 @@ class Altapay_Models_Terminal extends ObjectModel
     public $custom_message;
     public $nature;
     public $secret;
+    public $identifier;
 
     public static $definition = [
         'table' => 'altapay_terminals',
@@ -48,6 +49,7 @@ class Altapay_Models_Terminal extends ObjectModel
             'custom_message' => ['type' => self::TYPE_STRING, 'required' => false, 'size' => 255],
             'nature' => ['type' => self::TYPE_HTML, 'required' => true, 'size' => 3999999999999],
             'secret' => ['type' => self::TYPE_STRING, 'required' => false, 'size' => 255],
+            'identifier' => ['type' => self::TYPE_STRING, 'required' => false, 'size' => 255],
         ],
     ];
 
