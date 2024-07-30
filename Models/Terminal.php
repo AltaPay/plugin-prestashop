@@ -97,7 +97,7 @@ class Altapay_Models_Terminal extends ObjectModel
             if (filter_var($shop_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
                 throw new Exception('Invalid shop id');
             }
-            $query = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE active = 1 AND shop_id = ' . (int) $shop_id . ' ORDER BY `display_name` ASC';
+            $query = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_terminals` WHERE active = 1 AND shop_id = ' . (int) $shop_id . ' ORDER BY IF(ISNULL(position), \"\", position) ASC, display_name ASC';
             $result = Db::getInstance()->executeS($query);
 
             return $result;
