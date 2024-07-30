@@ -1372,10 +1372,10 @@ class ALTAPAY extends PaymentModule
                     $rateBasePrice = 1 + ($cartDetails['rate'] / 100);
                     $price_without_reduction = 0;
 
-                    if (isset($p['price_without_reduction'])) {
+                    if (isset($cartDetails['price_without_reduction'])) {
                         $price_without_reduction = $cartDetails['price_without_reduction'];
-                    } elseif (isset($p['total_wt'])) {
-                        $price_without_reduction = $cartDetails['total_wt'];
+                    } elseif (isset($cartDetails['price_wt'])) {
+                        $price_without_reduction = $cartDetails['price_wt'];
                     }
                     //Calculation of base price
                     $basePrice = $price_without_reduction / $rateBasePrice;
@@ -3343,7 +3343,7 @@ class ALTAPAY extends PaymentModule
     }
 
     /**
-     * Used to create the capture or refund quantity count in order to store in the db
+     * Used to create the capture or refund quantity count in order to stoGre in the db
      *
      * @param CartCore $cart
      *
@@ -3378,8 +3378,8 @@ class ALTAPAY extends PaymentModule
 
             if (isset($p['price_without_reduction'])) {
                 $price_without_reduction = $p['price_without_reduction'];
-            } elseif (isset($p['total_wt'])) {
-                $price_without_reduction = $p['total_wt'];
+            } elseif (isset($p['price_wt'])) {
+                $price_without_reduction = $p['price_wt'];
             }
 
             if (isset($p['price_with_reduction'])) {
