@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.8.5';
+        $this->version = '3.8.6';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.7'];
@@ -3343,7 +3343,7 @@ class ALTAPAY extends PaymentModule
     }
 
     /**
-     * Used to create the capture or refund quantity count in order to stoGre in the db
+     * Used to create the capture or refund quantity count in order to store in the db
      *
      * @param CartCore $cart
      *
