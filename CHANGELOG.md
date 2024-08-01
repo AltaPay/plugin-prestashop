@@ -5,6 +5,11 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.8.6]
+### Fixed
+- Fix: Terminal sorting by position in Prestashop 1.6.x.
+- Fix: Klarna order lines for PrestaShop version 1.6.x.
+
 ## [3.8.5]
 ### Added
 - Configure terminal logo automatically.

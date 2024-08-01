@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.8.5';
+        $this->version = '3.8.6';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.7'];
@@ -1372,10 +1372,10 @@ class ALTAPAY extends PaymentModule
                     $rateBasePrice = 1 + ($cartDetails['rate'] / 100);
                     $price_without_reduction = 0;
 
-                    if (isset($p['price_without_reduction'])) {
+                    if (isset($cartDetails['price_without_reduction'])) {
                         $price_without_reduction = $cartDetails['price_without_reduction'];
-                    } elseif (isset($p['total_wt'])) {
-                        $price_without_reduction = $cartDetails['total_wt'];
+                    } elseif (isset($cartDetails['price_wt'])) {
+                        $price_without_reduction = $cartDetails['price_wt'];
                     }
                     //Calculation of base price
                     $basePrice = $price_without_reduction / $rateBasePrice;
@@ -3378,8 +3378,8 @@ class ALTAPAY extends PaymentModule
 
             if (isset($p['price_without_reduction'])) {
                 $price_without_reduction = $p['price_without_reduction'];
-            } elseif (isset($p['total_wt'])) {
-                $price_without_reduction = $p['total_wt'];
+            } elseif (isset($p['price_wt'])) {
+                $price_without_reduction = $p['price_wt'];
             }
 
             if (isset($p['price_with_reduction'])) {
