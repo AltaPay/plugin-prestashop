@@ -573,7 +573,9 @@ class ALTAPAY extends PaymentModule
         $tab->module = $this->name;
         $tab->id_parent = -1;
 
-        return $tab->add();
+        $tab->add();
+
+        return Tab::getIdFromClassName('AdminPayByLink');
     }
 
     private function uninstallTab()
