@@ -2879,45 +2879,46 @@ class ALTAPAY extends PaymentModule
      */
     public function hookActionFrontControllerSetMedia($params)
     {
-        $cart = $this->context->cart;
-        $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
-        $currency = new Currency($cart->id_currency);
-        // Default values for Apple Pay label and supported networks
-        $apple_pay_label = 'Apple Pay';
-        $applepay_supported_networks = ['visa', 'masterCard', 'amex'];
-
-        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
-        foreach ($paymentMethods as $paymentMethod) {
-            if ($paymentMethod['applepay']) {
-                if (!empty($paymentMethod['applepay_form_label'])) {
-                    $apple_pay_label = $paymentMethod['applepay_form_label'];
-                }
-                if (!empty($paymentMethod['applepay_supported_networks']) && $paymentMethod['applepay_supported_networks'] != 'b:0;') {
-                    $applepay_supported_networks = unserialize($paymentMethod['applepay_supported_networks']);
-                }
-                break;
-            }
-        }
-
-        $this->context->controller->addJquery();
         // Check if the current controller is 'order' or 'order-opc'
         if ($this->context->controller->php_self == 'order' || $this->context->controller->php_self == 'order-opc') {
+            $this->context->controller->addJquery();
             $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
-        }
-        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
-            Media::addJsDef(['cardwalleturl' => $this->context->link->getModuleLink('altapay', 'cardwalletsession')]);
-            Media::addJsDef(['cardwalletresponseurl' => $this->context->link->getModuleLink('altapay', 'payment')]);
-            Media::addJsDef(['amountPaid' => $amountPaid]);
-            Media::addJsDef(['currencyCode' => $currency->iso_code]);
-            Media::addJsDef(['countryCode' => $this->context->country->iso_code]);
-            Media::addJsDef(['applepayLabel' => $apple_pay_label]);
-            Media::addJsDef(['applepaySupportedNetworks' => json_encode($applepay_supported_networks)]);
-            $this->context->controller->registerJavascript(
-                'applepaysdk', // Unique ID
-                'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js', // JS path
-                ['server' => 'remote', 'position' => 'head', 'priority' => 150] // Arguments
-            );
-            $this->context->controller->registerJavascript('altapay-js-cookie', 'https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js', ['server' => 'remote']);
+
+            if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+                $cart = $this->context->cart;
+                $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
+                $currency = new Currency($cart->id_currency);
+                // Default values for Apple Pay label and supported networks
+                $apple_pay_label = 'Apple Pay';
+                $applepay_supported_networks = ['visa', 'masterCard', 'amex'];
+        
+                $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
+                foreach ($paymentMethods as $paymentMethod) {
+                    if ($paymentMethod['applepay']) {
+                        if (!empty($paymentMethod['applepay_form_label'])) {
+                            $apple_pay_label = $paymentMethod['applepay_form_label'];
+                        }
+                        if (!empty($paymentMethod['applepay_supported_networks']) && $paymentMethod['applepay_supported_networks'] != 'b:0;') {
+                            $applepay_supported_networks = unserialize($paymentMethod['applepay_supported_networks']);
+                        }
+                        break;
+                    }
+                }
+
+                Media::addJsDef(['cardwalleturl' => $this->context->link->getModuleLink('altapay', 'cardwalletsession')]);
+                Media::addJsDef(['cardwalletresponseurl' => $this->context->link->getModuleLink('altapay', 'payment')]);
+                Media::addJsDef(['amountPaid' => $amountPaid]);
+                Media::addJsDef(['currencyCode' => $currency->iso_code]);
+                Media::addJsDef(['countryCode' => $this->context->country->iso_code]);
+                Media::addJsDef(['applepayLabel' => $apple_pay_label]);
+                Media::addJsDef(['applepaySupportedNetworks' => json_encode($applepay_supported_networks)]);
+                $this->context->controller->registerJavascript(
+                    'applepaysdk', // Unique ID
+                    'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js', // JS path
+                    ['server' => 'remote', 'position' => 'head', 'priority' => 150] // Arguments
+                );
+                $this->context->controller->registerJavascript('altapay-js-cookie', 'https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js', ['server' => 'remote']);
+            }
         }
     }
 
