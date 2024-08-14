@@ -4060,7 +4060,7 @@ class ALTAPAY extends PaymentModule
                     $terminalName = $pay->Terminal;
                 }
             }
-            $remoteId = getTerminalIdByRemoteName($terminalName);
+            $remoteId = getTerminalIdByRemoteName($terminalName, $order->id_shop);
 
             $currency_iso_code = null;
             $id_currency = $order->id_currency;
