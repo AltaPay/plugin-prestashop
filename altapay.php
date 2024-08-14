@@ -2189,7 +2189,7 @@ class ALTAPAY extends PaymentModule
                 }
             }
 
-            $amountToCapture = min((float) $orderDetail->total_paid, $reserved - $captured);
+            $amountToCapture = min((float) $orderDetail->total_paid - $captured, $reserved - $captured);
             $giftWrappingFee = null;
             if ($productDetails->gift) {
                 $giftWrappingFee = $productDetails->total_wrapping;
