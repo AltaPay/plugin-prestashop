@@ -2346,7 +2346,7 @@ class ALTAPAY extends PaymentModule
         }
 
         $reconciliation_identifiers = getOrderReconciliationIdentifiers($params['id_order']);
-        $terminals = $this->getAltapayTerminals();
+        $terminals = Altapay_Models_Terminal::getActiveTerminals($orderDetail->id_shop);
 
         $this->smarty->assign('this_path', $this->_path);
 
