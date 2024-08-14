@@ -2891,7 +2891,7 @@ class ALTAPAY extends PaymentModule
                 // Default values for Apple Pay label and supported networks
                 $apple_pay_label = 'Apple Pay';
                 $applepay_supported_networks = ['visa', 'masterCard', 'amex'];
-        
+
                 $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
                 foreach ($paymentMethods as $paymentMethod) {
                     if ($paymentMethod['applepay']) {
