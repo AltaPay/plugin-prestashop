@@ -10,6 +10,7 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 - Fix: Allow to generate payment link for all shops.
 - Fix: When the order is captured due to status change, it captures the total reserved amount, not the order size.
 - Enhance page speed by loading the media exclusively on the checkout page.
+- Fix: Display the credit card form in the customer's language for payment links.
 
 ## [3.8.6]
 ### Fixed

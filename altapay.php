@@ -3042,11 +3042,20 @@ class ALTAPAY extends PaymentModule
 
             return $response;
         }
+
+        $languageId = $this->context->language->id;
+        $languageCode = $this->context->language->iso_code;
+
+        if ($parent_order) {
+            $languageId = $parent_order->getCustomer()->id_lang;
+            $languageCode = Db::getInstance()->getValue('SELECT iso_code FROM ' . _DB_PREFIX_ . 'lang WHERE `id_lang` = ' . (int) $languageId);
+        }
+
         $cgConf = [];
         // Config
         $cgConf['payment_type'] = $terminal->payment_type ?? 'payment';
         $cgConf['currency'] = $currencyCode;
-        $cgConf['language'] = $this->context->language->iso_code;
+        $cgConf['language'] = $languageCode;
         $cgConf['uniqueid'] = uniqid('PS');
         $cgConf['terminal'] = $terminal->remote_name;
         $cgConf['cookie'] = $_SERVER['HTTP_COOKIE'] ?? null;
@@ -3058,7 +3067,7 @@ class ALTAPAY extends PaymentModule
             'callbackform',
             [],
             true,
-            $this->context->language->id,
+            $languageId,
             $this->context->shop->id
         );
         $callback['callback_ok'] = $this->context->link->getModuleLink(
@@ -3066,7 +3075,7 @@ class ALTAPAY extends PaymentModule
             'callbackok',
             [],
             true,
-            $this->context->language->id,
+            $languageId,
             $this->context->shop->id
         );
         $callback['callback_fail'] = $this->context->link->getModuleLink(
@@ -3074,7 +3083,7 @@ class ALTAPAY extends PaymentModule
             'callbackfail',
             [],
             true,
-            $this->context->language->id,
+            $languageId,
             $this->context->shop->id
         );
         $callback['callback_open'] = $this->context->link->getModuleLink(
@@ -3082,7 +3091,7 @@ class ALTAPAY extends PaymentModule
             'callbackopen',
             [],
             true,
-            $this->context->language->id,
+            $languageId,
             $this->context->shop->id
         );
         $callback['callback_notification'] = $this->context->link->getModuleLink(
@@ -3090,7 +3099,7 @@ class ALTAPAY extends PaymentModule
             'callbacknotification',
             [],
             true,
-            $this->context->language->id,
+            $languageId,
             $this->context->shop->id
         );
         $callback['callback_redirect'] = $this->context->link->getModuleLink(
@@ -3098,7 +3107,7 @@ class ALTAPAY extends PaymentModule
             'callbackredirect',
             [],
             true,
-            $this->context->language->id,
+            $languageId,
             $this->context->shop->id
         );
 
