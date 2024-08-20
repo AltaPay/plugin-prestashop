@@ -170,7 +170,6 @@ var altapay = {
             }
         });
     },
-
     cancelOrder: function () {
         // Find the order status dropdown element by its ID
         var dropdown = document.getElementById('id_order_state');
@@ -310,10 +309,6 @@ $(document).ready(function () {
         return altapay.recalculateAmount(element);
     });
 
-    $("#orderTotal, #total_order").on("DOMSubtreeModified", function() {
-        location.reload();
-    });
-
     $('#generate-payment-link-btn').click(function (e) {
         e.preventDefault();
         var element = this;
@@ -334,6 +329,7 @@ $(document).ready(function () {
         });
     });
 
+
     $('#btn-remaining-refund').click(function (e) {
         e.preventDefault();
         var element = this;
@@ -347,4 +343,33 @@ $(document).ready(function () {
             }
         });
     });
+
+    MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+    var observer = new MutationObserver(function (mutations, observer) {
+        mutations.forEach(function (mutation) {
+            if (mutation.type === 'childList') {
+                location.reload();
+            }
+        });
+    });
+
+    var total_order = document.getElementById('total_order');
+    if (total_order) {
+        observer.observe(total_order, {
+            attributes: false,
+            childList: true,
+            subtree: true,
+            characterData: false
+        });
+    }
+
+    var orderTotal = document.getElementById('orderTotal');
+    if (orderTotal) {
+        observer.observe(orderTotal, {
+            attributes: false,
+            childList: true,
+            subtree: false,
+            characterData: false
+        });
+    }
 });
