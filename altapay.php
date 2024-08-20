@@ -3045,8 +3045,10 @@ class ALTAPAY extends PaymentModule
 
         $languageId = $this->context->language->id;
         $languageCode = $this->context->language->iso_code;
+        $shopId = $this->context->shop->id;
 
         if ($parent_order) {
+            $shopId = $parent_order->id_shop;
             $languageId = $parent_order->getCustomer()->id_lang;
             $languageCode = Db::getInstance()->getValue('SELECT iso_code FROM ' . _DB_PREFIX_ . 'lang WHERE `id_lang` = ' . (int) $languageId);
         }
@@ -3068,15 +3070,16 @@ class ALTAPAY extends PaymentModule
             [],
             true,
             $languageId,
-            $this->context->shop->id
+            $shopId
         );
+
         $callback['callback_ok'] = $this->context->link->getModuleLink(
             $this->name,
             'callbackok',
             [],
             true,
             $languageId,
-            $this->context->shop->id
+            $shopId
         );
         $callback['callback_fail'] = $this->context->link->getModuleLink(
             $this->name,
@@ -3084,7 +3087,7 @@ class ALTAPAY extends PaymentModule
             [],
             true,
             $languageId,
-            $this->context->shop->id
+            $shopId
         );
         $callback['callback_open'] = $this->context->link->getModuleLink(
             $this->name,
@@ -3092,7 +3095,7 @@ class ALTAPAY extends PaymentModule
             [],
             true,
             $languageId,
-            $this->context->shop->id
+            $shopId
         );
         $callback['callback_notification'] = $this->context->link->getModuleLink(
             $this->name,
@@ -3100,7 +3103,7 @@ class ALTAPAY extends PaymentModule
             [],
             true,
             $languageId,
-            $this->context->shop->id
+            $shopId
         );
         $callback['callback_redirect'] = $this->context->link->getModuleLink(
             $this->name,
@@ -3108,7 +3111,7 @@ class ALTAPAY extends PaymentModule
             [],
             true,
             $languageId,
-            $this->context->shop->id
+            $shopId
         );
 
         if ($parent_order) {
