@@ -170,6 +170,7 @@ var altapay = {
             }
         });
     },
+
     cancelOrder: function () {
         // Find the order status dropdown element by its ID
         var dropdown = document.getElementById('id_order_state');
@@ -328,7 +329,6 @@ $(document).ready(function () {
             }
         });
     });
-
 
     $('#btn-remaining-refund').click(function (e) {
         e.preventDefault();
