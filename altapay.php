@@ -2822,7 +2822,8 @@ class ALTAPAY extends PaymentModule
         $this->context->controller->addCSS($this->_path . 'css/payment.css', 'all');
         // Fetch payment methods
         $currency = $this->getCurrencyForCart($params['cart']);
-        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
+        $shopId = !empty($this->context->shop->id) ? (int) $this->context->shop->id : 1;
+        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, $shopId);
         $show_only_cc_terminal = cartHasSubscriptionProduct($params['cart']);
 
         $this->smarty->assign(
@@ -2892,7 +2893,8 @@ class ALTAPAY extends PaymentModule
                 $apple_pay_label = 'Apple Pay';
                 $applepay_supported_networks = ['visa', 'masterCard', 'amex'];
 
-                $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
+                $shopId = !empty($this->context->shop->id) ? (int) $this->context->shop->id : 1;
+                $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, $shopId);
                 foreach ($paymentMethods as $paymentMethod) {
                     if ($paymentMethod['applepay']) {
                         if (!empty($paymentMethod['applepay_form_label'])) {
@@ -3048,9 +3050,11 @@ class ALTAPAY extends PaymentModule
         $shopId = $this->context->shop->id;
 
         if ($parent_order) {
+            $languageId = !empty($parent_order->getCustomer()->id_lang) ? $parent_order->getCustomer()->id_lang : Configuration::get('PS_LANG_DEFAULT');
+            if (!empty($languageId)) {
+                $languageCode = Db::getInstance()->getValue('SELECT iso_code FROM ' . _DB_PREFIX_ . 'lang WHERE `id_lang` = ' . (int) $languageId);
+            }
             $shopId = $parent_order->id_shop;
-            $languageId = $parent_order->getCustomer()->id_lang;
-            $languageCode = Db::getInstance()->getValue('SELECT iso_code FROM ' . _DB_PREFIX_ . 'lang WHERE `id_lang` = ' . (int) $languageId);
         }
 
         $cgConf = [];
