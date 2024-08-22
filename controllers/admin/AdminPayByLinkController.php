@@ -204,7 +204,7 @@ class AdminPayByLinkController extends ModuleAdminController
 
             try {
                 Mail::Send(
-                    $this->context->language->id,
+                    $customer->id_lang,
                     $template,
                     $subject,
                     $templateVars,

@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.8.6';
+        $this->version = '3.8.7';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.7'];
@@ -2189,7 +2189,7 @@ class ALTAPAY extends PaymentModule
                 }
             }
 
-            $amountToCapture = min((float) $orderDetail->total_paid, $reserved - $captured);
+            $amountToCapture = min((float) $orderDetail->total_paid - $captured, $reserved - $captured);
             $giftWrappingFee = null;
             if ($productDetails->gift) {
                 $giftWrappingFee = $productDetails->total_wrapping;
@@ -2346,7 +2346,7 @@ class ALTAPAY extends PaymentModule
         }
 
         $reconciliation_identifiers = getOrderReconciliationIdentifiers($params['id_order']);
-        $terminals = $this->getAltapayTerminals();
+        $terminals = Altapay_Models_Terminal::getActiveTerminals($orderDetail->id_shop);
 
         $this->smarty->assign('this_path', $this->_path);
 
@@ -2822,7 +2822,8 @@ class ALTAPAY extends PaymentModule
         $this->context->controller->addCSS($this->_path . 'css/payment.css', 'all');
         // Fetch payment methods
         $currency = $this->getCurrencyForCart($params['cart']);
-        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
+        $shopId = !empty($this->context->shop->id) ? (int) $this->context->shop->id : 1;
+        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, $shopId);
         $show_only_cc_terminal = cartHasSubscriptionProduct($params['cart']);
 
         $this->smarty->assign(
@@ -2879,45 +2880,47 @@ class ALTAPAY extends PaymentModule
      */
     public function hookActionFrontControllerSetMedia($params)
     {
-        $cart = $this->context->cart;
-        $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
-        $currency = new Currency($cart->id_currency);
-        // Default values for Apple Pay label and supported networks
-        $apple_pay_label = 'Apple Pay';
-        $applepay_supported_networks = ['visa', 'masterCard', 'amex'];
-
-        $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, (int) $this->context->shop->id);
-        foreach ($paymentMethods as $paymentMethod) {
-            if ($paymentMethod['applepay']) {
-                if (!empty($paymentMethod['applepay_form_label'])) {
-                    $apple_pay_label = $paymentMethod['applepay_form_label'];
-                }
-                if (!empty($paymentMethod['applepay_supported_networks']) && $paymentMethod['applepay_supported_networks'] != 'b:0;') {
-                    $applepay_supported_networks = unserialize($paymentMethod['applepay_supported_networks']);
-                }
-                break;
-            }
-        }
-
-        $this->context->controller->addJquery();
         // Check if the current controller is 'order' or 'order-opc'
         if ($this->context->controller->php_self == 'order' || $this->context->controller->php_self == 'order-opc') {
+            $this->context->controller->addJquery();
             $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
-        }
-        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
-            Media::addJsDef(['cardwalleturl' => $this->context->link->getModuleLink('altapay', 'cardwalletsession')]);
-            Media::addJsDef(['cardwalletresponseurl' => $this->context->link->getModuleLink('altapay', 'payment')]);
-            Media::addJsDef(['amountPaid' => $amountPaid]);
-            Media::addJsDef(['currencyCode' => $currency->iso_code]);
-            Media::addJsDef(['countryCode' => $this->context->country->iso_code]);
-            Media::addJsDef(['applepayLabel' => $apple_pay_label]);
-            Media::addJsDef(['applepaySupportedNetworks' => json_encode($applepay_supported_networks)]);
-            $this->context->controller->registerJavascript(
-                'applepaysdk', // Unique ID
-                'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js', // JS path
-                ['server' => 'remote', 'position' => 'head', 'priority' => 150] // Arguments
-            );
-            $this->context->controller->registerJavascript('altapay-js-cookie', 'https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js', ['server' => 'remote']);
+
+            if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+                $cart = $this->context->cart;
+                $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
+                $currency = new Currency($cart->id_currency);
+                // Default values for Apple Pay label and supported networks
+                $apple_pay_label = 'Apple Pay';
+                $applepay_supported_networks = ['visa', 'masterCard', 'amex'];
+
+                $shopId = !empty($this->context->shop->id) ? (int) $this->context->shop->id : 1;
+                $paymentMethods = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency->iso_code, $shopId);
+                foreach ($paymentMethods as $paymentMethod) {
+                    if ($paymentMethod['applepay']) {
+                        if (!empty($paymentMethod['applepay_form_label'])) {
+                            $apple_pay_label = $paymentMethod['applepay_form_label'];
+                        }
+                        if (!empty($paymentMethod['applepay_supported_networks']) && $paymentMethod['applepay_supported_networks'] != 'b:0;') {
+                            $applepay_supported_networks = unserialize($paymentMethod['applepay_supported_networks']);
+                        }
+                        break;
+                    }
+                }
+
+                Media::addJsDef(['cardwalleturl' => $this->context->link->getModuleLink('altapay', 'cardwalletsession')]);
+                Media::addJsDef(['cardwalletresponseurl' => $this->context->link->getModuleLink('altapay', 'payment')]);
+                Media::addJsDef(['amountPaid' => $amountPaid]);
+                Media::addJsDef(['currencyCode' => $currency->iso_code]);
+                Media::addJsDef(['countryCode' => $this->context->country->iso_code]);
+                Media::addJsDef(['applepayLabel' => $apple_pay_label]);
+                Media::addJsDef(['applepaySupportedNetworks' => json_encode($applepay_supported_networks)]);
+                $this->context->controller->registerJavascript(
+                    'applepaysdk', // Unique ID
+                    'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js', // JS path
+                    ['server' => 'remote', 'position' => 'head', 'priority' => 150] // Arguments
+                );
+                $this->context->controller->registerJavascript('altapay-js-cookie', 'https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js', ['server' => 'remote']);
+            }
         }
     }
 
@@ -3041,11 +3044,24 @@ class ALTAPAY extends PaymentModule
 
             return $response;
         }
+
+        $languageId = $this->context->language->id;
+        $languageCode = $this->context->language->iso_code;
+        $shopId = $this->context->shop->id;
+
+        if ($parent_order) {
+            $languageId = !empty($parent_order->getCustomer()->id_lang) ? $parent_order->getCustomer()->id_lang : Configuration::get('PS_LANG_DEFAULT');
+            if (!empty($languageId)) {
+                $languageCode = Db::getInstance()->getValue('SELECT iso_code FROM ' . _DB_PREFIX_ . 'lang WHERE `id_lang` = ' . (int) $languageId);
+            }
+            $shopId = $parent_order->id_shop;
+        }
+
         $cgConf = [];
         // Config
         $cgConf['payment_type'] = $terminal->payment_type ?? 'payment';
         $cgConf['currency'] = $currencyCode;
-        $cgConf['language'] = $this->context->language->iso_code;
+        $cgConf['language'] = $languageCode;
         $cgConf['uniqueid'] = uniqid('PS');
         $cgConf['terminal'] = $terminal->remote_name;
         $cgConf['cookie'] = $_SERVER['HTTP_COOKIE'] ?? null;
@@ -3057,48 +3073,49 @@ class ALTAPAY extends PaymentModule
             'callbackform',
             [],
             true,
-            $this->context->language->id,
-            $this->context->shop->id
+            $languageId,
+            $shopId
         );
+
         $callback['callback_ok'] = $this->context->link->getModuleLink(
             $this->name,
             'callbackok',
             [],
             true,
-            $this->context->language->id,
-            $this->context->shop->id
+            $languageId,
+            $shopId
         );
         $callback['callback_fail'] = $this->context->link->getModuleLink(
             $this->name,
             'callbackfail',
             [],
             true,
-            $this->context->language->id,
-            $this->context->shop->id
+            $languageId,
+            $shopId
         );
         $callback['callback_open'] = $this->context->link->getModuleLink(
             $this->name,
             'callbackopen',
             [],
             true,
-            $this->context->language->id,
-            $this->context->shop->id
+            $languageId,
+            $shopId
         );
         $callback['callback_notification'] = $this->context->link->getModuleLink(
             $this->name,
             'callbacknotification',
             [],
             true,
-            $this->context->language->id,
-            $this->context->shop->id
+            $languageId,
+            $shopId
         );
         $callback['callback_redirect'] = $this->context->link->getModuleLink(
             $this->name,
             'callbackredirect',
             [],
             true,
-            $this->context->language->id,
-            $this->context->shop->id
+            $languageId,
+            $shopId
         );
 
         if ($parent_order) {
@@ -4060,7 +4077,7 @@ class ALTAPAY extends PaymentModule
                     $terminalName = $pay->Terminal;
                 }
             }
-            $remoteId = getTerminalIdByRemoteName($terminalName);
+            $remoteId = getTerminalIdByRemoteName($terminalName, $order->id_shop);
 
             $currency_iso_code = null;
             $id_currency = $order->id_currency;

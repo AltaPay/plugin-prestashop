@@ -274,7 +274,7 @@
                                             <select class="custom-select" id="order-terminal"
                                                 style="width:auto;height:38px;vertical-align:initial;">
                                                 {foreach $terminals as $terminal}
-                                                    <option value="{$terminal['id']}">{$terminal['name']}</option>
+                                                    <option value="{$terminal['remote_name']}">{$terminal['display_name']}</option>
                                                 {/foreach}
                                             </select>
                                         </label>
