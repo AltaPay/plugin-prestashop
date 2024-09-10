@@ -5,6 +5,11 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.8.8]
+### Fixed
+- Fix: Late callback failure changes order status to "Cancelled."
+- Show payment method name instead of payment type in the invoice and payment section for backorders.
+
 ## [3.8.7]
 ### Fixed
 - Fix: Allow to generate payment link for all shops.

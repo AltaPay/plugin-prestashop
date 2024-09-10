@@ -140,7 +140,20 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                             $currency = new Currency($cart->id_currency);
                         }
                         // Determine payment method for display
-                        $paymentMethod = determinePaymentMethodForDisplay($response);
+                        $currency_iso_code = null;
+                        $id_currency = $cart->id_currency;
+                        if ($id_currency) {
+                            $currency = new Currency($id_currency);
+                            $currency_iso_code = $currency->iso_code;
+                        }
+                        $remoteId = getTerminalIdByRemoteName($transaction->Terminal, $cart->id_shop);
+                        $terminal = getTerminal($remoteId, $currency_iso_code);
+
+                        if (!empty($terminal)) {
+                            $paymentMethod = $terminal->display_name;
+                        } else {
+                            $paymentMethod = $transaction->PaymentNature;
+                        }
 
                         // Create an order with 'payment accepted' status
                         $this->module->validateOrder(

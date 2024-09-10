@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.8.7';
+        $this->version = '3.8.8';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.7'];
@@ -2554,7 +2554,6 @@ class ALTAPAY extends PaymentModule
             'Card Country' => Tools::htmlentitiesUTF8($results['cardCountry']),
             'Payment Type' => Tools::htmlentitiesUTF8($results['paymentType']),
             'Payment Status' => Tools::htmlentitiesUTF8($results['paymentStatus']),
-            'Payment Nature' => Tools::htmlentitiesUTF8($results['paymentNature']),
             'Latest Error' => Tools::htmlentitiesUTF8($results['latestError']),
         ];
         $fet = $this->context->link;
@@ -3037,7 +3036,7 @@ class ALTAPAY extends PaymentModule
         $response = ['success' => false, 'payment_form_url' => '', 'apple_pay_terminal' => $is_apple_pay];
         $currencyCode = !empty($currencyCode) ? $currencyCode : $this->context->currency->iso_code;
         // Terminal
-        $terminal = $this->getTerminal($payment_method, $currencyCode);
+        $terminal = getTerminal($payment_method, $currencyCode);
         if (!is_object($terminal)) {
             $message = 'Could not determine remote terminal - possibly currency mismatch';
             PrestaShopLogger::addLog($message, 3, null, $this->name, $this->id, true);
@@ -3308,34 +3307,6 @@ class ALTAPAY extends PaymentModule
         PrestaShopLogger::addLog($message, 3, null, $this->name, $this->id, true);
 
         return $response;
-    }
-
-    /**
-     * Get the remote name of the terminal associated with
-     * this payment method. Will check if currency matches the remote terminal.
-     *
-     * @param bool $terminal_id
-     * @param bool $currency
-     *
-     * @return Altapay_Models_Terminal|null
-     *
-     * @throws PrestaShopDatabaseException
-     * @throws PrestaShopException
-     */
-    private function getTerminal($terminal_id = false, $currency = false)
-    {
-        if ($terminal_id === false || $currency === false) {
-            return null;
-        }
-
-        $terminal = new Altapay_Models_Terminal($terminal_id);
-        $terminalId = $terminal->id_terminal;
-        $terminalCurr = $terminal->currency;
-        if ($terminalId === null || Tools::strtolower($terminalCurr) !== Tools::strtolower($currency)) {
-            return null;
-        }
-
-        return $terminal;
     }
 
     /**
