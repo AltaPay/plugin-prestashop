@@ -346,6 +346,13 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
 
         if (Validate::isLoadedObject($current_order)) {
             try {
+                $currency = new Currency($current_order->id_currency);
+                $remoteId = getTerminalIdByRemoteName($paymentTerminal, $current_order->id_shop);
+                $terminal = getTerminal($remoteId, $currency->iso_code);
+
+                if (!empty($terminal)) {
+                    $paymentTerminal = $terminal->display_name;
+                }
                 $current_order->addOrderPayment($transaction->ReservedAmount, $paymentTerminal, $uniqueId);
             } catch (Exception $e) {
                 PrestaShopLogger::addLog("Child shop_orderid $uniqueId, Parent ID : $current_order->id, {$e->getMessage()}", 4);
