@@ -150,7 +150,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                             updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
                         }
                     } elseif (!$isChildOrder) {
-                        createOrder($response, $currencyPaid, $cart, $orderStatus);
+                        createOrder($transaction, $currencyPaid, $cart, $orderStatus);
                     }
                 }
                 // Load order
@@ -215,7 +215,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
         // Successful order exists, set its status to cancel
         $order = getOrderFromUniqueId($postData['shop_orderid']);
 
-        if (Validate::isLoadedObject($order) and $transaction->ReservedAmount == 0) {
+        if (Validate::isLoadedObject($order) and !empty($transaction) && $transaction->ReservedAmount == 0) {
             if ($isChildOrder) {
                 updatePaymentStatusForChildOrder($postData['transaction_id'], $postData['status']);
                 saveLastErrorMessageForChildOrder($postData['transaction_id'], $errorMessage);
@@ -227,7 +227,8 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             }
         }
 
-        $status = strtolower($response->Result);
+        $status = isset($response) ? strtolower($response->Result) : '';
+        $unique_id = $postData['shop_orderid'];
         if ($status === 'cancelled') {
             $unique_id = $postData['shop_orderid'];
             // Updated transaction record to cancel
@@ -246,14 +247,13 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                 $errorMessage = $errorMessage . '|' . $merchantError;
             }
 
-            $cId = $cart->id;
             $mNa = $this->module->name;
             $mId = $this->module->id;
-            PrestaShopLogger::addLog('Payment failure for cart ' . $cId . '. Error Message: ' . $errorMessage, 3, 2001, $mNa, $mId, true);
+            PrestaShopLogger::addLog('Error Message: ' . $errorMessage, 3, 2001, $mNa, $mId, true);
             $this->context->smarty->assign([
-                'errorText' => $response->CardHolderErrorMessage,
-                'unique_id' => $shopOrderId,
-                'payment_id' => $response->transactionId,
+                'errorText' => $postData['error_message'],
+                'unique_id' => $unique_id,
+                'payment_id' => $postData['transaction_id'],
                 'this_path' => $this->module->getPathUri(),
                 'this_path_altapay' => $this->module->getPathUri(),
                 'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $mNa . '/',

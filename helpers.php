@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.8.7';
+    $pluginVersion = '3.8.8';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -34,28 +34,6 @@ function transactionInfo($transactionInfo = [])
     $transactionInfo['otherInfo'] = 'storeName-' . Configuration::get('PS_SHOP_NAME');
 
     return $transactionInfo;
-}
-
-/**
- * @param AltapayCallbackHandler $response
- *
- * @return string
- */
-function determinePaymentMethodForDisplay($response)
-{
-    $paymentNature = $response->nature;
-
-    if ($paymentNature === 'Wallet') {
-        return $response->Transactions[0]->PaymentSchemeName;
-    }
-    if ($paymentNature === 'CreditCard') {
-        return $paymentNature;
-    }
-    if ($paymentNature === 'CreditCardWallet') {
-        return $response->Transactions[0]->PaymentSchemeName;
-    }
-
-    return $paymentNature;
 }
 
 /**
@@ -368,6 +346,13 @@ function createAltapayOrder($response, $current_order, $payment_status = 'succee
 
         if (Validate::isLoadedObject($current_order)) {
             try {
+                $currency = new Currency($current_order->id_currency);
+                $remoteId = getTerminalIdByRemoteName($paymentTerminal, $current_order->id_shop);
+                $terminal = getTerminal($remoteId, $currency->iso_code);
+
+                if (!empty($terminal)) {
+                    $paymentTerminal = $terminal->display_name;
+                }
                 $current_order->addOrderPayment($transaction->ReservedAmount, $paymentTerminal, $uniqueId);
             } catch (Exception $e) {
                 PrestaShopLogger::addLog("Child shop_orderid $uniqueId, Parent ID : $current_order->id, {$e->getMessage()}", 4);
@@ -1019,11 +1004,25 @@ function redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle)
  *
  * @return mixed
  */
-function createOrder($response, $currencyPaid, $cart, $orderStatus)
+function createOrder($transaction, $currencyPaid, $cart, $orderStatus)
 {
     $module = Module::getInstanceByName('altapay');
     // Determine payment method for display
-    $paymentMethod = determinePaymentMethodForDisplay($response);
+    $currency_iso_code = null;
+    $id_currency = $cart->id_currency;
+    if ($id_currency) {
+        $currency = new Currency($id_currency);
+        $currency_iso_code = $currency->iso_code;
+    }
+    $remoteId = getTerminalIdByRemoteName($transaction->Terminal, $cart->id_shop);
+    $terminal = getTerminal($remoteId, $currency_iso_code);
+
+    if (!empty($terminal)) {
+        $paymentMethod = $terminal->display_name;
+    } else {
+        $paymentMethod = $transaction->PaymentNature;
+    }
+
     // Create an order with 'payment accepted' status
     $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
     $cartID = $cart->id;
@@ -1440,7 +1439,7 @@ function createOrderOkCallback($postData, $record_id = null)
         $ccToken = $response->creditCardToken;
         $maskedPan = $response->maskedCreditCard;
         if (!$isChildOrder) {
-            $payment_module = createOrder($response, $currencyPaid, $cart, $orderStatus);
+            $payment_module = createOrder($transaction, $currencyPaid, $cart, $orderStatus);
             // Load order
             $order = new Order((int) $payment_module->currentOrder);
         } else {
@@ -1615,4 +1614,21 @@ function getPaymentMethodIcon($identifier = '')
     }
 
     return $defaultValue;
+}
+
+function getTerminal($terminal_id = false, $currency = false)
+{
+    if ($terminal_id === false || $currency === false) {
+        return null;
+    }
+
+    $terminal = new Altapay_Models_Terminal($terminal_id);
+
+    $terminalId = $terminal->id_terminal;
+    $terminalCurr = $terminal->currency;
+    if ($terminalId === null || Tools::strtolower($terminalCurr) !== Tools::strtolower($currency)) {
+        return null;
+    }
+
+    return $terminal;
 }

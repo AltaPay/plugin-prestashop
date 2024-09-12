@@ -27,7 +27,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
         $payment_method = Tools::getValue('method', false);
         $providerData = Tools::getValue('providerData');
         $is_apple_pay = (bool) Tools::getValue('is_apple_pay', false);
-        $terminal = $this->getTerminal($payment_method, $this->context->currency->iso_code);
+        $terminal = getTerminal($payment_method, $this->context->currency->iso_code);
 
         $cart = $this->context->cart;
         if (!$this->module->checkCurrency($cart)) {
@@ -108,33 +108,5 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             // Redirect user back to checkout with a generic error
             Tools::redirect($payment_form_url);
         }
-    }
-
-    /**
-     * Get the remote name of the terminal associated with
-     * this payment method. Will check if currency matches the remote terminal.
-     *
-     * @param bool $terminal_id
-     * @param bool $currency
-     *
-     * @return Altapay_Models_Terminal|null
-     *
-     * @throws PrestaShopDatabaseException
-     * @throws PrestaShopException
-     */
-    private function getTerminal($terminal_id = false, $currency = false)
-    {
-        if ($terminal_id === false || $currency === false) {
-            return null;
-        }
-
-        $terminal = new Altapay_Models_Terminal($terminal_id);
-        $terminalId = $terminal->id_terminal;
-        $terminalCurr = $terminal->currency;
-        if ($terminalId === null || Tools::strtolower($terminalCurr) !== Tools::strtolower($currency)) {
-            return null;
-        }
-
-        return $terminal;
     }
 }
