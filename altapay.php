@@ -2100,7 +2100,9 @@ class ALTAPAY extends PaymentModule
 
         $results = $this->selectOrder($params);
 
-        $results = $this->syncOrderDataFromGateway($results, $orderDetail, $params);
+        if (Context::getContext()->controller->controller_type == 'admin') {
+            $results = $this->syncOrderDataFromGateway($results, $orderDetail, $params);
+        }
 
         if (empty($results)) {
             return null;
@@ -2288,7 +2290,9 @@ class ALTAPAY extends PaymentModule
 
         $results = $this->selectOrder($params);
 
-        $results = $this->syncOrderDataFromGateway($results, $orderDetail, $params);
+        if (Context::getContext()->controller->controller_type == 'admin') {
+            $results = $this->syncOrderDataFromGateway($results, $orderDetail, $params);
+        }
 
         if (empty($results)) {
             return null;

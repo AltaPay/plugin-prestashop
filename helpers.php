@@ -997,14 +997,15 @@ function redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle)
 }
 
 /**
- * @param $response
+ * @param $transaction
+ * @param $amountPaid
  * @param $currencyPaid
  * @param $cart
  * @param $orderStatus
  *
  * @return mixed
  */
-function createOrder($transaction, $currencyPaid, $cart, $orderStatus)
+function createOrder($transaction, $amountPaid, $currencyPaid, $cart, $orderStatus)
 {
     $module = Module::getInstanceByName('altapay');
     // Determine payment method for display
@@ -1024,7 +1025,6 @@ function createOrder($transaction, $currencyPaid, $cart, $orderStatus)
     }
 
     // Create an order with 'payment accepted' status
-    $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
     $cartID = $cart->id;
 
     // Load the customer
@@ -1433,13 +1433,13 @@ function createOrderOkCallback($postData, $record_id = null)
         }
 
         $currencyPaid = Currency::getIdByIsoCode($transaction->MerchantCurrencyAlpha);
-        $amountPaid = $isChildOrder ? $postData['amount'] : $cart->getOrderTotal(true, Cart::BOTH);
+        $amountPaid = $response->amount;
         $customer = new Customer($cart->id_customer);
         $transactionID = $transaction->TransactionId;
         $ccToken = $response->creditCardToken;
         $maskedPan = $response->maskedCreditCard;
         if (!$isChildOrder) {
-            $payment_module = createOrder($transaction, $currencyPaid, $cart, $orderStatus);
+            $payment_module = createOrder($transaction, $amountPaid, $currencyPaid, $cart, $orderStatus);
             // Load order
             $order = new Order((int) $payment_module->currentOrder);
         } else {
