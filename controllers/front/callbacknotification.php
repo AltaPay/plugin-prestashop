@@ -126,34 +126,19 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 }
                 // NO ORDER FOUND, CREATE?
                 if (!Validate::isLoadedObject($order)) {
+                    $transaction = getTransaction($response);
                     // Payment successful - create order
                     if ($response && is_array($response->Transactions)) {
-                        $currency = Currency::getIdByIsoCode($response->currency);
-                        $amount = $response->amount;
-                        $paymentType = $response->Transactions[0]->AuthType;
-                        /*
-                        If payment type is 'payment' funds have not yet been captured,
-                        * so AltaPay returns 0 as the captured amount.Therefore, we assume full payment has been authorized.
-                        */
-                        if ($paymentType === 'payment') {
-                            $amount = $cart->getOrderTotal(true, Cart::BOTH);
-                            $currency = new Currency($cart->id_currency);
-                        }
-                        // Determine payment method for display
-                        $currency_iso_code = null;
-                        $id_currency = $cart->id_currency;
-                        if ($id_currency) {
-                            $currency = new Currency($id_currency);
+                        $amount = $response->amount ?? $cart->getOrderTotal(true, Cart::BOTH);
+                        $currencyId = Currency::getIdByIsoCode($transaction->MerchantCurrencyAlpha) ?? $cart->id_currency;
+                        $currency_iso_code = $transaction->MerchantCurrencyAlpha;
+                        if (empty($currency_iso_code)) {
+                            $currency = new Currency($currencyId);
                             $currency_iso_code = $currency->iso_code;
                         }
                         $remoteId = getTerminalIdByRemoteName($transaction->Terminal, $cart->id_shop);
                         $terminal = getTerminal($remoteId, $currency_iso_code);
-
-                        if (!empty($terminal)) {
-                            $paymentMethod = $terminal->display_name;
-                        } else {
-                            $paymentMethod = $transaction->PaymentNature;
-                        }
+                        $paymentMethod = !empty($terminal) ? $terminal->display_name : $transaction->PaymentNature;
 
                         // Create an order with 'payment accepted' status
                         $this->module->validateOrder(
@@ -163,7 +148,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                             $paymentMethod,
                             null,
                             null,
-                            (int) $currency->id,
+                            (int) $currencyId,
                             false,
                             $customer->secure_key
                         );

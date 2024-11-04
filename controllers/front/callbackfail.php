@@ -150,7 +150,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                             updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle);
                         }
                     } elseif (!$isChildOrder) {
-                        createOrder($transaction, $currencyPaid, $cart, $orderStatus);
+                        createOrder($transaction, $amountPaid, $currencyPaid, $cart, $orderStatus);
                     }
                 }
                 // Load order

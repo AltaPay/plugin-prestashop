@@ -5,6 +5,11 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.8.9]
+### Fixed
+- Fix: Order changes status from "Payment Received" to "Cancelled" due to duplicate cart.
+- Fix: Display an error when the cart is updated after payment completion.
+
 ## [3.8.8]
 ### Fixed
 - Fix: Late callback failure changes order status to "Cancelled."

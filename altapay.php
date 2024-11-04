@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.8.8';
+        $this->version = '3.8.9';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.7'];
@@ -2100,7 +2100,9 @@ class ALTAPAY extends PaymentModule
 
         $results = $this->selectOrder($params);
 
-        $results = $this->syncOrderDataFromGateway($results, $orderDetail, $params);
+        if (Context::getContext()->controller->controller_type == 'admin') {
+            $results = $this->syncOrderDataFromGateway($results, $orderDetail, $params);
+        }
 
         if (empty($results)) {
             return null;
@@ -2288,7 +2290,9 @@ class ALTAPAY extends PaymentModule
 
         $results = $this->selectOrder($params);
 
-        $results = $this->syncOrderDataFromGateway($results, $orderDetail, $params);
+        if (Context::getContext()->controller->controller_type == 'admin') {
+            $results = $this->syncOrderDataFromGateway($results, $orderDetail, $params);
+        }
 
         if (empty($results)) {
             return null;
