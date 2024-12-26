@@ -2460,7 +2460,6 @@ class ALTAPAY extends PaymentModule
                 if ($child_order_transaction) {
                     $childOrderId = $child_order_transaction['unique_id'];
                     $childOrderAmountReserved = $child_order_transaction['amount'] ?? 0;
-
                     $parentShopOrderId = strstr($childOrderId, '_', true);
                     $resultChildOrder = $this->selectChildOrder($parentShopOrderId);
                     if ($resultChildOrder) {
