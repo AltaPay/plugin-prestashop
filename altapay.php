@@ -2454,8 +2454,8 @@ class ALTAPAY extends PaymentModule
                 $childOrderPaymentID = null;
                 $requireCapture = null;
                 $transData = [];
+                $childOrderAmountReserved = 0;
                 $childOrderCaptured = 0;
-                $childReservedAmount = 0;
 
                 if ($child_order_transaction) {
                     $childOrderId = $child_order_transaction['unique_id'];
@@ -2467,9 +2467,8 @@ class ALTAPAY extends PaymentModule
                         $requireCapture = (bool) $resultChildOrder['requireCapture'];
                         $transData = getTransactionStatus($resultChildOrder['payment_id']);
                         $childOrderPaymentID = $resultChildOrder['payment_id'];
-                    }
-                    $childReservedAmount = !empty($childOrderPaymentID) ? $childOrderAmountReserved : 0;
-
+                        $childOrderAmountReserved = !empty($childOrderPaymentID) ? $childOrderAmountReserved : 0;
+                    }     
                     if (!$resultChildOrder) {
                         $this->smarty->assign('payment_url', $child_order_transaction['payment_form_url']);
                     }
@@ -2491,7 +2490,7 @@ class ALTAPAY extends PaymentModule
                 $this->context->smarty->assign('generate_payment_link_ajax_url', $ajaxUrl);
                 $this->smarty->assign('id_order', $params['id_order']);
                 $this->smarty->assign('additional_amount', $additionalAmount);
-                $this->smarty->assign('additional_amount_reserved', $childReservedAmount);
+                $this->smarty->assign('additional_amount_reserved', $childOrderAmountReserved);
                 $this->smarty->assign('reserved_payment_id', $childOrderPaymentID);
                 $this->smarty->assign('child_order_id', $childOrderId);
                 $this->smarty->assign('child_order_captured', $childOrderCaptured);
