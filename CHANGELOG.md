@@ -5,6 +5,10 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.9.0]
+### Fixed
+- Fix: Amount reserved upon payment link generation.
+
 ## [3.8.9]
 ### Fixed
 - Fix: Order changes status from "Payment Received" to "Cancelled" due to duplicate cart.

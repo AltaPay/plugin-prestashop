@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.8.9';
+        $this->version = '3.9.0';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.1.7'];
@@ -2454,18 +2454,21 @@ class ALTAPAY extends PaymentModule
                 $childOrderPaymentID = null;
                 $requireCapture = null;
                 $transData = [];
-                $childOrderAmountReserved = 0;
                 $childOrderCaptured = 0;
+                $childReservedAmount = 0;
 
                 if ($child_order_transaction) {
                     $childOrderId = $child_order_transaction['unique_id'];
-                    $childOrderAmountReserved = $child_order_transaction['amount'];
+                    $childOrderAmountReserved = $child_order_transaction['amount'] ?? 0;
+
                     $parentShopOrderId = strstr($childOrderId, '_', true);
                     $resultChildOrder = $this->selectChildOrder($parentShopOrderId);
                     if ($resultChildOrder) {
                         $requireCapture = (bool) $resultChildOrder['requireCapture'];
                         $transData = getTransactionStatus($resultChildOrder['payment_id']);
+                        $childOrderPaymentID = $resultChildOrder['payment_id'];
                     }
+                    $childReservedAmount = !empty($childOrderPaymentID) ? $childOrderAmountReserved : 0;
 
                     if (!$resultChildOrder) {
                         $this->smarty->assign('payment_url', $child_order_transaction['payment_form_url']);
@@ -2482,15 +2485,13 @@ class ALTAPAY extends PaymentModule
                     if ($requireCapture) {
                         $this->smarty->assign('is_require_capture', true);
                     }
-
-                    $childOrderPaymentID = $resultChildOrder['payment_id'];
                 }
 
                 $ajaxUrl = $this->context->link->getAdminLink('AdminPayByLink', true) . '&customer_id=' . $orderDetail->id_customer;
                 $this->context->smarty->assign('generate_payment_link_ajax_url', $ajaxUrl);
                 $this->smarty->assign('id_order', $params['id_order']);
                 $this->smarty->assign('additional_amount', $additionalAmount);
-                $this->smarty->assign('additional_amount_reserved', $childOrderAmountReserved);
+                $this->smarty->assign('additional_amount_reserved', $childReservedAmount);
                 $this->smarty->assign('reserved_payment_id', $childOrderPaymentID);
                 $this->smarty->assign('child_order_id', $childOrderId);
                 $this->smarty->assign('child_order_captured', $childOrderCaptured);
