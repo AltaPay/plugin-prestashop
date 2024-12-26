@@ -2466,7 +2466,7 @@ class ALTAPAY extends PaymentModule
                         $transData = getTransactionStatus($resultChildOrder['payment_id']);
                         $childOrderPaymentID = $resultChildOrder['payment_id'];
                         $childOrderAmountReserved = !empty($childOrderPaymentID) ? $child_order_transaction['amount'] : 0;
-                    }     
+                    }
                     if (!$resultChildOrder) {
                         $this->smarty->assign('payment_url', $child_order_transaction['payment_form_url']);
                     }
