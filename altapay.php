@@ -3994,7 +3994,7 @@ class ALTAPAY extends PaymentModule
         $order = new Order((int) $id_order);
         $cartId = (int) $order->id_cart;
         $uniqueId = $this->getTransactionUniqueId($cartId);
-        $shopOrderId  = !empty($uniqueId) ? $uniqueId : uniqid('PS');
+        $shopOrderId = !empty($uniqueId) ? $uniqueId : uniqid('PS');
         $terminalName = !empty($terminal) ? $terminal : null;
         if ($shopOrderId) {
             if (empty($terminalName)) {
@@ -4016,8 +4016,8 @@ class ALTAPAY extends PaymentModule
             }
             if ($amount > 0 && !$this->selectChildOrder($shopOrderId)) {
                 $childOrdersCount = Db::getInstance()->getValue('SELECT COUNT(*) FROM ' . _DB_PREFIX_ . 'altapay_transaction where
-                unique_id LIKE \'' . pSQL($shopOrderId . "_child_%") . '\'');
-                $shopOrderId .= '_child_'. ($childOrdersCount + 1);
+                unique_id LIKE \'' . pSQL($shopOrderId . '_child_%') . '\'');
+                $shopOrderId .= '_child_' . ($childOrdersCount + 1);
                 $result = $this->createTransaction(null, null, $remoteId, null, false, $shopOrderId, (float) $amount, $currency_iso_code, $order);
                 if ($result['success'] && !empty($result['payment_form_url'])) {
                     saveTransactionData($result, $result['payment_form_url'], $cartId, $terminalName);
