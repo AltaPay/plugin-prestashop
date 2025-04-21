@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '3.9.0';
+    $pluginVersion = '3.9.1';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -416,7 +416,7 @@ function getAltapayChildOrderDetails($orderID)
         return false;
     }
 
-    $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_child_order` WHERE id_order =' . $orderID;
+    $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_child_order` WHERE unique_id =' . $orderID;
 
     return Db::getInstance()->executeS($sql);
 }
@@ -1279,7 +1279,7 @@ function getPaymentFormUrl($id_cart, $unique_id)
             AND unique_id LIKE \'' . pSQL($unique_id) . "%\_%' 
             ORDER BY CAST(date_add AS UNSIGNED) DESC";
 
-    return Db::getInstance()->getRow($sql);
+    return Db::getInstance()->executeS($sql);
 }
 
 /**

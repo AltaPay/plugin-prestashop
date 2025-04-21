@@ -120,8 +120,14 @@ div#payment_error {
       padding: 0.5rem 1.25rem;
       font-weight: 600;
       text-transform: uppercase;
+      margin-top: 10px;
 }
 
+#legacy-cc .pensio_payment_form_submit_cell {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+}
 
 /** Checkout Styling **/
 

@@ -316,7 +316,7 @@ $(document).ready(function () {
         return altapay.generatePaymentLink(element);
     });
 
-    $('#btn-remaining-capture').click(function (e) {
+    $('.btn-remaining-capture').click(function (e) {
         e.preventDefault();
         var element = this;
         var remainingAmount = $(this).data('remaining_amount');
@@ -330,7 +330,7 @@ $(document).ready(function () {
         });
     });
 
-    $('#btn-remaining-refund').click(function (e) {
+    $('.btn-remaining-refund').click(function (e) {
         e.preventDefault();
         var element = this;
         var remainingAmount = $(this).data('remaining_amount');

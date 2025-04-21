@@ -5,6 +5,12 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.9.1]
+### Added
+- Add support for generating multiple payment links.
+### Fixed
+- Fix: Missing translation support in payment templates.
+
 ## [3.9.0]
 ### Fixed
 - Fix: Amount reserved upon payment link generation.
