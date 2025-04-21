@@ -3994,11 +3994,6 @@ class ALTAPAY extends PaymentModule
         $order = new Order((int) $id_order);
         $cartId = (int) $order->id_cart;
         $uniqueId = $this->getTransactionUniqueId($cartId);
-
-        error_log('===========uniqueId============'.PHP_EOL,3,'/var/www/html/modules/altapay/altapay.log');
-        error_log(print_r($uniqueId,true).PHP_EOL,3,'/var/www/html/modules/altapay/altapay.log');
-        error_log('===========uniqueId============'.PHP_EOL,3,'/var/www/html/modules/altapay/altapay.log');
-
         $shopOrderId  = !empty($uniqueId) ? $uniqueId : uniqid('PS');
         $terminalName = !empty($terminal) ? $terminal : null;
         if ($shopOrderId) {
