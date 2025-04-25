@@ -406,17 +406,13 @@ function getAltapayOrderDetails($orderID)
 }
 
 /**
- * @param $orderID
+ * @param string $uniqueId
  *
  * @return array
  */
-function getAltapayChildOrderDetails($orderID)
+function getAltapayChildOrderDetails($uniqueId)
 {
-    if (filter_var($orderID, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
-        return false;
-    }
-
-    $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_child_order` WHERE unique_id =' . $orderID;
+    $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'altapay_child_order` WHERE unique_id = \'' . pSQL($uniqueId) . '\'';
 
     return Db::getInstance()->executeS($sql);
 }
