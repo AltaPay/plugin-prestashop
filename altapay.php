@@ -4032,7 +4032,7 @@ class ALTAPAY extends PaymentModule
     {
         $db = Db::getInstance();
 
-        $uniqueId = $db->getValue('SELECT unique_id FROM `' . _DB_PREFIX_ . 'altapay_transaction` WHERE id_cart = "' . $cartId . '"');
+        $uniqueId = $db->getValue('SELECT unique_id FROM `' . _DB_PREFIX_ . 'altapay_transaction` WHERE id_cart = ' . $cartId);
 
         if ($uniqueId) {
             return strpos($uniqueId, '_') !== false ? strstr($uniqueId, '_', true) : $uniqueId;
