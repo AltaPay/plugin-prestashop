@@ -86,7 +86,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             // Check if this is a duplicate payment
             $order_id = Order::getOrderByCartId((int) ($cart->id));
             if (!empty($order_id)) {
-                $altapay_order_details = $isChildOrder ? getAltapayChildOrderDetails($order_id) : getAltapayOrderDetails($order_id);
+                $altapay_order_details = $isChildOrder ? getAltapayChildOrderDetails($shopOrderId) : getAltapayOrderDetails($order_id);
                 if (!empty($altapay_order_details)
                     and $altapay_order_details[0]['paymentStatus'] === 'succeeded'
                     and $altapay_order_details[0]['payment_id'] != $transactionID

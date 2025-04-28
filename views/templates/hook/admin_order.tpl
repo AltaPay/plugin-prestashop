@@ -20,13 +20,10 @@
                     </p>
                 {/if}
             </div>
-
             <div class="row panel-body" style="padding-top: 0;">
-
                 {if isset($ap_error)}
                     <div class="alert alert-danger">{$ap_error}</div>
                 {/if}
-
                 <!-- Actions -->
                 <div class="col-lg-12">
                     <div class="row row-ap">
@@ -189,11 +186,11 @@
                                                        readonly/>
                                                 {else}
                                                 <input type="number"
-                                                                                  name="ap_coupon_discount"
-                                                                                  class="form-control fixed-width-xs"
-                                                                                  value="0" style="border:none;"
-                                                                                  readonly/>
-                                            {/if}
+                                                       name="ap_coupon_discount"
+                                                       class="form-control fixed-width-xs"
+                                                       value="0" style="border:none;"
+                                                       readonly/>
+                                                {/if}
                                             </td>
                                             {if $freeShipping}
                                                 <td class="ap-total-amount">0</td>
@@ -208,7 +205,6 @@
                         </div>
                     </div>
                 </div>
-
                 {if $payment_id}
                 <div class="col-sm-6" id="transactionOptions">
                     <div class="row row-ap">
@@ -252,75 +248,78 @@
                                data-payment-id="{$payment_id}">Release payment</a>
                         </div>
                     </div>
-
                 </div>
                 <br>
                 {/if}
                 <div class="col-sm-12">
                     <div class="col-sm-6">
-                        {if !$reserved_payment_id && $additional_amount}
-                            <div class="row row-ap">
-                                <div class="col-lg-12" style="padding: 0;">
-                                    {if !$payment_url}
-                                    <h4>Generate Payment Link</h4>
-                                    <label style="display:block;">
-                                        <span>Amount</span>
-                                        <input id="order-additional-amount" class="form-control input" type="text"
-                                                value="{round($additional_amount, 2)}" style="width: auto;"/>
-                                    </label>
-                                    {if !$payment_id}
-                                        <label style="display: block;">
-                                            <span style="display: block;">Terminal</span>
-                                            <select class="custom-select" id="order-terminal"
+                        <div class="row row-ap">
+                            <div class="col-lg-12" style="padding: 0;">
+                                {if $additional_amount > 0}
+                                <h4>Generate Payment Link</h4>
+                                <label style="display:block;">
+                                    <span>Amount</span>
+                                    <input id="order-additional-amount" class="form-control input" type="text"
+                                           value="{round($additional_amount, 2)}" style="width: auto;"/>
+                                </label>
+                                {if !$payment_id}
+                                    <label style="display: block;">
+                                        <span style="display: block;">Terminal</span>
+                                        <select class="custom-select" id="order-terminal"
                                                 style="width:auto;height:38px;vertical-align:initial;">
-                                                {foreach $terminals as $terminal}
-                                                    <option value="{$terminal['remote_name']}">{$terminal['display_name']}</option>
-                                                {/foreach}
-                                            </select>
-                                        </label>
-                                    {/if}
-                                    <label for="send-payment-link-email" style="display: block;">
-                                        Send email?
-                                        <input type="checkbox" id="send-payment-link-email" value="1" checked="checked">
+                                            {foreach $terminals as $terminal}
+                                                <option value="{$terminal['remote_name']}">{$terminal['display_name']}</option>
+                                            {/foreach}
+                                        </select>
                                     </label>
-                                    <a href="#" class="btn btn-primary btn-ap" id="generate-payment-link-btn"
-                                        data-orderid="{$id_order}" data-url="{$generate_payment_link_ajax_url}"
-                                        style="text-align: left;width: auto;margin-bottom: 5px;">Generate Link</a>
-                                    <div class="send-message"></div>
-                                    {/if}
-                                </div>
-                                {if $payment_url}
-                                    <div class="col-lg-12" style="padding: 0;">
-                                        <p>
-                                            <strong>Payment Link for additional amount: </strong> <a href="{$payment_url}">{$payment_url}</a>
-                                        </p>
-                                    </div>
+                                {/if}
+                                <label for="send-payment-link-email" style="display: block;">
+                                    Send email?
+                                    <input type="checkbox" id="send-payment-link-email" value="1" checked="checked">
+                                </label>
+                                <a href="#" class="btn btn-primary btn-ap" id="generate-payment-link-btn"
+                                   data-orderid="{$id_order}" data-url="{$generate_payment_link_ajax_url}"
+                                   style="text-align: left;width: auto;margin-bottom: 5px;">Generate Link</a>
+                                <div class="send-message"></div>
                                 {/if}
                             </div>
-                        {/if}
-
-                        {if $is_require_capture}
-                            <div class="row row-ap">
-                                <div class="col-lg-6" style="padding: 0;">
-                                    <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-capture"
-                                       data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
-                                       data-payment-id="{$reserved_payment_id}"
-                                       data-remaining_amount="{$additional_amount_reserved}"
-                                       style="text-align: left;width: auto;">Capture <strong>{displayPrice price=$additional_amount_reserved currency=$currency->id}</strong> <small>(Payment Link)</small></a>
-                                </div>
-                            </div>
-                        {/if}
-
-                        {if $can_refund}
-                            <div class="row row-ap">
-                                <div class="col-lg-6" style="padding: 0;">
-                                    <a href="#" class="btn btn-primary btn-ap" id="btn-remaining-refund"
-                                       data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
-                                       data-payment-id="{$reserved_payment_id}"
-                                       data-remaining_amount="{$additional_amount_reserved}"
-                                       style="text-align: left;width: auto;">Refund <strong>{displayPrice price=$additional_amount_reserved currency=$currency->id}</strong> <small>(Payment Link)</small></a>
-                                </div>
-                            </div>
+                            {if $child_order_data}
+                                {foreach $child_order_data as $child_order}
+                                    {if $child_order.payment_form_url and !$child_order.payment_id}
+                                        <div class="col-lg-12" style="padding: 0;">
+                                            <p>
+                                                <strong>Payment Link for additional amount: </strong> <a href="{$child_order.payment_form_url}">{$child_order.payment_form_url}</a>
+                                            </p>
+                                        </div>
+                                    {/if}
+                                {/foreach}
+                            {/if}
+                        </div>
+                        {if $child_order_data}
+                            {foreach $child_order_data as $child_order}
+                                {if $child_order.requireCapture}
+                                    <div class="row row-ap">
+                                        <div class="col-lg-6" style="padding: 0;">
+                                            <a href="#" class="btn btn-primary btn-ap btn-remaining-capture"
+                                               data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
+                                               data-payment-id="{$child_order.payment_id}"
+                                               data-remaining_amount="{$child_order.amount}"
+                                               style="text-align: left;width: auto;">Capture <strong>{displayPrice price=$child_order.amount currency=$currency->id}</strong> <small>(Payment Link)</small></a>
+                                        </div>
+                                    </div>
+                                {/if}
+                                {if $child_order.can_refund}
+                                    <div class="row row-ap">
+                                        <div class="col-lg-6" style="padding: 0;">
+                                            <a href="#" class="btn btn-primary btn-ap btn-remaining-refund"
+                                               data-url="{$generate_payment_link_ajax_url}" data-orderid="{$id_order}"
+                                               data-payment-id="{$child_order.payment_id}"
+                                               data-remaining_amount="{$child_order.amount}"
+                                               style="text-align: left;width: auto;">Refund <strong>{displayPrice price=$child_order.amount currency=$currency->id}</strong> <small>(Payment Link)</small></a>
+                                        </div>
+                                    </div>
+                                {/if}
+                            {/foreach}
                         {/if}
                     </div>
                 </div>
@@ -353,7 +352,7 @@
                         </div>
                     </div>
                 </div>
-                {/if}
+            {/if}
                 <div class="row row-ap">
                     <div class="col-lg-12">
                     {if $paymentinfo}
@@ -370,35 +369,49 @@
                         </table>
                     </div>
                     {/if}
-                        {if $child_order_id}
-                            <h3 style="margin: 0;">Additional Payment via Payment Link</h3>
-                            <div class="table-responsive">
-                                <table class="table table-bordered">
-                                    <tbody>
-                                    <tr>
-                                        <td>Transaction ID</td>
-                                        <td>{$child_order_id}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Payment ID</td>
-                                        <td>{$reserved_payment_id}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Amount</td>
-                                        <td>{$additional_amount}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Amount Reserved</td>
-                                        <td>{$additional_amount_reserved}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Amount Captured</td>
-                                        <td>{$child_order_captured}</td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        {/if}
+                    {if $child_order_data}
+                        <h3 style="margin: 0;">Additional Payments via Payment Link</h3>
+                            {foreach $child_order_data as $child_order}
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                        <tr>
+                                            <td>Transaction ID</td>
+                                            <td>{$child_order['unique_id']}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Payment ID</td>
+                                            <td>{$child_order['payment_id']}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Amount</td>
+                                            <td>{$child_order['amount']}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Reserved</td>
+                                            <td>
+                                                {if $child_order['payment_id']}
+                                                    {$child_order.amount}
+                                                {else}
+                                                    0
+                                                {/if}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Captured</td>
+                                            <td>
+                                                {if $child_order.captured}
+                                                    {$child_order.amount}
+                                                {else}
+                                                    0
+                                                {/if}
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                        {/foreach}
+                    {/if}
                 </div>
             </div>
 
@@ -424,11 +437,8 @@
                     </div>
                 </div>
             {/if}
-
         </div>
-
     </div>
-
 </div>
 </div>
 </div>
@@ -467,8 +477,6 @@
                 $("#transactionOptions").hide();
             }
         }
-
-
     });
 </script>
 {/literal}
