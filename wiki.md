@@ -50,6 +50,8 @@ be provided by AltaPay.
       -   Terminal
       -   Gateway
 
+> **Note:** If the API user credentials have not yet been created, refer to the [Creating a New API User](#creating-a-new-api-user) section for step-by-step instructions.
+
 ## Installation
 
 1. Download the latest release (**altapay.zip**, for PrestaShop version 1.6.x download **altapay-for-prestashop-1.6.x.zip**) file from the [Releases](https://github.com/AltaPay/plugin-prestashop/releases) tab
@@ -202,6 +204,27 @@ In order to reconcile payments please follow the steps below:
    Use the below link to apply the **CSS** to the form page:
 
    <https://github.com/AltaPay/plugin-prestashop/blob/main/views/css/payment.css>
+
+## Creating a New API User
+
+To create a new API user in your AltaPay account, please follow these steps:
+
+- Log in to your AltaPay account.
+- From the left menu, navigate to **Settings** > **API Keys**.
+
+    ![api_key](Docs/API/api_keys.png)
+
+- Click on the **Create New API Key** button from top right corner.
+- Fill in the required fields:
+    - **Your current password**  
+    - **Username**  
+    - **Password**  
+    - **Assign Shops**
+
+    ![api_key](Docs/API/create_api_key.png)
+- After entering the details, click **Create**.
+
+The new credentials can now be used as the API Username and API Password in your AltaPay settings.
 
 ## Supported versions
 - PrestaShop 1.6.x (requires PHP 7.0 or later)
