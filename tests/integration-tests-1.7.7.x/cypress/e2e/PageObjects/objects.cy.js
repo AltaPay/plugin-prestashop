@@ -364,8 +364,6 @@ class Order
         cy.get('#field-id_country').select('Denmark')
         cy.get('.js-address-form > .form-footer > .continue').click()
         cy.get('#js-delivery > .continue').click()
-        
-
     }
 
     capture_for_order_update_test(){        
@@ -378,13 +376,10 @@ class Order
             cy.get('#update_order_status_action_input').select('Shipped')
             cy.get('#update_order_status_action_btn').click().wait(3000)
             cy.get('#capturedAmount').should('have.text', '60.15')
-            cy.get('#orderTotal').should('have.text', 'kr60.15')
-            
-        
+            cy.get('#orderTotal').should('have.text', 'kr60.15')                    
     }
 
     order_items_update(){        
-
         cy.get('.mi-shopping_basket').click()
         cy.get('#subtab-AdminOrders > .link').click()
         cy.get(':nth-child(1) > .action-type > .btn-group-action > .btn-group > .grid-view-row-link > .material-icons').click()
@@ -415,9 +410,7 @@ class Order
         cy.get('#btn-refund').click()
         cy.get('#popup_ok').click()
         cy.get('#popup_ok').click()
-        cy.get('#refundedAmount').should('have.text' , '96.05')
-        
-    
+        cy.get('#refundedAmount').should('have.text' , '96.05')            
 }
 }
 export default Order

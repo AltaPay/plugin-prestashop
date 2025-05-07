@@ -273,7 +273,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('Capture only order total after order Update', function () {
+    it('TC#9: Capture only order total after order Update', function () {
         const ord = new Order()
         ord.visit()
         cy.get('body').then(($body) => {
@@ -305,7 +305,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('Pay by link', function () {
+    it('TC#10: Pay by link', function () {
         const ord = new Order()
         ord.visit()
         cy.get('body').then(($body) => {
@@ -327,9 +327,7 @@ describe('Presta 1.7', function () {
                     } else {
                         cy.log(admin.CC_TERMINAL_NAME + ' not found in page')
                     }
-
                 })
-
             }
             else {
                 cy.log('CC_TERMINAL_NAME skipped')
@@ -337,7 +335,7 @@ describe('Presta 1.7', function () {
         })
     })
 
-    it('TC#9: iDeal Full Capture & Refund', function () {
+    it('TC#11: iDeal Full Capture & Refund', function () {
 
         const ord = new Order()
         ord.visit()
