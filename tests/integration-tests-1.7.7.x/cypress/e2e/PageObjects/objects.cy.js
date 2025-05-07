@@ -382,5 +382,42 @@ class Order
             
         
     }
+
+    order_items_update(){        
+
+        cy.get('.mi-shopping_basket').click()
+        cy.get('#subtab-AdminOrders > .link').click()
+        cy.get(':nth-child(1) > .action-type > .btn-group-action > .btn-group > .grid-view-row-link > .material-icons').click()
+        cy.get('.js-order-product-edit-btn').first().click();
+        cy.get('input.editProductQuantity').eq(0).clear({ force: true }).type('2', { force: true });
+        cy.get('button[name="edit_product_row[save]"]').first().click()
+        cy.get('#generate-payment-link-btn').click().wait(8000)
+        cy.get('a[href^="https://testgateway.pensio.com/eCommerce/API/requestForm?pid="]').click()
+        cy.get('[id=creditCardNumberInput]').type('4111111111111111')
+        cy.get('#emonth').select('12')
+        cy.get('#eyear').select('2025')
+        cy.get('#cvcInput').type('123')
+        cy.get('#cardholderNameInput').type('testname')
+        cy.get('#pensioCreditCardPaymentSubmitButton').click().wait(4000)
+        cy.go('back')
+        cy.go('back')
+        cy.get('.btn-outline-danger').click().wait(3000)
+        cy.get('.col-lg-12 > .btn').click()
+        cy.get('#popup_ok').click()
+        cy.get('#popup_ok').click()
+        cy.get(':nth-child(2) > .col-lg-6 > .btn').click()
+        cy.get('#popup_ok').click()
+        cy.get('#popup_ok').click()
+        cy.get('#btn-capture').click()
+        cy.get('#popup_ok').click()
+        cy.get('#popup_ok').click()
+        cy.get('#refund-amount').type('96.05')
+        cy.get('#btn-refund').click()
+        cy.get('#popup_ok').click()
+        cy.get('#popup_ok').click()
+        cy.get('#refundedAmount').should('have.text' , '96.05')
+        
+    
+}
 }
 export default Order
