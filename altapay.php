@@ -60,6 +60,38 @@ class ALTAPAY extends PaymentModule
     }
 
     /**
+     * Copy email templates for all active languages into the module's mails folder.
+     *
+     * @return void
+     */
+    public function copyEmailTemplates(): bool
+    {
+        $languages = Language::getLanguages(false);
+
+        $srcDir = __DIR__ . '/mails/en';
+        $files  = array_diff(scandir($srcDir), ['.', '..']);
+
+        foreach ($languages as $lang) {
+            $dstDir = __DIR__ . '/mails/' . $lang['iso_code'];
+
+            if (is_dir($dstDir)) {
+                continue;
+            }
+
+            if (!mkdir($dstDir, 0755, true) && !is_dir($dstDir)) {
+                PrestaShopLogger::addLog("Cannot create $dstDir", 4);
+                continue;
+            }
+
+            foreach ($files as $file) {
+                if (!copy("$srcDir/$file", "$dstDir/$file")) {
+                    PrestaShopLogger::addLog("Error while copying email template files", 4);
+                }
+            }
+        }
+    }
+
+    /**
      * Called on install
      *
      * @return bool
@@ -471,6 +503,7 @@ class ALTAPAY extends PaymentModule
 		) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
 
         $this->createOrderState();
+        $this->copyEmailTemplates();
 
         return true;
     }
