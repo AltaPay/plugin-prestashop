@@ -5,6 +5,10 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.9.2]
+### Fixed
+- Automatically create templates for each active language for email translations.
+
 ## [3.9.1]
 ### Added
 - Add support for generating multiple payment links.
