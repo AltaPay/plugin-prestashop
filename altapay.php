@@ -69,7 +69,7 @@ class ALTAPAY extends PaymentModule
         $languages = Language::getLanguages(false);
 
         $srcDir = __DIR__ . '/mails/en';
-        $files  = array_diff(scandir($srcDir), ['.', '..']);
+        $files = array_diff(scandir($srcDir), ['.', '..']);
 
         foreach ($languages as $lang) {
             $dstDir = __DIR__ . '/mails/' . $lang['iso_code'];
@@ -85,7 +85,7 @@ class ALTAPAY extends PaymentModule
 
             foreach ($files as $file) {
                 if (!copy("$srcDir/$file", "$dstDir/$file")) {
-                    PrestaShopLogger::addLog("Error while copying email template files", 4);
+                    PrestaShopLogger::addLog('Error while copying email template files', 4);
                 }
             }
         }

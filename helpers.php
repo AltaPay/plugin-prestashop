@@ -1628,4 +1628,3 @@ function getTerminal($terminal_id = false, $currency = false)
 
     return $terminal;
 }
-
