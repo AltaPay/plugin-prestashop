@@ -64,7 +64,7 @@ class ALTAPAY extends PaymentModule
      *
      * @return void
      */
-    public function copyEmailTemplates(): bool
+    public function copyEmailTemplates()
     {
         $languages = Language::getLanguages(false);
 
