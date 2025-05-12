@@ -1629,27 +1629,3 @@ function getTerminal($terminal_id = false, $currency = false)
     return $terminal;
 }
 
-
-
-/**
- * @param $src
- * @param $dst
- * @return bool
- */
-function recurseCopy($src, $dst)
-{
-    if (!is_dir($src)) {
-        return false;
-    }
-
-    @mkdir($dst, 0755, true);
-    $dir = opendir($src);
-    while (false !== ($file = readdir($dir))) {
-        if (($file != '.') && ($file != '..')) {
-            copy($src . '/' . $file, $dst . '/' . $file);
-        }
-    }
-    closedir($dir);
-    return true;
-}
-
