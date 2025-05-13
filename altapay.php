@@ -3041,7 +3041,7 @@ class ALTAPAY extends PaymentModule
         $shopId = $this->context->shop->id;
 
         if ($parent_order) {
-            $languageId = !empty($parent_order->getCustomer()->id_lang) ? $parent_order->getCustomer()->id_lang : Configuration::get('PS_LANG_DEFAULT');
+            $languageId = !empty($parent_order->id_lang) ? $parent_order->id_lang : Configuration::get('PS_LANG_DEFAULT');
             if (!empty($languageId)) {
                 $languageCode = Db::getInstance()->getValue('SELECT iso_code FROM ' . _DB_PREFIX_ . 'lang WHERE `id_lang` = ' . (int) $languageId);
             }

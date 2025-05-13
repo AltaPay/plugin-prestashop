@@ -42,7 +42,7 @@ class AdminPayByLinkController extends ModuleAdminController
 
         if ($send_email && $paymentLink) {
             $customerId = (int) Tools::getValue('customer_id');
-            $this->sendCustomEmail($customerId, $paymentLink, $amountFormatted, $order_id);
+            $this->sendCustomEmail($customerId, $paymentLink, $amountFormatted, $order_id, (int) $order->id_shop);
         }
 
         if ($paymentLink) {
@@ -176,11 +176,11 @@ class AdminPayByLinkController extends ModuleAdminController
      * @param $customerId
      * @param $paymentUrl
      * @param $amount
-     * @param $order_id
-     *
+     * @param $orderId
+     * @param $shopId
      * @return void
      */
-    protected function sendCustomEmail($customerId, $paymentUrl, $amount, $order_id)
+    protected function sendCustomEmail($customerId, $paymentUrl, $amount, $orderId, $shopId)
     {
         $customer = new Customer($customerId);
         if (Validate::isLoadedObject($customer)) {
@@ -197,11 +197,10 @@ class AdminPayByLinkController extends ModuleAdminController
                 '{customer_name}' => $customer->firstname . ' ' . $customer->lastname,
                 '{payment_link}' => $paymentUrl,
                 '{amount}' => $amount,
-                '{id_order}' => $order_id,
+                '{id_order}' => $orderId,
             ];
             $from = Configuration::get('PS_SHOP_EMAIL');
             $fromName = Configuration::get('PS_SHOP_NAME');
-
             try {
                 Mail::Send(
                     $customer->id_lang,
@@ -216,7 +215,7 @@ class AdminPayByLinkController extends ModuleAdminController
                     null,
                     dirname(__FILE__, 3) . '/mails/',
                     false,
-                    null
+                    $shopId
                 );
 
                 echo json_encode(['status' => 'success', 'message' => 'Payment link of ' . $amount . ' sent to ' . $customer->email]);
