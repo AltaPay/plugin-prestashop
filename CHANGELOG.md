@@ -8,6 +8,7 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 ## [3.9.2]
 ### Fixed
 - Automatically create templates for each active language for email translations.
+- Use the customer's order language when generating the payment link.
 
 ## [3.9.1]
 ### Added
