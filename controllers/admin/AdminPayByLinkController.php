@@ -178,6 +178,7 @@ class AdminPayByLinkController extends ModuleAdminController
      * @param $amount
      * @param $orderId
      * @param $shopId
+     *
      * @return void
      */
     protected function sendCustomEmail($customerId, $paymentUrl, $amount, $orderId, $shopId)
