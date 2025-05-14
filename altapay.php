@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.9.1';
+        $this->version = '3.9.2';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.2.1'];
@@ -56,6 +56,38 @@ class ALTAPAY extends PaymentModule
         // Make sure currencies are configured for this payment module
         if (empty(Currency::checkPaymentCurrencies($this->id)) || !count(Currency::checkPaymentCurrencies($this->id))) {
             $this->warning = $this->l('No currency has been set for this module.');
+        }
+    }
+
+    /**
+     * Copy email templates for all active languages into the module's mails folder.
+     *
+     * @return void
+     */
+    public function copyEmailTemplates()
+    {
+        $languages = Language::getLanguages(false);
+
+        $srcDir = __DIR__ . '/mails/en';
+        $files = array_diff(scandir($srcDir), ['.', '..']);
+
+        foreach ($languages as $lang) {
+            $dstDir = __DIR__ . '/mails/' . $lang['iso_code'];
+
+            if (is_dir($dstDir)) {
+                continue;
+            }
+
+            if (!mkdir($dstDir, 0755, true) && !is_dir($dstDir)) {
+                PrestaShopLogger::addLog("Cannot create $dstDir", 4);
+                continue;
+            }
+
+            foreach ($files as $file) {
+                if (!copy("$srcDir/$file", "$dstDir/$file")) {
+                    PrestaShopLogger::addLog('Error while copying email template files', 4);
+                }
+            }
         }
     }
 
@@ -471,6 +503,7 @@ class ALTAPAY extends PaymentModule
 		) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1');
 
         $this->createOrderState();
+        $this->copyEmailTemplates();
 
         return true;
     }
@@ -3008,7 +3041,7 @@ class ALTAPAY extends PaymentModule
         $shopId = $this->context->shop->id;
 
         if ($parent_order) {
-            $languageId = !empty($parent_order->getCustomer()->id_lang) ? $parent_order->getCustomer()->id_lang : Configuration::get('PS_LANG_DEFAULT');
+            $languageId = !empty($parent_order->id_lang) ? $parent_order->id_lang : Configuration::get('PS_LANG_DEFAULT');
             if (!empty($languageId)) {
                 $languageCode = Db::getInstance()->getValue('SELECT iso_code FROM ' . _DB_PREFIX_ . 'lang WHERE `id_lang` = ' . (int) $languageId);
             }
