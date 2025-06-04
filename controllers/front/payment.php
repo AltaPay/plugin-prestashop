@@ -100,7 +100,7 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
                                 'id_order' => (int) $currentOrder->id,
                                 'key' => $customer->secure_key,
                             ]
-                        )
+                        ),
                     ];
                     echo json_encode($response);
                     exit();
