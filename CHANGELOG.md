@@ -7,7 +7,7 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 ## [3.9.3]
 ### Fixed
-- Fix: Payment response to return the correct order confirmation redirect URL.
+- Fix: Apple Pay success page not displaying in PrestaShop 8.2.
 
 ## [3.9.2]
 ### Fixed
