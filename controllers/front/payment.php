@@ -90,7 +90,17 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
                     saveReconciliationDetails($result['response'], $currentOrder);
                     $response = [
                         'status' => $result['response']->Result,
-                        'redirectUrl' => 'index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $this->module->id . '&id_order=' . $currentOrder->id . '&key=' . $customer->secure_key,
+                        'redirectUrl' => $this->context->link->getPageLink(
+                            'order-confirmation',
+                            true,
+                            null,
+                            [
+                                'id_cart' => (int) $cart->id,
+                                'id_module' => (int) $this->module->id,
+                                'id_order' => (int) $currentOrder->id,
+                                'key' => $customer->secure_key,
+                            ]
+                        )
                     ];
                     echo json_encode($response);
                     exit();
