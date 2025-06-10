@@ -5,6 +5,10 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [3.9.3]
+### Fixed
+- Fix: Apple Pay success page not displaying in PrestaShop 8.2.
+
 ## [3.9.2]
 ### Fixed
 - Automatically create templates for each active language for email translations.
