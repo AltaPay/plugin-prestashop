@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '3.9.3';
+        $this->version = '4.0.0';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.2.1'];
@@ -1396,7 +1396,6 @@ class ALTAPAY extends PaymentModule
         $orderDetail = new Order((int) $orderID);
         $productDetailObject = new OrderDetail();
         $productDetail = $productDetailObject->getList($orderID);
-        $cartRuleDiscounts = $this->getCartRuleDiscounts($orderDetail);
         $cart = new Cart($orderDetail->id_cart);
 
         foreach ($orderLines as $key => $orderedQuantity) {
@@ -1404,35 +1403,11 @@ class ALTAPAY extends PaymentModule
                 $productDetails = $productDetail[$key];
                 $cartDetails = $cart->getProducts()[$key];
                 if ($productDetails) {
-                    $rateBasePrice = 1 + ($cartDetails['rate'] / 100);
-                    $price_without_reduction = 0;
-
-                    if (isset($cartDetails['price_without_reduction'])) {
-                        $price_without_reduction = $cartDetails['price_without_reduction'];
-                    } elseif (isset($cartDetails['price_wt'])) {
-                        $price_without_reduction = $cartDetails['price_wt'];
-                    }
-                    //Calculation of base price
-                    $basePrice = $price_without_reduction / $rateBasePrice;
-                    $productTax = $price_without_reduction - $basePrice;
+                    $productTax = $cartDetails['price_wt'] - $cartDetails['price'];
                     $productName = $cartDetails['name'];
                     $productQuantity = $orderedQuantity;
-                    $reductionPercent = $productDetails['reduction_percent'];
                     $goodsType = 'item';
                     $totalProductsTaxAmount = round($productTax * $productQuantity, 2);
-                    $unitPrice = round($basePrice, 2);
-                    // Calculation of base price
-                    if ($reductionPercent > 0) {
-                        $discountPercentage = $reductionPercent;
-                    } else {
-                        $discountPercentage = 0;
-                        foreach ($cartRuleDiscounts as $cartRuleDiscount) {
-                            if ($productDetails['product_id'] == $cartRuleDiscount['productID']) {
-                                $discountPercentage = $cartRuleDiscount['discountPercent'];
-                                break;
-                            }
-                        }
-                    }
                     if (isset($productDetails['product_attribute_id'])) {
                         $itemID = $productDetails['product_reference'] . '-' . $productDetails['product_attribute_id'];
                     } else {
@@ -1446,30 +1421,18 @@ class ALTAPAY extends PaymentModule
                         $productName = $itemID;
                     }
 
-                    // Compensation calculation
-                    $gatewaySubTotal = ($unitPrice * $productQuantity) + $totalProductsTaxAmount;
-                    $gatewayTotal = $gatewaySubTotal - ($gatewaySubTotal * ($discountPercentage / 100));
-                    $gatewayTotal = round($gatewayTotal, 2);
-                    $cmsSubTotal = ($basePrice * $productQuantity) + ($productTax * $productQuantity);
-                    $cmsTotal = $cmsSubTotal - ($cmsSubTotal * ($discountPercentage / 100));
-                    $compensationAmount = round(($cmsTotal - $gatewayTotal), 3);
                     $orderLine = new API\PHP\Altapay\Request\OrderLine(
                         $productName,
                         $itemID,
                         $productQuantity,
-                        number_format($basePrice, 2, '.', '')
+                        number_format($cartDetails['price'], 2, '.', '')
                     );
                     $orderLine->taxAmount = $totalProductsTaxAmount;
-                    $orderLine->discount = round($discountPercentage, 2);
+                    $orderLine->discount = 0;
                     $orderLine->setGoodsType($goodsType);
                     $altapayOrderLines[$i] = $orderLine;
-                    // Send compensation amount if Gateway total is not equal to cms total
-                    if (($compensationAmount > 0 || $compensationAmount < 0)) {
-                        ++$i;
-                        $altapayOrderLines[$i] = $this->compensationOrderlines($itemID, $compensationAmount);
-                    }
                 } else {
-                    $altapayOrderLines[$i] = $this->getShippingInfo($orderID, $cartRuleDiscounts);
+                    $altapayOrderLines[$i] = $this->getShippingInfo($orderID);
                 }
             } else {
                 continue;
@@ -1502,7 +1465,7 @@ class ALTAPAY extends PaymentModule
             ++$i;
         }
         if ($fullCapture) {
-            $altapayOrderLines[$i] = $this->getShippingInfo($orderID, $cartRuleDiscounts);
+            $altapayOrderLines[$i] = $this->getShippingInfo($orderID);
         }
 
         return $altapayOrderLines;
@@ -1510,21 +1473,15 @@ class ALTAPAY extends PaymentModule
 
     /**
      * @param string $orderID
-     * @param array $cartRuleDiscounts
      *
      * @return
      * \API\PHP\Altapay\Request\OrderLine
      */
-    public function getShippingInfo($orderID, $cartRuleDiscounts)
+    public function getShippingInfo($orderID)
     {
-        $shippingDiscount = 0;
+        // $shippingDiscount = 0;
         $orderDetail = new Order((int) $orderID);
         $shippingDetail = reset($orderDetail->getShipping());
-        foreach ($cartRuleDiscounts as $cartRuleDiscount) {
-            if ($cartRuleDiscount['shipping']) {
-                $shippingDiscount = 100;
-            }
-        }
         $orderLine = new API\PHP\Altapay\Request\OrderLine(
             $shippingDetail['carrier_name'],
             $shippingDetail['carrier_name'],
@@ -1532,7 +1489,7 @@ class ALTAPAY extends PaymentModule
             $shippingDetail['shipping_cost_tax_excl']
         );
         $orderLine->taxAmount = $shippingDetail['shipping_cost_tax_incl'] - $shippingDetail['shipping_cost_tax_excl'];
-        $orderLine->discount = $shippingDiscount;
+        $orderLine->discount = 0;
         $orderLine->setGoodsType('shipment');
 
         return $orderLine;
@@ -3337,13 +3294,10 @@ class ALTAPAY extends PaymentModule
     {
         $i = 0;
         $orderSummary = $cart->getSummaryDetails();
-        $orderSubtotal = $orderSummary['total_products_wt'];
 
         $orderLines = [];
         $products = $cart->getProducts();
-        $shippingDiscountPercent = 0;
         $freeGiftVoucher = $this->getCartRuleProperties($cart);
-        $vouchers = $this->getVoucherDetails();
         $cartID = $cart->id;
         $orderDetails = [];
 
@@ -3353,57 +3307,8 @@ class ALTAPAY extends PaymentModule
             $cartRuleFreeShipping = false;
         }
         foreach ($products as $p) {
-            $rateBasePrice = 1 + ($p['rate'] / 100);
-            //Calculation of base price
-            $price_without_reduction = 0;
-            $price_with_reduction = 0;
-
-            if (isset($p['price_without_reduction'])) {
-                $price_without_reduction = $p['price_without_reduction'];
-            } elseif (isset($p['price_wt'])) {
-                $price_without_reduction = $p['price_wt'];
-            }
-
-            if (isset($p['price_with_reduction'])) {
-                $price_with_reduction = $p['price_with_reduction'];
-            } elseif (isset($p['price_wt'])) {
-                $price_with_reduction = $p['price_wt'];
-            }
-
-            $basePrice = $price_without_reduction / $rateBasePrice;
-
-            $singleProductTaxAmount = $price_without_reduction - $basePrice;
+            $singleProductTaxAmount = $p['price_wt'] - $p['price'];
             $productID = $p['id_product'];
-            $discountPercent = 0;
-
-            if (!empty($vouchers) and empty($p['reduction'])) {
-                $discountPercent = $this->getVoucherDiscounts(
-                    $vouchers,
-                    $productID,
-                    $discountPercent,
-                    $basePrice,
-                    $orderSubtotal,
-                    $freeGiftVoucher
-                );
-            } elseif (empty($vouchers) and !empty($p['reduction']) and !empty($price_without_reduction)) {
-                $discountAmount = $price_without_reduction - $price_with_reduction;
-                $discountPercent = ($discountAmount / $price_without_reduction) * 100;
-            } elseif (!empty($vouchers) and !empty($p['reduction']) and !empty($price_without_reduction)) {
-                $voucherPercentDiscount = $this->getVoucherDiscounts(
-                    $vouchers,
-                    $productID,
-                    $discountPercent,
-                    $basePrice,
-                    $orderSubtotal,
-                    $freeGiftVoucher
-                );
-                $voucherDiscountAmount = ($p['total_wt'] * ($voucherPercentDiscount / 100));
-                $rowTotal = $p['total_wt'] - $voucherDiscountAmount;
-                $originalPrice = $price_without_reduction * $p['cart_quantity'];
-                $discountAmount = $originalPrice - $rowTotal;
-                $discountPercent = ($discountAmount / $originalPrice) * 100;
-                $discountPercent = number_format($discountPercent, 2, '.', '');
-            }
             $unitCode = 'unit';
             if ($p['cart_quantity'] > 1) {
                 $unitCode = 'units';
@@ -3419,7 +3324,6 @@ class ALTAPAY extends PaymentModule
             $productImageUrl = $this->context->link->getImageLink($p['link_rewrite'], $p['id_image'], 'home_default');
             $orderDetails[$i]['productID'] = $productID;
             $orderDetails[$i]['qty'] = $p['cart_quantity'];
-            $orderDetails[$i]['discountPercent'] = $discountPercent;
             if ($cartRuleFreeShipping) {
                 $orderDetails[$i]['shipping'] = 'free';
             }
@@ -3428,25 +3332,13 @@ class ALTAPAY extends PaymentModule
                 $p['name'],
                 $itemID,
                 $p['cart_quantity'],
-                $discountPercent,
-                $basePrice,
+                $p['price'],
                 $singleProductTaxAmount,
                 'item',
                 $unitCode,
                 $productImageUrl,
                 $productUrl
             );
-            $gatewaySubTotal = ($orderLines[$i]->unitPrice * $p['cart_quantity']) + $orderLines[$i]->taxAmount;
-            $gatewayTotal = $gatewaySubTotal - ($gatewaySubTotal * ($discountPercent / 100));
-            $gatewayTotal = round($gatewayTotal, 2);
-            $cmsSubTotal = ($basePrice * $p['cart_quantity']) + ($singleProductTaxAmount * $p['cart_quantity']);
-            $cmsTotal = $cmsSubTotal - ($cmsSubTotal * ($discountPercent / 100));
-            $compensationAmount = round(($cmsTotal - $gatewayTotal), 3);
-            // Send compensation amount if Gateway total is not equal to cms total
-            if (($compensationAmount > 0 || $compensationAmount < 0)) {
-                ++$i;
-                $orderLines[$i] = $this->compensationOrderlines($itemID, $compensationAmount);
-            }
             ++$i;
         }
 
@@ -3459,19 +3351,31 @@ class ALTAPAY extends PaymentModule
         $carrierCostWithTax = $cart->getTotalShippingCost();
         $carrierCostWithoutTax = $cart->getTotalShippingCost(null, false);
         $carrierTax = $carrierCostWithTax - $carrierCostWithoutTax;
-        if ($cartRuleFreeShipping) {
-            $shippingDiscountPercent = 100;
-        }
         if (!empty($carrier->name)) {
             $orderLines[$i] = $this->createOrderlines(
                 $carrier->delay,
                 $carrier->name,
                 1,
-                $shippingDiscountPercent,
                 $carrierCostWithoutTax,
                 $carrierTax,
                 'shipment',
+                'unit',
                 '',
+                ''
+            );
+            ++$i;
+        }
+
+        $totalDiscount = $orderSummary['total_discounts'] ?? 0;
+        if ($totalDiscount > 0) {
+            $orderLines[$i] = $this->createOrderlines(
+                'Cart Discount',
+                'Cart Price Rule',
+                1,
+                -abs($totalDiscount),
+                0,
+                'handling',
+                'unit',
                 '',
                 ''
             );
@@ -3520,7 +3424,6 @@ class ALTAPAY extends PaymentModule
         $productName,
         $itemID,
         $quantity,
-        $discount,
         $unitPrice,
         $taxAmount,
         $goodsType,
@@ -3536,60 +3439,17 @@ class ALTAPAY extends PaymentModule
         );
 
         $orderLine->taxAmount = number_format($quantity * $taxAmount, 2, '.', '');
-        $orderLine->discount = $discount;
-        $orderLine->taxPercent = $unitPrice > 0 ? number_format(($taxAmount / $unitPrice) * 100, 2, '.', '') : 0;
-        $orderLine->productUrl = $productUrl ? $productUrl : '';
-        $orderLine->imageUrl = $imageUrl ? $imageUrl : '';
+        $orderLine->discount = 0;
+        if (!empty($productUrl)) {
+            $orderLine->productUrl = $productUrl;
+        }
+        if (!empty($imageUrl)) {
+            $orderLine->imageUrl = $imageUrl;
+        }
         $orderLine->unitCode = $unitCode;
         $orderLine->setGoodsType($goodsType);
 
         return $orderLine;
-    }
-
-    /**
-     * Returns the voucher discounts for each product in the order lines
-     *
-     * @param array $vouchers
-     * @param string $productID
-     * @param float $discountPercent
-     * @param float $basePrice
-     * @param float $orderSubtotal
-     * @param array $freeGiftVoucher
-     *
-     * @return float
-     */
-    private function getVoucherDiscounts(
-        $vouchers,
-        $productID,
-        $discountPercent,
-        $basePrice,
-        $orderSubtotal,
-        $freeGiftVoucher
-    ) {
-        $discountedAmount = 0;
-        $productPriceAfterDiscount = 0;
-        foreach ($vouchers as $key => $voucher) {
-            if ((is_array($voucher['products']) and in_array($productID, $voucher['products'])) || $voucher['products'] === 'all' or empty($voucher['products'])) {
-                if (!$discountPercent && isset($voucher['reductionPercent']) && ($voucher['reductionPercent'] !== '0.00')) {
-                    $discountPercent += $voucher['reductionPercent'];
-                    $discountedAmount = $basePrice * ($discountPercent / 100);
-                    $productPriceAfterDiscount = $basePrice - $discountedAmount;
-                } elseif ($voucher['reductionPercent'] === '0.00' && (empty($freeGiftVoucher['free_gift']) || $freeGiftVoucher['free_gift']) && $freeGiftVoucher['free_gift'] != $productID) {
-                    if ($freeGiftVoucher['free_gift']) {
-                        $discountPercent += (($freeGiftVoucher['reductionAmount'] + $freeGiftVoucher[$key]) / ($orderSubtotal + $freeGiftVoucher[$key]) * 100);
-                    } else {
-                        $discountPercent += ($freeGiftVoucher[$key] / ($orderSubtotal)) * 100;
-                    }
-                } elseif ($voucher['reductionPercent'] === '0.00' && empty($freeGiftVoucher['free_gift']) || $freeGiftVoucher['free_gift'] == $productID) {
-                    $discountPercent += (($freeGiftVoucher['reductionAmount'] + $freeGiftVoucher[$key]) / ($orderSubtotal + $freeGiftVoucher[$key]) * 100);
-                } else {
-                    $totalDiscountedAmount = $discountedAmount + ($productPriceAfterDiscount * ($voucher['reductionPercent'] / 100));
-                    $discountPercent = ($totalDiscountedAmount / $basePrice) * 100;
-                }
-            }
-        }
-
-        return $discountPercent;
     }
 
     /**
@@ -3659,32 +3519,6 @@ class ALTAPAY extends PaymentModule
         }
 
         return $productIDs;
-    }
-
-    /**
-     * Returns array of applied voucher details from cart
-     *
-     * @return array
-     *
-     * @throws PrestaShopDatabaseException
-     */
-    private function getVoucherDetails()
-    {
-        $voucherDetails = [];
-        $appliedCartRules = $this->context->cart->getCartRules();
-        foreach ($appliedCartRules as $cartRule) {
-            $reductionPercent = $cartRule['reduction_percent'];
-            if (!empty($cartRule['reduction_product'])) {
-                $voucherDetails[$cartRule['id_cart_rule']] = $this->getCartRuleGroupProducts($cartRule['id_cart_rule'], $reductionPercent);
-            } else {
-                $voucherDetails[$cartRule['id_cart_rule']] = [
-                    'reductionPercent' => $reductionPercent,
-                    'products' => 'all',
-                ];
-            }
-        }
-
-        return $voucherDetails;
     }
 
     /**

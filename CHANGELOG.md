@@ -5,6 +5,11 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [4.0.0]
+### Fixed
+- Streamline and simplify management of order lines and amounts.
+- Support for the new PayPal Integration.
+
 ## [3.9.3]
 ### Fixed
 - Fix: Apple Pay success page not displaying in PrestaShop 8.2.
