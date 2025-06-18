@@ -1425,7 +1425,7 @@ class ALTAPAY extends PaymentModule
                         $productName,
                         $itemID,
                         $productQuantity,
-                        number_format($cartDetails['price'], 2, '.', '')
+                        round($cartDetails['price'], 2)
                     );
                     $orderLine->taxAmount = $totalProductsTaxAmount;
                     $orderLine->discount = 0;
@@ -1479,7 +1479,6 @@ class ALTAPAY extends PaymentModule
      */
     public function getShippingInfo($orderID)
     {
-        // $shippingDiscount = 0;
         $orderDetail = new Order((int) $orderID);
         $shippingDetail = reset($orderDetail->getShipping());
         $orderLine = new API\PHP\Altapay\Request\OrderLine(
@@ -1512,8 +1511,6 @@ class ALTAPAY extends PaymentModule
         return array_combine($itemIDs, $quantities);
     }
 
-    /* Handle merchant details form */
-
     /**
      * Method for creating dummy order lines array in case no order lines selected for refund action
      *
@@ -1528,7 +1525,7 @@ class ALTAPAY extends PaymentModule
         $dummyItemOrderLine['description'] = 'Good-will refund';
         $dummyItemOrderLine['itemId'] = '100200';
         $dummyItemOrderLine['quantity'] = 1;
-        $dummyItemOrderLine['unitPrice'] = number_format($totalAmount, 2, '.', '');
+        $dummyItemOrderLine['unitPrice'] = round($totalAmount, 2);
         // Optional keys for orderLines:
         $dummyItemOrderLine['taxAmount'] = '0.00';
         $dummyItemOrderLine['taxPercent'] = '0.00';
@@ -3369,10 +3366,10 @@ class ALTAPAY extends PaymentModule
         $totalDiscount = $orderSummary['total_discounts'] ?? 0;
         if ($totalDiscount > 0) {
             $orderLines[$i] = $this->createOrderlines(
-                'Cart Discount',
-                'Cart Price Rule',
+                'Discount',
+                'total_discount',
                 1,
-                -abs($totalDiscount),
+                round(-abs($totalDiscount), 2),
                 0,
                 'handling',
                 'unit',
@@ -3435,10 +3432,10 @@ class ALTAPAY extends PaymentModule
             $productName,
             $itemID,
             $quantity,
-            number_format((100 * $unitPrice) / 100, 2, '.', '')
+            round((100 * $unitPrice) / 100, 2)
         );
 
-        $orderLine->taxAmount = number_format($quantity * $taxAmount, 2, '.', '');
+        $orderLine->taxAmount = round($quantity * $taxAmount, 2);
         $orderLine->discount = 0;
         if (!empty($productUrl)) {
             $orderLine->productUrl = $productUrl;
