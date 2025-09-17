@@ -2398,6 +2398,9 @@ class ALTAPAY extends PaymentModule
                     PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}", 3, null, $this->name, $this->id, true);
 
                     return false;
+                } else {
+                    $orderDetail->date_upd = date('Y-m-d H:i:s');
+                    $orderDetail->update();
                 }
             }
 
@@ -3842,6 +3845,9 @@ class ALTAPAY extends PaymentModule
                     PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}", 3, null, $this->name, $this->id, true);
 
                     return false;
+                } else {
+                    $orderDetail->date_upd = date('Y-m-d H:i:s');
+                    $orderDetail->update();
                 }
             } catch (Exception $e) {
                 PrestaShopLogger::addLog('Payment API Error: ' . $e->getMessage(), 3, null, $this->name, $this->id, true);
