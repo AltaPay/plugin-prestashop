@@ -5,6 +5,10 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [4.0.1]
+### Fixed
+- Triggered order update when saving missing transaction data.
+
 ## [4.0.0]
 ### Fixed
 - Streamline and simplify management of order lines and amounts.

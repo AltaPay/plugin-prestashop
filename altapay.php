@@ -32,10 +32,10 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '4.0.0';
+        $this->version = '4.0.1';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.2.1'];
+        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.2.3'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -2398,6 +2398,9 @@ class ALTAPAY extends PaymentModule
                     PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}", 3, null, $this->name, $this->id, true);
 
                     return false;
+                } else {
+                    $orderDetail->date_upd = date('Y-m-d H:i:s');
+                    $orderDetail->update();
                 }
             }
 
@@ -3842,6 +3845,9 @@ class ALTAPAY extends PaymentModule
                     PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}", 3, null, $this->name, $this->id, true);
 
                     return false;
+                } else {
+                    $orderDetail->date_upd = date('Y-m-d H:i:s');
+                    $orderDetail->update();
                 }
             } catch (Exception $e) {
                 PrestaShopLogger::addLog('Payment API Error: ' . $e->getMessage(), 3, null, $this->name, $this->id, true);
