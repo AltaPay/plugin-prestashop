@@ -51,7 +51,7 @@
 
                         {/if}
                     </ul>
-                    {$product.price}
+                    {$currency_sign} {$product.price_wt|round:2}
                 </td>
 
                 <td class="cart_quantity text-center" data-title="{l s='Quantity' mod='altapay'}">
