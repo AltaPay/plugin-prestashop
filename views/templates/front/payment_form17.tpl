@@ -22,9 +22,9 @@
       <div class="page-order-detail">
           <div class="cart-grid-body col-xs-12 col-lg-12">
             {block name='checkout_process'}
-              <div id="{$stylingclass}">
+              <div class="{$stylingclass}">
                 <div id="card_info" {if ($cssClass)} class = "cvv_less" {/if}>
-                    {if ($stylingclass) != "checkout-cc"}
+                    {if strpos($stylingclass, "checkout-cc") === false}
                       <h1 class="payment_msg">{l s="Please enter your details below" mod="altapay"}</h1>
                     {/if}
                     <form id="PensioPaymentForm" ></form>

@@ -32,7 +32,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '4.0.1';
+        $this->version = '4.0.2';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.2.3'];
@@ -1748,6 +1748,10 @@ class ALTAPAY extends PaymentModule
                                     'name' => 'Checkout',
                                 ],
                                 [
+                                    'id_option' => 'checkout-v2',
+                                    'name' => 'Checkout v2',
+                                ],
+                                [
                                     'id_option' => 'custom-cc',
                                     'name' => 'Custom',
                                 ],
@@ -3202,6 +3206,12 @@ class ALTAPAY extends PaymentModule
 
             if (!$isReservation) {
                 $request->setConfig($config)->setLanguage($cgConf['language']);
+                if (!$terminal->applepay) {
+                    $formTemplate = getFormTemplate();
+                    if (!empty($formTemplate)) {
+                        $request->setFormTemplate($formTemplate);
+                    }
+                }
             }
             try {
                 $response = $request->call();

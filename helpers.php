@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '4.0.1';
+    $pluginVersion = '4.0.2';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -1627,4 +1627,26 @@ function getTerminal($terminal_id = false, $currency = false)
     }
 
     return $terminal;
+}
+
+/**
+ * Return matching form template value
+ *
+ * @return string|null
+ */
+function getFormTemplate()
+{
+    $form_templates = array(
+        'legacy-cc' => 'form_dynamic_div',
+        'checkout-cc' => 'form_checkout_div',
+        'checkout-v2' => 'form_checkout',
+    );
+
+    $style = Configuration::get('enable_cc_style');
+
+    if (empty($style)) {
+        return null;
+    }
+
+    return $form_templates[$style] ?? null;
 }

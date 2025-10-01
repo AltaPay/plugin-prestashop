@@ -11,9 +11,9 @@
 {assign currency_code Currency::getDefaultCurrency()->sign}
 <link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
 </header>
-<div id="{$stylingclass}" {if ($theme_name) == "Niara"} class="niara" {/if}>
+<div class="{$stylingclass}{if $theme_name == 'Niara'} niara{/if}">
 <div id="card_info" {if ($cssClass)} class = "cvv_less" {/if}>
-    {if ($stylingclass) != "checkout-cc"}
+    {if strpos($stylingclass, "checkout-cc") === false}
         <p class="payment_msg">{l s="Please enter your details below" mod="altapay"}</p>
     {/if}
     <form id="PensioPaymentForm" ></form>
