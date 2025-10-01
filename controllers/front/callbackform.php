@@ -46,12 +46,15 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
         $this->context->smarty->assign('theme_name', $themeName);
         $this->context->smarty->assign('cssClass', $terminalRemoteName);
         $payment_style = Configuration::get('enable_cc_style');
+        $payment_style_id = $payment_style;
         if (empty($payment_style)) {
             $payment_style = 'legacy-cc';
+            $payment_style_id = 'legacy-cc';
         } elseif ($payment_style == 'checkout-v2') {
             $payment_style .= ' checkout-cc';
         }
         $this->context->smarty->assign('stylingclass', $payment_style);
+        $this->context->smarty->assign('stylingid', $payment_style_id);
         $this->context->smarty->assign('summarydetails', $cart->getSummaryDetails());
         if (strpos($postData['shop_orderid'], '_') !== false) {
             $this->context->smarty->assign('amount', $postData['amount']);
