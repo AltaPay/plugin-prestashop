@@ -1636,11 +1636,11 @@ function getTerminal($terminal_id = false, $currency = false)
  */
 function getFormTemplate()
 {
-    $form_templates = array(
+    $form_templates = [
         'legacy-cc' => 'form_dynamic_div',
         'checkout-cc' => 'form_checkout_div',
         'checkout-v2' => 'form_checkout',
-    );
+    ];
 
     $style = Configuration::get('enable_cc_style');
 
