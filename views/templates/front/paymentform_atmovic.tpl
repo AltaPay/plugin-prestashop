@@ -67,9 +67,9 @@
       <div class="page-order-detail">
           <div class="cart-grid-body col-xs-12 col-lg-12">
             {block name='checkout_process'}
-              <div id="{$stylingclass}">
+              <div id="{$stylingid}" class="{$stylingclass}">
                 <div id="card_info" {if ($cssClass)} class = "cvv_less" {/if}>
-                    {if ($stylingclass) != "checkout-cc"}
+                    {if strpos($stylingclass, "checkout-cc") === false}
                         <h1 class="payment_msg">{l s='Du er ved at betale' mod='altapay'} {$cart_summary.total_price} {$currency_code}</h1>
                     {/if}
                     <form id="PensioPaymentForm" ></form>

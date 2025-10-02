@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "altapay/api-php",
-            "version": "3.4.1",
+            "version": "3.5.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/AltaPay/api-php.git",
-                "reference": "19dc981a5ff66644217d2d6967aeb71c1dbf20bf"
+                "reference": "6fd4457ebb66a83c0995ad86764db40207ad5f53"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/AltaPay/api-php/zipball/19dc981a5ff66644217d2d6967aeb71c1dbf20bf",
-                "reference": "19dc981a5ff66644217d2d6967aeb71c1dbf20bf",
+                "url": "https://api.github.com/repos/AltaPay/api-php/zipball/6fd4457ebb66a83c0995ad86764db40207ad5f53",
+                "reference": "6fd4457ebb66a83c0995ad86764db40207ad5f53",
                 "shasum": ""
             },
             "require": {
@@ -29,14 +29,14 @@
                 "ext-simplexml": "*",
                 "ext-spl": "*",
                 "guzzlehttp/guzzle": "^6.0 || ^7.0",
-                "php": "^5.6 || ^7.0 || ^8.0",
-                "symfony/event-dispatcher": "^2.1 || ^3.0 || ^4.0 || ^5.0 || ^6.0",
-                "symfony/options-resolver": "^2.6 || ^3.0 || ^4.0 || ^5.0 || ^6.0"
+                "php": "^7.0 || ^8.0",
+                "symfony/event-dispatcher": "^2.1 || ^3.0 || ^4.0 || ^5.0 || ^6.0 || ^7.0",
+                "symfony/options-resolver": "^2.6 || ^3.0 || ^4.0 || ^5.0 || ^6.0 || ^7.0"
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "^3.0",
                 "fzaninotto/faker": "^1.6",
-                "phpstan/phpstan": "^1.8",
+                "phpstan/phpstan": "^2.1",
                 "phpstan/phpstan-phpunit": "*",
                 "phpstan/phpstan-strict-rules": "*",
                 "phpunit/phpunit": "^7.0 || ^8.0 || ^9.0"
@@ -56,7 +56,11 @@
                 "altapay",
                 "payment"
             ],
-            "time": "2024-07-09T09:31:13+00:00"
+            "support": {
+                "issues": "https://github.com/AltaPay/api-php/issues",
+                "source": "https://github.com/AltaPay/api-php/tree/3.5.4"
+            },
+            "time": "2025-09-15T05:02:36+00:00"
         },
         {
             "name": "composer/package-versions-deprecated",
@@ -2897,6 +2901,6 @@
     "platform": {
         "php": "^7.0"
     },
-    "platform-dev": [],
-    "plugin-api-version": "1.1.0"
+    "platform-dev": {},
+    "plugin-api-version": "2.6.0"
 }

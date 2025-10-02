@@ -51,6 +51,7 @@
 
                         {/if}
                     </ul>
+                    {$currency_sign} {$product.price_wt|round:2}
                 </td>
 
                 <td class="cart_quantity text-center" data-title="{l s='Quantity' mod='altapay'}">
@@ -102,6 +103,7 @@
                         {if !empty($product.gift)}
                             <span class="gift-icon">{l s='Gift!' mod='altapay'}</span>
                         {else}
+                            {$currency_sign}
                             {if $quantityDisplayed == 0 AND isset($customizedDatas.$productId.$productAttributeId)}
                                 {if !isset($priceDisplay)}{$product.total_customization_wt}{else}{$product.total_customization}{/if}
                             {else}
@@ -288,7 +290,7 @@
                         <span>{l s='Total' mod='altapay'}</span>
                     </td>
                     <td colspan="2" class="price total_price_container" id="total_price_container">
-                        <span id="total_price" data-selenium-total-price="{$total_price_without_tax}">{$currency_sign}{$total_price_without_tax}</span>
+                        <span id="total_price" data-selenium-total-price="{$total_price_without_tax}">{$currency_sign} {$cart_summary.total_price}</span>
                     </td>
                 </tr>
             {/if}

@@ -161,13 +161,17 @@ In order to reconcile payments please follow the steps below:
 
    ![prestashop_configure_styling](Docs/Configuration/prestashop_configure_styling.png)
 
-   - `Legacy` Choose this option if legacy form is enabled from the gateway side.
+   - `Legacy` Legacy design with basic form styling.
 
       ![altapay_cc_legacy_form.png](Docs/Configuration/prestashop_legacy_styling_form.png)
 
-   - `Checkout` Select the option to show the Credit Card form in a modern look. Make sure the checkout form is enabled from the gateway side.
+   - `Checkout` Select the option to show the Credit Card form in a modern look.
 
       ![altapay_cc_checkout_form.png](Docs/Configuration/prestashop_checkout_styling_form.png)
+
+   - `Checkout v2` Select this option to display the credit card form with a sleek design, showing the expiry date in two-digit month and year format, and the payment amount on the pay button.
+
+      ![checkout_styling_form_v2.png](Docs/Configuration/checkout_styling_form_v2.png)
 
    - `Custom` This option can be selected to implement custom styling on the payment page. Selecting this option will remove all the styling from the payment page.
 
