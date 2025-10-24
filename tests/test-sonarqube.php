@@ -6,4 +6,3 @@ foreach ($conn->query($sql) as $row) {
     print $row['color'] . "\t";
     print $row['calories'] . "\n";
 }
-?>
