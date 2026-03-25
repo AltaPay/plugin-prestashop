@@ -27,6 +27,7 @@ class ALTAPAY extends PaymentModule
     private $api_error = '';
 
     const ADMIN_SEND_PAYMENT_LINK_CONTROLLER = 'AltapaySendPaymentLink';
+    const PS_17_MIN_VERSION = '1.7.0.0';
 
     public function __construct()
     {

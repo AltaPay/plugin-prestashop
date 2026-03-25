@@ -28,7 +28,7 @@ class AltapayCallbackformexternalModuleFrontController extends ModuleFrontContro
         $terminal_name = getTransactionTerminalByUniqueId($shopOrderId);
         $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
 
-        if (!empty($checksum) and !empty($secret) and calculateChecksum($postData, $secret) !== $checksum) {
+        if (!empty($checksum) && !empty($secret) && calculateChecksum($postData, $secret) !== $checksum) {
             exit('Invalid request');
         }
 

@@ -16,7 +16,7 @@ class AltapayPaymenterrorModuleFrontController extends ModuleFrontController
 
         $this->context->smarty->assign(['errorText' => $error]);
 
-        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+        if (version_compare(_PS_VERSION_, $this->module::PS_17_MIN_VERSION, '>=')) {
             $this->setTemplate('module:altapay/views/templates/front/payment_error17.tpl');
         } else {
             $this->setTemplate('payment_error.tpl');
