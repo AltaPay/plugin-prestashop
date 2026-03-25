@@ -1,4 +1,5 @@
 <?php
+
 /**
  * AltaPay module for PrestaShop
  *
@@ -6,20 +7,43 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-class AltapayPaymenterrorModuleFrontController extends ModuleFrontController
+class AltapayCallbackformexternalModuleFrontController extends ModuleFrontController
 {
-    public function initContent()
+    protected $display_header = false;
+    protected $display_footer = false;
+    public $content_only = true;
+
+    /**
+     * Method to follow when callback form is being requested
+     *
+     * @return void
+     *
+     * @throws Exception
+     */
+    public function postProcess()
     {
-        parent::initContent();
+        $postData = getAltaPayCallbackData();
+        $shopOrderId = $postData['shop_orderid'];
+        $checksum = !empty($postData['checksum']) ? $postData['checksum'] : '';
+        $terminal_name = getTransactionTerminalByUniqueId($shopOrderId);
+        $secret = Altapay_Models_Terminal::getTerminalSecretByRemoteName($terminal_name);
 
-        $error = Tools::getValue('error');
-
-        $this->context->smarty->assign(['errorText' => $error,]);
-
-        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
-            $this->setTemplate('module:altapay/views/templates/front/payment_error17.tpl');
-        } else {
-            $this->setTemplate('payment_error.tpl');
+        if (!empty($checksum) and !empty($secret) and calculateChecksum($postData, $secret) !== $checksum) {
+            exit('Invalid request');
         }
+
+        $payment_style = Configuration::get('enable_cc_style');
+
+        if ($payment_style == 'checkout-cc') {
+            $payment_style = 'checkout-style';
+        } elseif ($payment_style == 'checkout-v2') {
+            $payment_style .= ' checkout-style';
+        }
+        $this->context->smarty->assign([
+            'stylingclass' => $payment_style,
+            'amount' => $postData['amount'],
+            'shop_logo' => _PS_IMG_ . Configuration::get('PS_LOGO'),
+        ]);
+        $this->setTemplate('module:altapay/views/templates/front/payment_form_independent.tpl');
     }
 }

@@ -5,6 +5,11 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [4.0.3]
+### Added
+- Add support for `checkoutSession` for reusable checkout sessions improving fraud detection and conversion.
+- Support gateway form independent of the plugin/theme styling.
+
 ## [4.0.2]
 ### Added
 - Add support for Checkout Design v2.
