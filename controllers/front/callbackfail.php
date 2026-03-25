@@ -259,12 +259,18 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                 'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $mNa . '/',
                 'css_dir' => null,
             ]);
-            // PrestaShop 1.6 and PrestaShop 1.7 have different declarations of $this->setTemplate()
-            if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
-                $this->setTemplate('module:altapay/views/templates/front/payment_error17.tpl');
-            } else {
-                $this->setTemplate('payment_error.tpl');
-            }
+
+            Tools::redirect(
+                $this->context->link->getModuleLink(
+                    'altapay',
+                    'paymenterror',
+                    [
+                        'error' => $errorMessage,
+                        'order_id' => $unique_id,
+                        'payment_id' => $postData['transaction_id'],
+                    ]
+                )
+            );
         }
     }
 }

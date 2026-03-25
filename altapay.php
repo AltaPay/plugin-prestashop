@@ -473,6 +473,13 @@ class ALTAPAY extends PaymentModule
             Configuration::updateValue('enable_cc_style', 'checkout-cc');
         }
 
+        // Execute the query
+        $result = Db::getInstance()->getValue('SELECT COUNT(*) FROM ' . _DB_PREFIX_ . 'altapay_terminals');
+        // Check if the table contains data
+        if ($result == 0 && empty(Configuration::get('ALTAPAY_USERNAME'))) {
+            Configuration::updateValue('payment_page_layout', 'default_layout');
+        }
+
         if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_transaction\' AND COLUMN_NAME = \'is_processed_by_cron\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_transaction` ADD COLUMN is_processed_by_cron int(10) unsigned NOT NULL DEFAULT 0')) {
@@ -1762,6 +1769,28 @@ class ALTAPAY extends PaymentModule
                     ],
                     [
                         'type' => 'select',
+                        'label' => $this->l('Payment page layout'),
+                        'desc' => $this->l('The default option follows the theme styling, while the custom option
+                        displays the payment page independently of the theme styling.'),
+                        'name' => 'payment_page_layout',
+                        'required' => false,
+                        'options' => [
+                            'query' => [
+                                [
+                                    'id_option' => 'default_layout',
+                                    'name' => 'Default',
+                                ],
+                                [
+                                    'id_option' => 'checkout_independent',
+                                    'name' => 'Checkout Independent',
+                                ],
+                            ],
+                            'id' => 'id_option',
+                            'name' => 'name',
+                        ],
+                    ],
+                    [
+                        'type' => 'select',
                         'label' => $this->l('Authorized payments status'),
                         'desc' => $this->l('Choose the status for authorized payments'),
                         'name' => 'authorized_payments_status',
@@ -1882,6 +1911,7 @@ class ALTAPAY extends PaymentModule
             'AUTOCAPTURE_STATUSES[]' => Tools::getValue('AUTOCAPTURE_STATUSES',
                 unserialize(Configuration::get('AUTOCAPTURE_STATUSES'))),
             'enable_cc_style' => Tools::getValue('enable_cc_style', Configuration::get('enable_cc_style')),
+            'payment_page_layout' => Tools::getValue('payment_page_layout', Configuration::get('payment_page_layout')),
             'enable_fraud' => Tools::getValue('enable_fraud', Configuration::get('enable_fraud')),
             'enable_release_refund' => Tools::getValue('enable_release_refund', Configuration::get('enable_release_refund')),
             'authorized_payments_status' => Tools::getValue('authorized_payments_status', Configuration::get('authorized_payments_status')),
@@ -2018,6 +2048,9 @@ class ALTAPAY extends PaymentModule
             }
             if (Tools::getValue('enable_cc_style') !== '') {
                 Configuration::updateValue('enable_cc_style', Tools::getValue('enable_cc_style'));
+            }
+            if (Tools::getValue('payment_page_layout') !== '') {
+                Configuration::updateValue('payment_page_layout', Tools::getValue('payment_page_layout'));
             }
             if (Tools::getValue('authorized_payments_status') !== '') {
                 Configuration::updateValue('authorized_payments_status', Tools::getValue('authorized_payments_status'));
@@ -3017,12 +3050,17 @@ class ALTAPAY extends PaymentModule
         $cgConf['uniqueid'] = uniqid('PS');
         $cgConf['terminal'] = $terminal->remote_name;
         $cgConf['cookie'] = $_SERVER['HTTP_COOKIE'] ?? null;
+        $paymentPageLayout = Configuration::get('payment_page_layout');
 
         $callback = [];
+        $callbackFormType = 'callbackform';
+        if ($paymentPageLayout === 'checkout_independent') {
+            $callbackFormType = 'callbackformexternal';
+        }
         // Callbacks
         $callback['callback_form'] = $this->context->link->getModuleLink(
             $this->name,
-            'callbackform',
+            $callbackFormType,
             [],
             true,
             $languageId,
@@ -3138,6 +3176,15 @@ class ALTAPAY extends PaymentModule
         }
 
         $type = $cgConf['payment_type'];
+        $requestShopOrderId = $cgConf['uniqueid'];
+        $requestAmount = $amount;
+        if (!empty($shopOrderId)) {
+            $requestShopOrderId = $shopOrderId;
+            $requestAmount = $remainingAmount;
+            $requestOrderLines = $this->orderAddedFromBackOffice($remainingAmount);
+        } else {
+            $requestOrderLines = $this->getOrderLines($cart);
+        }
 
         if (!is_null($savecard) && $savecard != 0) {
             $type = 'verifyCard';
@@ -3147,6 +3194,14 @@ class ALTAPAY extends PaymentModule
         }
 
         try {
+            $sessionRequest = new API\PHP\Altapay\Api\Payments\CheckoutSession(getAuth());
+            $sessionRequest->setTerminals([$cgConf['terminal']])
+                ->setSessionId(sha1(uniqid(time(), true)))
+                ->setShopOrderId($requestShopOrderId)
+                ->setAmount($requestAmount)
+                ->setCurrency($cgConf['currency']);
+            $sessionResponse = $sessionRequest->call();
+            $sessionId = $sessionResponse->Session->Id;
             $config = new API\PHP\Altapay\Request\Config();
             $config->setCallbackOk($callback['callback_ok']);
             $config->setCallbackFail($callback['callback_fail']);
@@ -3183,20 +3238,11 @@ class ALTAPAY extends PaymentModule
                 $request->setAgreement(['type' => 'recurring']);
             }
 
-            $requestShopOrderId = $cgConf['uniqueid'];
-            $requestAmount = $amount;
-            if (!empty($shopOrderId)) {
-                $requestShopOrderId = $shopOrderId;
-                $requestAmount = $remainingAmount;
-                $requestOrderLines = $this->orderAddedFromBackOffice($remainingAmount);
-            } else {
-                $requestOrderLines = $this->getOrderLines($cart);
-            }
-
             $request->setType($type)->setTerminal($cgConf['terminal'])
                 ->setShopOrderId($requestShopOrderId)
                 ->setAmount($requestAmount)
                 ->setCurrency($cgConf['currency'])
+                ->setSessionID($sessionId)
                 ->setCustomerInfo($customer)
                 ->setTransactionInfo($transactionInfo)
                 ->setCookie($cgConf['cookie'])
