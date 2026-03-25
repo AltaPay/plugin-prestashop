@@ -467,17 +467,9 @@ class ALTAPAY extends PaymentModule
 		) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8');
         }
 
-        // Execute the query
-        $result = Db::getInstance()->getValue('SELECT COUNT(*) FROM ' . _DB_PREFIX_ . 'altapay_terminals');
         // Check if the table contains data
-        if ($result == 0 && empty(Configuration::get('ALTAPAY_USERNAME'))) {
+        if (isAltapayTerminalTableEmpty() && empty(Configuration::get('ALTAPAY_USERNAME'))) {
             Configuration::updateValue('enable_cc_style', 'checkout-cc');
-        }
-
-        // Execute the query
-        $result = Db::getInstance()->getValue('SELECT COUNT(*) FROM ' . _DB_PREFIX_ . 'altapay_terminals');
-        // Check if the table contains data
-        if ($result == 0 && empty(Configuration::get('ALTAPAY_USERNAME'))) {
             Configuration::updateValue('payment_page_layout', 'default_layout');
         }
 
@@ -3197,7 +3189,6 @@ class ALTAPAY extends PaymentModule
         try {
             $sessionRequest = new API\PHP\Altapay\Api\Payments\CheckoutSession(getAuth());
             $sessionRequest->setTerminals([$cgConf['terminal']])
-                ->setSessionId(bin2hex(random_bytes(32)))
                 ->setShopOrderId($requestShopOrderId)
                 ->setAmount($requestAmount)
                 ->setCurrency($cgConf['currency']);

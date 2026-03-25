@@ -1650,3 +1650,17 @@ function getFormTemplate()
 
     return $form_templates[$style] ?? null;
 }
+
+/**
+ * Check if terminals exists.
+ *
+ * @return bool
+ */
+function isAltapayTerminalTableEmpty()
+{
+    $count = Db::getInstance()->getValue(
+        'SELECT COUNT(*) FROM ' . _DB_PREFIX_ . 'altapay_terminals'
+    );
+
+    return (int) $count === 0;
+}
