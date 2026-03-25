@@ -3197,7 +3197,7 @@ class ALTAPAY extends PaymentModule
         try {
             $sessionRequest = new API\PHP\Altapay\Api\Payments\CheckoutSession(getAuth());
             $sessionRequest->setTerminals([$cgConf['terminal']])
-                ->setSessionId(sha1(uniqid(time(), true)))
+                ->setSessionId(bin2hex(random_bytes(32)))
                 ->setShopOrderId($requestShopOrderId)
                 ->setAmount($requestAmount)
                 ->setCurrency($cgConf['currency']);
