@@ -22,7 +22,7 @@
             width: 100%;
             color: #000;
             display: flex;
-            height: 150px;
+            min-height: 120px;
             justify-content: center;
             background-color: #dedede;
         }

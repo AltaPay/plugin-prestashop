@@ -21,6 +21,8 @@ Installing this plug-in will enable the web shop to handle card transactions thr
 [Reconcile Orders](#reconcile-orders)
 
 [Styling](#styling)
+
+* [Payment page layout](#payment-page-layout)
 *  [Customize Payment Form Page](#customize-payment-form-page)
 
 *  [Customize Redirect Form Page](#customize-redirect-form-page)
@@ -74,7 +76,7 @@ be provided by AltaPay.
 
    ![enter_credentials](Docs/Configuration/altapay_module_list.png)
 
-   ![enter_credentials](Docs/Configuration/prestashop_setup_altapay_credentials.png)
+   ![enter_credentials](Docs/Configuration/merchant_details.png)
 
 2. If you wish to enable fraud detection service and release/refund if fraud is detected then refer to the below screenshot.
 
@@ -159,7 +161,7 @@ In order to reconcile payments please follow the steps below:
 
    Choose one of the below options from Checkout form style dropdown to change the styling of payment form on the checkout page.
 
-   ![prestashop_configure_styling](Docs/Configuration/prestashop_configure_styling.png)
+   ![prestashop_configure_styling](Docs/Configuration/merchant_details.png)
 
    - `Legacy` Legacy design with basic form styling.
 
@@ -174,6 +176,18 @@ In order to reconcile payments please follow the steps below:
       ![checkout_styling_form_v2.png](Docs/Configuration/checkout_styling_form_v2.png)
 
    - `Custom` This option can be selected to implement custom styling on the payment page. Selecting this option will remove all the styling from the payment page.
+
+## Payment page layout
+
+Choose one of the below options from Payment page layout dropdown to select the layout type for payment page.
+
+- `Default` This will use the styling from the checkout/theme.
+   
+   ![altapay_cc_checkout_form.png](Docs/Configuration/prestashop_checkout_styling_form.png)
+
+- `Checkout Independent` This will show the payment page independent from the theme styling. This will provide a visually appealing appearance seamlessly, without conflicting with the theme styling.
+
+   ![independent_payment_page_layout.png](Docs/Configuration/independent_payment_page_layout.png)
 
 ### Customize Payment Form Page:
 
