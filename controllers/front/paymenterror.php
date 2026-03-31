@@ -12,7 +12,7 @@ class AltapayPaymenterrorModuleFrontController extends ModuleFrontController
     {
         parent::initContent();
 
-        $error = Tools::getValue('error');
+        $error = Tools::safeOutput(Tools::getValue('error'));
 
         $this->context->smarty->assign(['errorText' => $error]);
 
