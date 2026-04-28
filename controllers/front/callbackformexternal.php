@@ -43,6 +43,7 @@ class AltapayCallbackformexternalModuleFrontController extends ModuleFrontContro
             'stylingclass' => $payment_style,
             'amount' => $postData['amount'],
             'shop_logo' => _PS_IMG_ . Configuration::get('PS_LOGO'),
+            'shop_name' => Configuration::get('PS_SHOP_NAME'),
         ]);
         if (version_compare(_PS_VERSION_, $this->module::PS_17_MIN_VERSION, '>=')) {
             $this->setTemplate('module:altapay/views/templates/front/payment_form_independent.tpl');

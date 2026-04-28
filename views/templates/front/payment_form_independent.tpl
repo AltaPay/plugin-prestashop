@@ -747,7 +747,7 @@
 <body class="{$stylingclass}">
 <header class="header-minimal">
     <div class="header-minimal-logo">
-        <img src="{$shop_logo}" alt="logo" class="header-logo-main-img">
+        <img src="{$shop_logo}" alt="{$shop_name}" class="header-logo-main-img">
     </div>
 </header>
 <div class="content-wrapper">

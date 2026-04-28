@@ -3186,6 +3186,7 @@ class ALTAPAY extends PaymentModule
             $results = false;
         }
 
+        $sessionId = null;
         try {
             $sessionRequest = new API\PHP\Altapay\Api\Payments\CheckoutSession(getAuth());
             $sessionRequest->setTerminals([$cgConf['terminal']])
@@ -3194,6 +3195,11 @@ class ALTAPAY extends PaymentModule
                 ->setCurrency($cgConf['currency']);
             $sessionResponse = $sessionRequest->call();
             $sessionId = $sessionResponse->Session->Id;
+        } catch (\Exception $e) {
+            PrestaShopLogger::addLog($e->getMessage(), 2, $e->getCode(), $this->name, $this->id, true);
+        }
+
+        try {
             $config = new API\PHP\Altapay\Request\Config();
             $config->setCallbackOk($callback['callback_ok']);
             $config->setCallbackFail($callback['callback_fail']);
@@ -3234,13 +3240,16 @@ class ALTAPAY extends PaymentModule
                 ->setShopOrderId($requestShopOrderId)
                 ->setAmount($requestAmount)
                 ->setCurrency($cgConf['currency'])
-                ->setSessionID($sessionId)
                 ->setCustomerInfo($customer)
                 ->setTransactionInfo($transactionInfo)
                 ->setCookie($cgConf['cookie'])
                 ->setFraudService(null)
                 ->setOrderLines($requestOrderLines)
                 ->setSaleReconciliationIdentifier(sha1(uniqid(time(), true)));
+
+            if ($sessionId) {
+                $request->setSessionID($sessionId);
+            }
 
             if (!$isReservation) {
                 $request->setConfig($config)->setLanguage($cgConf['language']);
@@ -3292,7 +3301,7 @@ class ALTAPAY extends PaymentModule
                 $message = $e->getMessage();
             }
         } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
-            $message = $e->getResponse()->getBody();
+            $message = (string) $e->getResponse()->getBody();
         } catch (API\PHP\Altapay\Exceptions\ResponseHeaderException $e) {
             $message = $e->getHeader()->ErrorMessage;
         } catch (API\PHP\Altapay\Exceptions\ResponseMessageException $e) {
