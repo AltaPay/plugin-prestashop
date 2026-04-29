@@ -1,5 +1,3 @@
-require('@cypress/xpath');
-
 class Order
 
 {
@@ -47,8 +45,6 @@ class Order
         cy.get('.condition-label > .js-terms').click()
         cy.get('.ps-shown-by-js > .btn').click()
         cy.get('[id=creditCardNumberInput]').type('4111111111111111')
-        cy.get('#emonth').select('12')
-        cy.get('#eyear').select('2025')
         cy.get('#cvcInput').type('123')
         cy.get('#cardholderNameInput').type('testname')
         cy.get('#pensioCreditCardPaymentSubmitButton').click().wait(4000)
@@ -389,8 +385,6 @@ class Order
         cy.get('#generate-payment-link-btn').click().wait(8000)
         cy.get('a[href^="https://testgateway.pensio.com/eCommerce/API/requestForm?pid="]').click()
         cy.get('[id=creditCardNumberInput]').type('4111111111111111')
-        cy.get('#emonth').select('12')
-        cy.get('#eyear').select('2025')
         cy.get('#cvcInput').type('123')
         cy.get('#cardholderNameInput').type('testname')
         cy.get('#pensioCreditCardPaymentSubmitButton').click().wait(4000)
