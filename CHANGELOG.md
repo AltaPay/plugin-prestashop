@@ -5,13 +5,16 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [5.0.1]
+### Added
+- Ensure the payment request does not fail in cases where `checkoutSession` is not returned or fails, particularly for older gateway API versions.
+
 ## [5.0.0]
 ### Added
 - Add support for `checkoutSession` for reusable checkout sessions improving fraud detection and conversion.
 - Support gateway form independent of the plugin/theme styling.
 
     > **Note:** `checkoutSession` requires gateway version `20260311` or later.
-
 
 ## [4.0.2]
 ### Added
