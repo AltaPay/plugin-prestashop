@@ -32,7 +32,12 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         // Locking prevents attempt to create order in PrestaShop if notification & ok callbacks get processed simultaneously.
 
         $lockFileName = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'callback_lock_' . md5($postData['transaction_id']) . '.lock';
-        $lockFileHandle = lockCallback($lockFileName);
+        $lockFileHandle = lockCallback($lockFileName, false);
+
+        if ($lockFileHandle === false) {
+            $pollingUrl = $this->context->link->getModuleLink('altapay', 'callbackopenvalidate', ['order_id' => $postData['shop_orderid']]);
+            Tools::redirect($pollingUrl);
+        }
 
         $message = '';
         $callback = new API\PHP\Altapay\Api\Ecommerce\Callback($postData);
@@ -140,6 +145,13 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
         } catch (Exception $e) {
             $message = $e->getMessage();
         }
+
+        if (!empty($postData['status']) && $postData['status'] === 'succeeded') {
+            unlockCallback($lockFileName, $lockFileHandle);
+            $pollingUrl = $this->context->link->getModuleLink('altapay', 'callbackopenvalidate', ['order_id' => $postData['shop_orderid']]);
+            Tools::redirect($pollingUrl);
+        }
+
         saveLogs($message);
         redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
     }

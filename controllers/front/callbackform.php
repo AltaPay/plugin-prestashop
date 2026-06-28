@@ -34,6 +34,9 @@ class AltapayCallbackformModuleFrontController extends ModuleFrontController
         $shopOrderId = $postData['shop_orderid'];
 
         $cart = getCartFromUniqueId($shopOrderId);
+        if (!Validate::isLoadedObject($cart)) {
+            exit('Could not load cart - exiting');
+        }
         $checksum = !empty($postData['checksum']) ? $postData['checksum'] : '';
         $terminalRemoteName = getCvvLess($cart->id, $shopOrderId);
         $terminal_name = getTransactionTerminalByUniqueId($shopOrderId);

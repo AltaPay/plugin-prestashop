@@ -5,6 +5,13 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [5.0.1]
+### Fixed
+- Fix: False "Payment service temporary unavailable" shown on redirect/wallet payments (MobilePay, Swish, Klarna, ApplePay) due to callback race condition, causing duplicate orders.
+- Fix: Fatal error in `callbackform` when cart cannot be resolved, causing unnecessary gateway retries.
+- Fix: Fatal error in `checkorderstatus` when cart cannot be resolved while polling for order status.
+- Fix: `CheckoutSession` incorrectly called for Apple Pay payments; `setSessionID` now skipped when session is not applicable.
+
 ## [5.0.0]
 ### Added
 - Add support for `checkoutSession` for reusable checkout sessions improving fraud detection and conversion.

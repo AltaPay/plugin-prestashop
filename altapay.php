@@ -3186,21 +3186,15 @@ class ALTAPAY extends PaymentModule
             $results = false;
         }
 
+        $config = new API\PHP\Altapay\Request\Config();
+        $config->setCallbackOk($callback['callback_ok']);
+        $config->setCallbackFail($callback['callback_fail']);
+        $config->setCallbackOpen($callback['callback_open']);
+        $config->setCallbackNotification($callback['callback_notification']);
+        $config->setCallbackRedirect($callback['callback_redirect']);
+        $config->setCallbackForm($callback['callback_form']);
+
         try {
-            $sessionRequest = new API\PHP\Altapay\Api\Payments\CheckoutSession(getAuth());
-            $sessionRequest->setTerminals([$cgConf['terminal']])
-                ->setShopOrderId($requestShopOrderId)
-                ->setAmount($requestAmount)
-                ->setCurrency($cgConf['currency']);
-            $sessionResponse = $sessionRequest->call();
-            $sessionId = $sessionResponse->Session->Id;
-            $config = new API\PHP\Altapay\Request\Config();
-            $config->setCallbackOk($callback['callback_ok']);
-            $config->setCallbackFail($callback['callback_fail']);
-            $config->setCallbackOpen($callback['callback_open']);
-            $config->setCallbackNotification($callback['callback_notification']);
-            $config->setCallbackRedirect($callback['callback_redirect']);
-            $config->setCallbackForm($callback['callback_form']);
             $request = new API\PHP\Altapay\Api\Ecommerce\PaymentRequest(getAuth());
             if ($terminal->applepay) {
                 $response['apple_pay_terminal'] = true;
@@ -3230,11 +3224,12 @@ class ALTAPAY extends PaymentModule
                 $request->setAgreement(['type' => 'recurring']);
             }
 
+            $this->createCheckoutSession($request, $requestShopOrderId, $requestAmount, $cgConf['currency'], $cgConf['terminal'], $cart->id);
+
             $request->setType($type)->setTerminal($cgConf['terminal'])
                 ->setShopOrderId($requestShopOrderId)
                 ->setAmount($requestAmount)
                 ->setCurrency($cgConf['currency'])
-                ->setSessionID($sessionId)
                 ->setCustomerInfo($customer)
                 ->setTransactionInfo($transactionInfo)
                 ->setCookie($cgConf['cookie'])
@@ -3244,7 +3239,7 @@ class ALTAPAY extends PaymentModule
 
             if (!$isReservation) {
                 $request->setConfig($config)->setLanguage($cgConf['language']);
-                if (!$terminal->applepay) {
+                if ($request instanceof API\PHP\Altapay\Api\Ecommerce\PaymentRequest) {
                     $formTemplate = getFormTemplate();
                     if (!empty($formTemplate)) {
                         $request->setFormTemplate($formTemplate);
@@ -3253,9 +3248,8 @@ class ALTAPAY extends PaymentModule
             }
             try {
                 $response = $request->call();
-                $responseUrl = $response->Url ?? ($terminal->applepay ? 'cardwallet' : 'reservation');
+                $responseUrl = $response->Url ?? ($request instanceof API\PHP\Altapay\Api\Payments\CardWalletAuthorize ? 'cardwallet' : 'reservation');
                 $orderStatus = (int) Configuration::get('ALTAPAY_OS_PENDING');
-                // Handling for Apple Pay and reservation
                 if ($responseUrl === 'cardwallet' || $responseUrl === 'reservation') {
                     if (strtolower($response->Result) === 'success') {
                         $orderStatus = (int) Configuration::get('authorized_payments_status');
@@ -3304,6 +3298,81 @@ class ALTAPAY extends PaymentModule
         PrestaShopLogger::addLog($message, 3, null, $this->name, $this->id, true);
 
         return $response;
+    }
+
+    /**
+     * Builds the list of active terminal names for a CheckoutSession request.
+     *
+     * @param string $currentTerminal
+     * @param string $currency
+     * @param int    $shopId
+     *
+     * @return string[]
+     */
+    private function getActiveTerminals($currentTerminal, $currency, $shopId)
+    {
+        $activeTerminals = [];
+
+        if (!empty(trim($currentTerminal))) {
+            $activeTerminals[] = $currentTerminal;
+        }
+
+        $allActive = Altapay_Models_Terminal::getActiveTerminalsForCurrency($currency, $shopId);
+        foreach ($allActive as $t) {
+            $name = $t['remote_name'];
+            if (!empty(trim((string) $name)) && $name !== $currentTerminal) {
+                $activeTerminals[] = $name;
+            }
+        }
+
+        return $activeTerminals;
+    }
+
+    /**
+     * Calls CheckoutSession and sets the session ID on the request.
+     * @param mixed $request
+     * @param string $shopOrderId
+     * @param float $amount
+     * @param string $currency
+     * @param string $terminal
+     * @param int $cartId
+     * @return void
+     */
+    private function createCheckoutSession($request, $shopOrderId, $amount, $currency, $terminal, $cartId)
+    {
+        if (!($request instanceof API\PHP\Altapay\Api\Ecommerce\PaymentRequest)) {
+            return;
+        }
+
+        $shopId = (int) Context::getContext()->shop->id ?: 1;
+        $activeTerminals = $this->getActiveTerminals($terminal, $currency, $shopId);
+
+        $sessionKey = 'altapay_checkout_session_id_' . $cartId;
+        $sessionId = Context::getContext()->cookie->{$sessionKey};
+
+        $sessionToken = rtrim(strtr(base64_encode(hex2bin(hash('sha256', (string) $cartId))), '+/', '-_'), '=');
+
+        if (empty($sessionId)) {
+            try {
+                $sessionRequest = new API\PHP\Altapay\Api\Payments\CheckoutSession(getAuth());
+                $sessionRequest->setTerminals($activeTerminals)
+                    ->setTerminal($terminal)
+                    ->setShopOrderId($shopOrderId)
+                    ->setAmount($amount)
+                    ->setCurrency($currency)
+                    ->setSessionId($sessionToken);
+                $sessionResponse = $sessionRequest->call();
+                $sessionId = $sessionResponse->Session->Id ?? null;
+                Context::getContext()->cookie->{$sessionKey} = $sessionId;
+                Context::getContext()->cookie->write();
+            } catch (Exception $e) {
+                PrestaShopLogger::addLog('CheckoutSession Exception: ' . $e->getMessage(), 3, null, $this->name, $this->id, true);
+            }
+        }
+
+        if ($sessionId) {
+            $request->setSessionID($sessionId);
+        }
     }
 
     /**
