@@ -3286,7 +3286,7 @@ class ALTAPAY extends PaymentModule
                 $message = $e->getMessage();
             }
         } catch (API\PHP\Altapay\Exceptions\ClientException $e) {
-            $message = $e->getResponse()->getBody();
+            $message = (string) $e->getResponse()->getBody();
         } catch (API\PHP\Altapay\Exceptions\ResponseHeaderException $e) {
             $message = $e->getHeader()->ErrorMessage;
         } catch (API\PHP\Altapay\Exceptions\ResponseMessageException $e) {
