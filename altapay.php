@@ -3305,7 +3305,7 @@ class ALTAPAY extends PaymentModule
      *
      * @param string $currentTerminal
      * @param string $currency
-     * @param int    $shopId
+     * @param int $shopId
      *
      * @return string[]
      */

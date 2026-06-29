@@ -892,7 +892,7 @@ function getAltaPayCallbackData()
 
 /**
  * @param string $lockFileName
- * @param bool   $blocking
+ * @param bool $blocking
  *
  * @return false|resource
  */
