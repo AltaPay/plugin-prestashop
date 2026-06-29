@@ -3330,12 +3330,14 @@ class ALTAPAY extends PaymentModule
 
     /**
      * Calls CheckoutSession and sets the session ID on the request.
+     *
      * @param mixed $request
      * @param string $shopOrderId
      * @param float $amount
      * @param string $currency
      * @param string $terminal
      * @param int $cartId
+     *
      * @return void
      */
     private function createCheckoutSession($request, $shopOrderId, $amount, $currency, $terminal, $cartId)
