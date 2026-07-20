@@ -3352,7 +3352,7 @@ class ALTAPAY extends PaymentModule
         $sessionKey = 'altapay_checkout_session_id_' . $cartId;
         $sessionId = Context::getContext()->cookie->{$sessionKey};
 
-        $sessionToken = rtrim(strtr(base64_encode(hex2bin(hash('sha256', (string) $cartId))), '+/', '-_'), '=');
+        $sessionToken = rtrim(strtr(base64_encode(hex2bin(hash_hmac('sha256', (string) $cartId, _COOKIE_KEY_))), '+/', '-_'), '=');
 
         if (empty($sessionId)) {
             try {
