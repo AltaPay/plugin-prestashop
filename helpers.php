@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '5.0.0';
+    $pluginVersion = '5.0.1';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -891,14 +891,15 @@ function getAltaPayCallbackData()
 }
 
 /**
- * @param $lockFileName
+ * @param string $lockFileName
+ * @param bool $blocking
  *
- * @return false|mixed|resource|void
+ * @return false|resource
  */
-function lockCallback($lockFileName)
+function lockCallback($lockFileName, $blocking = true)
 {
-    $maxRetries = 10; // Maximum number of retry attempts
-    $retryDelay = 1000000; // 1-second delay between retries (in microseconds)
+    $maxRetries = $blocking ? 10 : 3;  // Maximum number of retry attempts
+    $retryDelay = $blocking ? 1000000 : 200000; // blocking: 1 s, non-blocking: 200 ms
 
     // Attempt to acquire the lock with retry mechanism
     $lockAcquired = false;
@@ -927,6 +928,9 @@ function lockCallback($lockFileName)
 
     if (!$lockAcquired) {
         // Lock acquisition failed after maximum retries, handle appropriately
+        if (!$blocking) {
+            return false;
+        }
         $message = 'Unable to acquire lock after maximum retries';
         $module = Module::getInstanceByName('altapay');
         PrestaShopLogger::addLog($message, 3, '1004', $module->name, $module->id, true);

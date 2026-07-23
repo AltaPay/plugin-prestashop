@@ -38,6 +38,9 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
                 if (!in_array($transactionStatus, $errorStatus, true)) {
                     // Load the order object
                     $cart = getCartFromUniqueId($shopOrderId);
+                    if (!Validate::isLoadedObject($cart)) {
+                        $this->ajaxDie(json_encode(['success' => false]));
+                    }
                     $orderId = Order::getOrderByCartId((int) ($cart->id));
                     $order = new Order($orderId);
                     $customer = new Customer($cart->id_customer);
