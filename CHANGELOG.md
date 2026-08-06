@@ -5,6 +5,10 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [5.0.2]
+### Added
+- Include new parameters in session and authorize to support MarketPay integration
+
 ## [5.0.1]
 ### Fixed
 - Fix: False "Payment service temporary unavailable" shown on redirect/wallet payments (MobilePay, Swish, Klarna, ApplePay) due to callback race condition, causing duplicate orders.
