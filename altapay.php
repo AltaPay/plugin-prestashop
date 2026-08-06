@@ -297,6 +297,7 @@ class ALTAPAY extends PaymentModule
             `applepay` BOOLEAN NOT NULL DEFAULT \'0\',
             `applepay_form_label` varchar(255) DEFAULT \'\',
             `applepay_supported_networks` text,
+            `applepay_legacy_flow` BOOLEAN NOT NULL DEFAULT \'1\',
             `custom_message` varchar(255) DEFAULT \'\',
             `nature` text,
             `secret` varchar(255) DEFAULT \'\',
@@ -341,6 +342,14 @@ class ALTAPAY extends PaymentModule
         if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'applepay_supported_networks\'')) {
             if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN applepay_supported_networks text')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'applepay_legacy_flow\'')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN applepay_legacy_flow BOOLEAN NOT NULL DEFAULT 1')) {
                 $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
                 return false;
@@ -463,8 +472,27 @@ class ALTAPAY extends PaymentModule
 			`id_cart` int(10) unsigned NOT NULL,
 			`productDetails` varchar(255) NOT NULL,
 			`date_add` varchar(50) NOT NULL,
+			`payment_id` varchar(255) NULL,
 			PRIMARY KEY (`id_cart`)
 		) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8');
+        }
+
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_cartInfo\' AND COLUMN_NAME = \'payment_id\'')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_cartInfo` ADD COLUMN payment_id varchar(255) NULL')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
+        }
+
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_cartInfo\' AND COLUMN_NAME = \'shop_order_id\'')) {
+            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_cartInfo` ADD COLUMN shop_order_id varchar(255) NULL')) {
+                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+                return false;
+            }
         }
 
         // Check if the table contains data
@@ -935,6 +963,27 @@ class ALTAPAY extends PaymentModule
                             [
                                 'id_option' => 'amex',
                                 'name' => 'Amex',
+                            ],
+                        ],
+                        'id' => 'id_option',
+                        'name' => 'name',
+                    ],
+                ],
+                [
+                    'type' => 'select',
+                    'label' => $this->l('Legacy Apple Pay Flow'),
+                    'desc' => $this->l('Disable to use the MarketPay Apple Pay flow'),
+                    'name' => 'applepay_legacy_flow',
+                    'required' => true,
+                    'options' => [
+                        'query' => [
+                            [
+                                'id_option' => '0',
+                                'name' => 'No',
+                            ],
+                            [
+                                'id_option' => '1',
+                                'name' => 'Yes',
                             ],
                         ],
                         'id' => 'id_option',
@@ -1584,6 +1633,7 @@ class ALTAPAY extends PaymentModule
             'ccTokenControl_',
             'applepay',
             'applepay_form_label',
+            'applepay_legacy_flow',
             'payment_type',
             'active',
             'position',
@@ -3178,6 +3228,7 @@ class ALTAPAY extends PaymentModule
         } else {
             $requestOrderLines = $this->getOrderLines($cart);
         }
+        $authoritativeShopOrderId = $requestShopOrderId;
 
         if (!is_null($savecard) && $savecard != 0) {
             $type = 'verifyCard';
@@ -3205,6 +3256,24 @@ class ALTAPAY extends PaymentModule
                 }
                 $request = new API\PHP\Altapay\Api\Payments\CardWalletAuthorize(getAuth());
                 $request->setProviderData($providerData);
+
+                if (!$terminal->applepay_legacy_flow) {
+                    $lookupCartId = (int) $cart->id;
+                    $db = Db::getInstance();
+
+                    $applePaySessionData = $db->getRow(
+                        'SELECT payment_id, shop_order_id FROM `' . _DB_PREFIX_ . 'altapay_cartInfo`
+                        WHERE id_cart = ' . (int) $lookupCartId
+                    );
+                    $requestShopOrderId = $applePaySessionData['shop_order_id'];
+                    $paymentId = (string) ($applePaySessionData['payment_id'] ?? '');
+
+                    if (!empty($paymentId)) {
+                        $request->setPaymentId($paymentId);
+                    } else {
+                        PrestaShopLogger::addLog('Apple Pay session PaymentId missing for cart id ' . (int) $lookupCartId . '. Proceeding without PaymentId as fallback.', 2, null, $this->name, $this->id, true);
+                    }
+                }
             }
             if ($results) {
                 $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
