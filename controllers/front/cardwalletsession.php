@@ -43,7 +43,7 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
             $uniqueId = $this->getTransactionUniqueId($cart->id);
             $shopOrderId = !empty($uniqueId) ? $uniqueId : uniqid('PS');
 
-            if($shopOrderId){
+            if ($shopOrderId) {
                 $request->setShopOrderId($shopOrderId)
                     ->setAmount($amount)
                     ->setCurrency($currency)
@@ -68,7 +68,6 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
      *
      * @param object $response
      * @param Cart $cart
-     *
      * @param string|null $sessionShopOrderId
      *
      * @return void
