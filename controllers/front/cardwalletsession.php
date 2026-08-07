@@ -8,6 +8,8 @@
  */
 class AltapaycardwalletsessionModuleFrontController extends ModuleFrontController
 {
+    const ERROR_SOMETHING_WENT_WRONG = 'Something went wrong';
+
     /**
      * Method to follow when card wallet session initiate
      *
@@ -23,7 +25,7 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
 
         $terminal = new Altapay_Models_Terminal($terminalId);
         if (!Validate::isLoadedObject($terminal) || (int) $terminal->shop_id !== (int) $currentShopId) {
-            $this->ajaxDie(json_encode(['success' => false, 'error' => 'Something went wrong']));
+            $this->ajaxDie(json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
         }
 
         $cart = $this->context->cart;
@@ -74,7 +76,7 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
     private function sendValidateMerchantResponse($response, $cart)
     {
         if ($response->Result !== 'Success') {
-            $this->ajaxDie(json_encode(['success' => false, 'error' => 'Something went wrong']));
+            $this->ajaxDie(json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
         }
 
         if (isset($response->ApplePaySession)) {
@@ -111,7 +113,7 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
             $this->ajaxDie(json_encode(['success' => true, 'applePaySession' => $response->WalletData->Session]));
         }
 
-        $this->ajaxDie(json_encode(['success' => false, 'error' => 'Something went wrong']));
+        $this->ajaxDie(json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
     }
 
     private function getTransactionUniqueId($cartId)
