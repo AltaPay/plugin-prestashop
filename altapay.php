@@ -348,12 +348,11 @@ class ALTAPAY extends PaymentModule
             }
         }
         if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'applepay_legacy_flow\'')) {
-            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN applepay_legacy_flow BOOLEAN NOT NULL DEFAULT 1')) {
-                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'applepay_legacy_flow\'')
+            && !Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN applepay_legacy_flow BOOLEAN NOT NULL DEFAULT 1')) {
+            $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
-                return false;
-            }
+            return false;
         }
         if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'shop_id\'')) {
@@ -478,21 +477,19 @@ class ALTAPAY extends PaymentModule
         }
 
         if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_cartInfo\' AND COLUMN_NAME = \'payment_id\'')) {
-            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_cartInfo` ADD COLUMN payment_id varchar(255) NULL')) {
-                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_cartInfo\' AND COLUMN_NAME = \'payment_id\'')
+            && !Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_cartInfo` ADD COLUMN payment_id varchar(255) NULL')) {
+            $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
-                return false;
-            }
+            return false;
         }
 
         if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_cartInfo\' AND COLUMN_NAME = \'shop_order_id\'')) {
-            if (!Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_cartInfo` ADD COLUMN shop_order_id varchar(255) NULL')) {
-                $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_cartInfo\' AND COLUMN_NAME = \'shop_order_id\'')
+            && !Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_cartInfo` ADD COLUMN shop_order_id varchar(255) NULL')) {
+            $this->context->controller->errors[] = Db::getInstance()->getMsgError();
 
-                return false;
-            }
+            return false;
         }
 
         // Check if the table contains data
@@ -3228,7 +3225,6 @@ class ALTAPAY extends PaymentModule
         } else {
             $requestOrderLines = $this->getOrderLines($cart);
         }
-        $authoritativeShopOrderId = $requestShopOrderId;
 
         if (!is_null($savecard) && $savecard != 0) {
             $type = 'verifyCard';
