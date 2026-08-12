@@ -98,17 +98,19 @@ be provided by AltaPay.
 
 8. If the terminal is for Apple Pay payments, select **Yes** from the **Is Apple Pay?** dropdown.
 
+9. The Legacy Apple Pay option is checked by default. If your AltaPay gateway is running [version 20260113](https://documentation.altapay.com/Content/Ecom/Ecom%20Release%20Notes.htm) or later, uncheck this option to use the new Apple Pay integration. For older gateway versions, leave it checked to continue using the legacy Apple Pay flow
+
    ![terminal_config](Docs/Configuration/prestashop_configure_altapay_terminal_detail.jpg)
 
    > Note
    >
    > Apple Pay functionality is supported with Prestashop 1.7 and above only.
 
-9. Enter value for Apple Pay Form Label.
+10. Enter value for Apple Pay Form Label.
 
-10. Select one or more of the payment network values for Apple Pay.
+11. Select one or more of the payment network values for Apple Pay.
 
-11. When you have set up your terminals you are ready to process transactions through AltaPay.
+12. When you have set up your terminals you are ready to process transactions through AltaPay.
 
       ![verify_terminals](Docs/Configuration/prestashop_payment_method_page.png)
 

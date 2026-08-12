@@ -971,7 +971,7 @@ class ALTAPAY extends PaymentModule
                     'label' => $this->l('Legacy Apple Pay Flow'),
                     'desc' => $this->l('Disable to use the MarketPay Apple Pay flow'),
                     'name' => 'applepay_legacy_flow',
-                    'required' => true,
+                    'required' => false,
                     'options' => [
                         'query' => [
                             [

@@ -7,7 +7,7 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 ## [5.0.2]
 ### Added
-- Include new parameters in session and authorize to support MarketPay integration
+- Extended Apple Pay support to include the MarketPay acquirer. For the updated payment methods settings please see [Configure the terminals for the checkout page](https://github.com/AltaPay/plugin-prestashop/wiki#configuration).
 
 ## [5.0.1]
 ### Fixed
