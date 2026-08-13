@@ -24,11 +24,8 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
         $domain = parse_url($currentUrl, PHP_URL_HOST);
 
         $terminal = new Altapay_Models_Terminal($terminalId);
-        if (!Validate::isLoadedObject($terminal) || (int) $terminal->shop_id !== (int) $currentShopId) {
-            $this->ajaxDie(json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
-        }
-
-        if (empty($validationUrl) || !Validate::isAbsoluteUrl($validationUrl)) {
+        if (!Validate::isLoadedObject($terminal) || (int) $terminal->shop_id !== (int) $currentShopId
+            || empty($validationUrl) || !Validate::isAbsoluteUrl($validationUrl)) {
             $this->ajaxDie(json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
         }
 
