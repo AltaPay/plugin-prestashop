@@ -36,7 +36,7 @@ class ALTAPAY extends PaymentModule
         $this->version = '5.0.2';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.2.3'];
+        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.2.7'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
