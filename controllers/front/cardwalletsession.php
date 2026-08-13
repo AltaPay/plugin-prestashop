@@ -28,6 +28,10 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
             $this->ajaxDie(json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
         }
 
+        if (empty($validationUrl) || !Validate::isAbsoluteUrl($validationUrl)) {
+            $this->ajaxDie(json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
+        }
+
         $cart = $this->context->cart;
         $request = new API\PHP\Altapay\Api\Payments\CardWalletSession(getAuth());
         $request->setTerminal($terminal->remote_name)
@@ -35,7 +39,8 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
                 ->setDomain($domain);
 
         if (!$terminal->applepay_legacy_flow) {
-            $requestedAmount = (float) Tools::getValue('amount');
+            $requestedAmount = Tools::getValue('amount');
+            $requestedAmount = is_numeric($requestedAmount) ? (float) $requestedAmount : 0;
             $amount = $requestedAmount > 0 ? $requestedAmount : $cart->getOrderTotal(true, Cart::BOTH);
 
             $requestedCurrency = Tools::strtoupper((string) Tools::getValue('currency'));
@@ -119,7 +124,7 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
     {
         $db = Db::getInstance();
 
-        $uniqueId = $db->getValue('SELECT unique_id FROM `' . _DB_PREFIX_ . 'altapay_transaction` WHERE id_cart = ' . $cartId);
+        $uniqueId = (string) $db->getValue('SELECT unique_id FROM `' . _DB_PREFIX_ . 'altapay_transaction` WHERE id_cart = ' . $cartId);
 
         if ($uniqueId) {
             return strpos($uniqueId, '_') !== false ? strstr($uniqueId, '_', true) : $uniqueId;
