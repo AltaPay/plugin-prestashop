@@ -19,29 +19,26 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
     {
         $currentShopId = $this->context->shop->id;
         $validationUrl = Tools::getValue('validationUrl');
-        $terminalId = (int) Tools::getValue('termminalid');
+        $terminalId = (int) (Tools::getValue('terminalid'));
         $currentUrl = $this->context->shop->getBaseURL();
         $domain = parse_url($currentUrl, PHP_URL_HOST);
 
         $terminal = new Altapay_Models_Terminal($terminalId);
+        $cart = $this->context->cart;
         if (!Validate::isLoadedObject($terminal) || (int) $terminal->shop_id !== (int) $currentShopId
-            || empty($validationUrl) || !Validate::isAbsoluteUrl($validationUrl)) {
+            || empty($validationUrl) || !Validate::isAbsoluteUrl($validationUrl)
+            || !Validate::isLoadedObject($cart)) {
             $this->ajaxDie(json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
         }
 
-        $cart = $this->context->cart;
         $request = new API\PHP\Altapay\Api\Payments\CardWalletSession(getAuth());
         $request->setTerminal($terminal->remote_name)
                 ->setValidationUrl($validationUrl)
                 ->setDomain($domain);
 
         if (!$terminal->applepay_legacy_flow) {
-            $requestedAmount = Tools::getValue('amount');
-            $requestedAmount = is_numeric($requestedAmount) ? (float) $requestedAmount : 0;
-            $amount = $requestedAmount > 0 ? $requestedAmount : $cart->getOrderTotal(true, Cart::BOTH);
-
-            $requestedCurrency = Tools::strtoupper((string) Tools::getValue('currency'));
-            $currency = preg_match('/^[A-Z]{3}$/', $requestedCurrency) ? $requestedCurrency : $this->context->currency->iso_code;
+            $amount = $cart->getOrderTotal(true, Cart::BOTH);
+            $currency = $this->context->currency->iso_code;
             $uniqueId = $this->getTransactionUniqueId($cart->id);
             $shopOrderId = !empty($uniqueId) ? $uniqueId : uniqid('PS');
 

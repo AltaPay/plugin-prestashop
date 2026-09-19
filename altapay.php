@@ -2782,6 +2782,53 @@ class ALTAPAY extends PaymentModule
     }
 
     /**
+     * Build a cache-busting version for a module asset.
+     *
+     * @param string $relativePath
+     *
+     * @return string
+     */
+    private function getModuleAssetVersion($relativePath)
+    {
+        $assetPath = _PS_MODULE_DIR_ . $this->name . '/' . ltrim($relativePath, '/');
+
+        return file_exists($assetPath) ? (string) filemtime($assetPath) : (string) $this->version;
+    }
+
+    /**
+     * Register a module JavaScript file with cache-busting version.
+     *
+     * @param string $assetId
+     * @param string $relativePath
+     * @param string $position
+     * @param int $priority
+     *
+     * @return void
+     */
+    private function addVersionedModuleJs($assetId, $relativePath, $position = 'bottom', $priority = 150)
+    {
+        $relativePath = ltrim($relativePath, '/');
+        $assetVersion = $this->getModuleAssetVersion($relativePath);
+
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=') && method_exists($this->context->controller, 'registerJavascript')) {
+            $this->context->controller->registerJavascript(
+                $assetId,
+                'modules/' . $this->name . '/' . $relativePath,
+                [
+                    'server' => 'local',
+                    'position' => $position,
+                    'priority' => (int) $priority,
+                    'version' => $assetVersion,
+                ]
+            );
+
+            return;
+        }
+
+        $this->context->controller->addJS($this->_path . $relativePath . '?v=' . $assetVersion, false);
+    }
+
+    /**
      * Hook for displaying custom section in  user account page in prestashop
      *
      * @return void
@@ -2796,7 +2843,7 @@ class ALTAPAY extends PaymentModule
     public function hookDisplayBackOfficeHeader($params)
     {
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
-            $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
+            $this->addVersionedModuleJs('altapay-creditcard-front-bo', 'views/js/creditCardFront.js');
             $this->context->controller->addJS($this->_path . 'views/js/form.js', 'all');
             $this->context->controller->addCSS($this->_path . 'views/css/payment.css', 'all');
             $this->context->controller->addJS($this->_path . 'views/js/admin_order.js', 'all');
@@ -2908,7 +2955,7 @@ class ALTAPAY extends PaymentModule
         // Check if the current controller is 'order' or 'order-opc'
         if ($this->context->controller->php_self == 'order' || $this->context->controller->php_self == 'order-opc') {
             $this->context->controller->addJquery();
-            $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
+            $this->addVersionedModuleJs('altapay-creditcard-front-fo', 'views/js/creditCardFront.js');
 
             if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
                 $cart = $this->context->cart;
