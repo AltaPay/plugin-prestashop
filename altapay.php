@@ -2811,7 +2811,7 @@ class ALTAPAY extends PaymentModule
         $relativePath = ltrim($relativePath, '/');
         $assetVersion = $this->getModuleAssetVersion($relativePath);
 
-        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=') && method_exists($this->context->controller, 'registerJavascript')) {
+        if (version_compare(_PS_VERSION_, self::PS_17_MIN_VERSION, '>=') && method_exists($this->context->controller, 'registerJavascript')) {
             $this->context->controller->registerJavascript(
                 $assetId,
                 self::MODULES_PATH_PREFIX . '/' . $this->name . '/' . $relativePath,
