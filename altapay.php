@@ -15,6 +15,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 class ALTAPAY extends PaymentModule
 {
     const ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS = 'no';
+    const MODULES_PATH_PREFIX = 'modules';
     public $url;
     public $captureStatus;
     public $username;
@@ -2738,7 +2739,7 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign([
             'this_path' => $this->_path,
             'this_path_altapay' => $this->_path,
-            'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/',
+            'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . self::MODULES_PATH_PREFIX . '/' . $this->name . '/',
             'methods' => $paymentMethods,
             'PS_STOCK_MANAGEMENT' => Configuration::get('PS_STOCK_MANAGEMENT'),
         ]);
@@ -2813,7 +2814,7 @@ class ALTAPAY extends PaymentModule
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=') && method_exists($this->context->controller, 'registerJavascript')) {
             $this->context->controller->registerJavascript(
                 $assetId,
-                'modules/' . $this->name . '/' . $relativePath,
+                self::MODULES_PATH_PREFIX . '/' . $this->name . '/' . $relativePath,
                 [
                     'server' => 'local',
                     'position' => $position,
@@ -3012,7 +3013,7 @@ class ALTAPAY extends PaymentModule
         return [
             'this_path' => $this->_path,
             'this_path_altapay' => $this->_path,
-            'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $this->name
+            'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . self::MODULES_PATH_PREFIX . '/' . $this->name
                 . '/',
             'methods' => $paymentMethods,
             'PS_STOCK_MANAGEMENT' => Configuration::get('PS_STOCK_MANAGEMENT'),
