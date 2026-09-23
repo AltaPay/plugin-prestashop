@@ -5,6 +5,10 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [5.0.2]
+### Added
+- Extended Apple Pay support to include the MarketPay acquirer. For the updated payment methods settings please see [Configure the terminals for the checkout page](https://github.com/AltaPay/plugin-prestashop/wiki#configuration).
+
 ## [5.0.1]
 ### Fixed
 - Fix: False "Payment service temporary unavailable" shown on redirect/wallet payments (MobilePay, Swish, Klarna, ApplePay) due to callback race condition, causing duplicate orders.

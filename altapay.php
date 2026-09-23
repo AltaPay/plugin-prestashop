@@ -15,6 +15,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 class ALTAPAY extends PaymentModule
 {
     const ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS = 'no';
+    const MODULES_PATH_PREFIX = 'modules';
     public $url;
     public $captureStatus;
     public $username;
@@ -33,10 +34,10 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '5.0.1';
+        $this->version = '5.0.2';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.2.3'];
+        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.2.7'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -297,6 +298,7 @@ class ALTAPAY extends PaymentModule
             `applepay` BOOLEAN NOT NULL DEFAULT \'0\',
             `applepay_form_label` varchar(255) DEFAULT \'\',
             `applepay_supported_networks` text,
+            `applepay_legacy_flow` BOOLEAN NOT NULL DEFAULT \'1\',
             `custom_message` varchar(255) DEFAULT \'\',
             `nature` text,
             `secret` varchar(255) DEFAULT \'\',
@@ -345,6 +347,13 @@ class ALTAPAY extends PaymentModule
 
                 return false;
             }
+        }
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'applepay_legacy_flow\'')
+            && !Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_terminals` ADD COLUMN applepay_legacy_flow BOOLEAN NOT NULL DEFAULT 1')) {
+            $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+            return false;
         }
         if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_terminals\' AND COLUMN_NAME = \'shop_id\'')) {
@@ -463,8 +472,25 @@ class ALTAPAY extends PaymentModule
 			`id_cart` int(10) unsigned NOT NULL,
 			`productDetails` varchar(255) NOT NULL,
 			`date_add` varchar(50) NOT NULL,
+			`payment_id` varchar(255) NULL,
 			PRIMARY KEY (`id_cart`)
 		) ENGINE=' . _MYSQL_ENGINE_ . '  DEFAULT CHARSET=utf8');
+        }
+
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_cartInfo\' AND COLUMN_NAME = \'payment_id\'')
+            && !Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_cartInfo` ADD COLUMN payment_id varchar(255) NULL')) {
+            $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+            return false;
+        }
+
+        if (!Db::getInstance()->getRow('SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = \'' . _DB_PREFIX_ . 'altapay_cartInfo\' AND COLUMN_NAME = \'shop_order_id\'')
+            && !Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'altapay_cartInfo` ADD COLUMN shop_order_id varchar(255) NULL')) {
+            $this->context->controller->errors[] = Db::getInstance()->getMsgError();
+
+            return false;
         }
 
         // Check if the table contains data
@@ -935,6 +961,27 @@ class ALTAPAY extends PaymentModule
                             [
                                 'id_option' => 'amex',
                                 'name' => 'Amex',
+                            ],
+                        ],
+                        'id' => 'id_option',
+                        'name' => 'name',
+                    ],
+                ],
+                [
+                    'type' => 'select',
+                    'label' => $this->l('Legacy Apple Pay Flow'),
+                    'desc' => $this->l('Disable to use the MarketPay Apple Pay flow'),
+                    'name' => 'applepay_legacy_flow',
+                    'required' => false,
+                    'options' => [
+                        'query' => [
+                            [
+                                'id_option' => '0',
+                                'name' => 'No',
+                            ],
+                            [
+                                'id_option' => '1',
+                                'name' => 'Yes',
                             ],
                         ],
                         'id' => 'id_option',
@@ -1584,6 +1631,7 @@ class ALTAPAY extends PaymentModule
             'ccTokenControl_',
             'applepay',
             'applepay_form_label',
+            'applepay_legacy_flow',
             'payment_type',
             'active',
             'position',
@@ -2691,7 +2739,7 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign([
             'this_path' => $this->_path,
             'this_path_altapay' => $this->_path,
-            'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/',
+            'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . self::MODULES_PATH_PREFIX . '/' . $this->name . '/',
             'methods' => $paymentMethods,
             'PS_STOCK_MANAGEMENT' => Configuration::get('PS_STOCK_MANAGEMENT'),
         ]);
@@ -2735,6 +2783,53 @@ class ALTAPAY extends PaymentModule
     }
 
     /**
+     * Build a cache-busting version for a module asset.
+     *
+     * @param string $relativePath
+     *
+     * @return string
+     */
+    private function getModuleAssetVersion($relativePath)
+    {
+        $assetPath = _PS_MODULE_DIR_ . $this->name . '/' . ltrim($relativePath, '/');
+
+        return file_exists($assetPath) ? (string) filemtime($assetPath) : (string) $this->version;
+    }
+
+    /**
+     * Register a module JavaScript file with cache-busting version.
+     *
+     * @param string $assetId
+     * @param string $relativePath
+     * @param string $position
+     * @param int $priority
+     *
+     * @return void
+     */
+    private function addVersionedModuleJs($assetId, $relativePath, $position = 'bottom', $priority = 150)
+    {
+        $relativePath = ltrim($relativePath, '/');
+        $assetVersion = $this->getModuleAssetVersion($relativePath);
+
+        if (version_compare(_PS_VERSION_, self::PS_17_MIN_VERSION, '>=') && method_exists($this->context->controller, 'registerJavascript')) {
+            $this->context->controller->registerJavascript(
+                $assetId,
+                self::MODULES_PATH_PREFIX . '/' . $this->name . '/' . $relativePath,
+                [
+                    'server' => 'local',
+                    'position' => $position,
+                    'priority' => (int) $priority,
+                    'version' => $assetVersion,
+                ]
+            );
+
+            return;
+        }
+
+        $this->context->controller->addJS($this->_path . $relativePath . '?v=' . $assetVersion, false);
+    }
+
+    /**
      * Hook for displaying custom section in  user account page in prestashop
      *
      * @return void
@@ -2749,7 +2844,7 @@ class ALTAPAY extends PaymentModule
     public function hookDisplayBackOfficeHeader($params)
     {
         if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
-            $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
+            $this->addVersionedModuleJs('altapay-creditcard-front-bo', 'views/js/creditCardFront.js');
             $this->context->controller->addJS($this->_path . 'views/js/form.js', 'all');
             $this->context->controller->addCSS($this->_path . 'views/css/payment.css', 'all');
             $this->context->controller->addJS($this->_path . 'views/js/admin_order.js', 'all');
@@ -2861,7 +2956,7 @@ class ALTAPAY extends PaymentModule
         // Check if the current controller is 'order' or 'order-opc'
         if ($this->context->controller->php_self == 'order' || $this->context->controller->php_self == 'order-opc') {
             $this->context->controller->addJquery();
-            $this->context->controller->addJS($this->_path . '/views/js/creditCardFront.js', 'all');
+            $this->addVersionedModuleJs('altapay-creditcard-front-fo', 'views/js/creditCardFront.js');
 
             if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
                 $cart = $this->context->cart;
@@ -2918,7 +3013,7 @@ class ALTAPAY extends PaymentModule
         return [
             'this_path' => $this->_path,
             'this_path_altapay' => $this->_path,
-            'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $this->name
+            'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . self::MODULES_PATH_PREFIX . '/' . $this->name
                 . '/',
             'methods' => $paymentMethods,
             'PS_STOCK_MANAGEMENT' => Configuration::get('PS_STOCK_MANAGEMENT'),
@@ -3205,6 +3300,24 @@ class ALTAPAY extends PaymentModule
                 }
                 $request = new API\PHP\Altapay\Api\Payments\CardWalletAuthorize(getAuth());
                 $request->setProviderData($providerData);
+
+                if (!$terminal->applepay_legacy_flow) {
+                    $lookupCartId = (int) $cart->id;
+                    $db = Db::getInstance();
+
+                    $applePaySessionData = $db->getRow(
+                        'SELECT payment_id, shop_order_id FROM `' . _DB_PREFIX_ . 'altapay_cartInfo`
+                        WHERE id_cart = ' . (int) $lookupCartId
+                    );
+                    $requestShopOrderId = $applePaySessionData['shop_order_id'];
+                    $paymentId = (string) ($applePaySessionData['payment_id'] ?? '');
+
+                    if (!empty($paymentId)) {
+                        $request->setPaymentId($paymentId);
+                    } else {
+                        PrestaShopLogger::addLog('Apple Pay session PaymentId missing for cart id ' . (int) $lookupCartId . '. Proceeding without PaymentId as fallback.', 2, null, $this->name, $this->id, true);
+                    }
+                }
             }
             if ($results) {
                 $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());

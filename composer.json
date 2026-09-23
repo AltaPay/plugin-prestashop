@@ -9,6 +9,9 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "config": {
+    "platform": {
+      "php": "7.2.34"
+    },
     "preferred-install": "dist",
     "sort-packages": true,
     "isolate": {
@@ -21,7 +24,7 @@
   },
   "require": {
     "php": "^7.0",
-    "altapay/api-php": "^3.5.9",
+    "altapay/api-php": "^3.6.1",
     "humbug/php-scoper": "0.13.9",
     "nikic/php-parser": "4.x-dev",
     "symfony/options-resolver": "^3.0",

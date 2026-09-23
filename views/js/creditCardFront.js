@@ -94,7 +94,9 @@ document.addEventListener('DOMContentLoaded', function (event) {
                 type: 'post',
                 data: {
                     validationUrl: event.validationURL,
-                    termminalid: terminalId
+                    terminalid: terminalId,
+                    amount: amountPaid,
+                    currency: currencyCode
                 },
                 success: function(response) {
                     if (response.success === true) {
