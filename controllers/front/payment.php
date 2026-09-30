@@ -39,6 +39,16 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             Tools::redirect('index.php?controller=order');
         }
 
+        $applePayAmount = Tools::getValue('amount');
+        if ($is_apple_pay === true && $applePayAmount !== false && $applePayAmount !== '') {
+            $cartTotal = $cart->getOrderTotal(true, Cart::BOTH);
+            if (abs((float) $applePayAmount - (float) $cartTotal) >= 0.01) {
+                PrestaShopLogger::addLog('Apple Pay amount ' . $applePayAmount . ' does not match cart total ' . $cartTotal . ' for cart id ' . (int) $cart->id, 3, null, $this->module->name, $this->module->id, true);
+                echo json_encode(['status' => 'error', 'reload' => true]);
+                exit();
+            }
+        }
+
         /* Redirect user back to the checkout payment step,
         * assume a failure occurred creating the URL until a payment URL is received
         */
