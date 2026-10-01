@@ -24,7 +24,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '5.0.2';
+    $pluginVersion = '5.0.3';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -292,15 +292,8 @@ function updatePaymentStatusForChildOrder($paymentId, $paymentStatus)
  */
 function createAltapayOrder($response, $current_order, $payment_status = 'succeeded', $ischildOrder = false)
 {
-    $latestTransKey = 0;
     if (isset($response) && isset($response->Transactions)) {
-        foreach ($response->Transactions as $key => $transaction) {
-            if ($transaction->AuthType === 'subscription_payment' && $transaction->CreatedDate > $max_date) {
-                $max_date = $transaction->CreatedDate;
-                $latestTransKey = $key;
-            }
-        }
-        $transaction = $response->Transactions[$latestTransKey];
+        $transaction = getTransaction($response);
         $uniqueId = ($payment_status === 'subscription_payment_succeeded' ? "$transaction->ShopOrderId ($transaction->TransactionId)" : $transaction->ShopOrderId);
         $paymentId = $transaction->TransactionId;
         $cardMask = $transaction->CreditCardMaskedPan;
@@ -590,7 +583,7 @@ function cartHasSubscriptionProduct($cart)
  * @param int $order_id
  * @param int $parent_order_id
  *
- * @return void
+ * @return bool
  */
 function chargeAltaPayAgreement($order_id, $parent_order_id)
 {
@@ -609,7 +602,9 @@ function chargeAltaPayAgreement($order_id, $parent_order_id)
             }
             $response = $api->call();
             $latestTransKey = 0;
-            if (isset($response) && isset($response->Transactions)) {
+            $result = isset($response->Result) ? strtolower((string) $response->Result) : '';
+            if ($result === 'success' && !empty($response->Transactions)) {
+                $max_date = '';
                 foreach ($response->Transactions as $key => $transaction) {
                     if ($transaction->AuthType === 'subscription_payment' && $transaction->CreatedDate > $max_date) {
                         $max_date = $transaction->CreatedDate;
@@ -617,12 +612,22 @@ function chargeAltaPayAgreement($order_id, $parent_order_id)
                     }
                 }
                 $transaction = $response->Transactions[$latestTransKey];
+                if (!hasFundedAmount($transaction)) {
+                    PrestaShopLogger::addLog("Subscription charge did not reserve or capture an amount for Order ID: $order_id", 3);
+
+                    return false;
+                }
                 $uniqueId = (($transaction->AuthType === 'subscription_payment') ? "$transaction->ShopOrderId ($transaction->TransactionId)" : $transaction->ShopOrderId);
-                createAltapayOrder($response, $order, 'subscription_payment_succeeded');
+                $transactionResponse = clone $response;
+                $transactionResponse->Transactions = [$transaction];
+                createAltapayOrder($transactionResponse, $order, 'subscription_payment_succeeded');
                 saveAltaPayTransaction($uniqueId, $transaction->CapturedAmount, $transaction->Terminal, $response->Result);
                 saveOrderReconciliationIdentifier($order_id, $reconciliation_identifier, $uniqueId);
                 $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+
+                return true;
             }
+            PrestaShopLogger::addLog("Subscription charge failed for Order ID: $order_id", 3);
         } catch (Exception $e) {
             $file = fopen(dirname(__FILE__) . '/cron_logs.log', 'a');
             $msg = "\r\n\n";
@@ -634,6 +639,8 @@ function chargeAltaPayAgreement($order_id, $parent_order_id)
             fclose($file);
         }
     }
+
+    return false;
 }
 
 /**
@@ -733,6 +740,42 @@ function getTransaction($response)
     }
 
     return $response->Transactions[$latestTransKey];
+}
+
+/**
+ * Determine whether a transaction has money reserved or captured at AltaPay.
+ *
+ * @param object|null $transaction
+ *
+ * @return bool
+ */
+function hasFundedAmount($transaction)
+{
+    if (!is_object($transaction)) {
+        return false;
+    }
+
+    $reservedAmount = isset($transaction->ReservedAmount) ? (float) $transaction->ReservedAmount : 0;
+    $capturedAmount = isset($transaction->CapturedAmount) ? (float) $transaction->CapturedAmount : 0;
+
+    return $reservedAmount > 0 || $capturedAmount > 0;
+}
+
+/**
+ * Subscription setup transactions intentionally establish an agreement before
+ * later payments are made with the saved agreement.
+ *
+ * @param object|null $transaction
+ *
+ * @return bool
+ */
+function isAgreementSetupTransaction($transaction)
+{
+    $authType = is_object($transaction) && isset($transaction->AuthType)
+        ? strtolower((string) $transaction->AuthType)
+        : '';
+
+    return $authType === 'subscription';
 }
 
 /**
@@ -1065,12 +1108,23 @@ function saveLogs($message)
 function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle)
 {
     $module = Module::getInstanceByName('altapay');
-    if ($response && is_array($response->Transactions)) {
-        $transactionStatus = $response->Transactions[0]->TransactionStatus;
+    $transaction = null;
+    $transactionStatus = '';
+    if ($response && !empty($response->Transactions) && is_array($response->Transactions)) {
+        $transaction = getTransaction($response);
+        $transactionStatus = $transaction->TransactionStatus;
     }
     $auth_statuses = ['preauth', 'invoice_initialized', 'recurring_confirmed'];
     $captured_statuses = ['bank_payment_finalized', 'captured'];
     if (in_array($transactionStatus, $auth_statuses, true) or in_array($transactionStatus, $captured_statuses, true)) {
+        if (!hasFundedAmount($transaction)
+            && !isAgreementSetupTransaction($transaction)) {
+            PrestaShopLogger::addLog('Order was not updated for Transaction ' . $shopOrderId
+                . ' because no amount is reserved or captured.', 3, '1005', $module->name,
+                $module->id, true);
+            unlockCallback($lockFileName, $lockFileHandle);
+            exit('Order not updated because no amount is reserved or captured');
+        }
         /*
          * preauth occurs for wallet transactions where payment type is 'payment'.
          * Funds are still waiting to be captured.
@@ -1090,9 +1144,9 @@ function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $loc
         SET `paymentStatus` = \'succeeded\' WHERE `id_order` = ' . (int) $order->id;
         Db::getInstance()->Execute($sql);
 
-        if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
-            $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
-            $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+        if (!empty($transaction->ReconciliationIdentifiers)) {
+            $reconciliation_identifier = $transaction->ReconciliationIdentifiers[0]->Id;
+            $reconciliation_type = $transaction->ReconciliationIdentifiers[0]->Type;
 
             saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type, $shopOrderId);
         }
@@ -1130,20 +1184,31 @@ function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $loc
 function updateChildOrder($cart, $order, $response, $shopOrderId, $lockFileName, $lockFileHandle)
 {
     $module = Module::getInstanceByName('altapay');
-    if ($response && is_array($response->Transactions)) {
-        $transactionStatus = $response->Transactions[0]->TransactionStatus;
+    $transaction = null;
+    $transactionStatus = '';
+    if ($response && !empty($response->Transactions) && is_array($response->Transactions)) {
+        $transaction = getTransaction($response);
+        $transactionStatus = $transaction->TransactionStatus;
     }
     $auth_statuses = ['preauth', 'invoice_initialized', 'recurring_confirmed'];
     $captured_statuses = ['bank_payment_finalized', 'captured'];
     if (in_array($transactionStatus, $auth_statuses, true) or in_array($transactionStatus, $captured_statuses, true)) {
+        if (!hasFundedAmount($transaction)
+            && !isAgreementSetupTransaction($transaction)) {
+            PrestaShopLogger::addLog('Child order was not updated for Transaction ' . $shopOrderId
+                . ' because no amount is reserved or captured.', 3, '1005', $module->name,
+                $module->id, true);
+            unlockCallback($lockFileName, $lockFileHandle);
+            exit('Child order not updated because no amount is reserved or captured');
+        }
         // Update payment status to 'succeeded'
         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_child_order` 
         SET `paymentStatus` = \'succeeded\' WHERE `unique_id` = \'' . pSQL($shopOrderId) . "'";
         Db::getInstance()->Execute($sql);
 
-        if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
-            $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
-            $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+        if (!empty($transaction->ReconciliationIdentifiers)) {
+            $reconciliation_identifier = $transaction->ReconciliationIdentifiers[0]->Id;
+            $reconciliation_type = $transaction->ReconciliationIdentifiers[0]->Type;
 
             saveChildOrderIdentifier($order->id, $reconciliation_identifier, $reconciliation_type, $shopOrderId);
         }
@@ -1179,7 +1244,7 @@ function updateChildOrder($cart, $order, $response, $shopOrderId, $lockFileName,
  * @param $cart
  * @param $agreementType
  *
- * @return void
+ * @return false|object
  */
 function handleVerifyCard(
     $shopOrderId,
@@ -1196,9 +1261,6 @@ function handleVerifyCard(
     $cardType = '';
     $transactionID = $transaction->TransactionId;
     $amountPaid = $cart->getOrderTotal(true, Cart::BOTH);
-    if (isset($transaction->CapturedAmount)) {
-        $amountPaid = $transaction->CapturedAmount;
-    }
     if (isset($transaction->CreditCardExpiry->Month)
         && isset($transaction->CreditCardExpiry->Year)
     ) {
@@ -1215,7 +1277,6 @@ function handleVerifyCard(
         . pSQL($agreementType) . '","' . pSQL($cardType) . '","'
         . pSQL($maskedPan) . '","' . pSQL($expires) . '","' . pSQL($ccToken)
         . '")';
-    Db::getInstance()->executeS($sql);
 
     $request = new API\PHP\Altapay\Api\Payments\ReservationOfFixedAmount(getAuth());
     $request->setCreditCardToken($transaction->CreditCardToken)
@@ -1239,13 +1300,36 @@ function handleVerifyCard(
     } catch (Exception $e) {
         $message = $e->getMessage();
     }
-    PrestaShopLogger::addLog('Callback OK issue, Message ' . $message,
-        3,
-        '1005',
-        $module->name,
-        $module->id,
-        true
-    );
+
+    if (!empty($message)) {
+        PrestaShopLogger::addLog('Callback OK issue, Message ' . $message,
+            3,
+            '1005',
+            $module->name,
+            $module->id,
+            true
+        );
+
+        return false;
+    }
+
+    $result = isset($response->Result) ? strtolower((string) $response->Result) : '';
+    $reservationTransaction = !empty($response->Transactions) ? getTransaction($response) : null;
+    if ($result !== 'success' || !hasFundedAmount($reservationTransaction)) {
+        PrestaShopLogger::addLog('Callback OK issue, verifyCard reservation did not reserve or capture an amount.',
+            3,
+            '1005',
+            $module->name,
+            $module->id,
+            true
+        );
+
+        return false;
+    }
+
+    Db::getInstance()->execute($sql);
+
+    return $response;
 }
 
 /**
@@ -1427,17 +1511,40 @@ function createOrderOkCallback($postData, $record_id = null)
         $isChildOrder = isChildOrder($shopOrderId);
         $paymentType = $response->type;
         $transaction = getTransaction($response);
+        $ccToken = $response->creditCardToken;
+        $maskedPan = $response->maskedCreditCard;
+        if ($paymentType === 'verifyCard') {
+            $reservationResponse = handleVerifyCard(
+                $shopOrderId,
+                $transaction,
+                $ccToken,
+                $maskedPan,
+                $cart->id_customer,
+                $cart,
+                $agreementType
+            );
+            if (!$reservationResponse) {
+                markAltaPayCallbackRecord($record_id, 2);
+                saveLogs('Order creation skipped because the verifyCard reservation failed.');
+                redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
+            }
+            $response = $reservationResponse;
+            $transaction = getTransaction($response);
+        }
+        if (!hasFundedAmount($transaction) && !isAgreementSetupTransaction($transaction)) {
+            markAltaPayCallbackRecord($record_id, 2);
+            saveLogs('Order creation skipped because no amount is reserved or captured at AltaPay.');
+            redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
+        }
         $orderStatus = (int) Configuration::get('authorized_payments_status');
         if (empty($orderStatus) or in_array($transaction->TransactionStatus, ['bank_payment_finalized', 'captured'], true)) {
             $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
         }
 
         $currencyPaid = Currency::getIdByIsoCode($transaction->MerchantCurrencyAlpha);
-        $amountPaid = $response->amount;
+        $amountPaid = isset($response->amount) ? $response->amount : $cart->getOrderTotal(true, Cart::BOTH);
         $customer = new Customer($cart->id_customer);
         $transactionID = $transaction->TransactionId;
-        $ccToken = $response->creditCardToken;
-        $maskedPan = $response->maskedCreditCard;
         if (!$isChildOrder) {
             $payment_module = createOrder($transaction, $amountPaid, $currencyPaid, $cart, $orderStatus);
             // Load order
@@ -1469,16 +1576,13 @@ function createOrderOkCallback($postData, $record_id = null)
             }
         }
 
-        if ($paymentType === 'verifyCard') {
-            handleVerifyCard($shopOrderId, $transaction, $ccToken, $maskedPan, $cart->id_customer, $cart, $agreementType);
-        }
         if (in_array($paymentType, ['subscription', 'subscriptionAndCharge'])) {
             $sql = 'INSERT INTO `' . _DB_PREFIX_
                 . 'altapay_saved_credit_card` (time,userID,agreement_id,agreement_type,id_order) VALUES (Now(),'
                 . pSQL($cart->id_customer) . ',"' . pSQL($transactionID) . '","'
                 . pSQL('recurring') . '","' . pSQL($order->id)
                 . '")';
-            Db::getInstance()->executeS($sql);
+            Db::getInstance()->execute($sql);
         }
 
         // Log order

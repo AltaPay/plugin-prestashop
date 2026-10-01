@@ -39,12 +39,23 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             Tools::redirect('index.php?controller=order');
         }
 
+        $applePayAmount = Tools::getValue('amount');
+        if ($is_apple_pay === true && $applePayAmount !== false && $applePayAmount !== '') {
+            $cartTotal = $cart->getOrderTotal(true, Cart::BOTH);
+            if (abs((float) $applePayAmount - (float) $cartTotal) >= 0.01) {
+                PrestaShopLogger::addLog('Apple Pay amount ' . $applePayAmount . ' does not match cart total ' . $cartTotal . ' for cart id ' . (int) $cart->id, 3, null, $this->module->name, $this->module->id, true);
+                echo json_encode(['status' => 'error', 'reload' => true]);
+                exit();
+            }
+        }
+
         /* Redirect user back to the checkout payment step,
         * assume a failure occurred creating the URL until a payment URL is received
         */
         $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
-        $payment_form_url = $this->context->link->getPageLink($controller, true, null,
+        $payment_failure_url = $this->context->link->getPageLink($controller, true, null,
                 'step=3&altapay_unavailable=1') . '#altapay_unavailable';
+        $payment_form_url = $payment_failure_url;
 
         unset($_COOKIE['savecard']);
         unset($_COOKIE['selectedCreditCard']);
@@ -68,6 +79,33 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
             Db::getInstance()->Execute($sql);
 
             if ($payment_form_url === 'reservation' || $payment_form_url === 'cardwallet') {
+                $transaction = null;
+                if (!empty($result['response']->Transactions) && is_array($result['response']->Transactions)) {
+                    $transaction = getTransaction($result['response']);
+                }
+
+                $gatewayResult = isset($result['response']->Result) ? strtolower((string) $result['response']->Result) : '';
+                $isAgreementSetup = isAgreementSetupTransaction($transaction);
+                if ($gatewayResult !== 'success' || (!hasFundedAmount($transaction) && !$isAgreementSetup)) {
+                    $failureReason = $gatewayResult !== 'success'
+                        ? 'the gateway result was not successful'
+                        : 'no amount is reserved or captured at AltaPay';
+                    PrestaShopLogger::addLog(
+                        'Order creation skipped for transaction ' . $result['uniqueid'] . ' because ' . $failureReason . '.',
+                        3,
+                        null,
+                        $this->module->name,
+                        $this->module->id,
+                        true
+                    );
+                    if ($payment_form_url === 'cardwallet' || $is_apple_pay === true) {
+                        echo json_encode(['status' => 'error']);
+                        exit();
+                    }
+
+                    Tools::redirect($payment_failure_url);
+                }
+
                 // Create Order with pending status
                 $this->module->validateOrder(
                     $cart->id,

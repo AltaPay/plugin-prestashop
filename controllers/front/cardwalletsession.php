@@ -55,7 +55,7 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
 
         try {
             $response = $request->call();
-            $this->sendValidateMerchantResponse($response, $cart);
+            $this->sendValidateMerchantResponse($response, $cart, $cart->getOrderTotal(true, Cart::BOTH));
         } catch (Exception $e) {
             $this->ajaxDie(json_encode(['success' => false, 'error' => $e->getMessage()]));
         }
@@ -67,18 +67,18 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
      *
      * @param object $response
      * @param Cart $cart
-     * @param string|null $sessionShopOrderId
+     * @param float $amount
      *
      * @return void
      */
-    private function sendValidateMerchantResponse($response, $cart)
+    private function sendValidateMerchantResponse($response, $cart, $amount)
     {
         if ($response->Result !== 'Success') {
             $this->ajaxDie(json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
         }
 
         if (isset($response->ApplePaySession)) {
-            $this->ajaxDie(json_encode(['success' => true, 'applePaySession' => $response->ApplePaySession]));
+            $this->ajaxDie(json_encode(['success' => true, 'applePaySession' => $response->ApplePaySession, 'amount' => $amount]));
         }
 
         if (isset($response->WalletData->Session)) {
@@ -108,7 +108,7 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
                 Db::getInstance()->Execute($sql);
             }
 
-            $this->ajaxDie(json_encode(['success' => true, 'applePaySession' => $response->WalletData->Session]));
+            $this->ajaxDie(json_encode(['success' => true, 'applePaySession' => $response->WalletData->Session, 'amount' => $amount]));
         }
 
         $this->ajaxDie(json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));

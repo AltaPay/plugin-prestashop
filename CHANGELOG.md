@@ -5,6 +5,23 @@ PrestaShop 1.6.x, 1.7.x and 8.x
 
 # Changelog
 
+## [5.0.3]
+### Changed
+- Update AltaPay PHP SDK to version 3.6.2.
+- Use the same selected gateway transaction when validating and storing payment data.
+- Pass payment status explicitly from all internal order-storage paths.
+
+### Fixed
+- Prevent failed Apple Pay and saved-card authorizations from creating PrestaShop orders.
+- Prevent non-subscription orders from being created or marked as paid unless an amount is reserved or captured.
+- Apply funding validation to OK callbacks, notification callbacks, pending-order updates, child orders and gateway synchronization.
+- Prevent unfunded gateway transactions from being stored as succeeded.
+- Reserve the cart amount before creating an order from a verify-card flow, and store the card token only after the reservation succeeds.
+- Prevent failed or unfunded subscription renewal charges from marking an order as paid.
+- Detect capture attempts where nothing is reserved or captured, log an error and add a private order warning.
+- Detect Apple Pay cart-total changes between session creation and authorization.
+- Fix database write errors when saving or deleting card and agreement data.
+
 ## [5.0.2]
 ### Added
 - Extended Apple Pay support to include the MarketPay acquirer. For the updated payment methods settings please see [Configure the terminals for the checkout page](https://github.com/AltaPay/plugin-prestashop/wiki#configuration).
