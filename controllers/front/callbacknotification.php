@@ -127,7 +127,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     $transaction = getTransaction($response);
                     if (!hasFundedAmount($transaction) && !isAgreementSetupTransaction($transaction)) {
                         PrestaShopLogger::addLog(
-                            'Order creation skipped for transaction ' . $transactionId . ' because no amount is reserved or captured at AltaPay.',
+                            'Order creation skipped for transaction ' . $transactionId . ' because it has no reserved or captured amount.',
                             3,
                             '1005',
                             $this->module->name,
@@ -186,7 +186,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     if (in_array($transactionStatus, $auth_statuses, true) or in_array($transactionStatus, $captured_statuses, true)) {
                         if (!hasFundedAmount($transaction) && !isAgreementSetupTransaction($transaction)) {
                             PrestaShopLogger::addLog(
-                                'Pending order update skipped for transaction ' . $transactionId . ' because no amount is reserved or captured at AltaPay.',
+                                'Pending order update skipped because transaction ' . $transactionId . ' has no reserved or captured amount.',
                                 3,
                                 '1005',
                                 $this->module->name,
@@ -280,7 +280,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
         $transaction = getTransaction($response);
         if (!hasFundedAmount($transaction) && !isAgreementSetupTransaction($transaction)) {
             PrestaShopLogger::addLog(
-                'Child order update skipped for transaction ' . $transactionId . ' because no amount is reserved or captured at AltaPay.',
+                'Child order update skipped because transaction ' . $transactionId . ' has neither a reserved amount nor a captured amount.',
                 3,
                 '1005',
                 $this->module->name,
