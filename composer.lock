@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ad7b7703e72eefc067f76ad896dd72ee",
+    "content-hash": "fd9974d2767013205ef8770add9dd8c8",
     "packages": [
         {
             "name": "altapay/api-php",
-            "version": "3.6.1",
+            "version": "3.6.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/AltaPay/api-php.git",
-                "reference": "d9dea2b34a810d2726bb0e11312f66fc1c56cebb"
+                "reference": "73c58fdf78c9968a1bcebff2692395f8319f9678"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/AltaPay/api-php/zipball/d9dea2b34a810d2726bb0e11312f66fc1c56cebb",
-                "reference": "d9dea2b34a810d2726bb0e11312f66fc1c56cebb",
+                "url": "https://api.github.com/repos/AltaPay/api-php/zipball/73c58fdf78c9968a1bcebff2692395f8319f9678",
+                "reference": "73c58fdf78c9968a1bcebff2692395f8319f9678",
                 "shasum": ""
             },
             "require": {
@@ -58,9 +58,9 @@
             ],
             "support": {
                 "issues": "https://github.com/AltaPay/api-php/issues",
-                "source": "https://github.com/AltaPay/api-php/tree/3.6.1"
+                "source": "https://github.com/AltaPay/api-php/tree/3.6.2"
             },
-            "time": "2026-07-23T16:20:18+00:00"
+            "time": "2026-09-04T09:06:34+00:00"
         },
         {
             "name": "composer/package-versions-deprecated",

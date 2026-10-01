@@ -34,7 +34,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '5.0.2';
+        $this->version = '5.0.3';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.2.7'];
@@ -2515,7 +2515,13 @@ class ALTAPAY extends PaymentModule
 
             if (!$results) {
                 $response['Transactions'] = $paymentDetails;
-                createAltapayOrder(json_decode(json_encode($response)), $orderDetail);
+                $gatewayResponse = json_decode(json_encode($response));
+                $transaction = getTransaction($gatewayResponse);
+                if (!hasFundedAmount($transaction) && !isAgreementSetupTransaction($transaction)) {
+                    return false;
+                }
+                $gatewayResponse->Transactions = [$transaction];
+                createAltapayOrder($gatewayResponse, $orderDetail, 'succeeded');
                 $results = $this->selectOrder($params);
                 if (!$results) {
                     PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}", 3, null, $this->name, $this->id, true);
@@ -4118,7 +4124,15 @@ class ALTAPAY extends PaymentModule
                 }
 
                 $response['Transactions'] = $paymentDetails;
-                createAltapayOrder(json_decode(json_encode($response)), $orderDetail);
+                $gatewayResponse = json_decode(json_encode($response));
+                $transaction = getTransaction($gatewayResponse);
+                if (!hasFundedAmount($transaction) && !isAgreementSetupTransaction($transaction)) {
+                    PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}: no amount is reserved or captured at AltaPay", 3, null, $this->name, $this->id, true);
+
+                    return ['payment_id' => $transaction->TransactionId];
+                }
+                $gatewayResponse->Transactions = [$transaction];
+                createAltapayOrder($gatewayResponse, $orderDetail, 'succeeded');
                 $results = $this->selectOrder($params);
                 if (!$results) {
                     PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}", 3, null, $this->name, $this->id, true);
