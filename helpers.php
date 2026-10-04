@@ -1120,10 +1120,9 @@ function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $loc
         if (!hasFundedAmount($transaction)
             && !isAgreementSetupTransaction($transaction)) {
             PrestaShopLogger::addLog('Order was not updated for Transaction ' . $shopOrderId
-                . ' because no amount is reserved or captured.', 3, '1005', $module->name,
+                . ' because no amount is reserved or captured.', 3, null, $module->name,
                 $module->id, true);
-            unlockCallback($lockFileName, $lockFileHandle);
-            exit('Order not updated because no amount is reserved or captured');
+            redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
         }
         /*
          * preauth occurs for wallet transactions where payment type is 'payment'.
@@ -1196,10 +1195,9 @@ function updateChildOrder($cart, $order, $response, $shopOrderId, $lockFileName,
         if (!hasFundedAmount($transaction)
             && !isAgreementSetupTransaction($transaction)) {
             PrestaShopLogger::addLog('Child order was not updated for Transaction ' . $shopOrderId
-                . ' because no amount is reserved or captured.', 3, '1005', $module->name,
+                . ' because no amount is reserved or captured.', 3, null, $module->name,
                 $module->id, true);
-            unlockCallback($lockFileName, $lockFileHandle);
-            exit('Child order not updated because no amount is reserved or captured');
+            redirectUserToCheckoutPaymentStep($lockFileName, $lockFileHandle);
         }
         // Update payment status to 'succeeded'
         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_child_order` 
@@ -1318,7 +1316,7 @@ function handleVerifyCard(
     if ($result !== 'success' || !hasFundedAmount($reservationTransaction)) {
         PrestaShopLogger::addLog('Callback OK issue, verifyCard reservation did not reserve or capture an amount.',
             3,
-            '1005',
+            null,
             $module->name,
             $module->id,
             true

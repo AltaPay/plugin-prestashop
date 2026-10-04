@@ -129,7 +129,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         PrestaShopLogger::addLog(
                             'Order creation skipped for transaction ' . $transactionId . ' because it has no reserved or captured amount.',
                             3,
-                            '1005',
+                            null,
                             $this->module->name,
                             $this->module->id,
                             true
@@ -188,7 +188,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                             PrestaShopLogger::addLog(
                                 'Pending order update skipped because transaction ' . $transactionId . ' has no reserved or captured amount.',
                                 3,
-                                '1005',
+                                null,
                                 $this->module->name,
                                 $this->module->id,
                                 true
@@ -282,7 +282,7 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
             PrestaShopLogger::addLog(
                 'Child order update skipped because transaction ' . $transactionId . ' has neither a reserved amount nor a captured amount.',
                 3,
-                '1005',
+                null,
                 $this->module->name,
                 $this->module->id,
                 true
