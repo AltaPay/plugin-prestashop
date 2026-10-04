@@ -24,7 +24,7 @@
   },
   "require": {
     "php": "^7.0",
-    "altapay/api-php": "^3.6",
+    "altapay/api-php": "^3.6.2",
     "humbug/php-scoper": "0.13.9",
     "nikic/php-parser": "4.x-dev",
     "symfony/options-resolver": "^3.0",
