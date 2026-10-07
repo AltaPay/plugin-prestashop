@@ -1398,6 +1398,27 @@ function refundOrReleaseTransactionByStatus($transaction)
 }
 
 /**
+ * Refunds or Releases the payment if the cart already has an order from another payment
+ *
+ * @param Cart $cart
+ * @param $transaction
+ *
+ * @return int the existing order id, or 0 if the cart has no order yet
+ */
+function releaseDuplicatePayment($cart, $transaction)
+{
+    $order_id = (int) Order::getOrderByCartId((int) $cart->id);
+    if (!empty($order_id)) {
+        $altapay_order_details = getAltapayOrderDetails($order_id);
+        if (!empty($altapay_order_details) && $altapay_order_details[0]['payment_id'] != $transaction->TransactionId) {
+            refundOrReleaseTransactionByStatus($transaction);
+        }
+    }
+
+    return $order_id;
+}
+
+/**
  * Get the terminal ID based on the remote name and shop ID.
  *
  * @param string $remote_name
@@ -1544,6 +1565,16 @@ function createOrderOkCallback($postData, $record_id = null)
         $customer = new Customer($cart->id_customer);
         $transactionID = $transaction->TransactionId;
         if (!$isChildOrder) {
+            // Lock the cart so two payments for it (e.g. checkout opened in two tabs) cannot create an order at the same time.
+            $cartLockFileName = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cart_lock_' . md5($cart->id) . '.lock';
+            $cartLockFileHandle = lockCallback($cartLockFileName);
+            $order_id = releaseDuplicatePayment($cart, $transaction);
+            if (!empty($order_id)) {
+                unlockCallback($cartLockFileName, $cartLockFileHandle);
+                unlockCallback($lockFileName, $lockFileHandle);
+                markAltaPayCallbackRecord($record_id);
+                Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $module->id . '&id_order=' . $order_id . '&key=' . $customer->secure_key);
+            }
             $payment_module = createOrder($transaction, $amountPaid, $currencyPaid, $cart, $orderStatus);
             // Load order
             $order = new Order((int) $payment_module->currentOrder);
@@ -1585,6 +1616,9 @@ function createOrderOkCallback($postData, $record_id = null)
 
         // Log order
         createAltapayOrder($response, $order, 'succeeded', $isChildOrder);
+        if (!$isChildOrder) {
+            unlockCallback($cartLockFileName, $cartLockFileHandle);
+        }
         unlockCallback($lockFileName, $lockFileHandle);
         markAltaPayCallbackRecord($record_id);
         if ($isChildOrder) {

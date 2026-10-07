@@ -20,6 +20,16 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
                 'SELECT id_order, paymentStatus FROM `' . _DB_PREFIX_ . $tableName
                 . '` WHERE unique_id = \'' . pSQL($shopOrderId) . '\''
             );
+            if (empty($paymentRecord) && !$isChildOrder) {
+                // A duplicate payment for a cart that already has an order is released; show that order instead
+                $cart = getCartFromUniqueId($shopOrderId);
+                $cartOrderId = Validate::isLoadedObject($cart) ? (int) Order::getOrderByCartId((int) $cart->id) : 0;
+                if (!empty($cartOrderId)) {
+                    $paymentRecord = Db::getInstance()->getRow(
+                        'SELECT id_order, paymentStatus FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE id_order = ' . $cartOrderId
+                    );
+                }
+            }
 
             if (!empty($paymentRecord)) {
                 $order = new Order((int) $paymentRecord['id_order']);
