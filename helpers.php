@@ -1096,6 +1096,19 @@ function saveLogs($message)
 }
 
 /**
+ * @param Cart $cart
+ * @param int $orderId
+ * @param Module $module
+ * @param Customer $customer
+ *
+ * @return string
+ */
+function getOrderConfirmationUrl($cart, $orderId, $module, $customer)
+{
+    return 'index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $module->id . '&id_order=' . $orderId . '&key=' . $customer->secure_key;
+}
+
+/**
  * @param $cart
  * @param $order
  * @param $response
@@ -1151,7 +1164,7 @@ function updateOrder($cart, $order, $response, $shopOrderId, $lockFileName, $loc
         }
         $customer = new Customer($cart->id_customer);
         unlockCallback($lockFileName, $lockFileHandle);
-        Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
+        Tools::redirect(getOrderConfirmationUrl($cart, $order->id, $module, $customer));
     } elseif ($transactionStatus === 'epayment_declined') {
         // Update payment status to 'declined'
         $sql = 'UPDATE `' . _DB_PREFIX_ . 'altapay_order` 
@@ -1573,7 +1586,7 @@ function createOrderOkCallback($postData, $record_id = null)
                 unlockCallback($cartLockFileName, $cartLockFileHandle);
                 unlockCallback($lockFileName, $lockFileHandle);
                 markAltaPayCallbackRecord($record_id);
-                Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $module->id . '&id_order=' . $order_id . '&key=' . $customer->secure_key);
+                Tools::redirect(getOrderConfirmationUrl($cart, $order_id, $module, $customer));
             }
             $payment_module = createOrder($transaction, $amountPaid, $currencyPaid, $cart, $orderStatus);
             // Load order
@@ -1624,7 +1637,7 @@ function createOrderOkCallback($postData, $record_id = null)
         if ($isChildOrder) {
             $redirectUrl = Context::getContext()->link->getModuleLink('altapay', 'orderconfirmation', ['id_order' => $order->id]);
         } else {
-            $redirectUrl = Tools::redirect('index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int) $module->id . '&id_order=' . $order->id . '&key=' . $customer->secure_key);
+            $redirectUrl = Tools::redirect(getOrderConfirmationUrl($cart, $order->id, $module, $customer));
         }
 
         Tools::redirect($redirectUrl);
