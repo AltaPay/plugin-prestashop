@@ -1579,7 +1579,7 @@ function createOrderOkCallback($postData, $record_id = null)
         $transactionID = $transaction->TransactionId;
         if (!$isChildOrder) {
             // Lock the cart so two payments for it (e.g. checkout opened in two tabs) cannot create an order at the same time.
-            $cartLockFileName = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cart_lock_' . md5($cart->id) . '.lock';
+            $cartLockFileName = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cart_lock_' . (int) $cart->id . '.lock';
             $cartLockFileHandle = lockCallback($cartLockFileName);
             $order_id = releaseDuplicatePayment($cart, $transaction);
             if (!empty($order_id)) {
