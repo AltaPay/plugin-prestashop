@@ -95,11 +95,9 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
 
             // Load the customer
             $customer = new Customer((int) $cart->id_customer);
-            $transactionStatus = $response->paymentStatus;
-
-            if ($response && is_array($response->Transactions)) {
-                $transactionStatus = $response->Transactions[0]->TransactionStatus;
-            }
+            $transactionStatus = isset($transaction->TransactionStatus)
+                ? $transaction->TransactionStatus
+                : $response->paymentStatus;
 
             $auth_statuses = ['preauth', 'invoice_initialized', 'recurring_confirmed'];
             $captured_statuses = ['bank_payment_finalized', 'captured'];
@@ -127,6 +125,18 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                 // NO ORDER FOUND, CREATE?
                 if (!Validate::isLoadedObject($order)) {
                     $transaction = getTransaction($response);
+                    if (!hasFundedAmount($transaction) && !isAgreementSetupTransaction($transaction)) {
+                        PrestaShopLogger::addLog(
+                            'Order creation skipped for transaction ' . $transactionId . ' because it has no reserved or captured amount.',
+                            3,
+                            null,
+                            $this->module->name,
+                            $this->module->id,
+                            true
+                        );
+                        unlockCallback($lockFileName, $lockFileHandle);
+                        exit('Order not created because no amount is reserved or captured');
+                    }
                     // Payment successful - create order
                     if ($response && is_array($response->Transactions)) {
                         $amount = $response->amount ?? $cart->getOrderTotal(true, Cart::BOTH);
@@ -155,11 +165,11 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                         // Log order
                         $currentOrder = new Order((int) $this->module->currentOrder);
 
-                        createAltapayOrder($response, $currentOrder);
+                        createAltapayOrder($response, $currentOrder, 'succeeded');
 
-                        if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
-                            $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
-                            $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+                        if (!empty($transaction->ReconciliationIdentifiers)) {
+                            $reconciliation_identifier = $transaction->ReconciliationIdentifiers[0]->Id;
+                            $reconciliation_type = $transaction->ReconciliationIdentifiers[0]->Type;
 
                             saveOrderReconciliationIdentifierIfNotExists($currentOrder->id, $reconciliation_identifier, $reconciliation_type, $shopOrderId);
                         }
@@ -174,6 +184,18 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     exit('Order found but is not currently pending - ignoring');
                 } elseif (Validate::isLoadedObject($order)) { // Pending order found, update
                     if (in_array($transactionStatus, $auth_statuses, true) or in_array($transactionStatus, $captured_statuses, true)) {
+                        if (!hasFundedAmount($transaction) && !isAgreementSetupTransaction($transaction)) {
+                            PrestaShopLogger::addLog(
+                                'Pending order update skipped because transaction ' . $transactionId . ' has no reserved or captured amount.',
+                                3,
+                                null,
+                                $this->module->name,
+                                $this->module->id,
+                                true
+                            );
+                            unlockCallback($lockFileName, $lockFileHandle);
+                            exit('Order not updated because no amount is reserved or captured');
+                        }
                         /*
                          * preauth occurs for wallet transactions where payment type is 'payment'.
                          * Funds are still waiting to be captured.
@@ -186,9 +208,9 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     SET `paymentStatus` = \'succeeded\' WHERE `id_order` = ' . (int) $order->id;
                         Db::getInstance()->Execute($sql);
 
-                        if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
-                            $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
-                            $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+                        if (!empty($transaction->ReconciliationIdentifiers)) {
+                            $reconciliation_identifier = $transaction->ReconciliationIdentifiers[0]->Id;
+                            $reconciliation_type = $transaction->ReconciliationIdentifiers[0]->Type;
 
                             saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type, $shopOrderId);
                         }
@@ -255,15 +277,28 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
     public function processChildOrder($cart, $transactionId, $response, $transactionStatus, $auth_statuses, $captured_statuses, $lockFileName, $lockFileHandle)
     {
         $shopOrderId = $response->shopOrderId;
+        $transaction = getTransaction($response);
+        if (!hasFundedAmount($transaction) && !isAgreementSetupTransaction($transaction)) {
+            PrestaShopLogger::addLog(
+                'Child order update skipped because transaction ' . $transactionId . ' has neither a reserved amount nor a captured amount.',
+                3,
+                null,
+                $this->module->name,
+                $this->module->id,
+                true
+            );
+            unlockCallback($lockFileName, $lockFileHandle);
+            exit('Child order not updated because no amount is reserved or captured');
+        }
         // Check if an order exist
         $order = getChildOrderFromUniqueId($shopOrderId);
         if (!Validate::isLoadedObject($order)) {
             $order_id = Order::getOrderByCartId((int) ($cart->id));
             $order = new Order((int) $order_id);
             createAltapayOrder($response, $order, 'succeeded', true);
-            if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
-                $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
-                $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+            if (!empty($transaction->ReconciliationIdentifiers)) {
+                $reconciliation_identifier = $transaction->ReconciliationIdentifiers[0]->Id;
+                $reconciliation_type = $transaction->ReconciliationIdentifiers[0]->Type;
 
                 saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type, $shopOrderId);
             }
@@ -276,9 +311,9 @@ class AltapayCallbacknotificationModuleFrontController extends ModuleFrontContro
                     SET `paymentStatus` = \'succeeded\' WHERE `unique_id` = \'' . pSQL($shopOrderId) . "'";
                 Db::getInstance()->Execute($sql);
 
-                if (!empty($response->Transactions[0]->ReconciliationIdentifiers)) {
-                    $reconciliation_identifier = $response->Transactions[0]->ReconciliationIdentifiers[0]->Id;
-                    $reconciliation_type = $response->Transactions[0]->ReconciliationIdentifiers[0]->Type;
+                if (!empty($transaction->ReconciliationIdentifiers)) {
+                    $reconciliation_identifier = $transaction->ReconciliationIdentifiers[0]->Id;
+                    $reconciliation_type = $transaction->ReconciliationIdentifiers[0]->Type;
 
                     saveOrderReconciliationIdentifierIfNotExists($order->id, $reconciliation_identifier, $reconciliation_type, $shopOrderId);
                 }

@@ -184,7 +184,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                             . pSQL($customerID) . ',"' . pSQL($transactionID) . '","'
                             . pSQL('recurring') . '","' . pSQL($order->id)
                             . '")';
-                        Db::getInstance()->executeS($sql);
+                        Db::getInstance()->execute($sql);
                     }
 
                     // Log order

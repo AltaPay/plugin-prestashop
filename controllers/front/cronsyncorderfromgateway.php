@@ -81,7 +81,7 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
                         }
 
                         // Sync AltaPay transaction data
-                        createAltapayOrder($response, $orderDetail);
+                        createAltapayOrder($response, $orderDetail, 'succeeded');
 
                         if (!empty($this->recordExistsInAltapayOrder($record['unique_id'], $payment_module))) {
                             ++$total_orders_synced;
@@ -164,20 +164,28 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
             $api->setShopOrderId($shop_orderid);
             $paymentDetails = $api->call();
 
-            // Ignore if no transaction is found or ReservedAmount = 0
-            if (empty($paymentDetails) or $paymentDetails[0]->ReservedAmount == 0) {
+            if (empty($paymentDetails)) {
+                return false;
+            }
+
+            $response['Transactions'] = $paymentDetails;
+            $gatewayResponse = json_decode(json_encode($response));
+            $transaction = getTransaction($gatewayResponse);
+
+            // Ignore transactions with no reserved or captured amount, except agreement setup transactions.
+            if (!hasFundedAmount($transaction) && !isAgreementSetupTransaction($transaction)) {
                 return false;
             }
 
             // Ignore if fraud is detected
-            if (strtolower($paymentDetails[0]->FraudRecommendation) === 'deny') {
+            if (strtolower($transaction->FraudRecommendation) === 'deny') {
                 PrestaShopLogger::addLog("$this->cron_msg_prefix error: fraud payment shop_orderid: $shop_orderid", 3, null, $payment_module->name, $payment_module->id, true);
 
                 return false;
             }
 
-            $response['nature'] = $paymentDetails[0]->PaymentNature ?? '';
-            $response['Transactions'] = $paymentDetails;
+            $response['nature'] = $transaction->PaymentNature ?? '';
+            $response['Transactions'] = [$transaction];
 
             return json_decode(json_encode($response));
         } catch (Exception $e) {

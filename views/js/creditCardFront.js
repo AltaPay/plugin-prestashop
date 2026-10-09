@@ -100,6 +100,9 @@ document.addEventListener('DOMContentLoaded', function (event) {
                 },
                 success: function(response) {
                     if (response.success === true) {
+                        if (response.amount) {
+                            amountPaid = response.amount;
+                        }
                         var responsedata = jQuery.parseJSON(response.applePaySession);
                         session.completeMerchantValidation(responsedata);
                       } else {
@@ -141,7 +144,8 @@ document.addEventListener('DOMContentLoaded', function (event) {
                 data: {
                     providerData: JSON.stringify(event.payment.token),
                     method: terminalId,
-                    is_apple_pay: true
+                    is_apple_pay: true,
+                    amount: amountPaid
                 },
                 type: 'post',
                 dataType: 'JSON',
@@ -150,7 +154,11 @@ document.addEventListener('DOMContentLoaded', function (event) {
                         session.completePayment(ApplePaySession.STATUS_SUCCESS);
                         window.location.replace(response.redirectUrl);
                     } else {
-                        session.completePayment(ApplePaySession.STATUS_FAILURE); 
+                        session.completePayment(ApplePaySession.STATUS_FAILURE);
+                        // Cart total changed after the popup was opened, reload to show the current total
+                        if (response && response.reload === true) {
+                            window.location.reload();
+                        }
                     }
                 },
                 error: function (response) {

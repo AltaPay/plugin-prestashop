@@ -47,10 +47,13 @@
         <div class="row">
             <div class="page-order-detail">
                 <div class="cart-grid-body col-xs-12 col-lg-12" id="ajaxContent">
-                    <p style="margin: 30px 0;text-align: center;">
+                    <p id="paymentProcessingMessage" style="margin: 30px 0;text-align: center;">
                         {l s='Payment is processing' mod='altapay'}
                     </p>
                     <div class="loader"></div>
+                    <p id="paymentCompletedMessage" style="display: none;margin: 30px 0;text-align: center;">
+                        {l s='Payment completed. Your order confirmation has been sent by email.' mod='altapay'}
+                    </p>
                 </div>
             </div>
         </div>
@@ -70,9 +73,16 @@
                     success: function(response) {
                         if (response.url) {
                             location.href = response.url;
+                            return;
                         }
 
-                        var timeout = requestTime > 5 ? true : false;
+                        if (response.completed === true) {
+                            $('#paymentProcessingMessage, .loader').hide();
+                            $('#paymentCompletedMessage').show();
+                            return;
+                        }
+
+                        var timeout = requestTime >= 5 ? true : false;
                         setTimeout(function() {
                             checkResponse(timeout);
                         }, 5000);

@@ -34,7 +34,7 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '5.0.2';
+        $this->version = '5.0.3';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.2.7'];
@@ -2243,6 +2243,15 @@ class ALTAPAY extends PaymentModule
                 $shopOrderId = $pay->ShopOrderId;
             }
 
+            // Nothing reserved or captured means there is no money behind this order, flag it instead of skipping silently
+            if ($reserved <= 0 && $captured <= 0) {
+                $message = 'Capture not possible: no amount is reserved at AltaPay for payment ' . $paymentID . '. The order may be unpaid, please verify before shipping.';
+                PrestaShopLogger::addLog($message . ' Order ID: ' . (int) $params['id_order'], 3, null, $this->name, $this->id, true);
+                $this->addPrivateOrderMessage($orderDetail, $message);
+
+                return null;
+            }
+
             if ($captured > 0 && !$captureRemaining) {
                 return null;
             }
@@ -2294,6 +2303,42 @@ class ALTAPAY extends PaymentModule
             saveOrderReconciliationIdentifier($params['id_order'], $reconciliation_identifier, $shopOrderId);
         } catch (Exception $e) {
             $this->returnError($paymentID, $e);
+        }
+    }
+
+    /**
+     * Adds a private (staff only) message to the order, shown in the order page "Messages" section
+     *
+     * @param Order $order
+     * @param string $message
+     *
+     * @return void
+     */
+    private function addPrivateOrderMessage($order, $message)
+    {
+        try {
+            $email = (new Customer((int) $order->id_customer))->email;
+            $idThread = CustomerThread::getIdCustomerThreadByEmailAndIdOrder($email, (int) $order->id);
+
+            if (!$idThread) {
+                $thread = new CustomerThread();
+                $thread->hydrate([
+                    'id_contact' => 0, 'id_customer' => (int) $order->id_customer, 'id_shop' => (int) $order->id_shop,
+                    'id_order' => (int) $order->id, 'id_lang' => (int) $order->id_lang, 'email' => $email,
+                    'status' => 'open', 'token' => Tools::passwdGen(12),
+                ]);
+                $thread->add();
+                $idThread = $thread->id;
+            }
+
+            $customerMessage = new CustomerMessage();
+            $customerMessage->hydrate([
+                'id_customer_thread' => (int) $idThread, 'id_employee' => (int) ($this->context->employee->id ?? 0),
+                'message' => $message, 'private' => 1,
+            ]);
+            $customerMessage->add();
+        } catch (Exception $e) {
+            PrestaShopLogger::addLog('Could not add private message to Order ID: ' . (int) $order->id . ', ' . $e->getMessage(), 3, null, $this->name, $this->id, true);
         }
     }
 
@@ -2470,7 +2515,13 @@ class ALTAPAY extends PaymentModule
 
             if (!$results) {
                 $response['Transactions'] = $paymentDetails;
-                createAltapayOrder(json_decode(json_encode($response)), $orderDetail);
+                $gatewayResponse = json_decode(json_encode($response));
+                $transaction = getTransaction($gatewayResponse);
+                if (!hasFundedAmount($transaction) && !isAgreementSetupTransaction($transaction)) {
+                    return false;
+                }
+                $gatewayResponse->Transactions = [$transaction];
+                createAltapayOrder($gatewayResponse, $orderDetail, 'succeeded');
                 $results = $this->selectOrder($params);
                 if (!$results) {
                     PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}", 3, null, $this->name, $this->id, true);
@@ -3360,16 +3411,16 @@ class ALTAPAY extends PaymentModule
                 }
             }
             try {
-                $response = $request->call();
-                $responseUrl = $response->Url ?? ($request instanceof API\PHP\Altapay\Api\Payments\CardWalletAuthorize ? 'cardwallet' : 'reservation');
+                $apiResponse = $request->call();
+                $responseUrl = $apiResponse->Url ?? ($request instanceof API\PHP\Altapay\Api\Payments\CardWalletAuthorize ? 'cardwallet' : 'reservation');
                 $orderStatus = (int) Configuration::get('ALTAPAY_OS_PENDING');
                 if ($responseUrl === 'cardwallet' || $responseUrl === 'reservation') {
-                    if (strtolower($response->Result) === 'success') {
+                    if (strtolower($apiResponse->Result) === 'success') {
                         $orderStatus = (int) Configuration::get('authorized_payments_status');
                         if (empty($orderStatus)) {
                             $orderStatus = (int) Configuration::get('PS_OS_PAYMENT');
                         }
-                        $transaction = $response->Transactions[$latestTransKey];
+                        $transaction = $apiResponse->Transactions[$latestTransKey];
                         $paymentType = $transaction->AuthType;
                         if (isset($transaction->CapturedAmount)) {
                             $amount = $transaction->CapturedAmount;
@@ -3381,7 +3432,9 @@ class ALTAPAY extends PaymentModule
                             }
                         }
                     } else {
-                        PrestaShopLogger::addLog($responseUrl . ' request failed for order id ' . $requestShopOrderId, 3, null, $this->name, $this->id, true);
+                        PrestaShopLogger::addLog($responseUrl . ' request failed for order id ' . $requestShopOrderId . ' with result: ' . $apiResponse->Result, 3, null, $this->name, $this->id, true);
+
+                        return $response;
                     }
                 }
 
@@ -3393,7 +3446,7 @@ class ALTAPAY extends PaymentModule
                     'amount' => $requestAmount,
                     'result' => 'Success',
                     'payment_form_url' => $responseUrl,
-                    'response' => $response,
+                    'response' => $apiResponse,
                 ];
             } catch (Exception $e) {
                 $message = $e->getMessage();
@@ -4071,7 +4124,15 @@ class ALTAPAY extends PaymentModule
                 }
 
                 $response['Transactions'] = $paymentDetails;
-                createAltapayOrder(json_decode(json_encode($response)), $orderDetail);
+                $gatewayResponse = json_decode(json_encode($response));
+                $transaction = getTransaction($gatewayResponse);
+                if (!hasFundedAmount($transaction) && !isAgreementSetupTransaction($transaction)) {
+                    PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}: no amount is reserved or captured at AltaPay", 3, null, $this->name, $this->id, true);
+
+                    return ['payment_id' => $transaction->TransactionId];
+                }
+                $gatewayResponse->Transactions = [$transaction];
+                createAltapayOrder($gatewayResponse, $orderDetail, 'succeeded');
                 $results = $this->selectOrder($params);
                 if (!$results) {
                     PrestaShopLogger::addLog("Could not sync payment info for Order ID: {$params['id_order']}", 3, null, $this->name, $this->id, true);
