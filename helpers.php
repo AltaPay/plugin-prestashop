@@ -51,14 +51,14 @@ function altapayFormatPrice($amount, $currency = null)
     }
 
     if (method_exists($context, 'getCurrentLocale') && $context->getCurrentLocale() && Validate::isLoadedObject($currency)) {
-        return $context->getCurrentLocale()->formatPrice((float) $amount, $currency->iso_code);
+        $formatted = $context->getCurrentLocale()->formatPrice((float) $amount, $currency->iso_code);
+    } elseif (method_exists('Tools', 'displayPrice')) {
+        $formatted = Tools::displayPrice($amount, $currency);
+    } else {
+        $formatted = number_format((float) $amount, 2) . (Validate::isLoadedObject($currency) ? ' ' . $currency->iso_code : '');
     }
 
-    if (method_exists('Tools', 'displayPrice')) {
-        return Tools::displayPrice($amount, $currency);
-    }
-
-    return number_format((float) $amount, 2) . (Validate::isLoadedObject($currency) ? ' ' . $currency->iso_code : '');
+    return $formatted;
 }
 
 /**
