@@ -63,7 +63,7 @@ class AltapayCronSyncOrderFromGatewayModuleFrontController extends ModuleFrontCo
                         }
 
                         // Check if order exists in PrestaShop
-                        $id_order = Order::getOrderByCartId((int) ($cart->id));
+                        $id_order = altapayGetOrderIdByCartId((int) ($cart->id));
 
                         if (!empty($id_order)) {
                             $orderDetail = new Order((int) $id_order);

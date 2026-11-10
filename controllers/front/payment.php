@@ -59,8 +59,8 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
 
         unset($_COOKIE['savecard']);
         unset($_COOKIE['selectedCreditCard']);
-        setcookie('savecard', null, -1, '/');
-        setcookie('selectedCreditCard', null, -1, '/');
+        setcookie('savecard', '', -1, '/');
+        setcookie('selectedCreditCard', '', -1, '/');
 
         $result = $this->module->createTransaction($saveCard, $savedCreditCard, $payment_method, $providerData, $is_apple_pay);
         // Load the customer

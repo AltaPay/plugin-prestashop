@@ -34,10 +34,10 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '5.0.3';
+        $this->version = '5.1.0';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.2.7'];
+        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '9.2.99'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -649,9 +649,22 @@ class ALTAPAY extends PaymentModule
         return $tab->delete();
     }
 
+    /**
+     * Load jQuery on PrestaShop versions that still expose Controller::addJquery().
+     * The method was removed in PrestaShop 9, where jQuery is loaded by the core.
+     *
+     * @return void
+     */
+    private function addJqueryIfSupported()
+    {
+        if (isset($this->context->controller) && method_exists($this->context->controller, 'addJquery')) {
+            $this->context->controller->addJquery();
+        }
+    }
+
     public function hookHeader($params)
     {
-        $this->context->controller->addJquery();
+        $this->addJqueryIfSupported();
         $this->context->controller->addCSS($this->_path . 'views/css/payment.css', 'all');
     }
 
@@ -792,6 +805,7 @@ class ALTAPAY extends PaymentModule
 
         $ccTokenControlOptions = [
             [
+                'id' => '',
                 'name' => 'Enable',
                 'val' => 1,
             ],
@@ -1104,7 +1118,12 @@ class ALTAPAY extends PaymentModule
         $helper->id = (int) Tools::getValue('id_terminal');
         $helper->submit_action = 'savealtapay_terminals';
         $form_values = (array) $this->getFormValues();
-        $form_values['applepay_supported_networks[]'] = unserialize($form_values['applepay_supported_networks']);
+        $supportedNetworks = !empty($form_values['applepay_supported_networks'])
+            ? @unserialize($form_values['applepay_supported_networks'])
+            : false;
+        $form_values['applepay_supported_networks[]'] = is_array($supportedNetworks) ? $supportedNetworks : [];
+        $form_values['terminal_nature'] = isset($form_values['nature']) ? (string) $form_values['nature'] : '';
+        $form_values['terminal_identifier'] = isset($form_values['identifier']) ? (string) $form_values['identifier'] : '';
         $helper->tpl_vars = [
             'fields_value' => $form_values,
             'languages' => (array) $this->context->controller->getLanguages(),
@@ -2132,7 +2151,7 @@ class ALTAPAY extends PaymentModule
     {
         $cookie = $this->context->cookie;
 
-        $this->context->controller->addJquery();
+        $this->addJqueryIfSupported();
         $this->context->controller->addJS($this->_path . 'views/js/form.js', 'all');
         $this->context->controller->addCSS(($this->_path) . 'views/css/payment.css', 'all');
         if ($cookie->altapayError) {
@@ -2772,7 +2791,7 @@ class ALTAPAY extends PaymentModule
             return;
         }
 
-        $this->context->controller->addJquery();
+        $this->addJqueryIfSupported();
         $this->context->controller->addCSS($this->_path . 'css/payment.css', 'all');
 
         // Fetch payment methods
@@ -2917,6 +2936,7 @@ class ALTAPAY extends PaymentModule
     public function hookPaymentOptions($params)
     {
         $savedCreditCard = [];
+        $customerID = null;
 
         if (!$this->active) {
             return null;
@@ -2954,10 +2974,11 @@ class ALTAPAY extends PaymentModule
             $this->getTemplateVarInfos()
         );
         $paymentsOptions = [];
-        $userAgent = $_SERVER['HTTP_USER_AGENT'];
+        $userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? (string) $_SERVER['HTTP_USER_AGENT'] : '';
         foreach ($paymentMethods as $paymentMethod) {
-            $nature = json_decode($paymentMethod['nature'], true);
-            if ($show_only_cc_terminal and (count($nature) != 1 or $nature[0]['Nature'] !== 'CreditCard')) {
+            $nature = json_decode((string) $paymentMethod['nature'], true);
+            if ($show_only_cc_terminal
+                && (!is_array($nature) || count($nature) != 1 || !isset($nature[0]['Nature']) || $nature[0]['Nature'] !== 'CreditCard')) {
                 continue;
             }
 
@@ -3006,7 +3027,7 @@ class ALTAPAY extends PaymentModule
     {
         // Check if the current controller is 'order' or 'order-opc'
         if ($this->context->controller->php_self == 'order' || $this->context->controller->php_self == 'order-opc') {
-            $this->context->controller->addJquery();
+            $this->addJqueryIfSupported();
             $this->addVersionedModuleJs('altapay-creditcard-front-fo', 'views/js/creditCardFront.js');
 
             if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
@@ -3101,9 +3122,10 @@ class ALTAPAY extends PaymentModule
         $state = $params['objOrder']->getCurrentState();
         $results = Db::getInstance()->getRow('SELECT *
     FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE id_order=' . (int) $params['objOrder']->id);
+        $results = array_merge(['unique_id' => '', 'payment_id' => ''], is_array($results) ? $results : []);
         if (in_array($state, $states)) {
             $this->smarty->assign([
-                'total_to_pay' => Tools::displayPrice($params['total_to_pay'], $params['currencyObj'], false),
+                'total_to_pay' => altapayFormatPrice($params['total_to_pay'], $params['currencyObj']),
                 'status' => 'ok',
                 'unique_id' => $results['unique_id'],
                 'payment_id' => $results['payment_id'],
@@ -3111,7 +3133,7 @@ class ALTAPAY extends PaymentModule
             ]);
         } else {
             $this->smarty->assign([
-                'total_to_pay' => Tools::displayPrice($params['total_to_pay'], $params['currencyObj'], false),
+                'total_to_pay' => altapayFormatPrice($params['total_to_pay'], $params['currencyObj']),
                 'status' => 'open',
                 'unique_id' => $results['unique_id'],
                 'payment_id' => $results['payment_id'],

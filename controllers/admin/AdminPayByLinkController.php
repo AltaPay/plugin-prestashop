@@ -38,7 +38,7 @@ class AdminPayByLinkController extends ModuleAdminController
         $paymentLink = $this->module->altaPayOrderEdited($order_id, $amount, $terminal);
         $order = new Order($order_id);
         $currency = new Currency($order->id_currency);
-        $amountFormatted = Tools::displayPrice($amount, $currency);
+        $amountFormatted = altapayFormatPrice($amount, $currency);
 
         if ($send_email && $paymentLink) {
             $customerId = (int) Tools::getValue('customer_id');
@@ -187,7 +187,8 @@ class AdminPayByLinkController extends ModuleAdminController
         if (Validate::isLoadedObject($customer)) {
             $to = $customer->email;
             $toName = $customer->firstname . ' ' . $customer->lastname;
-            $subject = $this->l('Action Required: Payment Link for Outstanding Amount');
+            // AdminController::l() was removed in PrestaShop 9; translate through the module instead.
+            $subject = $this->module->l('Action Required: Payment Link for Outstanding Amount', 'adminpaybylinkcontroller');
 
             if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
                 $template = 'addition_item_email';

@@ -23,7 +23,7 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
             if (empty($paymentRecord) && !$isChildOrder) {
                 // A duplicate payment for a cart that already has an order is released; show that order instead
                 $cart = getCartFromUniqueId($shopOrderId);
-                $cartOrderId = Validate::isLoadedObject($cart) ? (int) Order::getOrderByCartId((int) $cart->id) : 0;
+                $cartOrderId = Validate::isLoadedObject($cart) ? (int) altapayGetOrderIdByCartId((int) $cart->id) : 0;
                 if (!empty($cartOrderId)) {
                     $paymentRecord = Db::getInstance()->getRow(
                         'SELECT id_order, paymentStatus FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE id_order = ' . $cartOrderId
@@ -53,12 +53,12 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
                             ]
                         );
 
-                        $this->ajaxDie(json_encode(['success' => true, 'url' => $thankYouUrl]));
+                        $this->sendAjaxResponse(json_encode(['success' => true, 'url' => $thankYouUrl]));
                     }
 
                     // The payment is complete, but the current browser does not own the order session.
                     // Do not expose the confirmation URL, secure key, or any order/customer information.
-                    $this->ajaxDie(json_encode(['success' => true, 'completed' => true]));
+                    $this->sendAjaxResponse(json_encode(['success' => true, 'completed' => true]));
                 }
             }
 
@@ -81,7 +81,7 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
             $this->redirectBackToCheckout('altapay_cancel=1&isPaymentStep=true&step=3#altapay_cancel');
         }
 
-        $this->ajaxDie(json_encode(['success' => false]));
+        $this->sendAjaxResponse(json_encode(['success' => false]));
     }
 
     /**
@@ -104,12 +104,31 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
         return !in_array((int) $order->getCurrentState(), $incompleteOrderStates, true);
     }
 
+    /**
+     * Output an AJAX response and stop execution.
+     * Controller::ajaxDie() was removed in PrestaShop 9; ajaxRender() does not exit, so exit explicitly.
+     *
+     * @param string $value
+     *
+     * @return void
+     */
+    private function sendAjaxResponse($value)
+    {
+        if (method_exists($this, 'ajaxRender')) {
+            // Pass "ajaxDie" as the method so the actionAjaxDie...Before hook name stays the same as before
+            $this->ajaxRender($value, null, 'ajaxDie');
+            exit;
+        }
+
+        $this->ajaxDie($value);
+    }
+
     public function redirectBackToCheckout($query)
     {
         $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
         $pLink = $this->context->link->getPageLink($controller);
         $location = $pLink . (strpos($controller, '?') !== false ? '&' : '?') . $query;
 
-        $this->ajaxDie(json_encode(['success' => false, 'url' => $location]));
+        $this->sendAjaxResponse(json_encode(['success' => false, 'url' => $location]));
     }
 }

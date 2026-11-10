@@ -115,7 +115,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                 }
 
                 // Check if this is a duplicate payment
-                $order_id = Order::getOrderByCartId((int) ($cart->id));
+                $order_id = altapayGetOrderIdByCartId((int) ($cart->id));
                 if (!empty($order_id)) {
                     $altapay_order_details = $isChildOrder ? getAltapayChildOrderDetails($shopOrderId) : getAltapayOrderDetails($order_id);
                     if (!empty($altapay_order_details)
@@ -155,7 +155,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
                 }
                 // Load order
                 if ($isChildOrder) {
-                    $order_id = Order::getOrderByCartId((int) ($cart->id));
+                    $order_id = altapayGetOrderIdByCartId((int) ($cart->id));
                     $order = new Order((int) $order_id);
                 } else {
                     $order = new Order((int) $this->module->currentOrder);
@@ -241,7 +241,7 @@ class AltapayCallbackfailModuleFrontController extends ModuleFrontController
             $pLink = $this->context->link->getPageLink($controller);
             $vCan = 'altapay_cancel=1&isPaymentStep=true&step=3#altapay_cancel';
             $location = $pLink . (strpos($controller, '?') !== false ? '&' : '?') . $vCan;
-            Tools::redirectLink($location);
+            Tools::redirect($location);
         } else {
             if (!empty($merchantError)) {
                 $errorMessage = $errorMessage . '|' . $merchantError;
