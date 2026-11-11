@@ -73,18 +73,19 @@ function altapayFormatPrice($amount, $currency = null)
  */
 function altapaySendAjaxResponse($controller, $value)
 {
-    $send = function ($value) {
-        if (method_exists($this, 'ajaxRender')) {
+    $send = function ($controller, $value) {
+        if (method_exists($controller, 'ajaxRender')) {
             // Pass "ajaxDie" as the method so the actionAjaxDie...Before hook name stays the same as before
-            $this->ajaxRender($value, null, 'ajaxDie');
+            $controller->ajaxRender($value, null, 'ajaxDie');
             exit;
         }
 
-        $this->ajaxDie($value);
+        $controller->ajaxDie($value);
     };
 
-    $send = Closure::bind($send, $controller, get_class($controller));
-    $send($value);
+    // Only the class scope is bound (no $this), which is what allows calling the protected methods
+    $send = Closure::bind($send, null, get_class($controller));
+    $send($controller, $value);
 }
 
 /**
