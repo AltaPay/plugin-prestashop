@@ -251,6 +251,7 @@ The new credentials can now be used as the API Username and API Password in your
 - Thirty Bees 1.5.x (requires PHP 7.2 or later)
 - PrestaShop 1.7.x (requires PHP 7.2 or later)
 - PrestaShop 8.x (requires PHP 7.2 or later)
+- PrestaShop 9.x (requires PHP 8.1 or later)
 
 ## Plugin updates
 
