@@ -9,7 +9,7 @@
 {extends file=$layout}
 {block name='header'}
     {include file='checkout/_partials/header.tpl'}
-    <link rel="stylesheet" href="{$css_dir}/theme.css" type="text/css" />
+    <link rel="stylesheet" href="{if isset($css_dir)}{$css_dir}{else}{$urls.theme_assets}css{/if}/theme.css" type="text/css" />
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <style>
         .loader {

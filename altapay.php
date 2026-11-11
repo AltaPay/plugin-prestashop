@@ -650,6 +650,31 @@ class ALTAPAY extends PaymentModule
     }
 
     /**
+     * URL of the module configuration page.
+     * The legacy AdminModules controller does not exist in PrestaShop 9.
+     *
+     * @param string $legacyUrl URL built for PrestaShop versions before 9
+     *
+     * @return string
+     */
+    private function getConfigureUrl($legacyUrl)
+    {
+        if (version_compare(_PS_VERSION_, '9.0.0', '<')) {
+            return $legacyUrl;
+        }
+
+        $url = $this->context->link->getAdminLink('AdminModules', true, [
+            'route' => 'admin_module_configure_action',
+            'module_name' => $this->name,
+        ]);
+        if (strpos($url, '?') === false) {
+            $url .= '?configure=' . $this->name;
+        }
+
+        return $url;
+    }
+
+    /**
      * Load jQuery on PrestaShop versions that still expose Controller::addJquery().
      * The method was removed in PrestaShop 9, where jQuery is loaded by the core.
      *
@@ -1110,7 +1135,7 @@ class ALTAPAY extends PaymentModule
         $helper->name_controller = 'altapay';
         $helper->identifier = $this->identifier;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
-        $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
+        $helper->currentIndex = $this->getConfigureUrl(AdminController::$currentIndex . '&configure=' . $this->name);
         $helper->show_toolbar = false;
         $helper->table = 'altapay_terminals';
         $lang = new Language((int) Configuration::get('PS_LANG_DEFAULT'));
@@ -1258,7 +1283,7 @@ class ALTAPAY extends PaymentModule
      *
      * @return void
      */
-    private function processPaymentActions()
+    public function processPaymentActions()
     {
         $paymentID = (int) Tools::getValue('payment_id');
         $action = Tools::ucfirst(Tools::getValue('action'));
@@ -1941,8 +1966,10 @@ class ALTAPAY extends PaymentModule
         $helper->id = (int) Tools::getValue('id_carrier');
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'btnSubmit';
-        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&configure='
-            . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
+        $helper->currentIndex = $this->getConfigureUrl(
+            $this->context->link->getAdminLink('AdminModules', false) . '&configure='
+            . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name
+        );
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->tpl_vars = [
             'fields_value' => $this->getConfigFieldsValues(),
@@ -2661,7 +2688,13 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign('payment_amount', number_format($payment_amount, 2, '.', ''));
         $this->smarty->assign('payment_captured', !$results['requireCapture']);
         $this->smarty->assign('this_path', $this->_path);
-        $this->smarty->assign('ajax_url', $fet->getAdminLink('AdminModules') . '&configure=' . $tname . '&payment_actions');
+        // The legacy AdminModules controller does not exist in PrestaShop 9, so the actions go through a module controller
+        if (version_compare(_PS_VERSION_, '9.0.0', '>=')) {
+            $ajaxUrl = $fet->getAdminLink('AdminPayByLink');
+        } else {
+            $ajaxUrl = $fet->getAdminLink('AdminModules') . '&configure=' . $tname . '&payment_actions';
+        }
+        $this->smarty->assign('ajax_url', $ajaxUrl);
         $this->smarty->assign('token', Tools::getAdminTokenLite('AdminModules'));
         $this->smarty->assign('reconciliation_identifiers', $reconciliation_identifiers);
         $this->smarty->assign('altapay_module_update', $this->isAltaPayModuleUpdateAvailable());
@@ -3928,8 +3961,10 @@ class ALTAPAY extends PaymentModule
         $helper->id = (int) Tools::getValue('id_carrier');
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'synchterminalsync';
-        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&configure='
-            . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
+        $helper->currentIndex = $this->getConfigureUrl(
+            $this->context->link->getAdminLink('AdminModules', false) . '&configure='
+            . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name
+        );
         $helper->token = Tools::getAdminTokenLite('AdminModules');
 
         return $helper->generateForm([$fieldsForm]);
@@ -4005,7 +4040,7 @@ class ALTAPAY extends PaymentModule
         $helper->module = $this;
         $helper->name_controller = $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
-        $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
+        $helper->currentIndex = $this->getConfigureUrl(AdminController::$currentIndex . '&configure=' . $this->name);
         $helper->default_form_language = (int) Configuration::get('PS_LANG_DEFAULT');
         $helper->allow_employee_form_lang = (int) Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG');
         $helper->title = $this->displayName;

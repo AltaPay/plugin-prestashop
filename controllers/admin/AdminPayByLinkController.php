@@ -25,6 +25,26 @@ class AdminPayByLinkController extends ModuleAdminController
     }
 
     /**
+     * Capture, refund and release requests from the admin order page (PrestaShop 9 and later).
+     *
+     * @return void
+     */
+    public function ajaxProcessCapture()
+    {
+        $this->module->processPaymentActions();
+    }
+
+    public function ajaxProcessRefund()
+    {
+        $this->module->processPaymentActions();
+    }
+
+    public function ajaxProcessRelease()
+    {
+        $this->module->processPaymentActions();
+    }
+
+    /**
      * Process an AJAX request to get the payment link and optionally send a custom email.
      *
      * @return void
