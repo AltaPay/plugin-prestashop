@@ -1297,7 +1297,6 @@ class ALTAPAY extends PaymentModule
     {
         $paymentID = (int) Tools::getValue('payment_id');
         $action = Tools::ucfirst(Tools::getValue('action'));
-        $goodWillRefund = false;
         $orderID = Tools::getValue('ap_order_id');
         $orderLines = Tools::getValue('ap_order_qty');
         $orderLineGiftWrap = Tools::getValue('ap_order_wrap');
@@ -1320,152 +1319,184 @@ class ALTAPAY extends PaymentModule
         }
 
         if ($action === 'Capture') { // CAPTURE
-            try {
-                $finalOrderLines = $this->populateOrderLinesFromPost($orderLines, $orderID, 0, $orderLineGiftWrap);
-
-                $reconciliation_identifier = sha1($paymentID . time());
-                $payment_type = getAltapayOrderDetails($orderID)[0]['paymentType'];
-                if (in_array($payment_type, ['subscription', 'subscription_payment'])) {
-                    $api = new API\PHP\Altapay\Api\Subscription\ChargeSubscription(getAuth());
-                    $api->setAgreement(['id' => $paymentID]);
-                } else {
-                    $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
-                    $api->setOrderLines($finalOrderLines);
-                    $api->setAmount((float) Tools::getValue('amount'));
-                }
-                $api->setTransaction($paymentID);
-                $api->setReconciliationIdentifier($reconciliation_identifier);
-                $response = $api->call();
-                if ($payment_type == 'subscription' and isset($response) and isset($response->Transactions)) {
-                    $latestTransKey = 0;
-                    foreach ($response->Transactions as $key => $transaction) {
-                        if ($transaction->AuthType === 'subscription_payment' && $transaction->CreatedDate > $max_date) {
-                            $max_date = $transaction->CreatedDate;
-                            $latestTransKey = $key;
-                        }
-                    }
-                    $transaction = $response->Transactions[$latestTransKey];
-                    updateTransactionIdForParentSubscription($orderID, $transaction->TransactionId);
-                }
-
-                $orderStatus = Configuration::get('manual_capture_payments_status');
-
-                if (markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines)) && ($orderStatus !== self::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS)) {
-                    $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
-                }
-                $transaction = getTransaction($response);
-                saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $transaction->ShopOrderId);
-            } catch (Exception $e) {
-                // Save the latest error message in db
-                saveLastErrorMessage($paymentID, $e->getMessage());
-                echo json_encode(
-                    [
-                        'status' => 'error',
-                        'message' => 'Could not capture reservation. ' . $e->getMessage(),
-                    ]
-                );
-                exit();
-            }
-            echo json_encode(
-                [
-                    'status' => 'success',
-                    'message' => 'Reservation captured successfully',
-                ]
-            );
-            exit();
+            $this->captureReservation($paymentID, $orderID, $orderLines, $orderLineGiftWrap, $order);
         } elseif ($action === 'Refund') { // REFUND
-            try {
-                $refundAmount = (float) Tools::getValue('amount');
-                if (Tools::getValue('goodwillrefund') === 'yes') {
-                    $goodWillRefund = true;
-                }
-                $finalOrderLines = $this->populateOrderLinesFromPost(
-                    $orderLines,
-                    $orderID,
-                    0,
-                    $orderLineGiftWrap,
-                    $goodWillRefund
-                );
-
-                // Add a dummy orderLine array in case no orderLines are parsed in the refund
-                if ($finalOrderLines === [] && $goodWillRefund) {
-                    $finalOrderLines = $this->createDummyOrderLinesArr($refundAmount);
-                }
-                $reconciliation_identifier = sha1($paymentID . time());
-                $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
-                $api->setAmount($refundAmount);
-                $api->setOrderLines($finalOrderLines);
-                $api->setTransaction($paymentID);
-                $api->setReconciliationIdentifier($reconciliation_identifier);
-                $response = $api->call();
-
-                markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
-
-                if (strtolower($response->Result) === 'open') {
-                    $order_message = new Message();
-                    $order_message->id_order = $orderID;
-                    $order_message->message = 'Payment refund is in progress.';
-                    $order_message->private = true;
-                    $order_message->save();
-
-                    echo json_encode(
-                        [
-                            'status' => 'success',
-                            'message' => 'Payment refund is in progress.',
-                        ]
-                    );
-                    exit();
-                }
-                $refundStatus = Configuration::get('manual_refund_payments_status');
-                if ($refundStatus !== self::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS) {
-                    $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
-                }
-                $transaction = getTransaction($response);
-                saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $transaction->ShopOrderId, 'refunded');
-            } catch (Exception $e) {
-                $message = $e->getMessage();
-                saveLastErrorMessage($paymentID, $message);
-                echo json_encode(
-                    [
-                        'status' => 'error',
-                        'message' => 'Could not refund payment. ' . $message,
-                    ]
-                );
-                exit();
-            }
-
-            echo json_encode(
-                [
-                    'status' => 'success',
-                    'message' => 'Payment refunded successfully',
-                ]
-            );
-            exit();
+            $this->refundCapturedReservation($paymentID, $orderID, $orderLines, $orderLineGiftWrap, $order);
         } elseif ($action === 'Release') { // RELEASE
-            try {
-                $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
-                $api->setTransaction($paymentID);
-                $api->call();
-                updatePaymentStatus($paymentID, 'Payment Released');
-            } catch (Exception $e) {
-                saveLastErrorMessage($paymentID, $e->getMessage());
+            $this->releaseReservation($paymentID);
+        }
+    }
 
-                echo json_encode(
-                    [
-                        'status' => 'error',
-                        'message' => 'Could not release reservation. ' . $e->getMessage(),
-                    ]
-                );
-                exit();
+    /**
+     * Capture the reservation and report the result as JSON.
+     *
+     * @return void
+     */
+    private function captureReservation($paymentID, $orderID, $orderLines, $orderLineGiftWrap, $order)
+    {
+        try {
+            $finalOrderLines = $this->populateOrderLinesFromPost($orderLines, $orderID, 0, $orderLineGiftWrap);
+
+            $reconciliation_identifier = sha1($paymentID . time());
+            $payment_type = getAltapayOrderDetails($orderID)[0]['paymentType'];
+            if (in_array($payment_type, ['subscription', 'subscription_payment'])) {
+                $api = new API\PHP\Altapay\Api\Subscription\ChargeSubscription(getAuth());
+                $api->setAgreement(['id' => $paymentID]);
+            } else {
+                $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
+                $api->setOrderLines($finalOrderLines);
+                $api->setAmount((float) Tools::getValue('amount'));
             }
+            $api->setTransaction($paymentID);
+            $api->setReconciliationIdentifier($reconciliation_identifier);
+            $response = $api->call();
+            if ($payment_type == 'subscription' and isset($response) and isset($response->Transactions)) {
+                $max_date = '';
+                $latestTransKey = 0;
+                foreach ($response->Transactions as $key => $transaction) {
+                    if ($transaction->AuthType === 'subscription_payment' && $transaction->CreatedDate > $max_date) {
+                        $max_date = $transaction->CreatedDate;
+                        $latestTransKey = $key;
+                    }
+                }
+                $transaction = $response->Transactions[$latestTransKey];
+                updateTransactionIdForParentSubscription($orderID, $transaction->TransactionId);
+            }
+
+            $orderStatus = Configuration::get('manual_capture_payments_status');
+
+            if (markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines)) && ($orderStatus !== self::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS)) {
+                $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+            }
+            $transaction = getTransaction($response);
+            saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $transaction->ShopOrderId);
+        } catch (Exception $e) {
+            // Save the latest error message in db
+            saveLastErrorMessage($paymentID, $e->getMessage());
             echo json_encode(
                 [
-                    'status' => 'success',
-                    'message' => 'Reservation released successfully',
+                    'status' => 'error',
+                    'message' => 'Could not capture reservation. ' . $e->getMessage(),
                 ]
             );
             exit();
         }
+        echo json_encode(
+            [
+                'status' => 'success',
+                'message' => 'Reservation captured successfully',
+            ]
+        );
+        exit();
+    }
+
+    /**
+     * Refund the captured amount and report the result as JSON.
+     *
+     * @return void
+     */
+    private function refundCapturedReservation($paymentID, $orderID, $orderLines, $orderLineGiftWrap, $order)
+    {
+        $goodWillRefund = false;
+        try {
+            $refundAmount = (float) Tools::getValue('amount');
+            if (Tools::getValue('goodwillrefund') === 'yes') {
+                $goodWillRefund = true;
+            }
+            $finalOrderLines = $this->populateOrderLinesFromPost(
+                $orderLines,
+                $orderID,
+                0,
+                $orderLineGiftWrap,
+                $goodWillRefund
+            );
+
+            // Add a dummy orderLine array in case no orderLines are parsed in the refund
+            if ($finalOrderLines === [] && $goodWillRefund) {
+                $finalOrderLines = $this->createDummyOrderLinesArr($refundAmount);
+            }
+            $reconciliation_identifier = sha1($paymentID . time());
+            $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
+            $api->setAmount($refundAmount);
+            $api->setOrderLines($finalOrderLines);
+            $api->setTransaction($paymentID);
+            $api->setReconciliationIdentifier($reconciliation_identifier);
+            $response = $api->call();
+
+            markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
+
+            if (strtolower($response->Result) === 'open') {
+                $order_message = new Message();
+                $order_message->id_order = $orderID;
+                $order_message->message = 'Payment refund is in progress.';
+                $order_message->private = true;
+                $order_message->save();
+
+                echo json_encode(
+                    [
+                        'status' => 'success',
+                        'message' => 'Payment refund is in progress.',
+                    ]
+                );
+                exit();
+            }
+            $refundStatus = Configuration::get('manual_refund_payments_status');
+            if ($refundStatus !== self::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS) {
+                $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
+            }
+            $transaction = getTransaction($response);
+            saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $transaction->ShopOrderId, 'refunded');
+        } catch (Exception $e) {
+            $message = $e->getMessage();
+            saveLastErrorMessage($paymentID, $message);
+            echo json_encode(
+                [
+                    'status' => 'error',
+                    'message' => 'Could not refund payment. ' . $message,
+                ]
+            );
+            exit();
+        }
+
+        echo json_encode(
+            [
+                'status' => 'success',
+                'message' => 'Payment refunded successfully',
+            ]
+        );
+        exit();
+    }
+
+    /**
+     * Release the reservation and report the result as JSON.
+     *
+     * @return void
+     */
+    private function releaseReservation($paymentID)
+    {
+        try {
+            $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
+            $api->setTransaction($paymentID);
+            $api->call();
+            updatePaymentStatus($paymentID, 'Payment Released');
+        } catch (Exception $e) {
+            saveLastErrorMessage($paymentID, $e->getMessage());
+
+            echo json_encode(
+                [
+                    'status' => 'error',
+                    'message' => 'Could not release reservation. ' . $e->getMessage(),
+                ]
+            );
+            exit();
+        }
+        echo json_encode(
+            [
+                'status' => 'success',
+                'message' => 'Reservation released successfully',
+            ]
+        );
+        exit();
     }
 
     /**
