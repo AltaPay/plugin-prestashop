@@ -62,6 +62,32 @@ function altapayFormatPrice($amount, $currency = null)
 }
 
 /**
+ * Output an AJAX response from a controller and stop execution.
+ * Controller::ajaxDie() was removed in PrestaShop 9; ajaxRender() does not exit, so exit explicitly.
+ * Both methods are protected, so the call is made from within the controller's scope.
+ *
+ * @param Controller $controller
+ * @param string $value
+ *
+ * @return void
+ */
+function altapaySendAjaxResponse($controller, $value)
+{
+    $send = function ($value) {
+        if (method_exists($this, 'ajaxRender')) {
+            // Pass "ajaxDie" as the method so the actionAjaxDie...Before hook name stays the same as before
+            $this->ajaxRender($value, null, 'ajaxDie');
+            exit;
+        }
+
+        $this->ajaxDie($value);
+    };
+
+    $send = Closure::bind($send, $controller, get_class($controller));
+    $send($value);
+}
+
+/**
  * Determine which payment method to display in PrestaShop backoffice
  * i.e. MobilePay Visa, CreditCard, etc.
  *

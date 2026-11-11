@@ -53,12 +53,12 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
                             ]
                         );
 
-                        $this->sendAjaxResponse(json_encode(['success' => true, 'url' => $thankYouUrl]));
+                        altapaySendAjaxResponse($this, json_encode(['success' => true, 'url' => $thankYouUrl]));
                     }
 
                     // The payment is complete, but the current browser does not own the order session.
                     // Do not expose the confirmation URL, secure key, or any order/customer information.
-                    $this->sendAjaxResponse(json_encode(['success' => true, 'completed' => true]));
+                    altapaySendAjaxResponse($this, json_encode(['success' => true, 'completed' => true]));
                 }
             }
 
@@ -81,7 +81,7 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
             $this->redirectBackToCheckout('altapay_cancel=1&isPaymentStep=true&step=3#altapay_cancel');
         }
 
-        $this->sendAjaxResponse(json_encode(['success' => false]));
+        altapaySendAjaxResponse($this, json_encode(['success' => false]));
     }
 
     /**
@@ -104,31 +104,12 @@ class AltapayCheckorderstatusModuleFrontController extends ModuleFrontController
         return !in_array((int) $order->getCurrentState(), $incompleteOrderStates, true);
     }
 
-    /**
-     * Output an AJAX response and stop execution.
-     * Controller::ajaxDie() was removed in PrestaShop 9; ajaxRender() does not exit, so exit explicitly.
-     *
-     * @param string $value
-     *
-     * @return void
-     */
-    private function sendAjaxResponse($value)
-    {
-        if (method_exists($this, 'ajaxRender')) {
-            // Pass "ajaxDie" as the method so the actionAjaxDie...Before hook name stays the same as before
-            $this->ajaxRender($value, null, 'ajaxDie');
-            exit;
-        }
-
-        $this->ajaxDie($value);
-    }
-
     public function redirectBackToCheckout($query)
     {
         $controller = Configuration::get('PS_ORDER_PROCESS_TYPE') ? 'order-opc.php' : 'order.php';
         $pLink = $this->context->link->getPageLink($controller);
         $location = $pLink . (strpos($controller, '?') !== false ? '&' : '?') . $query;
 
-        $this->sendAjaxResponse(json_encode(['success' => false, 'url' => $location]));
+        altapaySendAjaxResponse($this, json_encode(['success' => false, 'url' => $location]));
     }
 }
