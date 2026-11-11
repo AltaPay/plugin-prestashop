@@ -31,17 +31,17 @@ class AdminPayByLinkController extends ModuleAdminController
      */
     public function ajaxProcessCapture()
     {
-        $this->module->processPaymentActions();
+        $this->module->handlePaymentActionsRequest();
     }
 
     public function ajaxProcessRefund()
     {
-        $this->module->processPaymentActions();
+        $this->module->handlePaymentActionsRequest();
     }
 
     public function ajaxProcessRelease()
     {
-        $this->module->processPaymentActions();
+        $this->module->handlePaymentActionsRequest();
     }
 
     /**

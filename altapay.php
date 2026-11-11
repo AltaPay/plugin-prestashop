@@ -1278,12 +1278,22 @@ class ALTAPAY extends PaymentModule
     }
 
     /**
+     * Entry point for the module admin controller (PrestaShop 9 and later).
+     *
+     * @return void
+     */
+    public function handlePaymentActionsRequest()
+    {
+        $this->processPaymentActions();
+    }
+
+    /**
      * Handle payment processing
      * capture, refund, release
      *
      * @return void
      */
-    public function processPaymentActions()
+    private function processPaymentActions()
     {
         $paymentID = (int) Tools::getValue('payment_id');
         $action = Tools::ucfirst(Tools::getValue('action'));
