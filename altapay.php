@@ -34,10 +34,10 @@ class ALTAPAY extends PaymentModule
     {
         $this->name = 'altapay';
         $this->tab = 'payments_gateways';
-        $this->version = '5.0.3';
+        $this->version = '5.1.0';
         $this->author = 'AltaPay A/S';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '8.2.7'];
+        $this->ps_versions_compliancy = ['min' => '1.6.0.1', 'max' => '9.2.99'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -649,9 +649,47 @@ class ALTAPAY extends PaymentModule
         return $tab->delete();
     }
 
+    /**
+     * URL of the module configuration page.
+     * The legacy AdminModules controller does not exist in PrestaShop 9.
+     *
+     * @param string $legacyUrl URL built for PrestaShop versions before 9
+     *
+     * @return string
+     */
+    private function getConfigureUrl($legacyUrl)
+    {
+        if (version_compare(_PS_VERSION_, '9.0.0', '<')) {
+            return $legacyUrl;
+        }
+
+        $url = $this->context->link->getAdminLink('AdminModules', true, [
+            'route' => 'admin_module_configure_action',
+            'module_name' => $this->name,
+        ]);
+        if (strpos($url, '?') === false) {
+            $url .= '?configure=' . $this->name;
+        }
+
+        return $url;
+    }
+
+    /**
+     * Load jQuery on PrestaShop versions that still expose Controller::addJquery().
+     * The method was removed in PrestaShop 9, where jQuery is loaded by the core.
+     *
+     * @return void
+     */
+    private function addJqueryIfSupported()
+    {
+        if (isset($this->context->controller) && method_exists($this->context->controller, 'addJquery')) {
+            $this->context->controller->addJquery();
+        }
+    }
+
     public function hookHeader($params)
     {
-        $this->context->controller->addJquery();
+        $this->addJqueryIfSupported();
         $this->context->controller->addCSS($this->_path . 'views/css/payment.css', 'all');
     }
 
@@ -792,6 +830,7 @@ class ALTAPAY extends PaymentModule
 
         $ccTokenControlOptions = [
             [
+                'id' => '',
                 'name' => 'Enable',
                 'val' => 1,
             ],
@@ -1096,7 +1135,7 @@ class ALTAPAY extends PaymentModule
         $helper->name_controller = 'altapay';
         $helper->identifier = $this->identifier;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
-        $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
+        $helper->currentIndex = $this->getConfigureUrl(AdminController::$currentIndex . '&configure=' . $this->name);
         $helper->show_toolbar = false;
         $helper->table = 'altapay_terminals';
         $lang = new Language((int) Configuration::get('PS_LANG_DEFAULT'));
@@ -1104,7 +1143,12 @@ class ALTAPAY extends PaymentModule
         $helper->id = (int) Tools::getValue('id_terminal');
         $helper->submit_action = 'savealtapay_terminals';
         $form_values = (array) $this->getFormValues();
-        $form_values['applepay_supported_networks[]'] = unserialize($form_values['applepay_supported_networks']);
+        $supportedNetworks = !empty($form_values['applepay_supported_networks'])
+            ? @unserialize($form_values['applepay_supported_networks'])
+            : false;
+        $form_values['applepay_supported_networks[]'] = is_array($supportedNetworks) ? $supportedNetworks : [];
+        $form_values['terminal_nature'] = isset($form_values['nature']) ? (string) $form_values['nature'] : '';
+        $form_values['terminal_identifier'] = isset($form_values['identifier']) ? (string) $form_values['identifier'] : '';
         $helper->tpl_vars = [
             'fields_value' => $form_values,
             'languages' => (array) $this->context->controller->getLanguages(),
@@ -1234,6 +1278,16 @@ class ALTAPAY extends PaymentModule
     }
 
     /**
+     * Entry point for the module admin controller (PrestaShop 9 and later).
+     *
+     * @return void
+     */
+    public function handlePaymentActionsRequest()
+    {
+        $this->processPaymentActions();
+    }
+
+    /**
      * Handle payment processing
      * capture, refund, release
      *
@@ -1243,7 +1297,6 @@ class ALTAPAY extends PaymentModule
     {
         $paymentID = (int) Tools::getValue('payment_id');
         $action = Tools::ucfirst(Tools::getValue('action'));
-        $goodWillRefund = false;
         $orderID = Tools::getValue('ap_order_id');
         $orderLines = Tools::getValue('ap_order_qty');
         $orderLineGiftWrap = Tools::getValue('ap_order_wrap');
@@ -1266,152 +1319,184 @@ class ALTAPAY extends PaymentModule
         }
 
         if ($action === 'Capture') { // CAPTURE
-            try {
-                $finalOrderLines = $this->populateOrderLinesFromPost($orderLines, $orderID, 0, $orderLineGiftWrap);
-
-                $reconciliation_identifier = sha1($paymentID . time());
-                $payment_type = getAltapayOrderDetails($orderID)[0]['paymentType'];
-                if (in_array($payment_type, ['subscription', 'subscription_payment'])) {
-                    $api = new API\PHP\Altapay\Api\Subscription\ChargeSubscription(getAuth());
-                    $api->setAgreement(['id' => $paymentID]);
-                } else {
-                    $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
-                    $api->setOrderLines($finalOrderLines);
-                    $api->setAmount((float) Tools::getValue('amount'));
-                }
-                $api->setTransaction($paymentID);
-                $api->setReconciliationIdentifier($reconciliation_identifier);
-                $response = $api->call();
-                if ($payment_type == 'subscription' and isset($response) and isset($response->Transactions)) {
-                    $latestTransKey = 0;
-                    foreach ($response->Transactions as $key => $transaction) {
-                        if ($transaction->AuthType === 'subscription_payment' && $transaction->CreatedDate > $max_date) {
-                            $max_date = $transaction->CreatedDate;
-                            $latestTransKey = $key;
-                        }
-                    }
-                    $transaction = $response->Transactions[$latestTransKey];
-                    updateTransactionIdForParentSubscription($orderID, $transaction->TransactionId);
-                }
-
-                $orderStatus = Configuration::get('manual_capture_payments_status');
-
-                if (markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines)) && ($orderStatus !== self::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS)) {
-                    $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
-                }
-                $transaction = getTransaction($response);
-                saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $transaction->ShopOrderId);
-            } catch (Exception $e) {
-                // Save the latest error message in db
-                saveLastErrorMessage($paymentID, $e->getMessage());
-                echo json_encode(
-                    [
-                        'status' => 'error',
-                        'message' => 'Could not capture reservation. ' . $e->getMessage(),
-                    ]
-                );
-                exit();
-            }
-            echo json_encode(
-                [
-                    'status' => 'success',
-                    'message' => 'Reservation captured successfully',
-                ]
-            );
-            exit();
+            $this->captureReservation($paymentID, $orderID, $orderLines, $orderLineGiftWrap, $order);
         } elseif ($action === 'Refund') { // REFUND
-            try {
-                $refundAmount = (float) Tools::getValue('amount');
-                if (Tools::getValue('goodwillrefund') === 'yes') {
-                    $goodWillRefund = true;
-                }
-                $finalOrderLines = $this->populateOrderLinesFromPost(
-                    $orderLines,
-                    $orderID,
-                    0,
-                    $orderLineGiftWrap,
-                    $goodWillRefund
-                );
-
-                // Add a dummy orderLine array in case no orderLines are parsed in the refund
-                if ($finalOrderLines === [] && $goodWillRefund) {
-                    $finalOrderLines = $this->createDummyOrderLinesArr($refundAmount);
-                }
-                $reconciliation_identifier = sha1($paymentID . time());
-                $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
-                $api->setAmount($refundAmount);
-                $api->setOrderLines($finalOrderLines);
-                $api->setTransaction($paymentID);
-                $api->setReconciliationIdentifier($reconciliation_identifier);
-                $response = $api->call();
-
-                markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
-
-                if (strtolower($response->Result) === 'open') {
-                    $order_message = new Message();
-                    $order_message->id_order = $orderID;
-                    $order_message->message = 'Payment refund is in progress.';
-                    $order_message->private = true;
-                    $order_message->save();
-
-                    echo json_encode(
-                        [
-                            'status' => 'success',
-                            'message' => 'Payment refund is in progress.',
-                        ]
-                    );
-                    exit();
-                }
-                $refundStatus = Configuration::get('manual_refund_payments_status');
-                if ($refundStatus !== self::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS) {
-                    $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
-                }
-                $transaction = getTransaction($response);
-                saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $transaction->ShopOrderId, 'refunded');
-            } catch (Exception $e) {
-                $message = $e->getMessage();
-                saveLastErrorMessage($paymentID, $message);
-                echo json_encode(
-                    [
-                        'status' => 'error',
-                        'message' => 'Could not refund payment. ' . $message,
-                    ]
-                );
-                exit();
-            }
-
-            echo json_encode(
-                [
-                    'status' => 'success',
-                    'message' => 'Payment refunded successfully',
-                ]
-            );
-            exit();
+            $this->refundCapturedReservation($paymentID, $orderID, $orderLines, $orderLineGiftWrap, $order);
         } elseif ($action === 'Release') { // RELEASE
-            try {
-                $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
-                $api->setTransaction($paymentID);
-                $api->call();
-                updatePaymentStatus($paymentID, 'Payment Released');
-            } catch (Exception $e) {
-                saveLastErrorMessage($paymentID, $e->getMessage());
+            $this->releaseReservation($paymentID);
+        }
+    }
 
-                echo json_encode(
-                    [
-                        'status' => 'error',
-                        'message' => 'Could not release reservation. ' . $e->getMessage(),
-                    ]
-                );
-                exit();
+    /**
+     * Capture the reservation and report the result as JSON.
+     *
+     * @return void
+     */
+    private function captureReservation($paymentID, $orderID, $orderLines, $orderLineGiftWrap, $order)
+    {
+        try {
+            $finalOrderLines = $this->populateOrderLinesFromPost($orderLines, $orderID, 0, $orderLineGiftWrap);
+
+            $reconciliation_identifier = sha1($paymentID . time());
+            $payment_type = getAltapayOrderDetails($orderID)[0]['paymentType'];
+            if (in_array($payment_type, ['subscription', 'subscription_payment'])) {
+                $api = new API\PHP\Altapay\Api\Subscription\ChargeSubscription(getAuth());
+                $api->setAgreement(['id' => $paymentID]);
+            } else {
+                $api = new API\PHP\Altapay\Api\Payments\CaptureReservation(getAuth());
+                $api->setOrderLines($finalOrderLines);
+                $api->setAmount((float) Tools::getValue('amount'));
             }
+            $api->setTransaction($paymentID);
+            $api->setReconciliationIdentifier($reconciliation_identifier);
+            $response = $api->call();
+            if ($payment_type == 'subscription' and isset($response) and isset($response->Transactions)) {
+                $max_date = '';
+                $latestTransKey = 0;
+                foreach ($response->Transactions as $key => $transaction) {
+                    if ($transaction->AuthType === 'subscription_payment' && $transaction->CreatedDate > $max_date) {
+                        $max_date = $transaction->CreatedDate;
+                        $latestTransKey = $key;
+                    }
+                }
+                $transaction = $response->Transactions[$latestTransKey];
+                updateTransactionIdForParentSubscription($orderID, $transaction->TransactionId);
+            }
+
+            $orderStatus = Configuration::get('manual_capture_payments_status');
+
+            if (markAsCaptured($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines)) && ($orderStatus !== self::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS)) {
+                $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+            }
+            $transaction = getTransaction($response);
+            saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $transaction->ShopOrderId);
+        } catch (Exception $e) {
+            // Save the latest error message in db
+            saveLastErrorMessage($paymentID, $e->getMessage());
             echo json_encode(
                 [
-                    'status' => 'success',
-                    'message' => 'Reservation released successfully',
+                    'status' => 'error',
+                    'message' => 'Could not capture reservation. ' . $e->getMessage(),
                 ]
             );
             exit();
         }
+        echo json_encode(
+            [
+                'status' => 'success',
+                'message' => 'Reservation captured successfully',
+            ]
+        );
+        exit();
+    }
+
+    /**
+     * Refund the captured amount and report the result as JSON.
+     *
+     * @return void
+     */
+    private function refundCapturedReservation($paymentID, $orderID, $orderLines, $orderLineGiftWrap, $order)
+    {
+        $goodWillRefund = false;
+        try {
+            $refundAmount = (float) Tools::getValue('amount');
+            if (Tools::getValue('goodwillrefund') === 'yes') {
+                $goodWillRefund = true;
+            }
+            $finalOrderLines = $this->populateOrderLinesFromPost(
+                $orderLines,
+                $orderID,
+                0,
+                $orderLineGiftWrap,
+                $goodWillRefund
+            );
+
+            // Add a dummy orderLine array in case no orderLines are parsed in the refund
+            if ($finalOrderLines === [] && $goodWillRefund) {
+                $finalOrderLines = $this->createDummyOrderLinesArr($refundAmount);
+            }
+            $reconciliation_identifier = sha1($paymentID . time());
+            $api = new API\PHP\Altapay\Api\Payments\RefundCapturedReservation(getAuth());
+            $api->setAmount($refundAmount);
+            $api->setOrderLines($finalOrderLines);
+            $api->setTransaction($paymentID);
+            $api->setReconciliationIdentifier($reconciliation_identifier);
+            $response = $api->call();
+
+            markAsRefund($paymentID, $this->getItemCaptureRefundQuantityCount($finalOrderLines));
+
+            if (strtolower($response->Result) === 'open') {
+                $order_message = new Message();
+                $order_message->id_order = $orderID;
+                $order_message->message = 'Payment refund is in progress.';
+                $order_message->private = true;
+                $order_message->save();
+
+                echo json_encode(
+                    [
+                        'status' => 'success',
+                        'message' => 'Payment refund is in progress.',
+                    ]
+                );
+                exit();
+            }
+            $refundStatus = Configuration::get('manual_refund_payments_status');
+            if ($refundStatus !== self::ALTAPAY_MANUAL_CAPTURE_REFUND_STATUS) {
+                $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
+            }
+            $transaction = getTransaction($response);
+            saveOrderReconciliationIdentifier($orderID, $reconciliation_identifier, $transaction->ShopOrderId, 'refunded');
+        } catch (Exception $e) {
+            $message = $e->getMessage();
+            saveLastErrorMessage($paymentID, $message);
+            echo json_encode(
+                [
+                    'status' => 'error',
+                    'message' => 'Could not refund payment. ' . $message,
+                ]
+            );
+            exit();
+        }
+
+        echo json_encode(
+            [
+                'status' => 'success',
+                'message' => 'Payment refunded successfully',
+            ]
+        );
+        exit();
+    }
+
+    /**
+     * Release the reservation and report the result as JSON.
+     *
+     * @return void
+     */
+    private function releaseReservation($paymentID)
+    {
+        try {
+            $api = new API\PHP\Altapay\Api\Payments\ReleaseReservation(getAuth());
+            $api->setTransaction($paymentID);
+            $api->call();
+            updatePaymentStatus($paymentID, 'Payment Released');
+        } catch (Exception $e) {
+            saveLastErrorMessage($paymentID, $e->getMessage());
+
+            echo json_encode(
+                [
+                    'status' => 'error',
+                    'message' => 'Could not release reservation. ' . $e->getMessage(),
+                ]
+            );
+            exit();
+        }
+        echo json_encode(
+            [
+                'status' => 'success',
+                'message' => 'Reservation released successfully',
+            ]
+        );
+        exit();
     }
 
     /**
@@ -1922,8 +2007,10 @@ class ALTAPAY extends PaymentModule
         $helper->id = (int) Tools::getValue('id_carrier');
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'btnSubmit';
-        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&configure='
-            . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
+        $helper->currentIndex = $this->getConfigureUrl(
+            $this->context->link->getAdminLink('AdminModules', false) . '&configure='
+            . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name
+        );
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->tpl_vars = [
             'fields_value' => $this->getConfigFieldsValues(),
@@ -2132,7 +2219,7 @@ class ALTAPAY extends PaymentModule
     {
         $cookie = $this->context->cookie;
 
-        $this->context->controller->addJquery();
+        $this->addJqueryIfSupported();
         $this->context->controller->addJS($this->_path . 'views/js/form.js', 'all');
         $this->context->controller->addCSS(($this->_path) . 'views/css/payment.css', 'all');
         if ($cookie->altapayError) {
@@ -2642,7 +2729,13 @@ class ALTAPAY extends PaymentModule
         $this->smarty->assign('payment_amount', number_format($payment_amount, 2, '.', ''));
         $this->smarty->assign('payment_captured', !$results['requireCapture']);
         $this->smarty->assign('this_path', $this->_path);
-        $this->smarty->assign('ajax_url', $fet->getAdminLink('AdminModules') . '&configure=' . $tname . '&payment_actions');
+        // The legacy AdminModules controller does not exist in PrestaShop 9, so the actions go through a module controller
+        if (version_compare(_PS_VERSION_, '9.0.0', '>=')) {
+            $ajaxUrl = $fet->getAdminLink('AdminPayByLink');
+        } else {
+            $ajaxUrl = $fet->getAdminLink('AdminModules') . '&configure=' . $tname . '&payment_actions';
+        }
+        $this->smarty->assign('ajax_url', $ajaxUrl);
         $this->smarty->assign('token', Tools::getAdminTokenLite('AdminModules'));
         $this->smarty->assign('reconciliation_identifiers', $reconciliation_identifiers);
         $this->smarty->assign('altapay_module_update', $this->isAltaPayModuleUpdateAvailable());
@@ -2772,7 +2865,7 @@ class ALTAPAY extends PaymentModule
             return;
         }
 
-        $this->context->controller->addJquery();
+        $this->addJqueryIfSupported();
         $this->context->controller->addCSS($this->_path . 'css/payment.css', 'all');
 
         // Fetch payment methods
@@ -2917,6 +3010,7 @@ class ALTAPAY extends PaymentModule
     public function hookPaymentOptions($params)
     {
         $savedCreditCard = [];
+        $customerID = null;
 
         if (!$this->active) {
             return null;
@@ -2954,10 +3048,11 @@ class ALTAPAY extends PaymentModule
             $this->getTemplateVarInfos()
         );
         $paymentsOptions = [];
-        $userAgent = $_SERVER['HTTP_USER_AGENT'];
+        $userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? (string) $_SERVER['HTTP_USER_AGENT'] : '';
         foreach ($paymentMethods as $paymentMethod) {
-            $nature = json_decode($paymentMethod['nature'], true);
-            if ($show_only_cc_terminal and (count($nature) != 1 or $nature[0]['Nature'] !== 'CreditCard')) {
+            $nature = json_decode((string) $paymentMethod['nature'], true);
+            if ($show_only_cc_terminal
+                && (!is_array($nature) || count($nature) != 1 || !isset($nature[0]['Nature']) || $nature[0]['Nature'] !== 'CreditCard')) {
                 continue;
             }
 
@@ -3006,7 +3101,7 @@ class ALTAPAY extends PaymentModule
     {
         // Check if the current controller is 'order' or 'order-opc'
         if ($this->context->controller->php_self == 'order' || $this->context->controller->php_self == 'order-opc') {
-            $this->context->controller->addJquery();
+            $this->addJqueryIfSupported();
             $this->addVersionedModuleJs('altapay-creditcard-front-fo', 'views/js/creditCardFront.js');
 
             if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
@@ -3101,9 +3196,10 @@ class ALTAPAY extends PaymentModule
         $state = $params['objOrder']->getCurrentState();
         $results = Db::getInstance()->getRow('SELECT *
     FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE id_order=' . (int) $params['objOrder']->id);
+        $results = array_merge(['unique_id' => '', 'payment_id' => ''], is_array($results) ? $results : []);
         if (in_array($state, $states)) {
             $this->smarty->assign([
-                'total_to_pay' => Tools::displayPrice($params['total_to_pay'], $params['currencyObj'], false),
+                'total_to_pay' => altapayFormatPrice($params['total_to_pay'], $params['currencyObj']),
                 'status' => 'ok',
                 'unique_id' => $results['unique_id'],
                 'payment_id' => $results['payment_id'],
@@ -3111,7 +3207,7 @@ class ALTAPAY extends PaymentModule
             ]);
         } else {
             $this->smarty->assign([
-                'total_to_pay' => Tools::displayPrice($params['total_to_pay'], $params['currencyObj'], false),
+                'total_to_pay' => altapayFormatPrice($params['total_to_pay'], $params['currencyObj']),
                 'status' => 'open',
                 'unique_id' => $results['unique_id'],
                 'payment_id' => $results['payment_id'],
@@ -3906,8 +4002,10 @@ class ALTAPAY extends PaymentModule
         $helper->id = (int) Tools::getValue('id_carrier');
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'synchterminalsync';
-        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&configure='
-            . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
+        $helper->currentIndex = $this->getConfigureUrl(
+            $this->context->link->getAdminLink('AdminModules', false) . '&configure='
+            . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name
+        );
         $helper->token = Tools::getAdminTokenLite('AdminModules');
 
         return $helper->generateForm([$fieldsForm]);
@@ -3983,7 +4081,7 @@ class ALTAPAY extends PaymentModule
         $helper->module = $this;
         $helper->name_controller = $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
-        $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
+        $helper->currentIndex = $this->getConfigureUrl(AdminController::$currentIndex . '&configure=' . $this->name);
         $helper->default_form_language = (int) Configuration::get('PS_LANG_DEFAULT');
         $helper->allow_employee_form_lang = (int) Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG');
         $helper->title = $this->displayName;

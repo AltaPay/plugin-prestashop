@@ -56,3 +56,23 @@ jobs:
        run: |
          find . -path ./vendor -prune -false -o -type f -name '*.php' -print0 | xargs -0 -n1 -P$(nproc) php7.0 -l -n | (! grep -v "No syntax errors detected" )
        working-directory: prestashop/modules/altapay
+
+  php-lint:
+    name: PHP ${{ matrix.php-versions }} lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-versions: ['8.1', '8.2', '8.3', '8.4', '8.5']
+    steps:
+     - uses: actions/checkout@v4
+
+     - name: Install PHP ${{ matrix.php-versions }}
+       uses: shivammathur/setup-php@v2
+       with:
+         php-version: ${{ matrix.php-versions }}
+         ini-values: "error_reporting=-1"
+
+     - name: Run php linter
+       run: |
+         find . -path ./vendor -prune -false -o -type f -name '*.php' -print0 | xargs -0 -n1 -P$(nproc) php -l | (! grep -v "No syntax errors detected" )
