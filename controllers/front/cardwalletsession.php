@@ -57,7 +57,8 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
             $response = $request->call();
             $this->sendValidateMerchantResponse($response, $cart, $cart->getOrderTotal(true, Cart::BOTH));
         } catch (Exception $e) {
-            altapaySendAjaxResponse($this, json_encode(['success' => false, 'error' => $e->getMessage()]));
+            PrestaShopLogger::addLog($e->getMessage(), 3, $e->getCode(), $this->module->name, $this->module->id, true);
+            altapaySendAjaxResponse($this, json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
         }
     }
 
