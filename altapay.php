@@ -1303,14 +1303,23 @@ class ALTAPAY extends PaymentModule
     {
         $paymentID = (int) Tools::getValue('payment_id');
         $action = Tools::ucfirst(Tools::getValue('action'));
-        $orderID = Tools::getValue('ap_order_id');
+        $apOrderId = (int) Tools::getValue('ap_order_id');
+        $orderID = (int) Db::getInstance()->getValue(
+            'SELECT id_order FROM `' . _DB_PREFIX_ . 'altapay_order` WHERE payment_id = \'' . pSQL($paymentID) . '\''
+        );
         $orderLines = Tools::getValue('ap_order_qty');
         $orderLineGiftWrap = Tools::getValue('ap_order_wrap');
-        $order = new Order((int) $orderID);
+        $order = new Order($orderID);
 
         header('Content-Type: application/json');
         if (!(Tools::getValue('action') && Tools::getValue('payment_id'))) {
             return;
+        }
+
+        // The payment must belong to the order
+        if (!$orderID || ($apOrderId && $apOrderId !== $orderID)) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid payment request.']);
+            exit();
         }
 
         if (!$this->altapayApiLogin()) {
