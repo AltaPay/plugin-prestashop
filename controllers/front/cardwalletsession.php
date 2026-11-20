@@ -26,7 +26,7 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
         $terminal = new Altapay_Models_Terminal($terminalId);
         $cart = $this->context->cart;
         if (!Validate::isLoadedObject($terminal) || (int) $terminal->shop_id !== (int) $currentShopId
-            || empty($validationUrl) || !Validate::isAbsoluteUrl($validationUrl)
+            || !preg_match('#^https://(cn-)?apple-pay-gateway[\w-]*\.apple\.com/#i', $validationUrl)
             || !Validate::isLoadedObject($cart)) {
             altapaySendAjaxResponse($this, json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
         }
