@@ -1284,6 +1284,12 @@ class ALTAPAY extends PaymentModule
      */
     public function handlePaymentActionsRequest()
     {
+        // Check employee have permission to edit orders
+        if (!Access::isGranted('ROLE_MOD_TAB_ADMINORDERS_UPDATE', (int) $this->context->employee->id_profile)) {
+            echo json_encode(['status' => 'error', 'message' => 'You do not have permission to edit orders.']);
+            exit();
+        }
+
         $this->processPaymentActions();
     }
 
