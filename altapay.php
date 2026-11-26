@@ -1284,12 +1284,6 @@ class ALTAPAY extends PaymentModule
      */
     public function handlePaymentActionsRequest()
     {
-        // Check employee have permission to edit orders
-        if (!Access::isGranted('ROLE_MOD_TAB_ADMINORDERS_UPDATE', (int) $this->context->employee->id_profile)) {
-            echo json_encode(['status' => 'error', 'message' => 'You do not have permission to edit orders.']);
-            exit();
-        }
-
         $this->processPaymentActions();
     }
 
@@ -1316,6 +1310,12 @@ class ALTAPAY extends PaymentModule
             return;
         }
 
+        if (!$this->canEditOrders()) {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'You do not have permission to edit orders.']);
+            exit();
+        }
+
         // The payment must belong to the order
         if (!$orderID || ($apOrderId && $apOrderId !== $orderID)) {
             echo json_encode(['status' => 'error', 'message' => 'Invalid payment request.']);
@@ -1340,6 +1340,24 @@ class ALTAPAY extends PaymentModule
         } elseif ($action === 'Release') { // RELEASE
             $this->releaseReservation($paymentID);
         }
+    }
+
+    /**
+     * Whether the employee may edit orders.
+     *
+     * @return bool
+     */
+    public function canEditOrders()
+    {
+        $profileId = (int) $this->context->employee->id_profile;
+        if (method_exists('Access', 'isGranted')) {
+            return Access::isGranted('ROLE_MOD_TAB_ADMINORDERS_UPDATE', $profileId);
+        }
+
+        // PrestaShop 1.6 has no Access::isGranted()
+        $access = Profile::getProfileAccess($profileId, (int) Tab::getIdFromClassName('AdminOrders'));
+
+        return !empty($access['edit']);
     }
 
     /**
@@ -1414,6 +1432,7 @@ class ALTAPAY extends PaymentModule
     {
         $goodWillRefund = false;
         try {
+            $this->checkAmountWithinRemaining($paymentID, 'refund');
             $refundAmount = (float) Tools::getValue('amount');
             if (Tools::getValue('goodwillrefund') === 'yes') {
                 $goodWillRefund = true;
