@@ -51,17 +51,28 @@ class AdminPayByLinkController extends ModuleAdminController
      */
     public function ajaxProcessGetUrl()
     {
+        if (!$this->module->canEditOrders()) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'You do not have permission to edit orders.']);
+            exit();
+        }
         $amount = Tools::getValue('amount');
         $order_id = Tools::getValue('order_id');
         $send_email = Tools::getValue('send_email');
         $terminal = Tools::getValue('terminal');
-        $paymentLink = $this->module->altaPayOrderEdited($order_id, $amount, $terminal);
         $order = new Order($order_id);
+        $customerId = (int) Tools::getValue('customer_id');
+        // The order must exist, and the customer who gets the email must be the customer of that order
+        if (!Validate::isLoadedObject($order) || ($send_email && (int) $order->id_customer !== $customerId)) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid payment link request.']);
+            exit();
+        }
+        $paymentLink = $this->module->altaPayOrderEdited($order_id, $amount, $terminal);
         $currency = new Currency($order->id_currency);
         $amountFormatted = altapayFormatPrice($amount, $currency);
 
         if ($send_email && $paymentLink) {
-            $customerId = (int) Tools::getValue('customer_id');
             $this->sendCustomEmail($customerId, $paymentLink, $amountFormatted, $order_id, (int) $order->id_shop);
         }
 
