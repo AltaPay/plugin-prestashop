@@ -1341,6 +1341,7 @@ class ALTAPAY extends PaymentModule
             $this->releaseReservation($paymentID);
         }
     }
+
     /**
      * The amount must be above 0 and not above what is still capturable or refundable at the gateway.
      *
