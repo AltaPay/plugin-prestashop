@@ -27,7 +27,7 @@ class ALTAPAYorderconfirmationModuleFrontController extends ModuleFrontControlle
         parent::initContent();
 
         // Assignment of order detail variables
-        $orderID = (int) $_REQUEST['id_order'];
+        $orderID = (int) Tools::getValue('id_order');
         $order = new Order($orderID);
         $productDetails = $order->getProducts();
         $deliveryAddress = new Address((int) ($order->id_address_delivery));

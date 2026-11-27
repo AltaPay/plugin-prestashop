@@ -26,9 +26,9 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
         $terminal = new Altapay_Models_Terminal($terminalId);
         $cart = $this->context->cart;
         if (!Validate::isLoadedObject($terminal) || (int) $terminal->shop_id !== (int) $currentShopId
-            || empty($validationUrl) || !Validate::isAbsoluteUrl($validationUrl)
+            || !preg_match('#^https://(cn-)?apple-pay-gateway[\w-]*\.apple\.com/#i', $validationUrl)
             || !Validate::isLoadedObject($cart)) {
-            $this->ajaxDie(json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
+            altapaySendAjaxResponse($this, json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
         }
 
         $request = new API\PHP\Altapay\Api\Payments\CardWalletSession(getAuth());
@@ -57,7 +57,8 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
             $response = $request->call();
             $this->sendValidateMerchantResponse($response, $cart, $cart->getOrderTotal(true, Cart::BOTH));
         } catch (Exception $e) {
-            $this->ajaxDie(json_encode(['success' => false, 'error' => $e->getMessage()]));
+            PrestaShopLogger::addLog($e->getMessage(), 3, $e->getCode(), $this->module->name, $this->module->id, true);
+            altapaySendAjaxResponse($this, json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
         }
     }
 
@@ -74,11 +75,11 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
     private function sendValidateMerchantResponse($response, $cart, $amount)
     {
         if ($response->Result !== 'Success') {
-            $this->ajaxDie(json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
+            altapaySendAjaxResponse($this, json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
         }
 
         if (isset($response->ApplePaySession)) {
-            $this->ajaxDie(json_encode(['success' => true, 'applePaySession' => $response->ApplePaySession, 'amount' => $amount]));
+            altapaySendAjaxResponse($this, json_encode(['success' => true, 'applePaySession' => $response->ApplePaySession, 'amount' => $amount]));
         }
 
         if (isset($response->WalletData->Session)) {
@@ -108,10 +109,10 @@ class AltapaycardwalletsessionModuleFrontController extends ModuleFrontControlle
                 Db::getInstance()->Execute($sql);
             }
 
-            $this->ajaxDie(json_encode(['success' => true, 'applePaySession' => $response->WalletData->Session, 'amount' => $amount]));
+            altapaySendAjaxResponse($this, json_encode(['success' => true, 'applePaySession' => $response->WalletData->Session, 'amount' => $amount]));
         }
 
-        $this->ajaxDie(json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
+        altapaySendAjaxResponse($this, json_encode(['success' => false, 'error' => self::ERROR_SOMETHING_WENT_WRONG]));
     }
 
     private function getTransactionUniqueId($cartId)

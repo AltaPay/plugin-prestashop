@@ -1,9 +1,13 @@
 # AltaPay for PrestaShop
 ## Supported versions
 
-PrestaShop 1.6.x, 1.7.x and 8.x
+PrestaShop 1.6.x, 1.7.x, 8.x and 9.x
 
 # Changelog
+
+## [5.1.0]
+### Added
+- Add support for PrestaShop 9.x.
 
 ## [5.0.3]
 ### Changed

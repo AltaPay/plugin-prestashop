@@ -14,6 +14,81 @@
  */
 
 /**
+ * Get the order id created from a cart, across PrestaShop versions.
+ * Order::getOrderByCartId() was removed in PrestaShop 9; Order::getIdByCartId() exists since 1.7.
+ *
+ * @param int $cartId
+ *
+ * @return int|false Order id, or false if the cart has no order
+ */
+function altapayGetOrderIdByCartId($cartId)
+{
+    if (method_exists('Order', 'getIdByCartId')) {
+        return Order::getIdByCartId((int) $cartId);
+    }
+
+    return Order::getOrderByCartId((int) $cartId);
+}
+
+/**
+ * Format a price for display, across PrestaShop versions.
+ * Tools::displayPrice() was removed in PrestaShop 9.
+ *
+ * @param float $amount
+ * @param Currency|int|null $currency Currency object or id; defaults to the context currency
+ *
+ * @return string
+ */
+function altapayFormatPrice($amount, $currency = null)
+{
+    if (!is_numeric($amount)) {
+        return $amount;
+    }
+
+    $context = Context::getContext();
+    if (!($currency instanceof Currency)) {
+        $currency = $currency ? new Currency((int) $currency) : $context->currency;
+    }
+
+    if (method_exists($context, 'getCurrentLocale') && $context->getCurrentLocale() && Validate::isLoadedObject($currency)) {
+        $formatted = $context->getCurrentLocale()->formatPrice((float) $amount, $currency->iso_code);
+    } elseif (method_exists('Tools', 'displayPrice')) {
+        $formatted = Tools::displayPrice($amount, $currency);
+    } else {
+        $formatted = number_format((float) $amount, 2) . (Validate::isLoadedObject($currency) ? ' ' . $currency->iso_code : '');
+    }
+
+    return $formatted;
+}
+
+/**
+ * Output an AJAX response from a controller and stop execution.
+ * Controller::ajaxDie() was removed in PrestaShop 9; ajaxRender() does not exit, so exit explicitly.
+ * Both methods are protected, so the call is made from within the controller's scope.
+ *
+ * @param Controller $controller
+ * @param string $value
+ *
+ * @return void
+ */
+function altapaySendAjaxResponse($controller, $value)
+{
+    $send = function ($controller, $value) {
+        if (method_exists($controller, 'ajaxRender')) {
+            // Pass "ajaxDie" as the method so the actionAjaxDie...Before hook name stays the same as before
+            $controller->ajaxRender($value, null, 'ajaxDie');
+            exit;
+        }
+
+        $controller->ajaxDie($value);
+    };
+
+    // Only the class scope is bound (no $this), which is what allows calling the protected methods
+    $send = Closure::bind($send, null, get_class($controller));
+    $send($controller, $value);
+}
+
+/**
  * Determine which payment method to display in PrestaShop backoffice
  * i.e. MobilePay Visa, CreditCard, etc.
  *
@@ -24,7 +99,7 @@
 function transactionInfo($transactionInfo = [])
 {
     $pluginName = 'altapay';
-    $pluginVersion = '5.0.3';
+    $pluginVersion = '5.1.0';
 
     // Transaction info
     $transactionInfo['ecomPlatform'] = 'PrestaShop';
@@ -1420,7 +1495,7 @@ function refundOrReleaseTransactionByStatus($transaction)
  */
 function releaseDuplicatePayment($cart, $transaction)
 {
-    $order_id = (int) Order::getOrderByCartId((int) $cart->id);
+    $order_id = (int) altapayGetOrderIdByCartId((int) $cart->id);
     if (!empty($order_id)) {
         $altapay_order_details = getAltapayOrderDetails($order_id);
         if (!empty($altapay_order_details) && $altapay_order_details[0]['payment_id'] != $transaction->TransactionId) {
@@ -1592,7 +1667,7 @@ function createOrderOkCallback($postData, $record_id = null)
             // Load order
             $order = new Order((int) $payment_module->currentOrder);
         } else {
-            $order_id = Order::getOrderByCartId((int) ($cart->id));
+            $order_id = altapayGetOrderIdByCartId((int) ($cart->id));
             $order = new Order((int) $order_id);
             if (in_array($transaction->TransactionStatus, ['bank_payment_finalized', 'captured'], true)) {
                 markChildOrderAsCaptured($transactionID);

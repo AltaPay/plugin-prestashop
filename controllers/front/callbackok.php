@@ -89,7 +89,7 @@ class AltapayCallbackokModuleFrontController extends ModuleFrontController
             }
 
             // Check if this is a duplicate payment
-            $order_id = Order::getOrderByCartId((int) ($cart->id));
+            $order_id = altapayGetOrderIdByCartId((int) ($cart->id));
             if (!empty($order_id)) {
                 $altapay_order_details = $isChildOrder ? getAltapayChildOrderDetails($shopOrderId) : getAltapayOrderDetails($order_id);
                 if (!empty($altapay_order_details)

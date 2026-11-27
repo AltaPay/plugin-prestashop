@@ -25,23 +25,54 @@ class AdminPayByLinkController extends ModuleAdminController
     }
 
     /**
+     * Capture, refund and release requests from the admin order page (PrestaShop 9 and later).
+     *
+     * @return void
+     */
+    public function ajaxProcessCapture()
+    {
+        $this->module->handlePaymentActionsRequest();
+    }
+
+    public function ajaxProcessRefund()
+    {
+        $this->module->handlePaymentActionsRequest();
+    }
+
+    public function ajaxProcessRelease()
+    {
+        $this->module->handlePaymentActionsRequest();
+    }
+
+    /**
      * Process an AJAX request to get the payment link and optionally send a custom email.
      *
      * @return void
      */
     public function ajaxProcessGetUrl()
     {
+        if (!$this->module->canEditOrders()) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'You do not have permission to edit orders.']);
+            exit();
+        }
         $amount = Tools::getValue('amount');
         $order_id = Tools::getValue('order_id');
         $send_email = Tools::getValue('send_email');
         $terminal = Tools::getValue('terminal');
-        $paymentLink = $this->module->altaPayOrderEdited($order_id, $amount, $terminal);
         $order = new Order($order_id);
+        $customerId = (int) Tools::getValue('customer_id');
+        // The order must exist, and the customer who gets the email must be the customer of that order
+        if (!Validate::isLoadedObject($order) || ($send_email && (int) $order->id_customer !== $customerId)) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid payment link request.']);
+            exit();
+        }
+        $paymentLink = $this->module->altaPayOrderEdited($order_id, $amount, $terminal);
         $currency = new Currency($order->id_currency);
-        $amountFormatted = Tools::displayPrice($amount, $currency);
+        $amountFormatted = altapayFormatPrice($amount, $currency);
 
         if ($send_email && $paymentLink) {
-            $customerId = (int) Tools::getValue('customer_id');
             $this->sendCustomEmail($customerId, $paymentLink, $amountFormatted, $order_id, (int) $order->id_shop);
         }
 
@@ -187,7 +218,8 @@ class AdminPayByLinkController extends ModuleAdminController
         if (Validate::isLoadedObject($customer)) {
             $to = $customer->email;
             $toName = $customer->firstname . ' ' . $customer->lastname;
-            $subject = $this->l('Action Required: Payment Link for Outstanding Amount');
+            // AdminController::l() was removed in PrestaShop 9; translate through the module instead.
+            $subject = $this->module->l('Action Required: Payment Link for Outstanding Amount', 'adminpaybylinkcontroller');
 
             if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
                 $template = 'addition_item_email';

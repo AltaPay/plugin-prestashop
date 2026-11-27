@@ -59,8 +59,8 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
 
         unset($_COOKIE['savecard']);
         unset($_COOKIE['selectedCreditCard']);
-        setcookie('savecard', null, -1, '/');
-        setcookie('selectedCreditCard', null, -1, '/');
+        setcookie('savecard', '', -1, '/');
+        setcookie('selectedCreditCard', '', -1, '/');
 
         $result = $this->module->createTransaction($saveCard, $savedCreditCard, $payment_method, $providerData, $is_apple_pay);
         // Load the customer
@@ -143,13 +143,13 @@ class AltapayPaymentModuleFrontController extends ModuleFrontController
                     echo json_encode($response);
                     exit();
                 }
-            } elseif ($result['apple_pay_terminal'] === true) {
+            } elseif (($result['apple_pay_terminal'] ?? false) === true) {
                 echo json_encode(['status' => 'error']);
                 exit();
             } else {
                 Tools::redirect($payment_form_url);
             }
-        } elseif ($result['apple_pay_terminal'] === true || $is_apple_pay === true) {
+        } elseif (($result['apple_pay_terminal'] ?? false) === true || $is_apple_pay === true) {
             echo json_encode(['status' => 'error']);
             exit();
         } else {
