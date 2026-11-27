@@ -1345,7 +1345,7 @@ class ALTAPAY extends PaymentModule
     /**
      * The amount must be above 0 and not above what is still capturable or refundable at the gateway.
      *
-     * @throws Exception
+     * @throws InvalidArgumentException
      */
     private function checkAmountWithinRemaining($paymentID, $action)
     {
@@ -1355,7 +1355,7 @@ class ALTAPAY extends PaymentModule
         $remaining = $action === 'capture' ? $pay->ReservedAmount - $pay->CapturedAmount : $pay->CapturedAmount - $pay->RefundedAmount;
         $amount = (float) Tools::getValue('amount');
         if ($amount <= 0 || $amount > $remaining + 0.01) {
-            throw new Exception('The amount must be above 0 and not above ' . $remaining . '.');
+            throw new InvalidArgumentException('The amount must be above 0 and not above ' . $remaining . '.');
         }
     }
 
